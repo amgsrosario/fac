@@ -8,15 +8,17 @@ import lombok.ToString;
 @Entity
 @Table(name = "mpagamento")
 @Getter
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 public class MPagamento {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Setter
+    @ToString.Include
     private Integer id;
 
     @Column(length = 30, nullable = false)
+    @ToString.Include
     private String nome;
 
 }

@@ -10,35 +10,41 @@ import lombok.ToString;
 @Entity
 @Table(name = "moeda")
 @Getter
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 public class Moeda {
 
     @Id
     @Column(length = 3, nullable = false)
-    @Setter
+    @ToString.Include
     private String id;
 
     @Column(length = 30, nullable = false)
     @Setter
+    @ToString.Include
     private String nome;
 
     @Column(precision = 20, scale = 10)
     @Setter
+    @ToString.Include
     private BigDecimal vcompra;
 
     @Column(precision = 20, scale = 10)
     @Setter
+    @ToString.Include
     private BigDecimal vvenda;
 
     @Column(length = 5, nullable = false)
     @Setter
+    @ToString.Include
     private String simbolo;
 
     @Column(nullable = false)
     @Setter
+    @ToString.Include
     private Integer ndecimais;
 
     @Column(length = 10)
     @Setter
+    @ToString.Include
     private String ciso;
 }

@@ -8,7 +8,6 @@ import lombok.ToString;
 @Entity
 @Table(name = "morada")
 @Getter
-
 @ToString(onlyExplicitlyIncluded = true)
 public class Morada {
 

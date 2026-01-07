@@ -8,16 +8,18 @@ import lombok.ToString;
 @Entity
 @Table(name = "misencao")
 @Getter
-@ToString(exclude = "ivaSaft")
+@ToString(onlyExplicitlyIncluded = true)
 public class MIsencao {
 
     @Id
     @Column(length = 3, nullable = false)
     @Setter
+    @ToString.Include
     private String id;
 
     @Column(length = 60, nullable = false)
     @Setter
+    @ToString.Include
     private String nome;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)

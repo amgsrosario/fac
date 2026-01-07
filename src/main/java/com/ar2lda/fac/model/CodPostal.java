@@ -9,15 +9,17 @@ import lombok.ToString;
 @Entity
 @Table(name = "codpostal")
 @Getter
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 public class CodPostal {
 
     @Id
     @Column(length = 20, nullable = false)
+    @ToString.Include
     private String id;
 
     @Column(length = 50, nullable = false)
     @Setter
+    @ToString.Include
     private String nome;
 
 }

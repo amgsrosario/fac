@@ -7,17 +7,18 @@ import lombok.ToString;
 
 @Entity
 @Getter
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 @Table(name = "ivasaft")
 public class IvaSaft {
 
     @Id
     @Column(length = 3, nullable = false)
-    @Setter
+    @ToString.Include
     private String id;
 
     @Column(length = 50, nullable = false)
     @Setter
+    @ToString.Include
     private String nome;
 
 
