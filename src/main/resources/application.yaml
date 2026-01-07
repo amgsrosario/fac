@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: fac
+  #  profiles:
+  #    active: production
+  # SPRING PROFILES_ACTIVE=production
+  output:
+    ansi:
+      enabled: always
+
+  datasource:
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/facdb}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+      # ddl-auto: update
+    properties:
+      hibernate.format_sql: true
