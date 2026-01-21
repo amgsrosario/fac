@@ -47,4 +47,16 @@ public class Moeda {
     @Setter
     @ToString.Include
     private String ciso;
+
+    public Moeda() {}
+
+    public Moeda(String id, String nome, BigDecimal vcompra, BigDecimal vvenda, String simbolo, Integer ndecimais, String ciso) {
+        this.id = id;
+        this.nome = nome;
+        this.vcompra = vcompra;
+        this.vvenda = vvenda;
+        this.simbolo = simbolo;
+        this.ndecimais = ndecimais;
+        this.ciso = ciso;
+    }
 }

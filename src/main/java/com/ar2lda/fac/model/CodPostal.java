@@ -1,7 +1,6 @@
 package com.ar2lda.fac.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -22,4 +21,10 @@ public class CodPostal {
     @ToString.Include
     private String nome;
 
+    public CodPostal() {}
+
+    public CodPostal(String id, String nome) {
+        this.id = id;
+        this.nome = nome;
+    }
 }
