@@ -5,7 +5,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 
 public interface GenericController {
-    default URI gerarHeaderLocationInteger(Integer id){
+    default URI gerarHeaderLocation(Integer id){
         return ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -13,7 +13,7 @@ public interface GenericController {
                 .toUri();
     }
 
-    default URI gerarHeaderLocationInteger(Long id){
+    default URI gerarHeaderLocation(Long id){
         return ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -21,7 +21,7 @@ public interface GenericController {
                 .toUri();
     }
 
-    default URI gerarHeaderLocationInteger(String id){
+    default URI gerarHeaderLocation(String id){
         return ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
