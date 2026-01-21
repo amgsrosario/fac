@@ -1,4 +1,4 @@
-//alter table usuario add column email varchar (150) not null,
+--alter table usuario add column email varchar (150) not null,
 
 create table codpostal(
 	id varchar(20) not null primary key,
@@ -40,10 +40,10 @@ create table misencao(
 create table riva(
     id varchar(3) not null primary key,
 	nome varchar(30) not null,
-	isenta numeric(4,2),
-	reduzida numeric(4,2),
-	intermedia numeric(4,2),
-	normal numeric(4,2)
+	isenta numeric(4,2) not null,
+	reduzida numeric(4,2) not null,
+	intermedia numeric(4,2) not null,
+	normal numeric(4,2) not null
 );
 
 create table transporte(
@@ -59,21 +59,21 @@ create table cliente(
     localidade varchar(50),
     id_codpostal varchar(20)not null references codpostal(id),
     nif varchar(20)not null ,
-    id_moeda integer not null references moeda(id),
+    id_moeda varchar(3) not null references moeda(id),
     tel varchar (20),
     tm varchar (20),
     email varchar (120),
     email1 varchar (120),
     id_mpagamento integer references mpagamento(id),
     id_ppagamento integer references ppagamento(id),
-    id_riva integer references riva(id),
+    id_riva varchar(3) references riva(id),
     tspiva varchar (20),
     iban varchar (34),
     retencao boolean not null default false,
     id_transporte integer references transporte(id),
     inativo boolean not null default false,
-    observacoes varchar(300),
-    CONSTRAINT uk_cliente_nif
+    observacoes varchar(300)
+  --CONSTRAINT uk_cliente_nif
 );
 
 
