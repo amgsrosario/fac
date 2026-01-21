@@ -35,7 +35,7 @@ public class MoedaController implements GenericController {
         );
         Moeda created = service.create(entity);
         MoedaDto body = mapper.toDTO(created);
-        URI location = gerarHeaderLocationInteger(created.getId());
+        URI location = gerarHeaderLocation(created.getId());
         return ResponseEntity.created(location).body(body);
     }
 

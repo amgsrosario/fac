@@ -26,7 +26,7 @@ public class TransporteController implements GenericController{
     public ResponseEntity<Void> salvar(@RequestBody @Valid TransporteDto dto){
         Transporte transporte=mapper.toEntity(dto);
         Transporte salvo=service.salvar(transporte);
-        URI location=gerarHeaderLocationInteger(salvo.getId());
+        URI location= gerarHeaderLocation(salvo.getId());
         return ResponseEntity.created(location).build();
     }
 

@@ -28,7 +28,7 @@ public class CodPostalController implements GenericController {
         CodPostal entity = mapper.fromCreate(dto);
         CodPostal created = service.create(entity);
         CodPostalDto body = mapper.toDTO(created);
-        URI location = gerarHeaderLocationInteger(created.getId());
+        URI location = gerarHeaderLocation(created.getId());
         return ResponseEntity.created(location).body(body);
     }
 

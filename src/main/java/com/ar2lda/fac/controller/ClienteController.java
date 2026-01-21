@@ -23,7 +23,7 @@ public class ClienteController implements GenericController {
     @PostMapping
     public ResponseEntity<ClienteDto> create(@RequestBody @Valid ClienteCreateDto dto) {
         ClienteDto created = service.create(dto);
-        URI location = gerarHeaderLocationInteger(created.id());
+        URI location = gerarHeaderLocation(created.id());
         return ResponseEntity.created(location).body(created);
     }
 
