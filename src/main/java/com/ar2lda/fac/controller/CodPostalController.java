@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/cod-postais")
+@RequestMapping("/codpostal")
 @RequiredArgsConstructor
 public class CodPostalController implements GenericController {
 
@@ -25,12 +25,11 @@ public class CodPostalController implements GenericController {
 
     @PostMapping
     public ResponseEntity<CodPostalDto> create(@RequestBody @Valid CodPostalCreateDto dto) {
-        CodPostal entity = mapper.fromCreate(dto);
-        CodPostal created = service.create(entity);
-        CodPostalDto body = mapper.toDTO(created);
-        URI location = gerarHeaderLocation(created.getId());
-        return ResponseEntity.created(location).body(body);
+        CodPostalDto created = service.create(dto);
+        URI location = gerarHeaderLocation(created.id()); // ou gerarHeaderLocation(...) se existir
+        return ResponseEntity.created(location).body(created);
     }
+
 
     @GetMapping
     public Page<CodPostalDto> list(Pageable pageable) {

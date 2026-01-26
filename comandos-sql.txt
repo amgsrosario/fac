@@ -118,3 +118,15 @@ insert into client
 (id, client_id, client_secret, redirect_uri, scope)
 values
 (uuid_generate_v4(), 'client-production', '$2a$12$cRWAY6.2ZGhxFZ47WcLXnueh25QpCqxj4pWojjYlIC1dOdLZklj6u', 'http://locahost:8080/authorized', 'GERENTE' )
+
+insert into moeda(
+    id ,
+    nome,
+    vcompra,
+    vvenda,
+    simbolo,
+    ndecimais,
+    ciso
+)
+value
+('EUR', 'EURO', 1, 1, '€', 2, '012')

@@ -1,7 +1,10 @@
 package com.ar2lda.fac.service;
 
+import com.ar2lda.fac.controller.dto.CodPostalCreateDto;
+import com.ar2lda.fac.controller.dto.CodPostalDto;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
+import com.ar2lda.fac.mapper.CodPostalMapper;
 import com.ar2lda.fac.model.CodPostal;
 import com.ar2lda.fac.repository.CodPostalRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,13 +17,17 @@ import org.springframework.stereotype.Service;
 public class CodPostalService {
 
     private final CodPostalRepository repository;
+    private final CodPostalMapper mapper;
 
-    public CodPostal create(CodPostal entity) {
-        if (repository.existsById(entity.getId())) {
-            throw new ConflictException("Código postal já existe: " + entity.getId());
+    public CodPostalDto create(CodPostalCreateDto dto) {
+        if (repository.existsById(dto.id())) {
+            throw new ConflictException("CodPostal já existe: " + dto.id());
         }
-        return repository.save(entity);
+        CodPostal entity = new CodPostal(dto.id(), dto.nome());
+        CodPostal saved = repository.save(entity);
+        return mapper.toDTO(saved);
     }
+
 
     public CodPostal getById(String id) {
         return repository.findById(id)

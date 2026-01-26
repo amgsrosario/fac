@@ -23,3 +23,7 @@ spring:
 
   flyway:
     enabled: false
+
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
