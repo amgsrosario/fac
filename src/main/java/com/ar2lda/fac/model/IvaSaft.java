@@ -21,5 +21,10 @@ public class IvaSaft {
     @ToString.Include
     private String nome;
 
+    public IvaSaft() {}
 
+    public IvaSaft(String id, String nome) {
+        this.id = id;
+        this.nome = nome;
+    }
 }

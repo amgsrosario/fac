@@ -18,6 +18,7 @@ public class MPagamento {
     private Integer id;
 
     @Column(length = 30, nullable = false)
+    @Setter
     @ToString.Include
     private String nome;
 
