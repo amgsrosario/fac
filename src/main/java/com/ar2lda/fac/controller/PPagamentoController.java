@@ -38,12 +38,12 @@ public class PPagamentoController implements GenericController {
     }
 
     @GetMapping("/{id}")
-    public PPagamentoDto getById(@PathVariable("id") Integer id) {
+    public PPagamentoDto getById(@PathVariable("id") String id) {
         return mapper.toDTO(service.getById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable("id") Integer id,
+    public ResponseEntity<Void> update(@PathVariable("id") String id,
                                        @RequestBody @Valid PPagamentoUpdateDto dto) {
         PPagamento update = new PPagamento();
         mapper.applyUpdate(dto, update);
@@ -52,7 +52,7 @@ public class PPagamentoController implements GenericController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

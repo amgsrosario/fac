@@ -40,7 +40,7 @@ public record ClienteUpdateDto(
         @NotBlank(message = "Moeda é obrigatória")
         String moedaId,
         Integer mPagamentoId,
-        Integer pPagamentoId,
+        String pPagamentoId,
         String rivaId,
         Integer transporteId
 ) {}

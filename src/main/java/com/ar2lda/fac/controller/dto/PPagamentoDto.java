@@ -1,7 +1,7 @@
 package com.ar2lda.fac.controller.dto;
 
 public record PPagamentoDto(
-        Integer id,
+        String id,
         String nome,
         Integer dias
 ) {}

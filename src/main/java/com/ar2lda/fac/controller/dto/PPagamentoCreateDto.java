@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record PPagamentoCreateDto(
+        @NotBlank(message = "Código é obrigatório")
+        @Size(max = 3, message = "Código deve ter 3 caracteres")
+        String id,
         @NotBlank(message = "Nome é obrigatório")
         @Size(max = 30, message = "Nome deve ter no máximo 30 caracteres")
         String nome,

@@ -138,7 +138,7 @@ public class ClienteService {
                 .orElseThrow(() -> new NotFoundException("Modo de pagamento não encontrado: " + id));
     }
 
-    private PPagamento findPPagamento(Integer id) {
+    private PPagamento findPPagamento(String id) {
         if (id == null) return null;
         return pPagamentoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Prazo de pagamento não encontrado: " + id));

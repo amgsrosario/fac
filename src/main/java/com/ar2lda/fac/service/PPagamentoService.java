@@ -22,19 +22,19 @@ public class PPagamentoService {
         return repository.findAll(pageable);
     }
 
-    public PPagamento getById(Integer id) {
+    public PPagamento getById(String id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Prazo de pagamento não encontrado: " + id));
     }
 
-    public void update(Integer id, PPagamento update) {
+    public void update(String id, PPagamento update) {
         PPagamento existing = getById(id);
         existing.setNome(update.getNome());
         existing.setDias(update.getDias());
         repository.save(existing);
     }
 
-    public void delete(Integer id) {
+    public void delete(String id) {
         PPagamento existing = getById(id);
         repository.delete(existing);
     }
