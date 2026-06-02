@@ -1,0 +1,41 @@
+name: fac
+
+services:
+  db:
+    image: postgres:16.3
+    container_name: facdb
+    environment:
+      POSTGRES_DB: fac
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "25432:5432"
+    volumes:
+      - fac-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fac"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: fac-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@fac.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - fac-pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  fac-postgres-data:
+    external: true
+    name: cb6aa488c50c3c056fc45c5b0b90497be1db5fd2212ca7fab2a43f6202589d48
+  fac-pgadmin-data:
+    external: true
+    name: 6b8d62a8cd35b5b39924cafd078b48a6eb28222f3b48da720cab705b10f8f1ac
