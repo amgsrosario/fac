@@ -2,6 +2,7 @@ package com.ar2lda.fac.controller;
 
 import com.ar2lda.fac.controller.dto.MoedaCreateDto;
 import com.ar2lda.fac.controller.dto.MoedaDto;
+import com.ar2lda.fac.controller.dto.MoedaUpdateDto;
 import com.ar2lda.fac.mapper.MoedaMapper;
 import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.service.MoedaService;
@@ -51,7 +52,7 @@ public class MoedaController implements GenericController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable("id") String id,
-                                       @RequestBody @Valid MoedaCreateDto dto) {
+                                       @RequestBody @Valid MoedaUpdateDto dto) {
         Moeda update = new Moeda(
                 id,
                 dto.nome(),
