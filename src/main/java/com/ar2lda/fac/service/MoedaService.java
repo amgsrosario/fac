@@ -1,7 +1,11 @@
 package com.ar2lda.fac.service;
 
+import com.ar2lda.fac.controller.dto.MoedaCreateDto;
+import com.ar2lda.fac.controller.dto.MoedaDto;
+import com.ar2lda.fac.controller.dto.MoedaUpdateDto;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
+import com.ar2lda.fac.mapper.MoedaMapper;
 import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.repository.MoedaRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,36 +18,35 @@ import org.springframework.stereotype.Service;
 public class MoedaService {
 
     private final MoedaRepository repository;
+    private final MoedaMapper mapper;
 
-    public Moeda create(Moeda entity) {
-        if (repository.existsById(entity.getId())) {
-            throw new ConflictException("Moeda já existe: " + entity.getId());
+    public MoedaDto create(MoedaCreateDto dto) {
+        if (repository.existsById(dto.id())) {
+            throw new ConflictException("Moeda já existe: " + dto.id());
         }
-        return repository.save(entity);
+        return mapper.toDTO(repository.save(mapper.fromCreateDTO(dto)));
     }
 
-    public Moeda getById(String id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Moeda não encontrada: " + id));
+    public Page<MoedaDto> list(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public Page<Moeda> list(Pageable pageable) {
-        return repository.findAll(pageable);
+    public MoedaDto getById(String id) {
+        return mapper.toDTO(findEntityById(id));
     }
 
-    public void update(String id, Moeda update) {
-        Moeda existing = getById(id);
-        existing.setNome(update.getNome());
-        existing.setVcompra(update.getVcompra());
-        existing.setVvenda(update.getVvenda());
-        existing.setSimbolo(update.getSimbolo());
-        existing.setNdecimais(update.getNdecimais());
-        existing.setCiso(update.getCiso());
+    public void update(String id, MoedaUpdateDto dto) {
+        Moeda existing = findEntityById(id);
+        mapper.applyUpdate(dto, existing);
         repository.save(existing);
     }
 
     public void delete(String id) {
-        Moeda existing = getById(id);
-        repository.delete(existing);
+        repository.delete(findEntityById(id));
+    }
+
+    private Moeda findEntityById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Moeda não encontrada: " + id));
     }
 }

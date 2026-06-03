@@ -3,8 +3,6 @@ package com.ar2lda.fac.controller;
 import com.ar2lda.fac.controller.dto.PPagamentoCreateDto;
 import com.ar2lda.fac.controller.dto.PPagamentoDto;
 import com.ar2lda.fac.controller.dto.PPagamentoUpdateDto;
-import com.ar2lda.fac.mapper.PPagamentoMapper;
-import com.ar2lda.fac.model.PPagamento;
 import com.ar2lda.fac.service.PPagamentoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,38 +19,32 @@ import java.net.URI;
 public class PPagamentoController implements GenericController {
 
     private final PPagamentoService service;
-    private final PPagamentoMapper mapper;
 
     @PostMapping
     public ResponseEntity<PPagamentoDto> create(@RequestBody @Valid PPagamentoCreateDto dto) {
-        PPagamento toSave = mapper.fromCreate(dto);
-        PPagamento created = service.create(toSave);
-        PPagamentoDto body = mapper.toDTO(created);
-        URI location = gerarHeaderLocation(created.getId());
-        return ResponseEntity.created(location).body(body);
+        PPagamentoDto created = service.create(dto);
+        URI location = gerarHeaderLocation(created.id());
+        return ResponseEntity.created(location).body(created);
     }
 
     @GetMapping
     public Page<PPagamentoDto> list(Pageable pageable) {
-        return service.list(pageable).map(mapper::toDTO);
+        return service.list(pageable);
     }
 
     @GetMapping("/{id}")
-    public PPagamentoDto getById(@PathVariable("id") String id) {
-        return mapper.toDTO(service.getById(id));
+    public PPagamentoDto getById(@PathVariable String id) {
+        return service.getById(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable("id") String id,
-                                       @RequestBody @Valid PPagamentoUpdateDto dto) {
-        PPagamento update = new PPagamento();
-        mapper.applyUpdate(dto, update);
-        service.update(id, update);
+    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody @Valid PPagamentoUpdateDto dto) {
+        service.update(id, dto);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") String id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

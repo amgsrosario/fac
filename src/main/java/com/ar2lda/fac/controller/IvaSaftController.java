@@ -3,8 +3,6 @@ package com.ar2lda.fac.controller;
 import com.ar2lda.fac.controller.dto.IvaSaftCreateDto;
 import com.ar2lda.fac.controller.dto.IvaSaftDto;
 import com.ar2lda.fac.controller.dto.IvaSaftUpdateDto;
-import com.ar2lda.fac.mapper.IvaSaftMapper;
-import com.ar2lda.fac.model.IvaSaft;
 import com.ar2lda.fac.service.IvaSaftService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +19,6 @@ import java.net.URI;
 public class IvaSaftController implements GenericController {
 
     private final IvaSaftService service;
-    private final IvaSaftMapper mapper;
 
     @PostMapping
     public ResponseEntity<IvaSaftDto> create(@RequestBody @Valid IvaSaftCreateDto dto) {
@@ -32,24 +29,22 @@ public class IvaSaftController implements GenericController {
 
     @GetMapping
     public Page<IvaSaftDto> list(Pageable pageable) {
-        return service.list(pageable).map(mapper::toDTO);
+        return service.list(pageable);
     }
 
     @GetMapping("/{id}")
-    public IvaSaftDto getById(@PathVariable("id") String id) {
-        IvaSaft e = service.getById(id);
-        return mapper.toDTO(e);
+    public IvaSaftDto getById(@PathVariable String id) {
+        return service.getById(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable("id") String id,
-                                       @RequestBody @Valid IvaSaftUpdateDto dto) {
-        service.update(id, dto.nome());
+    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody @Valid IvaSaftUpdateDto dto) {
+        service.update(id, dto);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") String id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

@@ -1,68 +1,51 @@
 package com.ar2lda.fac.controller;
 
+import com.ar2lda.fac.controller.dto.TransporteCreateDto;
 import com.ar2lda.fac.controller.dto.TransporteDto;
-import com.ar2lda.fac.mapper.TransporteMapper;
-import com.ar2lda.fac.model.Transporte;
+import com.ar2lda.fac.controller.dto.TransporteUpdateDto;
 import com.ar2lda.fac.service.TransporteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/transportes")
 @RequiredArgsConstructor
-public class TransporteController implements GenericController{
+public class TransporteController implements GenericController {
 
     private final TransporteService service;
-    private final TransporteMapper mapper;
-
 
     @PostMapping
-    //@ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Void> salvar(@RequestBody @Valid TransporteDto dto){
-        Transporte transporte=mapper.toEntity(dto);
-        Transporte salvo=service.salvar(transporte);
-        URI location= gerarHeaderLocation(salvo.getId());
-        return ResponseEntity.created(location).build();
+    public ResponseEntity<TransporteDto> create(@RequestBody @Valid TransporteCreateDto dto) {
+        TransporteDto created = service.create(dto);
+        URI location = gerarHeaderLocation(created.id());
+        return ResponseEntity.created(location).body(created);
+    }
+
+    @GetMapping
+    public Page<TransporteDto> list(Pageable pageable) {
+        return service.list(pageable);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TransporteDto>obterDetalhes(@PathVariable("id") Integer id){
-        return service
-                .porId(id)
-                .map(mapper::toDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public TransporteDto getById(@PathVariable Integer id) {
+        return service.getById(id);
     }
 
-    @PutMapping("{id}")
-    public ResponseEntity<Void> atualizar(
-            @PathVariable("id") Integer id,
-            @RequestBody @Valid TransporteDto dto
-    ){
-        return service.porId(id)
-                .<ResponseEntity<Void>>map(transporte ->{
-                    transporte.alterarNome(dto.nome()); // ou dto.getNome()
-                    service.atualizar(transporte);
-                    return ResponseEntity.noContent().build();
-
-                })
-                .orElseGet(()->ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("{id}")
-   public ResponseEntity<Void> remover(@PathVariable("id") Integer id){
-        Optional<Transporte> transporte=service.porId(id);
-        if(transporte.isEmpty()){
-            return ResponseEntity.notFound().build();
-        }
-       service.eliminar(transporte.get());
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable Integer id, @RequestBody @Valid TransporteUpdateDto dto) {
+        service.update(id, dto);
         return ResponseEntity.noContent().build();
-   }
+    }
 
-
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }

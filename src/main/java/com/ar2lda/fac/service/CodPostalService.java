@@ -2,6 +2,7 @@ package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.CodPostalCreateDto;
 import com.ar2lda.fac.controller.dto.CodPostalDto;
+import com.ar2lda.fac.controller.dto.CodPostalUpdateDto;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.CodPostalMapper;
@@ -21,31 +22,31 @@ public class CodPostalService {
 
     public CodPostalDto create(CodPostalCreateDto dto) {
         if (repository.existsById(dto.id())) {
-            throw new ConflictException("CodPostal já existe: " + dto.id());
+            throw new ConflictException("Código postal já existe: " + dto.id());
         }
-        CodPostal entity = new CodPostal(dto.id(), dto.nome());
-        CodPostal saved = repository.save(entity);
-        return mapper.toDTO(saved);
+        return mapper.toDTO(repository.save(mapper.fromCreateDTO(dto)));
     }
 
-
-    public CodPostal getById(String id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Código postal não encontrado: " + id));
+    public Page<CodPostalDto> list(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public Page<CodPostal> list(Pageable pageable) {
-        return repository.findAll(pageable);
+    public CodPostalDto getById(String id) {
+        return mapper.toDTO(findEntityById(id));
     }
 
-    public void update(String id, String nome) {
-        CodPostal existing = getById(id);
-        existing.setNome(nome);
+    public void update(String id, CodPostalUpdateDto dto) {
+        CodPostal existing = findEntityById(id);
+        mapper.applyUpdate(dto, existing);
         repository.save(existing);
     }
 
     public void delete(String id) {
-        CodPostal existing = getById(id);
-        repository.delete(existing);
+        repository.delete(findEntityById(id));
+    }
+
+    private CodPostal findEntityById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Código postal não encontrado: " + id));
     }
 }

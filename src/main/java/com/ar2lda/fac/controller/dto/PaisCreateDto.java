@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 public record PaisCreateDto(
         @NotBlank(message = "Código é obrigatório")
-        @Size(max = 3, message = "Código deve ter no máximo 2 caracteres")
+        @Size(max = 3, message = "Código deve ter no máximo 3 caracteres")
         String id,
         @NotBlank(message = "Nome é obrigatório")
         @Size(max = 50, message = "Nome deve ter no máximo 50 caracteres")

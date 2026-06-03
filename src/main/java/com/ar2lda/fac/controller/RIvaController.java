@@ -1,37 +1,51 @@
 package com.ar2lda.fac.controller;
 
-
+import com.ar2lda.fac.controller.dto.RIvaCreateDto;
 import com.ar2lda.fac.controller.dto.RIvaDto;
-import com.ar2lda.fac.mapper.RIvaMapper;
-import com.ar2lda.fac.model.RIva;
+import com.ar2lda.fac.controller.dto.RIvaUpdateDto;
 import com.ar2lda.fac.service.RIvaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
 @RestController
 @RequestMapping("/riva")
 @RequiredArgsConstructor
-public class RIvaController implements GenericController{
+public class RIvaController implements GenericController {
+
     private final RIvaService service;
-    private final RIvaMapper mapper;
 
     @PostMapping
-    public ResponseEntity<Void> salvar(@RequestBody @Valid RIvaDto dto) {
-
-        RIva rIva= mapper.toEntity(dto);
-        RIva salvo=service.salvar(rIva);
-        URI location= gerarHeaderLocation(salvo.getId());
-        return ResponseEntity.created(location).build();
+    public ResponseEntity<RIvaDto> create(@RequestBody @Valid RIvaCreateDto dto) {
+        RIvaDto created = service.create(dto);
+        URI location = gerarHeaderLocation(created.id());
+        return ResponseEntity.created(location).body(created);
     }
 
-    public ResponseEntity<Void> atualizar(@RequestBody @Valid RIvaDto dto){
+    @GetMapping
+    public Page<RIvaDto> list(Pageable pageable) {
+        return service.list(pageable);
+    }
+
+    @GetMapping("/{id}")
+    public RIvaDto getById(@PathVariable String id) {
+        return service.getById(id);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody @Valid RIvaUpdateDto dto) {
+        service.update(id, dto);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -2,6 +2,7 @@ package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.PaisCreateDto;
 import com.ar2lda.fac.controller.dto.PaisDto;
+import com.ar2lda.fac.controller.dto.PaisUpdateDto;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.PaisMapper;
@@ -21,31 +22,31 @@ public class PaisService {
 
     public PaisDto create(PaisCreateDto dto) {
         if (repository.existsById(dto.id())) {
-            throw new ConflictException("Pais já existe: " + dto.id());
+            throw new ConflictException("País já existe: " + dto.id());
         }
-        Pais entity = new Pais(dto.id(), dto.nome());
-        Pais saved = repository.save(entity);
-        return mapper.toDTO(saved);
+        return mapper.toDTO(repository.save(mapper.fromCreateDTO(dto)));
     }
 
-
-    public Pais getById(String id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Pais não encontrado: " + id));
+    public Page<PaisDto> list(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public Page<Pais> list(Pageable pageable) {
-        return repository.findAll(pageable);
+    public PaisDto getById(String id) {
+        return mapper.toDTO(findEntityById(id));
     }
 
-    public void update(String id, String nome) {
-        Pais existing = getById(id);
-        existing.setNome(nome);
+    public void update(String id, PaisUpdateDto dto) {
+        Pais existing = findEntityById(id);
+        mapper.applyUpdate(dto, existing);
         repository.save(existing);
     }
 
     public void delete(String id) {
-        Pais existing = getById(id);
-        repository.delete(existing);
+        repository.delete(findEntityById(id));
+    }
+
+    private Pais findEntityById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("País não encontrado: " + id));
     }
 }

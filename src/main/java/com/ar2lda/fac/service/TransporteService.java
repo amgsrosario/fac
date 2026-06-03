@@ -1,39 +1,48 @@
 package com.ar2lda.fac.service;
 
+import com.ar2lda.fac.controller.dto.TransporteCreateDto;
+import com.ar2lda.fac.controller.dto.TransporteDto;
+import com.ar2lda.fac.controller.dto.TransporteUpdateDto;
+import com.ar2lda.fac.exception.NotFoundException;
+import com.ar2lda.fac.mapper.TransporteMapper;
 import com.ar2lda.fac.model.Transporte;
 import com.ar2lda.fac.repository.TransporteRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class TransporteService {
-    private final TransporteRepository transporteRepository;
 
-    public Transporte salvar(Transporte transporte) {
-        return transporteRepository.save(transporte);
+    private final TransporteRepository repository;
+    private final TransporteMapper mapper;
+
+    public TransporteDto create(TransporteCreateDto dto) {
+        return mapper.toDTO(repository.save(mapper.fromCreateDTO(dto)));
     }
 
-    public Optional<Transporte>porId(Integer id){
-        return transporteRepository.findById(id);
+    public Page<TransporteDto> list(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public Transporte atualizar(Transporte transporte) {
-        return transporteRepository.save(transporte);
+    public TransporteDto getById(Integer id) {
+        return mapper.toDTO(findEntityById(id));
     }
 
-    public List<Transporte> pesquisa(
-            Integer id,
-            String nome){
-        return transporteRepository.findAll();
-    };
-
-    public void eliminar(Transporte transporte){
-        transporteRepository.delete (transporte);
+    public void update(Integer id, TransporteUpdateDto dto) {
+        Transporte existing = findEntityById(id);
+        mapper.applyUpdate(dto, existing);
+        repository.save(existing);
     }
 
+    public void delete(Integer id) {
+        repository.delete(findEntityById(id));
+    }
+
+    private Transporte findEntityById(Integer id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Transporte não encontrado: " + id));
+    }
 }

@@ -2,6 +2,7 @@ package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.IvaSaftCreateDto;
 import com.ar2lda.fac.controller.dto.IvaSaftDto;
+import com.ar2lda.fac.controller.dto.IvaSaftUpdateDto;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.IvaSaftMapper;
@@ -21,30 +22,31 @@ public class IvaSaftService {
 
     public IvaSaftDto create(IvaSaftCreateDto dto) {
         if (repository.existsById(dto.id())) {
-            throw new ConflictException("IvaSaft já existe: " + dto.id());
+            throw new ConflictException("IVA SAF-T já existe: " + dto.id());
         }
-        IvaSaft entity = new IvaSaft(dto.id(), dto.nome());
-        IvaSaft saved = repository.save(entity);
-        return mapper.toDTO(saved);
+        return mapper.toDTO(repository.save(mapper.fromCreateDTO(dto)));
     }
 
-    public IvaSaft getById(String id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("IvaSaft não encontrado: " + id));
+    public Page<IvaSaftDto> list(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public Page<IvaSaft> list(Pageable pageable) {
-        return repository.findAll(pageable);
+    public IvaSaftDto getById(String id) {
+        return mapper.toDTO(findEntityById(id));
     }
 
-    public void update(String id, String nome) {
-        IvaSaft existing = getById(id);
-        existing.setNome(nome);
+    public void update(String id, IvaSaftUpdateDto dto) {
+        IvaSaft existing = findEntityById(id);
+        mapper.applyUpdate(dto, existing);
         repository.save(existing);
     }
 
     public void delete(String id) {
-        IvaSaft existing = getById(id);
-        repository.delete(existing);
+        repository.delete(findEntityById(id));
+    }
+
+    private IvaSaft findEntityById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("IVA SAF-T não encontrado: " + id));
     }
 }

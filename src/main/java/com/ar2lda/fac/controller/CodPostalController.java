@@ -3,8 +3,6 @@ package com.ar2lda.fac.controller;
 import com.ar2lda.fac.controller.dto.CodPostalCreateDto;
 import com.ar2lda.fac.controller.dto.CodPostalDto;
 import com.ar2lda.fac.controller.dto.CodPostalUpdateDto;
-import com.ar2lda.fac.mapper.CodPostalMapper;
-import com.ar2lda.fac.model.CodPostal;
 import com.ar2lda.fac.service.CodPostalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,35 +19,32 @@ import java.net.URI;
 public class CodPostalController implements GenericController {
 
     private final CodPostalService service;
-    private final CodPostalMapper mapper;
 
     @PostMapping
     public ResponseEntity<CodPostalDto> create(@RequestBody @Valid CodPostalCreateDto dto) {
         CodPostalDto created = service.create(dto);
-        URI location = gerarHeaderLocation(created.id()); // ou gerarHeaderLocation(...) se existir
+        URI location = gerarHeaderLocation(created.id());
         return ResponseEntity.created(location).body(created);
     }
 
-
     @GetMapping
     public Page<CodPostalDto> list(Pageable pageable) {
-        return service.list(pageable).map(mapper::toDTO);
+        return service.list(pageable);
     }
 
     @GetMapping("/{id}")
-    public CodPostalDto getById(@PathVariable("id") String id) {
-        return mapper.toDTO(service.getById(id));
+    public CodPostalDto getById(@PathVariable String id) {
+        return service.getById(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable("id") String id,
-                                       @RequestBody @Valid CodPostalUpdateDto dto) {
-        service.update(id, dto.nome());
+    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody @Valid CodPostalUpdateDto dto) {
+        service.update(id, dto);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") String id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

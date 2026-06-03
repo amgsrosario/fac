@@ -6,8 +6,20 @@ import com.ar2lda.fac.controller.dto.ClienteUpdateDto;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.ClienteMapper;
-import com.ar2lda.fac.model.*;
-import com.ar2lda.fac.repository.*;
+import com.ar2lda.fac.model.Cliente;
+import com.ar2lda.fac.model.CodPostal;
+import com.ar2lda.fac.model.MPagamento;
+import com.ar2lda.fac.model.Moeda;
+import com.ar2lda.fac.model.PPagamento;
+import com.ar2lda.fac.model.RIva;
+import com.ar2lda.fac.model.Transporte;
+import com.ar2lda.fac.repository.ClienteRepository;
+import com.ar2lda.fac.repository.CodPostalRepository;
+import com.ar2lda.fac.repository.MPagamentoRepository;
+import com.ar2lda.fac.repository.MoedaRepository;
+import com.ar2lda.fac.repository.PPagamentoRepository;
+import com.ar2lda.fac.repository.RIvaRepository;
+import com.ar2lda.fac.repository.TransporteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,19 +37,17 @@ public class ClienteService {
     private final PPagamentoRepository pPagamentoRepository;
     private final RIvaRepository rIvaRepository;
     private final TransporteRepository transporteRepository;
-
     private final ClienteMapper mapper;
 
     @Transactional
     public ClienteDto create(ClienteCreateDto dto) {
-        // NIF uniqueness check
         if (clienteRepository.existsByNif(dto.nif())) {
             throw new ConflictException("Já existe um cliente com o NIF: " + dto.nif());
         }
-        Cliente c = new Cliente();
-        applyCreate(dto, c);
-        Cliente saved = clienteRepository.save(c);
-        return mapper.toDTO(saved);
+        Cliente cliente = mapper.fromCreateDTO(dto);
+        applyRelations(dto.codPostalId(), dto.moedaId(), dto.mPagamentoId(), dto.pPagamentoId(), dto.rivaId(),
+                dto.transporteId(), cliente);
+        return mapper.toDTO(clienteRepository.save(cliente));
     }
 
     public Page<ClienteDto> list(Pageable pageable) {
@@ -45,81 +55,39 @@ public class ClienteService {
     }
 
     public ClienteDto getById(Long id) {
-        Cliente c = clienteRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Cliente não encontrado: " + id));
-        return mapper.toDTO(c);
+        return mapper.toDTO(findEntityById(id));
     }
 
     @Transactional
     public ClienteDto update(Long id, ClienteUpdateDto dto) {
-        Cliente c = clienteRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Cliente não encontrado: " + id));
-        // NIF uniqueness check for update
+        Cliente cliente = findEntityById(id);
         if (clienteRepository.existsByNifAndIdNot(dto.nif(), id)) {
             throw new ConflictException("Já existe um cliente com o NIF: " + dto.nif());
         }
-        applyUpdate(dto, c);
-        Cliente saved = clienteRepository.save(c);
-        return mapper.toDTO(saved);
+        mapper.applyUpdate(dto, cliente);
+        applyRelations(dto.codPostalId(), dto.moedaId(), dto.mPagamentoId(), dto.pPagamentoId(), dto.rivaId(),
+                dto.transporteId(), cliente);
+        return mapper.toDTO(clienteRepository.save(cliente));
     }
 
     @Transactional
     public void delete(Long id) {
-        Cliente c = clienteRepository.findById(id)
+        clienteRepository.delete(findEntityById(id));
+    }
+
+    private Cliente findEntityById(Long id) {
+        return clienteRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Cliente não encontrado: " + id));
-        clienteRepository.delete(c);
     }
 
-    private void applyCreate(ClienteCreateDto dto, Cliente c) {
-        // Scalars
-        c.setNome(dto.nome());
-        c.setMorada(dto.morada());
-        c.setMorada1(dto.morada1());
-        c.setLocalidade(dto.localidade());
-        c.setNif(dto.nif());
-        c.setTel(dto.tel());
-        c.setTm(dto.tm());
-        c.setEmail(dto.email());
-        c.setEmail1(dto.email1());
-        c.setTspiva(dto.tspiva());
-        c.setIban(dto.iban());
-        c.setRetencao(dto.retencao());
-        c.setInativo(dto.inativo());
-        c.setObservacoes(dto.observacoes());
-        // Relations (required)
-        c.setCodPostal(findCodPostal(dto.codPostalId()));
-        c.setMoeda(findMoeda(dto.moedaId()));
-        // Relations (optionals)
-        c.setMPagamento(findMPagamento(dto.mPagamentoId()));
-        c.setPPagamento(findPPagamento(dto.pPagamentoId()));
-        c.setRiva(findRIva(dto.rivaId()));
-        c.setTransporte(findTransporte(dto.transporteId()));
-    }
-
-    private void applyUpdate(ClienteUpdateDto dto, Cliente c) {
-        // Scalars
-        c.setNome(dto.nome());
-        c.setMorada(dto.morada());
-        c.setMorada1(dto.morada1());
-        c.setLocalidade(dto.localidade());
-        c.setNif(dto.nif());
-        c.setTel(dto.tel());
-        c.setTm(dto.tm());
-        c.setEmail(dto.email());
-        c.setEmail1(dto.email1());
-        c.setTspiva(dto.tspiva());
-        c.setIban(dto.iban());
-        c.setRetencao(dto.retencao());
-        c.setInativo(dto.inativo());
-        c.setObservacoes(dto.observacoes());
-        // Relations (required)
-        c.setCodPostal(findCodPostal(dto.codPostalId()));
-        c.setMoeda(findMoeda(dto.moedaId()));
-        // Relations (optionals)
-        c.setMPagamento(findMPagamento(dto.mPagamentoId()));
-        c.setPPagamento(findPPagamento(dto.pPagamentoId()));
-        c.setRiva(findRIva(dto.rivaId()));
-        c.setTransporte(findTransporte(dto.transporteId()));
+    private void applyRelations(String codPostalId, String moedaId, Integer mPagamentoId, String pPagamentoId,
+                                String rivaId, Integer transporteId, Cliente cliente) {
+        cliente.setCodPostal(findCodPostal(codPostalId));
+        cliente.setMoeda(findMoeda(moedaId));
+        cliente.setMPagamento(findMPagamento(mPagamentoId));
+        cliente.setPPagamento(findPPagamento(pPagamentoId));
+        cliente.setRiva(findRIva(rivaId));
+        cliente.setTransporte(findTransporte(transporteId));
     }
 
     private CodPostal findCodPostal(String id) {
@@ -155,4 +123,5 @@ public class ClienteService {
         return transporteRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Transporte não encontrado: " + id));
     }
+
 }

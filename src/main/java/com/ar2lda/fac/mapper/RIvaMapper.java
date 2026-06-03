@@ -1,32 +1,37 @@
 package com.ar2lda.fac.mapper;
 
+import com.ar2lda.fac.controller.dto.RIvaCreateDto;
 import com.ar2lda.fac.controller.dto.RIvaDto;
-import com.ar2lda.fac.controller.dto.TransporteDto;
+import com.ar2lda.fac.controller.dto.RIvaUpdateDto;
 import com.ar2lda.fac.model.RIva;
-import com.ar2lda.fac.model.Transporte;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface RIvaMapper {
-
-    RIvaDto toDto(RIva entity);
-    RIva toEntity(RIvaDto dto);
-
-
-
-
-    @ObjectFactory
-    default RIva create(RIvaDto dto){
-        return new RIva(dto.id(),
-                dto.nome(),
-                dto.isenta(),
-                dto.reduzida(),
-                dto.intermedia(),
-                dto.normal()
-        );
+    default RIvaDto toDTO(RIva entity) {
+        if (entity == null) {
+            return null;
+        }
+        return new RIvaDto(entity.getId(), entity.getNome(), entity.getIsenta(), entity.getReduzida(),
+                entity.getIntermedia(), entity.getNormal());
     }
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    //@Mapping(target = "id", ignore = true) // não permitir trocar PK num update
-    void updateEntityFromDto(RIvaDto dto, @MappingTarget RIva entity);
 
+    default RIva fromCreateDTO(RIvaCreateDto dto) {
+        if (dto == null) {
+            return null;
+        }
+        return new RIva(dto.id(), dto.nome(), dto.isenta(), dto.reduzida(), dto.intermedia(), dto.normal());
+    }
+
+    default void applyUpdate(RIvaUpdateDto dto, @MappingTarget RIva entity) {
+        if (dto == null || entity == null) {
+            return;
+        }
+        entity.setNome(dto.nome());
+        entity.setIsenta(dto.isenta());
+        entity.setReduzida(dto.reduzida());
+        entity.setIntermedia(dto.intermedia());
+        entity.setNormal(dto.normal());
+    }
 }

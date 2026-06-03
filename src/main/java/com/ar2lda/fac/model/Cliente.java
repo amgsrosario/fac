@@ -126,9 +126,4 @@ public class Cliente {
     @Getter(AccessLevel.NONE)
     private List<Morada> moradas = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_pais")
-    @Setter
-    private Pais pais;
-
 }

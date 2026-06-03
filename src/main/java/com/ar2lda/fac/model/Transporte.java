@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @Entity
@@ -19,6 +20,7 @@ public class Transporte {
     private Integer id;
 
     @Column(length = 30, nullable = false)
+    @Setter
     @ToString.Include
     private String nome;
 
@@ -27,7 +29,7 @@ public class Transporte {
     }
 
     public void alterarNome(String nome){
-        if(this.nome==null||this.nome.isBlank()){
+        if(nome==null||nome.isBlank()){
             throw new IllegalArgumentException("O nome do transporte é obrigatório.");
         }
         this.nome=nome;

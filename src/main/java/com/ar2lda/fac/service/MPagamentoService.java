@@ -1,6 +1,10 @@
 package com.ar2lda.fac.service;
 
+import com.ar2lda.fac.controller.dto.MPagamentoCreateDto;
+import com.ar2lda.fac.controller.dto.MPagamentoDto;
+import com.ar2lda.fac.controller.dto.MPagamentoUpdateDto;
 import com.ar2lda.fac.exception.NotFoundException;
+import com.ar2lda.fac.mapper.MPagamentoMapper;
 import com.ar2lda.fac.model.MPagamento;
 import com.ar2lda.fac.repository.MPagamentoRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,28 +17,32 @@ import org.springframework.stereotype.Service;
 public class MPagamentoService {
 
     private final MPagamentoRepository repository;
+    private final MPagamentoMapper mapper;
 
-    public MPagamento create(MPagamento entity) {
-        return repository.save(entity);
+    public MPagamentoDto create(MPagamentoCreateDto dto) {
+        return mapper.toDTO(repository.save(mapper.fromCreateDTO(dto)));
     }
 
-    public Page<MPagamento> list(Pageable pageable) {
-        return repository.findAll(pageable);
+    public Page<MPagamentoDto> list(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public MPagamento getById(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Modo de pagamento não encontrado: " + id));
+    public MPagamentoDto getById(Integer id) {
+        return mapper.toDTO(findEntityById(id));
     }
 
-    public void update(Integer id, MPagamento update) {
-        MPagamento existing = getById(id);
-        existing.setNome(update.getNome());
+    public void update(Integer id, MPagamentoUpdateDto dto) {
+        MPagamento existing = findEntityById(id);
+        mapper.applyUpdate(dto, existing);
         repository.save(existing);
     }
 
     public void delete(Integer id) {
-        MPagamento existing = getById(id);
-        repository.delete(existing);
+        repository.delete(findEntityById(id));
+    }
+
+    private MPagamento findEntityById(Integer id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Modo de pagamento não encontrado: " + id));
     }
 }

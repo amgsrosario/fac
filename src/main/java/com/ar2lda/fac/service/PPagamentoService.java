@@ -1,6 +1,11 @@
 package com.ar2lda.fac.service;
 
+import com.ar2lda.fac.controller.dto.PPagamentoCreateDto;
+import com.ar2lda.fac.controller.dto.PPagamentoDto;
+import com.ar2lda.fac.controller.dto.PPagamentoUpdateDto;
+import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
+import com.ar2lda.fac.mapper.PPagamentoMapper;
 import com.ar2lda.fac.model.PPagamento;
 import com.ar2lda.fac.repository.PPagamentoRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,29 +18,35 @@ import org.springframework.stereotype.Service;
 public class PPagamentoService {
 
     private final PPagamentoRepository repository;
+    private final PPagamentoMapper mapper;
 
-    public PPagamento create(PPagamento entity) {
-        return repository.save(entity);
+    public PPagamentoDto create(PPagamentoCreateDto dto) {
+        if (repository.existsById(dto.id())) {
+            throw new ConflictException("Prazo de pagamento já existe: " + dto.id());
+        }
+        return mapper.toDTO(repository.save(mapper.fromCreateDTO(dto)));
     }
 
-    public Page<PPagamento> list(Pageable pageable) {
-        return repository.findAll(pageable);
+    public Page<PPagamentoDto> list(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public PPagamento getById(String id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Prazo de pagamento não encontrado: " + id));
+    public PPagamentoDto getById(String id) {
+        return mapper.toDTO(findEntityById(id));
     }
 
-    public void update(String id, PPagamento update) {
-        PPagamento existing = getById(id);
-        existing.setNome(update.getNome());
-        existing.setDias(update.getDias());
+    public void update(String id, PPagamentoUpdateDto dto) {
+        PPagamento existing = findEntityById(id);
+        mapper.applyUpdate(dto, existing);
         repository.save(existing);
     }
 
     public void delete(String id) {
-        PPagamento existing = getById(id);
-        repository.delete(existing);
+        repository.delete(findEntityById(id));
+    }
+
+    private PPagamento findEntityById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Prazo de pagamento não encontrado: " + id));
     }
 }
