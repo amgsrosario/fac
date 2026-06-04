@@ -8,9 +8,11 @@ import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.SerieMapper;
 import com.ar2lda.fac.model.Serie;
+import com.ar2lda.fac.model.SerieId;
 import com.ar2lda.fac.model.TipoDocumento;
 import com.ar2lda.fac.repository.SerieRepository;
 import com.ar2lda.fac.repository.TipoDocumentoRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,8 +29,9 @@ public class SerieService {
     private final SerieMapper mapper;
 
     public SerieDto create(SerieCreateDto dto) {
-        if (repository.existsById(dto.serie())) {
-            throw new ConflictException("Série já existe: " + dto.serie());
+        SerieId id = new SerieId(dto.tipoDocumentoId(), dto.serie());
+        if (repository.existsById(id)) {
+            throw new ConflictException("Série já existe: " + formatId(id));
         }
         validateCodigoAt(dto.codigoAt(), dto.dataCodigoAt());
         Serie entity = mapper.fromCreateDTO(dto);
@@ -40,25 +43,33 @@ public class SerieService {
         return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public SerieDto getById(String serie) {
-        return mapper.toDTO(findEntityById(serie));
+    public SerieDto getById(String tipoDocumentoId, String serie) {
+        return mapper.toDTO(findEntityById(tipoDocumentoId, serie));
     }
 
-    public void update(String serie, SerieUpdateDto dto) {
+    public void update(String tipoDocumentoId, String serie, SerieUpdateDto dto) {
         validateCodigoAt(dto.codigoAt(), dto.dataCodigoAt());
-        Serie existing = findEntityById(serie);
+        Serie existing = findEntityById(tipoDocumentoId, serie);
         mapper.applyUpdate(dto, existing);
-        existing.setTipoDocumento(findTipoDocumento(dto.tipoDocumentoId()));
         repository.save(existing);
     }
 
-    public void delete(String serie) {
-        repository.delete(findEntityById(serie));
+    public void delete(String tipoDocumentoId, String serie) {
+        repository.delete(findEntityById(tipoDocumentoId, serie));
     }
 
-    private Serie findEntityById(String serie) {
-        return repository.findById(serie)
-                .orElseThrow(() -> new NotFoundException("Série não encontrada: " + serie));
+    @Transactional
+    public Long proximoNumero(String tipoDocumentoId, String serie) {
+        SerieId id = new SerieId(tipoDocumentoId, serie);
+        Serie entity = repository.findForUpdate(tipoDocumentoId, serie)
+                .orElseThrow(() -> new NotFoundException("Série não encontrada: " + formatId(id)));
+        return entity.proximoNumero();
+    }
+
+    private Serie findEntityById(String tipoDocumentoId, String serie) {
+        SerieId id = new SerieId(tipoDocumentoId, serie);
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Série não encontrada: " + formatId(id)));
     }
 
     private TipoDocumento findTipoDocumento(String id) {
@@ -72,5 +83,9 @@ public class SerieService {
         if (hasCodigoAt != hasDataCodigoAt) {
             throw new BadRequestException("Código AT e data do código AT devem ser preenchidos em conjunto");
         }
+    }
+
+    private String formatId(SerieId id) {
+        return id.tipoDocumento() + "/" + id.serie();
     }
 }

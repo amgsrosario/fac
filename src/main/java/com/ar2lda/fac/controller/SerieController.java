@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/series")
@@ -30,7 +31,11 @@ public class SerieController implements GenericController {
     @PostMapping
     public ResponseEntity<SerieDto> create(@RequestBody @Valid SerieCreateDto dto) {
         SerieDto created = service.create(dto);
-        URI location = gerarHeaderLocation(created.serie());
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{tipoDocumentoId}/{serie}")
+                .buildAndExpand(created.tipoDocumentoId(), created.serie())
+                .toUri();
         return ResponseEntity.created(location).body(created);
     }
 
@@ -39,20 +44,21 @@ public class SerieController implements GenericController {
         return service.list(pageable);
     }
 
-    @GetMapping("/{serie}")
-    public SerieDto getById(@PathVariable String serie) {
-        return service.getById(serie);
+    @GetMapping("/{tipoDocumentoId}/{serie}")
+    public SerieDto getById(@PathVariable String tipoDocumentoId, @PathVariable String serie) {
+        return service.getById(tipoDocumentoId, serie);
     }
 
-    @PutMapping("/{serie}")
-    public ResponseEntity<Void> update(@PathVariable String serie, @RequestBody @Valid SerieUpdateDto dto) {
-        service.update(serie, dto);
+    @PutMapping("/{tipoDocumentoId}/{serie}")
+    public ResponseEntity<Void> update(@PathVariable String tipoDocumentoId, @PathVariable String serie,
+                                       @RequestBody @Valid SerieUpdateDto dto) {
+        service.update(tipoDocumentoId, serie, dto);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{serie}")
-    public ResponseEntity<Void> delete(@PathVariable String serie) {
-        service.delete(serie);
+    @DeleteMapping("/{tipoDocumentoId}/{serie}")
+    public ResponseEntity<Void> delete(@PathVariable String tipoDocumentoId, @PathVariable String serie) {
+        service.delete(tipoDocumentoId, serie);
         return ResponseEntity.noContent().build();
     }
 }

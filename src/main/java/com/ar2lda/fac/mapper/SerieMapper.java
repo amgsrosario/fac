@@ -19,7 +19,8 @@ public interface SerieMapper {
                 entity.getTipoDocumento() != null ? entity.getTipoDocumento().getId() : null,
                 entity.getNome(),
                 entity.getCodigoAt(),
-                entity.getDataCodigoAt()
+                entity.getDataCodigoAt(),
+                entity.getNumerador()
         );
     }
 
@@ -27,7 +28,7 @@ public interface SerieMapper {
         if (dto == null) {
             return null;
         }
-        return new Serie(dto.serie(), dto.nome(), dto.codigoAt(), dto.dataCodigoAt());
+        return new Serie(null, dto.serie(), dto.nome(), dto.codigoAt(), dto.dataCodigoAt());
     }
 
     default void applyUpdate(SerieUpdateDto dto, @MappingTarget Serie entity) {

@@ -7,6 +7,7 @@ public record SerieDto(
         String tipoDocumentoId,
         String nome,
         String codigoAt,
-        LocalDate dataCodigoAt
+        LocalDate dataCodigoAt,
+        Long numerador
 ) {
 }

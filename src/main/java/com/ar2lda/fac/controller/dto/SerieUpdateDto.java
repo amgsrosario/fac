@@ -6,9 +6,6 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public record SerieUpdateDto(
-        @NotBlank(message = "Tipo de documento é obrigatório")
-        @Size(min = 3, max = 3, message = "Tipo de documento deve ter 3 caracteres")
-        String tipoDocumentoId,
         @NotBlank(message = "Nome da série é obrigatório")
         @Size(max = 50, message = "Nome da série deve ter no máximo 50 caracteres")
         String nome,
