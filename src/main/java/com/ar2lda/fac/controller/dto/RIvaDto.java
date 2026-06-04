@@ -1,13 +1,10 @@
 package com.ar2lda.fac.controller.dto;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 public record RIvaDto (
     String id,
     String nome,
-    BigDecimal isenta,
-    BigDecimal reduzida,
-    BigDecimal intermedia,
-    BigDecimal normal
+    List<RIvaTaxaDto> taxas
 ){
 }

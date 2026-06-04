@@ -2,6 +2,7 @@ package com.ar2lda.fac.mapper;
 
 import com.ar2lda.fac.controller.dto.RIvaCreateDto;
 import com.ar2lda.fac.controller.dto.RIvaDto;
+import com.ar2lda.fac.controller.dto.RIvaTaxaDto;
 import com.ar2lda.fac.controller.dto.RIvaUpdateDto;
 import com.ar2lda.fac.model.RIva;
 import org.mapstruct.Mapper;
@@ -13,15 +14,20 @@ public interface RIvaMapper {
         if (entity == null) {
             return null;
         }
-        return new RIvaDto(entity.getId(), entity.getNome(), entity.getIsenta(), entity.getReduzida(),
-                entity.getIntermedia(), entity.getNormal());
+        return new RIvaDto(
+                entity.getId(),
+                entity.getNome(),
+                entity.getTaxas().stream()
+                        .map(taxa -> new RIvaTaxaDto(taxa.getTipoTaxaIva().getId(), taxa.getValor()))
+                        .toList()
+        );
     }
 
     default RIva fromCreateDTO(RIvaCreateDto dto) {
         if (dto == null) {
             return null;
         }
-        return new RIva(dto.id(), dto.nome(), dto.isenta(), dto.reduzida(), dto.intermedia(), dto.normal());
+        return new RIva(dto.id(), dto.nome());
     }
 
     default void applyUpdate(RIvaUpdateDto dto, @MappingTarget RIva entity) {
@@ -29,9 +35,5 @@ public interface RIvaMapper {
             return;
         }
         entity.setNome(dto.nome());
-        entity.setIsenta(dto.isenta());
-        entity.setReduzida(dto.reduzida());
-        entity.setIntermedia(dto.intermedia());
-        entity.setNormal(dto.normal());
     }
 }

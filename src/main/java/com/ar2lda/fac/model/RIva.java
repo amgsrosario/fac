@@ -1,10 +1,14 @@
 package com.ar2lda.fac.model;
 
-import java.math.BigDecimal;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "riva")
@@ -22,42 +26,36 @@ public class RIva {
     @ToString.Include
     private String nome;
 
-    @Column(precision = 4, scale = 2, nullable = false)
-    @Setter
-    @ToString.Include
-    private BigDecimal isenta;
-
-    @Column(precision = 4, scale = 2, nullable = false)
-    @Setter
-    @ToString.Include
-    private BigDecimal reduzida;
-
-    @Column(precision = 4, scale = 2, nullable = false)
-    @Setter
-    @ToString.Include
-    private BigDecimal intermedia;
-
-    @Column(precision = 4, scale = 2, nullable = false)
-    @Setter
-    @ToString.Include
-    private BigDecimal normal;
+    @OneToMany(mappedBy = "riva", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Getter(AccessLevel.NONE)
+    private List<RIvaTaxa> taxas = new ArrayList<>();
 
     public RIva() {
 
     }
 
-    public RIva(String id,
-                String nome,
-                BigDecimal isenta,
-                BigDecimal reduzida,
-                BigDecimal intermedia,
-                BigDecimal normal
-    ) {
+    public RIva(String id, String nome) {
         this.id = id;
         this.nome = nome;
-        this.isenta = isenta;
-        this.reduzida = reduzida;
-        this.intermedia = intermedia;
-        this.normal = normal;
+    }
+
+    public List<RIvaTaxa> getTaxas() {
+        return List.copyOf(taxas);
+    }
+
+    public void substituirTaxas(List<RIvaTaxa> novasTaxas) {
+        taxas.clear();
+        novasTaxas.forEach(taxa -> {
+            taxa.setRiva(this);
+            taxas.add(taxa);
+        });
+    }
+
+    public BigDecimal getTaxa(String tipoTaxaIvaId) {
+        return taxas.stream()
+                .filter(taxa -> taxa.getTipoTaxaIva().getId().equals(tipoTaxaIvaId))
+                .map(RIvaTaxa::getValor)
+                .findFirst()
+                .orElse(null);
     }
 }
