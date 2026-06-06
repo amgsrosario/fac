@@ -10,6 +10,7 @@ import com.ar2lda.fac.model.Cliente;
 import com.ar2lda.fac.model.CodPostal;
 import com.ar2lda.fac.model.MPagamento;
 import com.ar2lda.fac.model.Moeda;
+import com.ar2lda.fac.model.Pais;
 import com.ar2lda.fac.model.PPagamento;
 import com.ar2lda.fac.model.RIva;
 import com.ar2lda.fac.model.Transporte;
@@ -17,6 +18,7 @@ import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.CodPostalRepository;
 import com.ar2lda.fac.repository.MPagamentoRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
+import com.ar2lda.fac.repository.PaisRepository;
 import com.ar2lda.fac.repository.PPagamentoRepository;
 import com.ar2lda.fac.repository.RIvaRepository;
 import com.ar2lda.fac.repository.TransporteRepository;
@@ -34,6 +36,7 @@ public class ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final CodPostalRepository codPostalRepository;
+    private final PaisRepository paisRepository;
     private final MoedaRepository moedaRepository;
     private final MPagamentoRepository mPagamentoRepository;
     private final PPagamentoRepository pPagamentoRepository;
@@ -47,7 +50,7 @@ public class ClienteService {
             throw new ConflictException("Já existe um cliente com o NIF: " + dto.nif());
         }
         Cliente cliente = mapper.fromCreateDTO(dto);
-        applyRelations(dto.codPostalId(), dto.moedaId(), dto.mPagamentoId(), dto.pPagamentoId(), dto.rivaId(),
+        applyRelations(dto.codPostalId(), dto.paisId(), dto.moedaId(), dto.mPagamentoId(), dto.pPagamentoId(), dto.rivaId(),
                 dto.transporteId(), cliente);
         return mapper.toDTO(clienteRepository.save(cliente));
     }
@@ -67,7 +70,7 @@ public class ClienteService {
             throw new ConflictException("Já existe um cliente com o NIF: " + dto.nif());
         }
         mapper.applyUpdate(dto, cliente);
-        applyRelations(dto.codPostalId(), dto.moedaId(), dto.mPagamentoId(), dto.pPagamentoId(), dto.rivaId(),
+        applyRelations(dto.codPostalId(), dto.paisId(), dto.moedaId(), dto.mPagamentoId(), dto.pPagamentoId(), dto.rivaId(),
                 dto.transporteId(), cliente);
         return mapper.toDTO(clienteRepository.save(cliente));
     }
@@ -82,9 +85,10 @@ public class ClienteService {
                 .orElseThrow(() -> new NotFoundException("Cliente não encontrado: " + id));
     }
 
-    private void applyRelations(String codPostalId, String moedaId, Integer mPagamentoId, String pPagamentoId,
+    private void applyRelations(String codPostalId, String paisId, String moedaId, Integer mPagamentoId, String pPagamentoId,
                                 String rivaId, Integer transporteId, Cliente cliente) {
         cliente.setCodPostal(findCodPostal(codPostalId));
+        cliente.setPais(findPais(paisId));
         cliente.setMoeda(findMoeda(moedaId));
         cliente.setMPagamento(findMPagamento(mPagamentoId));
         cliente.setPPagamento(findPPagamento(pPagamentoId));
@@ -95,6 +99,11 @@ public class ClienteService {
     private CodPostal findCodPostal(String id) {
         return codPostalRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Código postal não encontrado: " + id));
+    }
+
+    private Pais findPais(String id) {
+        return paisRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("País não encontrado: " + id));
     }
 
     private Moeda findMoeda(String id) {

@@ -17,6 +17,7 @@ public record ClienteDto(
         boolean inativo,
         String observacoes,
         String codPostalId,
+        String paisId,
         String moedaId,
         Integer mPagamentoId,
         String pPagamentoId,

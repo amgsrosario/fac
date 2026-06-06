@@ -29,6 +29,7 @@ public abstract class ClienteMapper {
                 e.isInativo(),
                 e.getObservacoes(),
                 e.getCodPostal() != null ? e.getCodPostal().getId() : null,
+                e.getPais() != null ? e.getPais().getId() : null,
                 e.getMoeda() != null ? e.getMoeda().getId() : null,
                 e.getMPagamento() != null ? e.getMPagamento().getId() : null,
                 e.getPPagamento() != null ? e.getPPagamento().getId() : null,

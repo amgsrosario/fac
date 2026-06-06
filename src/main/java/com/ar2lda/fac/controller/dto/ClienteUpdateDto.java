@@ -37,6 +37,8 @@ public record ClienteUpdateDto(
         String observacoes,
         @NotBlank(message = "Código Postal é obrigatório")
         String codPostalId,
+        @NotBlank(message = "País é obrigatório")
+        String paisId,
         @NotBlank(message = "Moeda é obrigatória")
         String moedaId,
         Integer mPagamentoId,

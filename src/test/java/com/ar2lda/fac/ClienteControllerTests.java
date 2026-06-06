@@ -75,6 +75,7 @@ class ClienteControllerTests {
                                   "retencao": false,
                                   "inativo": false,
                                   "codPostalId": "3750-003",
+                                  "paisId": "PT",
                                   "moedaId": "EUR",
                                   "transporteId": %d
                                 }
@@ -100,6 +101,7 @@ class ClienteControllerTests {
                                   "retencao": false,
                                   "inativo": false,
                                   "codPostalId": "3750-003",
+                                  "paisId": "PT",
                                   "moedaId": "EUR"
                                 }
                                 """))

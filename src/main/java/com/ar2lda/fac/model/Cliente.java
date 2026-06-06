@@ -45,6 +45,11 @@ public class Cliente {
     @Setter
     private CodPostal codPostal;
 
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_pais", nullable = false)
+    @Setter
+    private Pais pais;
+
     @Column(length = 20, nullable = false, unique = true)
     @Setter
     @ToString.Include
