@@ -87,8 +87,8 @@ public class Cliente {
     @Setter
     private PPagamento pPagamento;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_riva")
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_riva", nullable = false)
     @Setter
     private RIva riva;
 
@@ -107,8 +107,8 @@ public class Cliente {
     @ToString.Include
     private boolean retencao = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_transporte")
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_transporte", nullable = false)
     @Setter
     private Transporte transporte;
 

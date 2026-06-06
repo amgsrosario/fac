@@ -30,6 +30,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ClienteService {
 
+    private static final String RIVA_DEFAULT_ID = "CON";
+
     private final ClienteRepository clienteRepository;
     private final CodPostalRepository codPostalRepository;
     private final MoedaRepository moedaRepository;
@@ -113,13 +115,12 @@ public class ClienteService {
     }
 
     private RIva findRIva(String id) {
-        if (id == null) return null;
-        return rIvaRepository.findById(id)
+        String effectiveId = (id == null || id.isBlank()) ? RIVA_DEFAULT_ID : id;
+        return rIvaRepository.findById(effectiveId)
                 .orElseThrow(() -> new NotFoundException("Regime de IVA não encontrado: " + id));
     }
 
     private Transporte findTransporte(Integer id) {
-        if (id == null) return null;
         return transporteRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Transporte não encontrado: " + id));
     }

@@ -42,5 +42,6 @@ public record ClienteUpdateDto(
         Integer mPagamentoId,
         String pPagamentoId,
         String rivaId,
+        @NotNull(message = "Transporte é obrigatório")
         Integer transporteId
 ) {}
