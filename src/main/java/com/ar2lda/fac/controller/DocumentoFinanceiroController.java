@@ -40,4 +40,9 @@ public class DocumentoFinanceiroController implements GenericController {
     public DocumentoFinanceiroDto getById(@PathVariable Long id) {
         return service.getById(id);
     }
+
+    @PostMapping("/{id}/anular")
+    public DocumentoFinanceiroDto anular(@PathVariable Long id) {
+        return service.anular(id);
+    }
 }

@@ -56,6 +56,11 @@ public class DocumentoComercialController implements GenericController {
         return service.emitir(id, dto);
     }
 
+    @PostMapping("/{id}/anular")
+    public DocumentoComercialDto anular(@PathVariable Long id) {
+        return service.anular(id);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);

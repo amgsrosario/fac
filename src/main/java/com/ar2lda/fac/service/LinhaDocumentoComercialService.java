@@ -239,6 +239,9 @@ public class LinhaDocumentoComercialService {
     }
 
     private void validateRascunho(DocumentoComercial documento) {
+        if (documento.isAnulado()) {
+            throw new BadRequestException("Documento comercial anulado nao pode ter linhas alteradas");
+        }
         if (documento.getEstado() != EstadoDocumentoComercial.RASCUNHO) {
             throw new BadRequestException("Documento emitido não pode ter linhas alteradas");
         }

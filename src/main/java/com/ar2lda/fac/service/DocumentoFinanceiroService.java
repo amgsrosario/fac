@@ -104,6 +104,38 @@ public class DocumentoFinanceiroService {
         return toDTO(findDocumento(id));
     }
 
+    @Transactional
+    public DocumentoFinanceiroDto anular(Long id) {
+        DocumentoFinanceiro documento = findDocumento(id);
+        if (documento.isAnulado()) {
+            throw new BadRequestException("Documento financeiro ja se encontra anulado");
+        }
+
+        List<LinhaDocumentoFinanceiro> linhas = linhaRepository.findByDocumentoFinanceiroIdOrderByNumeroLinha(documento.getId());
+        for (LinhaDocumentoFinanceiro linha : linhas) {
+            Pendente pendente = linha.getPendente();
+            if (pendente.getValorPendente().compareTo(linha.getNovoValorPendente()) != 0) {
+                throw new BadRequestException("Documento financeiro nao pode ser anulado porque o pendente teve movimentos posteriores");
+            }
+        }
+
+        documento.setAnulado(true);
+        documento = documentoRepository.save(documento);
+
+        for (LinhaDocumentoFinanceiro linha : linhas) {
+            Pendente pendente = linha.getPendente();
+            pendente.setValorPendente(linha.getValorPendenteAntes());
+            boolean temOutrasLiquidacoes = linhaRepository.existsOtherActiveLinesForDocumentoComercial(
+                    pendente.getDocumentoComercial().getId(),
+                    documento.getId()
+            );
+            pendente.getDocumentoComercial().setLiquidado(temOutrasLiquidacoes);
+            pendenteRepository.save(pendente);
+        }
+
+        return toDTO(documento);
+    }
+
     private LinhaDocumentoFinanceiro criarLinha(DocumentoFinanceiro documento, Cliente cliente, Moeda moeda,
                                                 LinhaDocumentoFinanceiroCreateDto dto, int numeroLinha) {
         Pendente pendente = findPendente(dto.pendenteId());

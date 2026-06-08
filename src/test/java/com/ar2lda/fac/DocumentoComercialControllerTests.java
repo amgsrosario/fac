@@ -359,6 +359,61 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void documentoEmitidoPodeSerAnuladoSeNaoTiverLiquidacao() throws Exception {
+        String documentoLocation = mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoDocumentoId": "DCT",
+                                  "serie": "A",
+                                  "dataEmissao": "2026-06-06",
+                                  "clienteId": %d,
+                                  "armazemCargaId": %d,
+                                  "pPagamentoId": "P30"
+                                }
+                                """.formatted(cliente.getId(), armazem.getId())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+
+        mockMvc.perform(post(documentoLocation + "/linhas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "artigoId": "ARTLINHA",
+                                  "quantidade": 2,
+                                  "precoUnitario": 10
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post(documentoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "emissorId": "EMISSOR"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.anulado").value(false));
+
+        DocumentoComercial documento = documentoRepository.findAll().get(0);
+        org.assertj.core.api.Assertions.assertThat(pendenteRepository.findByDocumentoComercialId(documento.getId())).isPresent();
+
+        mockMvc.perform(post(documentoLocation + "/anular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("EMITIDO"))
+                .andExpect(jsonPath("$.anulado").value(true))
+                .andExpect(jsonPath("$.liquidado").value(false));
+
+        org.assertj.core.api.Assertions.assertThat(pendenteRepository.findByDocumentoComercialId(documento.getId())).isEmpty();
+
+        mockMvc.perform(post(documentoLocation + "/anular"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void documentoFinanceiroLiquidaParcialmentePendente() throws Exception {
         String documentoLocation = mockMvc.perform(post("/documentos-comerciais")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -454,5 +509,19 @@ class DocumentoComercialControllerTests {
         Pendente pendenteAtualizado = pendenteRepository.findById(pendente.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteAtualizado.getValorPendente()).isEqualByComparingTo("14.600000");
         org.assertj.core.api.Assertions.assertThat(documentoRepository.findById(documento.getId()).orElseThrow().isLiquidado()).isTrue();
+
+        mockMvc.perform(post(documentoLocation + "/anular"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post(financeiroLocation + "/anular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.anulado").value(true));
+
+        Pendente pendenteReposto = pendenteRepository.findById(pendente.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(pendenteReposto.getValorPendente()).isEqualByComparingTo("24.600000");
+        org.assertj.core.api.Assertions.assertThat(documentoRepository.findById(documento.getId()).orElseThrow().isLiquidado()).isFalse();
+
+        mockMvc.perform(post(financeiroLocation + "/anular"))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -15,6 +15,7 @@ import com.ar2lda.fac.model.MPagamento;
 import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.model.Morada;
 import com.ar2lda.fac.model.PPagamento;
+import com.ar2lda.fac.model.Pendente;
 import com.ar2lda.fac.model.RIva;
 import com.ar2lda.fac.model.SerieId;
 import com.ar2lda.fac.model.TipoDocumento;
@@ -28,6 +29,7 @@ import com.ar2lda.fac.repository.MPagamentoRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
 import com.ar2lda.fac.repository.MoradaRepository;
 import com.ar2lda.fac.repository.PPagamentoRepository;
+import com.ar2lda.fac.repository.PendenteRepository;
 import com.ar2lda.fac.repository.RIvaRepository;
 import com.ar2lda.fac.repository.SerieRepository;
 import com.ar2lda.fac.repository.TipoDocumentoRepository;
@@ -59,6 +61,7 @@ public class DocumentoComercialService {
     private final TransporteRepository transporteRepository;
     private final LinhaDocumentoComercialRepository linhaRepository;
     private final UtilizadorRepository utilizadorRepository;
+    private final PendenteRepository pendenteRepository;
     private final SerieService serieService;
     private final PendenteService pendenteService;
     private final DocumentoComercialMapper mapper;
@@ -116,6 +119,7 @@ public class DocumentoComercialService {
     public DocumentoComercialDto emitir(Long id, DocumentoComercialEmitirDto dto) {
         DocumentoComercial documento = findDocumento(id);
         validateRascunho(documento);
+        validateNaoAnulado(documento);
         validateTemLinhas(documento);
         validateDataEmissao(documento);
 
@@ -131,6 +135,22 @@ public class DocumentoComercialService {
         DocumentoComercial saved = documentoRepository.save(documento);
         pendenteService.criarDeDocumento(saved);
         return mapper.toDTO(saved);
+    }
+
+    @Transactional
+    public DocumentoComercialDto anular(Long id) {
+        DocumentoComercial documento = findDocumento(id);
+        validatePodeAnular(documento);
+
+        pendenteRepository.findByDocumentoComercialId(documento.getId()).ifPresent(pendente -> {
+            if (pendente.getValorPendente().compareTo(pendente.getValorDocumento()) != 0) {
+                throw new BadRequestException("Documento com pendente movimentado nao pode ser anulado");
+            }
+            pendenteRepository.delete(pendente);
+        });
+
+        documento.setAnulado(true);
+        return mapper.toDTO(documentoRepository.save(documento));
     }
 
     private void applyEditableFields(DocumentoComercial documento, Cliente cliente, Long moradaEnvioId, Long armazemCargaId,
@@ -318,5 +338,23 @@ public class DocumentoComercialService {
             throw new BadRequestException("Emissor inativo nao pode emitir documento comercial");
         }
         return emissor;
+    }
+
+    private void validateNaoAnulado(DocumentoComercial documento) {
+        if (documento.isAnulado()) {
+            throw new BadRequestException("Documento comercial anulado nao pode ser alterado");
+        }
+    }
+
+    private void validatePodeAnular(DocumentoComercial documento) {
+        if (documento.getEstado() != EstadoDocumentoComercial.EMITIDO) {
+            throw new BadRequestException("Apenas documentos emitidos podem ser anulados");
+        }
+        if (documento.isAnulado()) {
+            throw new BadRequestException("Documento comercial ja se encontra anulado");
+        }
+        if (documento.isLiquidado()) {
+            throw new BadRequestException("Documento liquidado nao pode ser anulado");
+        }
     }
 }
