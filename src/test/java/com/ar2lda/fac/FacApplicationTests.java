@@ -26,10 +26,14 @@ class FacApplicationTests {
 	void serveWorkspaceInicial() throws Exception {
 		mockMvc.perform(get("/index.html"))
 				.andExpect(status().isOk())
-				.andExpect(content().string(containsString("FAC Workspace")));
+				.andExpect(content().string(containsString("FAC Workspace")))
+				.andExpect(content().string(containsString("comercial-detail")))
+				.andExpect(content().string(containsString("financeiro-detail")));
 
 		mockMvc.perform(get("/app.js"))
 				.andExpect(status().isOk())
-				.andExpect(content().string(containsString("/documentos-comerciais")));
+				.andExpect(content().string(containsString("/documentos-comerciais")))
+				.andExpect(content().string(containsString("renderComercialDetail")))
+				.andExpect(content().string(containsString("renderFinanceiroDetail")));
 	}
 }

@@ -75,21 +75,28 @@
                 </div>
                 <p class="hint">Abre o diagnostico HTML sem marcar o documento como impresso.</p>
             </div>
-            <div class="table-card">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Documento</th>
-                        <th>Estado</th>
-                        <th>Cliente</th>
-                        <th>Data</th>
-                        <th>Total</th>
-                        <th>Acoes</th>
-                    </tr>
-                    </thead>
-                    <tbody id="comerciais-body"></tbody>
-                </table>
+            <div class="work-grid">
+                <div class="table-card">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Documento</th>
+                            <th>Estado</th>
+                            <th>Cliente</th>
+                            <th>Data</th>
+                            <th>Total</th>
+                            <th>Acoes</th>
+                        </tr>
+                        </thead>
+                        <tbody id="comerciais-body"></tbody>
+                    </table>
+                </div>
+                <aside id="comercial-detail" class="detail-panel">
+                    <p class="eyebrow">Objeto aberto</p>
+                    <h3>Escolhe um documento comercial</h3>
+                    <p class="muted">Clica numa linha para ver cabecalho, totais e linhas principais.</p>
+                </aside>
             </div>
         </section>
 
@@ -127,21 +134,28 @@
                 </div>
                 <p class="hint">Confere recibos e notas de liquidacao antes do reporting definitivo.</p>
             </div>
-            <div class="table-card">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Documento</th>
-                        <th>Cliente</th>
-                        <th>Data</th>
-                        <th>Modo</th>
-                        <th>Liquido</th>
-                        <th>Acoes</th>
-                    </tr>
-                    </thead>
-                    <tbody id="financeiros-body"></tbody>
-                </table>
+            <div class="work-grid">
+                <div class="table-card">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Documento</th>
+                            <th>Cliente</th>
+                            <th>Data</th>
+                            <th>Modo</th>
+                            <th>Liquido</th>
+                            <th>Acoes</th>
+                        </tr>
+                        </thead>
+                        <tbody id="financeiros-body"></tbody>
+                    </table>
+                </div>
+                <aside id="financeiro-detail" class="detail-panel">
+                    <p class="eyebrow">Objeto aberto</p>
+                    <h3>Escolhe um documento financeiro</h3>
+                    <p class="muted">Clica numa linha para ver pagamento, linhas liquidadas e diagnostico.</p>
+                </aside>
             </div>
         </section>
     </main>

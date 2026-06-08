@@ -3,7 +3,9 @@ const state = {
     filter: "",
     comerciais: [],
     pendentes: [],
-    financeiros: []
+    financeiros: [],
+    selectedComercialId: null,
+    selectedFinanceiroId: null
 };
 
 const views = {
@@ -43,6 +45,12 @@ async function loadAll() {
         state.comerciais = comerciais;
         state.pendentes = pendentes;
         state.financeiros = financeiros;
+        if (!state.selectedComercialId && comerciais.length > 0) {
+            state.selectedComercialId = comerciais[0].id;
+        }
+        if (!state.selectedFinanceiroId && financeiros.length > 0) {
+            state.selectedFinanceiroId = financeiros[0].id;
+        }
         render();
     } catch (error) {
         showMessage("Nao foi possivel carregar dados do backend. Confirma se a aplicacao Spring Boot esta arrancada.");
@@ -76,6 +84,8 @@ function render() {
     renderComerciais();
     renderPendentes();
     renderFinanceiros();
+    renderComercialDetail();
+    renderFinanceiroDetail();
 }
 
 function renderComerciais() {
@@ -88,7 +98,7 @@ function renderComerciais() {
     ]);
 
     renderRows("#comerciais-body", rows, (documento) => `
-        <tr>
+        <tr class="selectable ${documento.id === state.selectedComercialId ? "selected" : ""}" data-comercial-id="${escapeHtml(documento.id)}">
             <td>${escapeHtml(documento.id)}</td>
             <td>${escapeHtml(referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento))}</td>
             <td>${status(documento.anulado ? "ANULADO" : documento.estado, documento.anulado)}</td>
@@ -98,6 +108,16 @@ function renderComerciais() {
             <td><a class="action-link" href="/documentos-comerciais/${documento.id}/diagnostico/html" target="_blank" rel="noopener">Diagnostico</a></td>
         </tr>
     `);
+
+    document.querySelectorAll("[data-comercial-id]").forEach((row) => {
+        row.addEventListener("click", (event) => {
+            if (event.target.closest("a")) {
+                return;
+            }
+            state.selectedComercialId = Number(row.dataset.comercialId);
+            render();
+        });
+    });
 }
 
 function renderPendentes() {
@@ -130,7 +150,7 @@ function renderFinanceiros() {
     ]);
 
     renderRows("#financeiros-body", rows, (documento) => `
-        <tr>
+        <tr class="selectable ${documento.id === state.selectedFinanceiroId ? "selected" : ""}" data-financeiro-id="${escapeHtml(documento.id)}">
             <td>${escapeHtml(documento.id)}</td>
             <td>${escapeHtml(referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento))}</td>
             <td>${escapeHtml(documento.clienteId)}</td>
@@ -140,6 +160,114 @@ function renderFinanceiros() {
             <td><a class="action-link" href="/documentos-financeiros/${documento.id}/diagnostico/html" target="_blank" rel="noopener">Diagnostico</a></td>
         </tr>
     `);
+
+    document.querySelectorAll("[data-financeiro-id]").forEach((row) => {
+        row.addEventListener("click", (event) => {
+            if (event.target.closest("a")) {
+                return;
+            }
+            state.selectedFinanceiroId = Number(row.dataset.financeiroId);
+            render();
+        });
+    });
+}
+
+function renderComercialDetail() {
+    const panel = document.querySelector("#comercial-detail");
+    const documento = state.comerciais.find((item) => item.id === state.selectedComercialId);
+    if (!documento) {
+        panel.innerHTML = `
+            <p class="eyebrow">Objeto aberto</p>
+            <h3>Escolhe um documento comercial</h3>
+            <p class="muted">Clica numa linha para ver cabecalho, totais e linhas principais.</p>
+        `;
+        return;
+    }
+
+    panel.innerHTML = `
+        <p class="eyebrow">Documento comercial</p>
+        <h3>${escapeHtml(referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento))}</h3>
+        ${detailLine("Estado", documento.anulado ? "ANULADO" : documento.estado)}
+        ${detailLine("Cliente", documento.clienteNome || documento.clienteId)}
+        ${detailLine("NIF", documento.clienteNif)}
+        ${detailLine("Data", documento.dataEmissao)}
+        ${detailLine("Vencimento", documento.dataVencimento)}
+        ${detailLine("Moeda", documento.moedaId)}
+        ${detailLine("Total", `${money(documento.valorTotal)} ${documento.moedaId || ""}`)}
+        ${detailLine("IVA", `${money(documento.valorIvaTotal)} ${documento.moedaId || ""}`)}
+        ${detailLine("Liquidado", documento.liquidado ? "Sim" : "Nao")}
+        <div class="detail-actions">
+            <a class="action-link" href="/documentos-comerciais/${documento.id}/diagnostico/html" target="_blank" rel="noopener">Diagnostico HTML</a>
+            <a class="action-link" href="/documentos-comerciais/${documento.id}/diagnostico" target="_blank" rel="noopener">JSON</a>
+        </div>
+        <h4>Linhas</h4>
+        ${renderComercialLines(documento.linhas || [])}
+    `;
+}
+
+function renderFinanceiroDetail() {
+    const panel = document.querySelector("#financeiro-detail");
+    const documento = state.financeiros.find((item) => item.id === state.selectedFinanceiroId);
+    if (!documento) {
+        panel.innerHTML = `
+            <p class="eyebrow">Objeto aberto</p>
+            <h3>Escolhe um documento financeiro</h3>
+            <p class="muted">Clica numa linha para ver pagamento, linhas liquidadas e diagnostico.</p>
+        `;
+        return;
+    }
+
+    panel.innerHTML = `
+        <p class="eyebrow">Documento financeiro</p>
+        <h3>${escapeHtml(referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento))}</h3>
+        ${detailLine("Cliente", documento.clienteId)}
+        ${detailLine("Data", documento.dataEmissao)}
+        ${detailLine("Moeda", documento.moedaId)}
+        ${detailLine("Modo pagamento", documento.mPagamentoId)}
+        ${detailLine("Bruto", `${money(documento.valorPagamentoBruto)} ${documento.moedaId || ""}`)}
+        ${detailLine("Desconto", `${money(documento.valorDescontoFinanceiro)} ${documento.moedaId || ""}`)}
+        ${detailLine("Liquido", `${money(documento.valorPagamentoLiquido)} ${documento.moedaId || ""}`)}
+        ${detailLine("Anulado", documento.anulado ? "Sim" : "Nao")}
+        <div class="detail-actions">
+            <a class="action-link" href="/documentos-financeiros/${documento.id}/diagnostico/html" target="_blank" rel="noopener">Diagnostico HTML</a>
+            <a class="action-link" href="/documentos-financeiros/${documento.id}/diagnostico" target="_blank" rel="noopener">JSON</a>
+        </div>
+        <h4>Linhas</h4>
+        ${renderFinanceiroLines(documento.linhas || [])}
+    `;
+}
+
+function renderComercialLines(linhas) {
+    if (linhas.length === 0) {
+        return `<p class="muted">Sem linhas.</p>`;
+    }
+    return `<div class="line-list">${linhas.map((linha) => `
+        <div class="line-item">
+            <strong>${escapeHtml(linha.numeroLinha)}. ${escapeHtml(linha.descricao)}</strong>
+            <span>${escapeHtml(linha.artigoId)} | Qtd ${money(linha.quantidade)} | Linha ${money(linha.valorLinha)}</span>
+        </div>
+    `).join("")}</div>`;
+}
+
+function renderFinanceiroLines(linhas) {
+    if (linhas.length === 0) {
+        return `<p class="muted">Sem linhas.</p>`;
+    }
+    return `<div class="line-list">${linhas.map((linha) => `
+        <div class="line-item">
+            <strong>${escapeHtml(linha.tipoDocumentoId)} ${escapeHtml(linha.serieDocumento)}/${escapeHtml(linha.numeroDocumento)}</strong>
+            <span>A liquidar ${money(linha.valorALiquidar)} | Novo pendente ${money(linha.novoValorPendente)}</span>
+        </div>
+    `).join("")}</div>`;
+}
+
+function detailLine(label, value) {
+    return `
+        <div class="detail-line">
+            <span>${escapeHtml(label)}</span>
+            <span>${escapeHtml(value)}</span>
+        </div>
+    `;
 }
 
 function renderRows(selector, rows, template) {

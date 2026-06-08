@@ -168,6 +168,7 @@ input {
 .hero-card,
 .table-card,
 .metric,
+.detail-panel,
 .message {
     border: 1px solid var(--line);
     border-radius: 24px;
@@ -226,6 +227,73 @@ input {
     overflow: hidden;
 }
 
+.work-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 16px;
+    align-items: start;
+}
+
+.detail-panel {
+    position: sticky;
+    top: 20px;
+    padding: 22px;
+}
+
+.detail-panel h3 {
+    margin: 0 0 12px;
+}
+
+.detail-panel h4 {
+    margin: 22px 0 10px;
+}
+
+.detail-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.detail-line span:first-child {
+    color: var(--muted);
+}
+
+.detail-line span:last-child {
+    font-weight: 700;
+    text-align: right;
+}
+
+.detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.line-list {
+    display: grid;
+    gap: 8px;
+}
+
+.line-item {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 10px;
+    background: var(--panel-soft);
+}
+
+.line-item strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.line-item span,
+.muted {
+    color: var(--muted);
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -249,6 +317,14 @@ th {
 
 tbody tr:hover {
     background: #fbfcff;
+}
+
+tr.selectable {
+    cursor: pointer;
+}
+
+tr.selected {
+    background: var(--accent-soft);
 }
 
 .status {
@@ -303,5 +379,13 @@ tbody tr:hover {
 
     .metrics {
         grid-template-columns: 1fr;
+    }
+
+    .work-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-panel {
+        position: static;
     }
 }
