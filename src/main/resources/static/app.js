@@ -5,6 +5,7 @@ const state = {
     pendentes: [],
     financeiros: [],
     selectedComercialId: null,
+    selectedPendenteId: null,
     selectedFinanceiroId: null
 };
 
@@ -48,6 +49,9 @@ async function loadAll() {
         if (!state.selectedComercialId && comerciais.length > 0) {
             state.selectedComercialId = comerciais[0].id;
         }
+        if (!state.selectedPendenteId && pendentes.length > 0) {
+            state.selectedPendenteId = pendentes[0].id;
+        }
         if (!state.selectedFinanceiroId && financeiros.length > 0) {
             state.selectedFinanceiroId = financeiros[0].id;
         }
@@ -85,6 +89,7 @@ function render() {
     renderPendentes();
     renderFinanceiros();
     renderComercialDetail();
+    renderPendenteDetail();
     renderFinanceiroDetail();
 }
 
@@ -129,9 +134,10 @@ function renderPendentes() {
     ]);
 
     renderRows("#pendentes-body", rows, (pendente) => `
-        <tr>
+        <tr class="selectable ${pendente.id === state.selectedPendenteId ? "selected" : ""}" data-pendente-id="${escapeHtml(pendente.id)}">
             <td>${escapeHtml(pendente.id)}</td>
             <td>${escapeHtml(referencia(pendente.tipoDocumentoId, pendente.serieDocumento, pendente.numeroDocumento))}</td>
+            <td>${pendenteStatus(pendente)}</td>
             <td>${escapeHtml(pendente.clienteId)}</td>
             <td>${escapeHtml(pendente.dataDocumento)}</td>
             <td>${escapeHtml(pendente.dataVencimento)}</td>
@@ -139,6 +145,13 @@ function renderPendentes() {
             <td>${money(pendente.valorPendente)} ${escapeHtml(pendente.moedaId)}</td>
         </tr>
     `);
+
+    document.querySelectorAll("[data-pendente-id]").forEach((row) => {
+        row.addEventListener("click", () => {
+            state.selectedPendenteId = Number(row.dataset.pendenteId);
+            render();
+        });
+    });
 }
 
 function renderFinanceiros() {
@@ -237,6 +250,50 @@ function renderFinanceiroDetail() {
     `;
 }
 
+function renderPendenteDetail() {
+    const panel = document.querySelector("#pendente-detail");
+    const pendente = state.pendentes.find((item) => item.id === state.selectedPendenteId);
+    if (!pendente) {
+        panel.innerHTML = `
+            <p class="eyebrow">Objeto aberto</p>
+            <h3>Escolhe um pendente</h3>
+            <p class="muted">Clica numa linha para ver estado, valores e documento de origem.</p>
+        `;
+        return;
+    }
+
+    const documento = state.comerciais.find((item) => item.id === pendente.documentoComercialId);
+    panel.innerHTML = `
+        <p class="eyebrow">Pendente</p>
+        <h3>${escapeHtml(referencia(pendente.tipoDocumentoId, pendente.serieDocumento, pendente.numeroDocumento))}</h3>
+        ${detailLine("Estado", pendenteStatusLabel(pendente))}
+        ${detailLine("Cliente", pendente.clienteId)}
+        ${detailLine("Data documento", pendente.dataDocumento)}
+        ${detailLine("Vencimento", pendente.dataVencimento)}
+        ${detailLine("Moeda", pendente.moedaId)}
+        ${detailLine("Valor documento", `${money(pendente.valorDocumento)} ${pendente.moedaId || ""}`)}
+        ${detailLine("Valor pendente", `${money(pendente.valorPendente)} ${pendente.moedaId || ""}`)}
+        ${detailLine("Valor liquidado", `${money(valorLiquidado(pendente))} ${pendente.moedaId || ""}`)}
+        <div class="detail-actions">
+            <a class="action-link" href="/documentos-comerciais/${pendente.documentoComercialId}/diagnostico/html" target="_blank" rel="noopener">Diagnostico origem</a>
+            <a class="action-link" href="/documentos-comerciais/${pendente.documentoComercialId}/diagnostico" target="_blank" rel="noopener">JSON origem</a>
+        </div>
+        <h4>Documento de origem</h4>
+        ${documento ? renderOrigemComercial(documento) : `<p class="muted">Documento comercial nao carregado nesta pagina.</p>`}
+    `;
+}
+
+function renderOrigemComercial(documento) {
+    return `
+        <div class="line-list">
+            <div class="line-item">
+                <strong>${escapeHtml(referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento))}</strong>
+                <span>${escapeHtml(documento.clienteNome || documento.clienteId)} | Total ${money(documento.valorTotal)} ${escapeHtml(documento.moedaId)}</span>
+            </div>
+        </div>
+    `;
+}
+
 function renderComercialLines(linhas) {
     if (linhas.length === 0) {
         return `<p class="muted">Sem linhas.</p>`;
@@ -270,6 +327,34 @@ function detailLine(label, value) {
     `;
 }
 
+function pendenteStatus(pendente) {
+    const statusInfo = pendenteStatusInfo(pendente);
+    return status(statusInfo.label, statusInfo.tone);
+}
+
+function pendenteStatusLabel(pendente) {
+    return pendenteStatusInfo(pendente).label;
+}
+
+function pendenteStatusInfo(pendente) {
+    const valorDocumento = Number(pendente.valorDocumento || 0);
+    const valorPendente = Number(pendente.valorPendente || 0);
+    if (valorPendente <= 0) {
+        return { label: "Liquidado", tone: "success" };
+    }
+    if (pendente.dataVencimento && pendente.dataVencimento < todayIso()) {
+        return { label: "Vencido", tone: "danger" };
+    }
+    if (valorPendente < valorDocumento) {
+        return { label: "Parcial", tone: "warning" };
+    }
+    return { label: "Em aberto", tone: "neutral" };
+}
+
+function valorLiquidado(pendente) {
+    return Number(pendente.valorDocumento || 0) - Number(pendente.valorPendente || 0);
+}
+
 function renderRows(selector, rows, template) {
     const body = document.querySelector(selector);
     if (rows.length === 0) {
@@ -298,8 +383,14 @@ function money(value) {
     });
 }
 
-function status(label, danger) {
-    return `<span class="status ${danger ? "danger" : ""}">${escapeHtml(label)}</span>`;
+function status(label, tone) {
+    let className = "";
+    if (tone === true || tone === "danger") {
+        className = "danger";
+    } else if (tone) {
+        className = tone;
+    }
+    return `<span class="status ${className}">${escapeHtml(label)}</span>`;
 }
 
 function showMessage(message) {
@@ -315,4 +406,8 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+}
+
+function todayIso() {
+    return new Date().toISOString().slice(0, 10);
 }

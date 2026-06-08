@@ -108,21 +108,29 @@
                 </div>
                 <p class="hint">Mostra o que ainda falta receber por documento comercial.</p>
             </div>
-            <div class="table-card">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Documento</th>
-                        <th>Cliente</th>
-                        <th>Data</th>
-                        <th>Vencimento</th>
-                        <th>Valor</th>
-                        <th>Pendente</th>
-                    </tr>
-                    </thead>
-                    <tbody id="pendentes-body"></tbody>
-                </table>
+            <div class="work-grid">
+                <div class="table-card">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Documento</th>
+                            <th>Estado</th>
+                            <th>Cliente</th>
+                            <th>Data</th>
+                            <th>Vencimento</th>
+                            <th>Valor</th>
+                            <th>Pendente</th>
+                        </tr>
+                        </thead>
+                        <tbody id="pendentes-body"></tbody>
+                    </table>
+                </div>
+                <aside id="pendente-detail" class="detail-panel">
+                    <p class="eyebrow">Objeto aberto</p>
+                    <h3>Escolhe um pendente</h3>
+                    <p class="muted">Clica numa linha para ver estado, valores e documento de origem.</p>
+                </aside>
             </div>
         </section>
 
