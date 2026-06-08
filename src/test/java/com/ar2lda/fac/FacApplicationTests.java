@@ -29,13 +29,17 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("FAC Workspace")))
 				.andExpect(content().string(containsString("comercial-detail")))
 				.andExpect(content().string(containsString("pendente-detail")))
-				.andExpect(content().string(containsString("financeiro-detail")));
+				.andExpect(content().string(containsString("financeiro-detail")))
+				.andExpect(content().string(containsString("conta-corrente-view")));
 
 		mockMvc.perform(get("/app.js"))
 				.andExpect(status().isOk())
 				.andExpect(content().string(containsString("/documentos-comerciais")))
 				.andExpect(content().string(containsString("renderComercialDetail")))
 				.andExpect(content().string(containsString("renderPendenteDetail")))
+				.andExpect(content().string(containsString("renderContaCorrente")))
+				.andExpect(content().string(containsString("buildContaCorrente")))
+				.andExpect(content().string(containsString("movimentosDoPendente")))
 				.andExpect(content().string(containsString("pendenteStatusInfo")))
 				.andExpect(content().string(containsString("Preparar recebimento")))
 				.andExpect(content().string(containsString("Pendente liquidado")))
@@ -45,9 +49,20 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("emitirDocumentoFinanceiro")))
 				.andExpect(content().string(containsString("buildRecebimentoPayload")))
 				.andExpect(content().string(containsString("validateRecebimentoPayload")))
+				.andExpect(content().string(containsString("dataMinimaFinanceira")))
+				.andExpect(content().string(containsString("refreshDataMinimaFinanceira")))
+				.andExpect(content().string(containsString("Data minima desta serie financeira")))
 				.andExpect(content().string(containsString("window.confirm")))
 				.andExpect(content().string(containsString("POST")))
 				.andExpect(content().string(containsString("criado. Pendente atualizado.")))
+				.andExpect(content().string(containsString("Anular documento financeiro")))
+				.andExpect(content().string(containsString("Anulacao bloqueada")))
+				.andExpect(content().string(containsString("anularDocumentoFinanceiro")))
+				.andExpect(content().string(containsString("ensureFinanceiroDiagnostico")))
+				.andExpect(content().string(containsString("renderFinanceiroDiagnosticoResumo")))
+				.andExpect(content().string(containsString("/anular")))
+				.andExpect(content().string(containsString("/diagnostico")))
+				.andExpect(content().string(containsString("rollback dos pendentes")))
 				.andExpect(content().string(containsString("Payload previsto")))
 				.andExpect(content().string(containsString("renderFinanceiroDetail")));
 
@@ -56,6 +71,9 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("preview-card")))
 				.andExpect(content().string(containsString("payload-preview")))
 				.andExpect(content().string(containsString("form-feedback")))
-				.andExpect(content().string(containsString("message.success")));
+				.andExpect(content().string(containsString("message.success")))
+				.andExpect(content().string(containsString("danger-action")))
+				.andExpect(content().string(containsString("diagnostic-card")))
+				.andExpect(content().string(containsString("account-card")));
 	}
 }

@@ -7,6 +7,7 @@ const state = {
     mpagamentos: [],
     tiposDocumento: [],
     series: [],
+    financeiroDiagnosticos: {},
     selectedComercialId: null,
     selectedPendenteId: null,
     selectedFinanceiroId: null
@@ -16,14 +17,16 @@ const views = {
     dashboard: document.querySelector("#dashboard-view"),
     comerciais: document.querySelector("#comerciais-view"),
     pendentes: document.querySelector("#pendentes-view"),
-    financeiros: document.querySelector("#financeiros-view")
+    financeiros: document.querySelector("#financeiros-view"),
+    contaCorrente: document.querySelector("#conta-corrente-view")
 };
 
 const titles = {
     dashboard: "Dashboard",
     comerciais: "Documentos comerciais",
     pendentes: "Pendentes",
-    financeiros: "Documentos financeiros"
+    financeiros: "Documentos financeiros",
+    contaCorrente: "Conta corrente"
 };
 
 document.querySelectorAll("[data-view]").forEach((button) => {
@@ -100,6 +103,7 @@ function render() {
     renderComercialDetail();
     renderPendenteDetail();
     renderFinanceiroDetail();
+    renderContaCorrente();
 }
 
 function renderComerciais() {
@@ -175,6 +179,7 @@ function renderFinanceiros() {
         <tr class="selectable ${documento.id === state.selectedFinanceiroId ? "selected" : ""}" data-financeiro-id="${escapeHtml(documento.id)}">
             <td>${escapeHtml(documento.id)}</td>
             <td>${escapeHtml(referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento))}</td>
+            <td>${status(documento.anulado ? "ANULADO" : "EMITIDO", documento.anulado ? "danger" : "success")}</td>
             <td>${escapeHtml(documento.clienteId)}</td>
             <td>${escapeHtml(documento.dataEmissao)}</td>
             <td>${escapeHtml(documento.mPagamentoId)}</td>
@@ -190,8 +195,128 @@ function renderFinanceiros() {
             }
             state.selectedFinanceiroId = Number(row.dataset.financeiroId);
             render();
+            ensureFinanceiroDiagnostico(state.selectedFinanceiroId);
         });
     });
+}
+
+function renderContaCorrente() {
+    const body = document.querySelector("#conta-corrente-body");
+    if (!body) {
+        return;
+    }
+    const clientes = buildContaCorrente();
+    const rows = filtered(clientes, (cliente) => [
+        cliente.clienteId,
+        cliente.nome,
+        cliente.totalDocumento,
+        cliente.totalPendente,
+        cliente.documentos.map((documento) => documento.referencia).join(" ")
+    ]);
+
+    if (rows.length === 0) {
+        body.innerHTML = `<div class="table-card empty account-empty">Sem movimentos para mostrar.</div>`;
+        return;
+    }
+
+    body.innerHTML = rows.map((cliente) => `
+        <article class="account-card">
+            <header class="account-header">
+                <div>
+                    <p class="eyebrow">Cliente ${escapeHtml(cliente.clienteId)}</p>
+                    <h3>${escapeHtml(cliente.nome || cliente.clienteId)}</h3>
+                </div>
+                <div class="account-totals">
+                    <span>Total documentos: <strong>${money(cliente.totalDocumento)} EUR</strong></span>
+                    <span>Pendente: <strong>${money(cliente.totalPendente)} EUR</strong></span>
+                </div>
+            </header>
+            <div class="account-documents">
+                ${cliente.documentos.map(renderContaCorrenteDocumento).join("")}
+            </div>
+        </article>
+    `).join("");
+}
+
+function renderContaCorrenteDocumento(documento) {
+    return `
+        <div class="account-document">
+            <div class="account-document-main">
+                <div>
+                    <strong>${escapeHtml(documento.referencia)}</strong>
+                    <span>${escapeHtml(documento.dataDocumento)} | Vence ${escapeHtml(documento.dataVencimento || "")}</span>
+                </div>
+                <div class="account-values">
+                    <span>Documento ${money(documento.valorDocumento)} ${escapeHtml(documento.moedaId)}</span>
+                    <span>Pendente ${money(documento.valorPendente)} ${escapeHtml(documento.moedaId)}</span>
+                    ${pendenteStatus(documento)}
+                </div>
+            </div>
+            <div class="account-movements">
+                ${documento.movimentos.length === 0
+                    ? `<p class="muted">Sem recebimentos associados.</p>`
+                    : documento.movimentos.map(renderContaCorrenteMovimento).join("")}
+            </div>
+        </div>
+    `;
+}
+
+function renderContaCorrenteMovimento(movimento) {
+    return `
+        <div class="account-movement ${movimento.anulado ? "cancelled" : ""}">
+            <span>${escapeHtml(movimento.referencia)} | ${escapeHtml(movimento.dataEmissao)}</span>
+            <strong>${money(movimento.valor)} ${escapeHtml(movimento.moedaId)}</strong>
+            ${status(movimento.anulado ? "ANULADO" : "ATIVO", movimento.anulado ? "danger" : "success")}
+        </div>
+    `;
+}
+
+function buildContaCorrente() {
+    const documentos = state.pendentes.map((pendente) => {
+        const comercial = state.comerciais.find((documento) => documento.id === pendente.documentoComercialId);
+        return {
+            clienteId: pendente.clienteId,
+            nome: comercial?.clienteNome,
+            referencia: referencia(pendente.tipoDocumentoId, pendente.serieDocumento, pendente.numeroDocumento),
+            dataDocumento: pendente.dataDocumento,
+            dataVencimento: pendente.dataVencimento,
+            moedaId: pendente.moedaId,
+            valorDocumento: Number(pendente.valorDocumento || 0),
+            valorPendente: Number(pendente.valorPendente || 0),
+            movimentos: movimentosDoPendente(pendente.id)
+        };
+    });
+
+    return Object.values(documentos.reduce((acc, documento) => {
+        const key = documento.clienteId;
+        if (!acc[key]) {
+            acc[key] = {
+                clienteId: documento.clienteId,
+                nome: documento.nome,
+                totalDocumento: 0,
+                totalPendente: 0,
+                documentos: []
+            };
+        }
+        acc[key].totalDocumento += documento.valorDocumento;
+        acc[key].totalPendente += documento.valorPendente;
+        acc[key].documentos.push(documento);
+        return acc;
+    }, {}));
+}
+
+function movimentosDoPendente(pendenteId) {
+    return state.financeiros
+        .flatMap((documento) => (documento.linhas || [])
+            .filter((linha) => linha.pendenteId === pendenteId)
+            .map((linha) => ({
+                referencia: referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento),
+                dataEmissao: documento.dataEmissao,
+                valor: Number(linha.valorALiquidar || 0),
+                moedaId: linha.moedaId || documento.moedaId,
+                anulado: documento.anulado
+            })))
+        .sort((left, right) => String(left.dataEmissao).localeCompare(String(right.dataEmissao)));
 }
 
 function renderComercialDetail() {
@@ -239,6 +364,14 @@ function renderFinanceiroDetail() {
         return;
     }
 
+    const diagnostico = state.financeiroDiagnosticos[documento.id];
+    const podeAnular = diagnostico ? diagnostico.podeAnular && !documento.anulado : !documento.anulado;
+    const botaoAnular = documento.anulado
+        ? "Documento anulado"
+        : podeAnular
+            ? "Anular documento financeiro"
+            : "Anulacao bloqueada";
+
     panel.innerHTML = `
         <p class="eyebrow">Documento financeiro</p>
         <h3>${escapeHtml(referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento))}</h3>
@@ -251,12 +384,19 @@ function renderFinanceiroDetail() {
         ${detailLine("Liquido", `${money(documento.valorPagamentoLiquido)} ${documento.moedaId || ""}`)}
         ${detailLine("Anulado", documento.anulado ? "Sim" : "Nao")}
         <div class="detail-actions">
+            <button class="action-link danger-action" type="button" data-anular-financeiro="${escapeHtml(documento.id)}" ${podeAnular ? "" : "disabled"}>${escapeHtml(botaoAnular)}</button>
             <a class="action-link" href="/documentos-financeiros/${documento.id}/diagnostico/html" target="_blank" rel="noopener">Diagnostico HTML</a>
             <a class="action-link" href="/documentos-financeiros/${documento.id}/diagnostico" target="_blank" rel="noopener">JSON</a>
         </div>
+        ${renderFinanceiroDiagnosticoResumo(diagnostico)}
         <h4>Linhas</h4>
         ${renderFinanceiroLines(documento.linhas || [])}
     `;
+
+    if (podeAnular) {
+        panel.querySelector("[data-anular-financeiro]")?.addEventListener("click", () => anularDocumentoFinanceiro(documento));
+    }
+    ensureFinanceiroDiagnostico(documento.id);
 }
 
 function renderPendenteDetail() {
@@ -305,6 +445,8 @@ function renderRecebimentoPreview(pendente, documento) {
     const tipoFinanceiro = defaultTipoFinanceiro();
     const serieFinanceira = defaultSerieFinanceira(tipoFinanceiro?.id);
     const modoPagamento = defaultMPagamento(documento);
+    const dataMinima = dataMinimaFinanceira(tipoFinanceiro?.id, serieFinanceira?.serie);
+    const dataSugerida = maxDate(todayIso(), dataMinima);
     const valorSugerido = Number(pendente.valorPendente || 0);
     const bloqueios = recebimentoBloqueios(pendente, documento, tipoFinanceiro, serieFinanceira, modoPagamento);
 
@@ -313,7 +455,7 @@ function renderRecebimentoPreview(pendente, documento) {
         <h4>Antes de emitir documento financeiro</h4>
         <div class="form-grid">
             ${formField("Cliente", `<input type="text" value="${escapeHtml(pendente.clienteId)}" disabled>`)}
-            ${formField("Data emissao", `<input id="recebimento-data" type="date" value="${todayIso()}">`)}
+            ${formField("Data emissao", `<input id="recebimento-data" type="date" value="${escapeHtml(dataSugerida)}" min="${escapeHtml(dataMinima || "")}">`)}
             ${formField("Tipo financeiro", select("recebimento-tipo", tiposFinanceiros(), tipoFinanceiro?.id, "id", "descricao"))}
             ${formField("Serie", select("recebimento-serie", seriesFinanceiras(tipoFinanceiro?.id), serieFinanceira?.serie, "serie", "nome"))}
             ${formField("Modo pagamento", select("recebimento-mpagamento", state.mpagamentos, modoPagamento?.id, "id", "nome"))}
@@ -321,6 +463,7 @@ function renderRecebimentoPreview(pendente, documento) {
             ${formField("Valor a liquidar", `<input id="recebimento-valor" type="number" min="0.000001" step="0.000001" value="${valorSugerido.toFixed(6)}">`)}
             ${formField("Desconto valor", `<input id="recebimento-desconto" type="number" min="0" step="0.000001" value="0.000000">`)}
         </div>
+        <p id="recebimento-data-regra" class="muted">${renderDataMinimaFinanceira(dataMinima)}</p>
         <div class="detail-actions">
             <button class="action-link secondary-action" type="button" id="refresh-payload">Atualizar JSON</button>
             <button class="action-link confirm-action" type="button" id="emitir-financeiro" ${bloqueios.length ? "disabled" : ""}>Emitir documento financeiro</button>
@@ -341,6 +484,11 @@ function renderRecebimentoPreview(pendente, documento) {
         const tipoId = preview.querySelector("#recebimento-tipo").value;
         const serieSelect = preview.querySelector("#recebimento-serie");
         serieSelect.innerHTML = options(seriesFinanceiras(tipoId), defaultSerieFinanceira(tipoId)?.serie, "serie", "nome");
+        refreshDataMinimaFinanceira();
+        updateRecebimentoPayload(pendente);
+    });
+    preview.querySelector("#recebimento-serie")?.addEventListener("change", () => {
+        refreshDataMinimaFinanceira();
         updateRecebimentoPayload(pendente);
     });
     updateRecebimentoPayload(pendente);
@@ -422,6 +570,61 @@ async function emitirDocumentoFinanceiro(pendente) {
     }
 }
 
+async function anularDocumentoFinanceiro(documento) {
+    const referenciaDocumento = referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento);
+    const confirmado = window.confirm(`Anular ${referenciaDocumento}? Esta operacao faz rollback dos pendentes afetados se nao houver movimentos posteriores.`);
+    if (!confirmado) {
+        showMessage("Anulacao cancelada. Nada foi gravado.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/documentos-financeiros/${documento.id}/anular`, {
+            method: "POST"
+        });
+        const body = await response.json().catch(() => null);
+        if (!response.ok) {
+            throw new Error(body?.message || `Erro HTTP ${response.status}`);
+        }
+
+        state.selectedFinanceiroId = body.id;
+        await loadAll();
+        setView("financeiros");
+        showMessage(`Documento financeiro ${referenciaDocumento} anulado. Pendentes repostos quando aplicavel.`, "success");
+    } catch (error) {
+        showMessage(`Nao foi possivel anular ${referenciaDocumento}: ${error.message}`);
+    }
+}
+
+async function ensureFinanceiroDiagnostico(documentoId) {
+    if (!documentoId || state.financeiroDiagnosticos[documentoId]) {
+        return;
+    }
+    state.financeiroDiagnosticos[documentoId] = { loading: true };
+    renderFinanceiroDetail();
+    try {
+        const diagnostico = await fetchJson(`/documentos-financeiros/${documentoId}/diagnostico`);
+        state.financeiroDiagnosticos[documentoId] = diagnostico;
+    } catch (error) {
+        state.financeiroDiagnosticos[documentoId] = {
+            loading: false,
+            podeAnular: false,
+            alertas: [],
+            bloqueios: [`Nao foi possivel carregar diagnostico: ${error.message}`]
+        };
+    }
+    renderFinanceiroDetail();
+}
+
+async function fetchJson(url) {
+    const response = await fetch(url);
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+        throw new Error(body?.message || `Erro HTTP ${response.status}`);
+    }
+    return body;
+}
+
 function recebimentoBloqueios(pendente, documento, tipoFinanceiro, serieFinanceira, modoPagamento) {
     const bloqueios = [];
     if (Number(pendente.valorPendente || 0) <= 0) {
@@ -455,6 +658,10 @@ function validateRecebimentoPayload(pendente, payload) {
     }
     if (!payload.dataEmissao) {
         bloqueios.push("Indica a data de emissao.");
+    }
+    const dataMinima = dataMinimaFinanceira(payload.tipoDocumentoId, payload.serie);
+    if (payload.dataEmissao && dataMinima && payload.dataEmissao < dataMinima) {
+        bloqueios.push(`A data de emissao nao pode ser anterior a ${dataMinima} para esta serie.`);
     }
     if (!payload.mPagamentoId) {
         bloqueios.push("Confirma o modo de pagamento.");
@@ -491,6 +698,46 @@ function defaultTipoFinanceiro() {
 
 function defaultSerieFinanceira(tipoDocumentoId) {
     return seriesFinanceiras(tipoDocumentoId)[0] || null;
+}
+
+function dataMinimaFinanceira(tipoDocumentoId, serie) {
+    const datas = state.financeiros
+        .filter((documento) => documento.tipoDocumentoId === tipoDocumentoId && documento.serie === serie)
+        .map((documento) => documento.dataEmissao)
+        .filter(Boolean)
+        .sort();
+    return datas.length === 0 ? "" : datas[datas.length - 1];
+}
+
+function refreshDataMinimaFinanceira() {
+    const tipoId = valueOf("#recebimento-tipo");
+    const serie = valueOf("#recebimento-serie");
+    const dataMinima = dataMinimaFinanceira(tipoId, serie);
+    const dataInput = document.querySelector("#recebimento-data");
+    if (dataInput) {
+        dataInput.min = dataMinima || "";
+        if (dataMinima && dataInput.value < dataMinima) {
+            dataInput.value = dataMinima;
+        }
+    }
+    const regra = document.querySelector("#recebimento-data-regra");
+    if (regra) {
+        regra.textContent = renderDataMinimaFinanceira(dataMinima);
+    }
+}
+
+function renderDataMinimaFinanceira(dataMinima) {
+    if (!dataMinima) {
+        return "Sem data minima detetada para esta serie financeira.";
+    }
+    return `Data minima desta serie financeira: ${dataMinima}.`;
+}
+
+function maxDate(first, second) {
+    if (!second) {
+        return first;
+    }
+    return first > second ? first : second;
 }
 
 function defaultMPagamento(documento) {
@@ -575,6 +822,40 @@ function renderFinanceiroLines(linhas) {
             <span>A liquidar ${money(linha.valorALiquidar)} | Novo pendente ${money(linha.novoValorPendente)}</span>
         </div>
     `).join("")}</div>`;
+}
+
+function renderFinanceiroDiagnosticoResumo(diagnostico) {
+    if (!diagnostico || diagnostico.loading) {
+        return `
+            <div class="diagnostic-card">
+                <strong>Diagnostico de anulacao</strong>
+                <p class="muted">A carregar diagnostico...</p>
+            </div>
+        `;
+    }
+    const bloqueios = diagnostico.bloqueios || [];
+    const alertas = diagnostico.alertas || [];
+    const podeAnular = diagnostico.podeAnular && bloqueios.length === 0;
+    return `
+        <div class="diagnostic-card ${podeAnular ? "ok" : "blocked"}">
+            <strong>Diagnostico de anulacao</strong>
+            <p>${podeAnular ? "Pode anular este documento financeiro." : "Nao pode anular neste momento."}</p>
+            ${renderDiagnosticList("Bloqueios", bloqueios)}
+            ${renderDiagnosticList("Alertas", alertas)}
+        </div>
+    `;
+}
+
+function renderDiagnosticList(title, items) {
+    if (!items || items.length === 0) {
+        return "";
+    }
+    return `
+        <div class="diagnostic-list">
+            <span>${escapeHtml(title)}</span>
+            <ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        </div>
+    `;
 }
 
 function detailLine(label, value) {

@@ -18,6 +18,7 @@
             <button class="nav-item" data-view="comerciais">Documentos</button>
             <button class="nav-item" data-view="pendentes">Pendentes</button>
             <button class="nav-item" data-view="financeiros">Recebimentos</button>
+            <button class="nav-item" data-view="contaCorrente">Conta corrente</button>
         </nav>
     </aside>
 
@@ -38,6 +39,7 @@
             <button class="tab" data-view="comerciais">Documentos comerciais</button>
             <button class="tab" data-view="pendentes">Pendentes</button>
             <button class="tab" data-view="financeiros">Documentos financeiros</button>
+            <button class="tab" data-view="contaCorrente">Conta corrente</button>
         </section>
 
         <section id="message" class="message hidden"></section>
@@ -165,6 +167,17 @@
                     <p class="muted">Clica numa linha para ver pagamento, linhas liquidadas e diagnostico.</p>
                 </aside>
             </div>
+        </section>
+
+        <section id="conta-corrente-view" class="view">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Cliente</p>
+                    <h2>Conta corrente simples</h2>
+                </div>
+                <p class="hint">Visao operacional dos documentos, recebimentos e saldo em aberto.</p>
+            </div>
+            <div id="conta-corrente-body" class="account-list"></div>
         </section>
     </main>
 </div>

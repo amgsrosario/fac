@@ -675,4 +675,93 @@ class DocumentoComercialControllerTests {
         mockMvc.perform(post(financeiroLocation + "/anular"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void documentoFinanceiroNaoPermiteDataAnteriorAoUltimoDaSerie() throws Exception {
+        String documentoLocation = mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoDocumentoId": "DCT",
+                                  "serie": "A",
+                                  "dataEmissao": "2026-06-06",
+                                  "clienteId": %d,
+                                  "armazemCargaId": %d,
+                                  "pPagamentoId": "P30"
+                                }
+                                """.formatted(cliente.getId(), armazem.getId())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+
+        mockMvc.perform(post(documentoLocation + "/linhas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "artigoId": "ARTLINHA",
+                                  "quantidade": 2,
+                                  "precoUnitario": 10
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post(documentoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "emissorId": "EMISSOR"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        DocumentoComercial documento = documentoRepository.findAll().get(0);
+        Pendente pendente = pendenteRepository.findByDocumentoComercialId(documento.getId()).orElseThrow();
+
+        mockMvc.perform(post("/documentos-financeiros")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoDocumentoId": "RCB",
+                                  "serie": "A",
+                                  "dataEmissao": "2026-06-09",
+                                  "clienteId": %d,
+                                  "moedaId": "EUR",
+                                  "mPagamentoId": %d,
+                                  "emissorId": "EMISSOR",
+                                  "linhas": [
+                                    {
+                                      "pendenteId": %d,
+                                      "valorALiquidar": 5,
+                                      "descontoValor": 0
+                                    }
+                                  ]
+                                }
+                                """.formatted(cliente.getId(), mPagamento.getId(), pendente.getId())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.dataEmissao").value("2026-06-09"));
+
+        mockMvc.perform(post("/documentos-financeiros")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoDocumentoId": "RCB",
+                                  "serie": "A",
+                                  "dataEmissao": "2026-06-08",
+                                  "clienteId": %d,
+                                  "moedaId": "EUR",
+                                  "mPagamentoId": %d,
+                                  "emissorId": "EMISSOR",
+                                  "linhas": [
+                                    {
+                                      "pendenteId": %d,
+                                      "valorALiquidar": 5,
+                                      "descontoValor": 0
+                                    }
+                                  ]
+                                }
+                                """.formatted(cliente.getId(), mPagamento.getId(), pendente.getId())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Data de emissao nao pode ser anterior ao ultimo documento financeiro emitido da serie"));
+    }
 }

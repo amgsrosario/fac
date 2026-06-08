@@ -68,6 +68,7 @@ public class DocumentoFinanceiroService {
         Cliente cliente = findCliente(dto.clienteId());
         TipoDocumento tipoDocumento = findTipoDocumento(dto.tipoDocumentoId());
         validateSerie(dto.tipoDocumentoId(), dto.serie());
+        validateDataEmissao(dto.tipoDocumentoId(), dto.serie(), dto.dataEmissao());
         Moeda moeda = findMoeda(dto.moedaId());
         MPagamento mPagamento = findMPagamento(dto.mPagamentoId());
         Utilizador emissor = findEmissor(dto.emissorId());
@@ -354,6 +355,13 @@ public class DocumentoFinanceiroService {
     private void validateSerie(String tipoDocumentoId, String serie) {
         if (!serieRepository.existsById(new SerieId(tipoDocumentoId, serie))) {
             throw new NotFoundException("Serie nao encontrada: " + tipoDocumentoId + "/" + serie);
+        }
+    }
+
+    private void validateDataEmissao(String tipoDocumentoId, String serie, java.time.LocalDate dataEmissao) {
+        java.time.LocalDate ultimaData = documentoRepository.findUltimaDataEmissao(tipoDocumentoId, serie);
+        if (ultimaData != null && dataEmissao.isBefore(ultimaData)) {
+            throw new BadRequestException("Data de emissao nao pode ser anterior ao ultimo documento financeiro emitido da serie");
         }
     }
 
