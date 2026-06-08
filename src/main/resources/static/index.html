@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="pt">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FAC Workspace</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-mark">FAC</span>
+            <span class="brand-text">Workspace</span>
+        </div>
+        <nav class="nav">
+            <button class="nav-item active" data-view="dashboard">Dashboard</button>
+            <button class="nav-item" data-view="comerciais">Documentos</button>
+            <button class="nav-item" data-view="pendentes">Pendentes</button>
+            <button class="nav-item" data-view="financeiros">Recebimentos</button>
+        </nav>
+    </aside>
+
+    <main class="workspace">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Primeiro prototipo operacional</p>
+                <h1 id="screen-title">Dashboard</h1>
+            </div>
+            <div class="topbar-actions">
+                <input id="global-filter" type="search" placeholder="Filtrar no ecra atual">
+                <button id="refresh-button">Atualizar</button>
+            </div>
+        </header>
+
+        <section class="tabs" aria-label="Objetos abertos">
+            <button class="tab active" data-view="dashboard">Dashboard</button>
+            <button class="tab" data-view="comerciais">Documentos comerciais</button>
+            <button class="tab" data-view="pendentes">Pendentes</button>
+            <button class="tab" data-view="financeiros">Documentos financeiros</button>
+        </section>
+
+        <section id="message" class="message hidden"></section>
+
+        <section id="dashboard-view" class="view active">
+            <div class="hero-card">
+                <p class="eyebrow">Ciclo principal</p>
+                <h2>Documento comercial -> pendente -> recebimento -> diagnostico</h2>
+                <p>
+                    Este e um primeiro ecra de trabalho para consultar dados reais do backend,
+                    abrir diagnosticos e validar o fluxo sem depender sempre do Postman.
+                </p>
+            </div>
+            <div class="metrics">
+                <article class="metric">
+                    <span id="metric-comerciais">-</span>
+                    <p>Documentos comerciais</p>
+                </article>
+                <article class="metric">
+                    <span id="metric-pendentes">-</span>
+                    <p>Pendentes</p>
+                </article>
+                <article class="metric">
+                    <span id="metric-financeiros">-</span>
+                    <p>Documentos financeiros</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="comerciais-view" class="view">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Consulta</p>
+                    <h2>Documentos comerciais</h2>
+                </div>
+                <p class="hint">Abre o diagnostico HTML sem marcar o documento como impresso.</p>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Documento</th>
+                        <th>Estado</th>
+                        <th>Cliente</th>
+                        <th>Data</th>
+                        <th>Total</th>
+                        <th>Acoes</th>
+                    </tr>
+                    </thead>
+                    <tbody id="comerciais-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="pendentes-view" class="view">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Recebimentos</p>
+                    <h2>Pendentes</h2>
+                </div>
+                <p class="hint">Mostra o que ainda falta receber por documento comercial.</p>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Documento</th>
+                        <th>Cliente</th>
+                        <th>Data</th>
+                        <th>Vencimento</th>
+                        <th>Valor</th>
+                        <th>Pendente</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pendentes-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="financeiros-view" class="view">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Consulta</p>
+                    <h2>Documentos financeiros</h2>
+                </div>
+                <p class="hint">Confere recibos e notas de liquidacao antes do reporting definitivo.</p>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Documento</th>
+                        <th>Cliente</th>
+                        <th>Data</th>
+                        <th>Modo</th>
+                        <th>Liquido</th>
+                        <th>Acoes</th>
+                    </tr>
+                    </thead>
+                    <tbody id="financeiros-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
