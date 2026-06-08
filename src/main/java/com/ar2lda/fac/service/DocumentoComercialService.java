@@ -1,6 +1,9 @@
 package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.DocumentoComercialCreateDto;
+import com.ar2lda.fac.controller.dto.DocumentoComercialDiagnosticoDto;
+import com.ar2lda.fac.controller.dto.DocumentoComercialDiagnosticoPendenteDto;
+import com.ar2lda.fac.controller.dto.DocumentoComercialDiagnosticoTotaisDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialEmitirDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
@@ -16,6 +19,7 @@ import com.ar2lda.fac.model.Cliente;
 import com.ar2lda.fac.model.DocumentoComercial;
 import com.ar2lda.fac.model.Empresa;
 import com.ar2lda.fac.model.EstadoDocumentoComercial;
+import com.ar2lda.fac.model.LinhaDocumentoComercial;
 import com.ar2lda.fac.model.MPagamento;
 import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.model.Morada;
@@ -47,13 +51,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class DocumentoComercialService {
+
+    private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP);
 
     private final DocumentoComercialRepository documentoRepository;
     private final TipoDocumentoRepository tipoDocumentoRepository;
@@ -120,6 +130,62 @@ public class DocumentoComercialService {
                 empresaMapper.toDTO(empresa),
                 mapper.toDTO(documento),
                 linhas
+        );
+    }
+
+    public DocumentoComercialDiagnosticoDto getDiagnostico(Long id) {
+        DocumentoComercial documento = findDocumento(id);
+        List<LinhaDocumentoComercial> linhas = linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(id);
+        Optional<Pendente> pendente = pendenteRepository.findByDocumentoComercialId(id);
+
+        List<String> alertas = new ArrayList<>();
+        List<String> bloqueios = new ArrayList<>();
+
+        if (linhas.isEmpty()) {
+            bloqueios.add("Documento comercial nao tem linhas");
+        }
+        if (documento.getEstado() == EstadoDocumentoComercial.EMITIDO) {
+            bloqueios.add("Documento comercial ja se encontra emitido");
+        }
+        if (documento.isAnulado()) {
+            bloqueios.add("Documento comercial encontra-se anulado");
+        }
+        if (documento.isLiquidado()) {
+            bloqueios.add("Documento comercial ja tem liquidacao associada");
+        }
+        if (documento.getEstado() == EstadoDocumentoComercial.EMITIDO && pendente.isEmpty()
+                && !documento.getTipoDocumento().isLiquidacaoImediata() && !documento.isAnulado()) {
+            alertas.add("Documento emitido sem pendente associado");
+        }
+
+        DocumentoComercialDiagnosticoTotaisDto totais = buildDiagnosticoTotais(documento, linhas);
+        if (!totais.coerente()) {
+            alertas.add("Totais do cabecalho nao coincidem com os totais calculados pelas linhas");
+        }
+
+        boolean podeEmitir = documento.getEstado() == EstadoDocumentoComercial.RASCUNHO
+                && !documento.isAnulado()
+                && !linhas.isEmpty()
+                && totais.coerente();
+        boolean podeAnular = documento.getEstado() == EstadoDocumentoComercial.EMITIDO
+                && !documento.isAnulado()
+                && !documento.isLiquidado()
+                && pendente.map(p -> p.getValorPendente().compareTo(p.getValorDocumento()) == 0).orElse(true);
+
+        return new DocumentoComercialDiagnosticoDto(
+                documento.getId(),
+                buildReferencia(documento),
+                documento.getEstado(),
+                documento.isAnulado(),
+                documento.isImpresso(),
+                documento.isLiquidado(),
+                !linhas.isEmpty(),
+                podeEmitir,
+                podeAnular,
+                buildDiagnosticoPendente(pendente),
+                totais,
+                alertas,
+                bloqueios
         );
     }
 
@@ -365,6 +431,80 @@ public class DocumentoComercialService {
             throw new BadRequestException("Emissor inativo nao pode emitir documento comercial");
         }
         return emissor;
+    }
+
+    private DocumentoComercialDiagnosticoPendenteDto buildDiagnosticoPendente(Optional<Pendente> pendente) {
+        return pendente
+                .map(p -> new DocumentoComercialDiagnosticoPendenteDto(
+                        true,
+                        p.getId(),
+                        scale6(p.getValorDocumento()),
+                        scale6(p.getValorPendente())
+                ))
+                .orElseGet(() -> new DocumentoComercialDiagnosticoPendenteDto(false, null, ZERO, ZERO));
+    }
+
+    private DocumentoComercialDiagnosticoTotaisDto buildDiagnosticoTotais(
+            DocumentoComercial documento,
+            List<LinhaDocumentoComercial> linhas
+    ) {
+        BigDecimal linhasValorBruto = ZERO;
+        BigDecimal linhasValorDesconto = ZERO;
+        BigDecimal linhasValorLinha = ZERO;
+        BigDecimal linhasValorIvaTotal = ZERO;
+        BigDecimal linhasValorTotal = ZERO;
+
+        for (LinhaDocumentoComercial linha : linhas) {
+            BigDecimal valorLinha = scale6(linha.getValorLinha());
+            BigDecimal valorIva = valorLinha
+                    .multiply(linha.getPercentagemIva())
+                    .divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+
+            linhasValorBruto = linhasValorBruto.add(scale6(linha.getValorBruto()));
+            linhasValorDesconto = linhasValorDesconto.add(scale6(linha.getValorDesconto()));
+            linhasValorLinha = linhasValorLinha.add(valorLinha);
+            linhasValorIvaTotal = linhasValorIvaTotal.add(valorIva);
+            linhasValorTotal = linhasValorTotal.add(valorLinha).add(valorIva);
+        }
+
+        BigDecimal cabecalhoValorLinha = scale6(documento.getValorBruto()).subtract(scale6(documento.getValorDesconto()));
+        boolean coerente = same(documento.getValorBruto(), linhasValorBruto)
+                && same(documento.getValorDesconto(), linhasValorDesconto)
+                && same(cabecalhoValorLinha, linhasValorLinha)
+                && same(documento.getValorIvaTotal(), linhasValorIvaTotal)
+                && same(documento.getValorTotal(), linhasValorTotal);
+
+        return new DocumentoComercialDiagnosticoTotaisDto(
+                scale6(documento.getValorBruto()),
+                scale6(linhasValorBruto),
+                scale6(documento.getValorDesconto()),
+                scale6(linhasValorDesconto),
+                scale6(cabecalhoValorLinha),
+                scale6(linhasValorLinha),
+                scale6(documento.getValorIvaTotal()),
+                scale6(linhasValorIvaTotal),
+                scale6(documento.getValorTotal()),
+                scale6(linhasValorTotal),
+                coerente
+        );
+    }
+
+    private String buildReferencia(DocumentoComercial documento) {
+        if (documento.getNumeroDocumento() == null) {
+            return documento.getTipoDocumento().getId() + " " + documento.getSerie() + "/RASCUNHO-" + documento.getId();
+        }
+        return documento.getTipoDocumento().getId() + " " + documento.getSerie() + "/" + documento.getNumeroDocumento();
+    }
+
+    private boolean same(BigDecimal left, BigDecimal right) {
+        return scale6(left).compareTo(scale6(right)) == 0;
+    }
+
+    private BigDecimal scale6(BigDecimal value) {
+        if (value == null) {
+            return ZERO;
+        }
+        return value.setScale(6, RoundingMode.HALF_UP);
     }
 
     private void validateNaoAnulado(DocumentoComercial documento) {

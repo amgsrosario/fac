@@ -4,7 +4,6 @@ import com.ar2lda.fac.model.CodPostal;
 import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.model.RIva;
 import com.ar2lda.fac.model.Transporte;
-import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.CodPostalRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
 import com.ar2lda.fac.repository.RIvaRepository;
@@ -33,9 +32,6 @@ class ClienteControllerTests {
     private MockMvc mockMvc;
 
     @Autowired
-    private ClienteRepository clienteRepository;
-
-    @Autowired
     private CodPostalRepository codPostalRepository;
 
     @Autowired
@@ -51,7 +47,6 @@ class ClienteControllerTests {
 
     @BeforeEach
     void setup() {
-        clienteRepository.deleteAll();
         codPostalRepository.findById("3750-003")
                 .orElseGet(() -> codPostalRepository.save(new CodPostal("3750-003", "Águeda")));
         moedaRepository.findById("EUR")

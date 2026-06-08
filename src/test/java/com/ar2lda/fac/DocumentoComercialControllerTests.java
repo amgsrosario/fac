@@ -23,8 +23,11 @@ import com.ar2lda.fac.repository.ArmazemRepository;
 import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.CodPostalRepository;
 import com.ar2lda.fac.repository.DocumentoComercialRepository;
+import com.ar2lda.fac.repository.DocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.EmpresaRepository;
 import com.ar2lda.fac.repository.FamiliaRepository;
+import com.ar2lda.fac.repository.LinhaDocumentoComercialRepository;
+import com.ar2lda.fac.repository.LinhaDocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
 import com.ar2lda.fac.repository.MPagamentoRepository;
 import com.ar2lda.fac.repository.PaisRepository;
@@ -64,6 +67,15 @@ class DocumentoComercialControllerTests {
 
     @Autowired
     private DocumentoComercialRepository documentoRepository;
+
+    @Autowired
+    private LinhaDocumentoComercialRepository linhaDocumentoComercialRepository;
+
+    @Autowired
+    private DocumentoFinanceiroRepository documentoFinanceiroRepository;
+
+    @Autowired
+    private LinhaDocumentoFinanceiroRepository linhaDocumentoFinanceiroRepository;
 
     @Autowired
     private EmpresaRepository empresaRepository;
@@ -124,6 +136,10 @@ class DocumentoComercialControllerTests {
 
     @BeforeEach
     void setup() {
+        linhaDocumentoFinanceiroRepository.deleteAll();
+        documentoFinanceiroRepository.deleteAll();
+        pendenteRepository.deleteAll();
+        linhaDocumentoComercialRepository.deleteAll();
         documentoRepository.deleteAll();
 
         CodPostal codPostal = codPostalRepository.findById("3750-004")
@@ -596,6 +612,19 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.documento.linhas[0].tipoDocumentoId").value("DCT"))
                 .andExpect(jsonPath("$.documento.linhas[0].numeroDocumento").value(1))
                 .andExpect(jsonPath("$.documento.linhas[0].valorALiquidar").value(10.000000));
+
+        mockMvc.perform(get(documentoLocation + "/diagnostico"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.documentoId").value(documento.getId()))
+                .andExpect(jsonPath("$.referencia").value("DCT A/1"))
+                .andExpect(jsonPath("$.estado").value("EMITIDO"))
+                .andExpect(jsonPath("$.temLinhas").value(true))
+                .andExpect(jsonPath("$.podeEmitir").value(false))
+                .andExpect(jsonPath("$.podeAnular").value(false))
+                .andExpect(jsonPath("$.liquidado").value(true))
+                .andExpect(jsonPath("$.pendente.existe").value(true))
+                .andExpect(jsonPath("$.pendente.valorPendente").value(14.600000))
+                .andExpect(jsonPath("$.totais.coerente").value(true));
 
         Pendente pendenteAtualizado = pendenteRepository.findById(pendente.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteAtualizado.getValorPendente()).isEqualByComparingTo("14.600000");

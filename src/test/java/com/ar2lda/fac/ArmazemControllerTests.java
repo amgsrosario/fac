@@ -30,7 +30,7 @@ class ArmazemControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "id": "3750-001",
+                                  "id": "3750-991",
                                   "nome": "Águeda"
                                 }
                                 """))
@@ -46,7 +46,7 @@ class ArmazemControllerTests {
                                   "nome": "Armazém Principal",
                                   "morada": "Rua Principal",
                                   "morada1": "Zona Industrial",
-                                  "codPostalId": "3750-001",
+                                  "codPostalId": "3750-991",
                                   "localidade": "Águeda",
                                   "paisId": "PT",
                                   "freguesiaId": "010103"
@@ -55,7 +55,7 @@ class ArmazemControllerTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.nome").value("Armazém Principal"))
-                .andExpect(jsonPath("$.codPostalId").value("3750-001"))
+                .andExpect(jsonPath("$.codPostalId").value("3750-991"))
                 .andExpect(jsonPath("$.paisId").value("PT"))
                 .andExpect(jsonPath("$.freguesiaId").value("010103"))
                 .andReturn()
@@ -72,7 +72,7 @@ class ArmazemControllerTests {
                                 {
                                   "nome": "Armazém Secundário",
                                   "morada": "Rua Nova",
-                                  "codPostalId": "3750-001",
+                                  "codPostalId": "3750-991",
                                   "localidade": "Águeda",
                                   "paisId": "PT"
                                 }
@@ -95,7 +95,7 @@ class ArmazemControllerTests {
                                 {
                                   "nome": "Armazém Teste",
                                   "morada": "Rua Principal",
-                                  "codPostalId": "3750-001",
+                                  "codPostalId": "3750-991",
                                   "localidade": "Águeda",
                                   "paisId": "ZZ"
                                 }

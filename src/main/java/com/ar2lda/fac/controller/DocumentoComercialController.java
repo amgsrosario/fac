@@ -1,6 +1,7 @@
 package com.ar2lda.fac.controller;
 
 import com.ar2lda.fac.controller.dto.DocumentoComercialCreateDto;
+import com.ar2lda.fac.controller.dto.DocumentoComercialDiagnosticoDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialEmitirDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
@@ -49,6 +50,11 @@ public class DocumentoComercialController implements GenericController {
     @GetMapping("/{id}/impressao")
     public DocumentoComercialImpressaoDto getImpressao(@PathVariable Long id) {
         return service.getImpressao(id);
+    }
+
+    @GetMapping("/{id}/diagnostico")
+    public DocumentoComercialDiagnosticoDto getDiagnostico(@PathVariable Long id) {
+        return service.getDiagnostico(id);
     }
 
     @PutMapping("/{id}")
