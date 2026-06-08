@@ -3,13 +3,18 @@ package com.ar2lda.fac.service;
 import com.ar2lda.fac.controller.dto.DocumentoComercialCreateDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialEmitirDto;
+import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialUpdateDto;
+import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialDto;
 import com.ar2lda.fac.exception.BadRequestException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.DocumentoComercialMapper;
+import com.ar2lda.fac.mapper.EmpresaMapper;
+import com.ar2lda.fac.mapper.LinhaDocumentoComercialMapper;
 import com.ar2lda.fac.model.Armazem;
 import com.ar2lda.fac.model.Cliente;
 import com.ar2lda.fac.model.DocumentoComercial;
+import com.ar2lda.fac.model.Empresa;
 import com.ar2lda.fac.model.EstadoDocumentoComercial;
 import com.ar2lda.fac.model.MPagamento;
 import com.ar2lda.fac.model.Moeda;
@@ -24,6 +29,7 @@ import com.ar2lda.fac.model.Utilizador;
 import com.ar2lda.fac.repository.ArmazemRepository;
 import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.DocumentoComercialRepository;
+import com.ar2lda.fac.repository.EmpresaRepository;
 import com.ar2lda.fac.repository.LinhaDocumentoComercialRepository;
 import com.ar2lda.fac.repository.MPagamentoRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
@@ -43,6 +49,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +59,7 @@ public class DocumentoComercialService {
     private final TipoDocumentoRepository tipoDocumentoRepository;
     private final SerieRepository serieRepository;
     private final ClienteRepository clienteRepository;
+    private final EmpresaRepository empresaRepository;
     private final MoradaRepository moradaRepository;
     private final ArmazemRepository armazemRepository;
     private final MoedaRepository moedaRepository;
@@ -65,6 +73,8 @@ public class DocumentoComercialService {
     private final SerieService serieService;
     private final PendenteService pendenteService;
     private final DocumentoComercialMapper mapper;
+    private final LinhaDocumentoComercialMapper linhaMapper;
+    private final EmpresaMapper empresaMapper;
 
     @Transactional
     public DocumentoComercialDto create(DocumentoComercialCreateDto dto) {
@@ -94,6 +104,23 @@ public class DocumentoComercialService {
 
     public DocumentoComercialDto getById(Long id) {
         return mapper.toDTO(findDocumento(id));
+    }
+
+    public DocumentoComercialImpressaoDto getImpressao(Long id) {
+        DocumentoComercial documento = findDocumento(id);
+        Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID)
+                .orElseThrow(() -> new NotFoundException("Empresa proprietaria nao encontrada"));
+        List<LinhaDocumentoComercialDto> linhas = linhaRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(id)
+                .stream()
+                .map(linhaMapper::toDTO)
+                .toList();
+
+        return new DocumentoComercialImpressaoDto(
+                empresaMapper.toDTO(empresa),
+                mapper.toDTO(documento),
+                linhas
+        );
     }
 
     @Transactional

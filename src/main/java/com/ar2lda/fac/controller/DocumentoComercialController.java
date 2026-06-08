@@ -3,6 +3,7 @@ package com.ar2lda.fac.controller;
 import com.ar2lda.fac.controller.dto.DocumentoComercialCreateDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialEmitirDto;
+import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialUpdateDto;
 import com.ar2lda.fac.service.DocumentoComercialService;
 import jakarta.validation.Valid;
@@ -43,6 +44,11 @@ public class DocumentoComercialController implements GenericController {
     @GetMapping("/{id}")
     public DocumentoComercialDto getById(@PathVariable Long id) {
         return service.getById(id);
+    }
+
+    @GetMapping("/{id}/impressao")
+    public DocumentoComercialImpressaoDto getImpressao(@PathVariable Long id) {
+        return service.getImpressao(id);
     }
 
     @PutMapping("/{id}")

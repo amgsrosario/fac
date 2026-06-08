@@ -2,12 +2,15 @@ package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroCreateDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDto;
+import com.ar2lda.fac.controller.dto.DocumentoFinanceiroImpressaoDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoFinanceiroCreateDto;
 import com.ar2lda.fac.exception.BadRequestException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.DocumentoFinanceiroMapper;
+import com.ar2lda.fac.mapper.EmpresaMapper;
 import com.ar2lda.fac.model.Cliente;
 import com.ar2lda.fac.model.DocumentoFinanceiro;
+import com.ar2lda.fac.model.Empresa;
 import com.ar2lda.fac.model.LinhaDocumentoFinanceiro;
 import com.ar2lda.fac.model.MPagamento;
 import com.ar2lda.fac.model.Moeda;
@@ -17,6 +20,7 @@ import com.ar2lda.fac.model.TipoDocumento;
 import com.ar2lda.fac.model.Utilizador;
 import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.DocumentoFinanceiroRepository;
+import com.ar2lda.fac.repository.EmpresaRepository;
 import com.ar2lda.fac.repository.LinhaDocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.MPagamentoRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
@@ -42,6 +46,7 @@ public class DocumentoFinanceiroService {
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP);
 
     private final DocumentoFinanceiroRepository documentoRepository;
+    private final EmpresaRepository empresaRepository;
     private final LinhaDocumentoFinanceiroRepository linhaRepository;
     private final PendenteRepository pendenteRepository;
     private final ClienteRepository clienteRepository;
@@ -52,6 +57,7 @@ public class DocumentoFinanceiroService {
     private final UtilizadorRepository utilizadorRepository;
     private final SerieService serieService;
     private final DocumentoFinanceiroMapper mapper;
+    private final EmpresaMapper empresaMapper;
 
     @Transactional
     public DocumentoFinanceiroDto create(DocumentoFinanceiroCreateDto dto) {
@@ -102,6 +108,17 @@ public class DocumentoFinanceiroService {
 
     public DocumentoFinanceiroDto getById(Long id) {
         return toDTO(findDocumento(id));
+    }
+
+    public DocumentoFinanceiroImpressaoDto getImpressao(Long id) {
+        DocumentoFinanceiro documento = findDocumento(id);
+        Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID)
+                .orElseThrow(() -> new NotFoundException("Empresa proprietaria nao encontrada"));
+
+        return new DocumentoFinanceiroImpressaoDto(
+                empresaMapper.toDTO(empresa),
+                toDTO(documento)
+        );
     }
 
     @Transactional

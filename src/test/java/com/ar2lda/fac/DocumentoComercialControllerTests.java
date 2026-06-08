@@ -7,6 +7,7 @@ import com.ar2lda.fac.model.CodPostal;
 import com.ar2lda.fac.model.Familia;
 import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.model.DocumentoComercial;
+import com.ar2lda.fac.model.Empresa;
 import com.ar2lda.fac.model.MPagamento;
 import com.ar2lda.fac.model.Pendente;
 import com.ar2lda.fac.model.Pais;
@@ -22,6 +23,7 @@ import com.ar2lda.fac.repository.ArmazemRepository;
 import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.CodPostalRepository;
 import com.ar2lda.fac.repository.DocumentoComercialRepository;
+import com.ar2lda.fac.repository.EmpresaRepository;
 import com.ar2lda.fac.repository.FamiliaRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
 import com.ar2lda.fac.repository.MPagamentoRepository;
@@ -62,6 +64,9 @@ class DocumentoComercialControllerTests {
 
     @Autowired
     private DocumentoComercialRepository documentoRepository;
+
+    @Autowired
+    private EmpresaRepository empresaRepository;
 
     @Autowired
     private TipoDocumentoRepository tipoDocumentoRepository;
@@ -140,6 +145,22 @@ class DocumentoComercialControllerTests {
         mPagamento = new MPagamento();
         mPagamento.setNome("Transferencia");
         mPagamento = mPagamentoRepository.save(mPagamento);
+
+        Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID).orElseGet(Empresa::new);
+        empresa.setNome("Empresa FAC");
+        empresa.setNif("500000000");
+        empresa.setMorada("Rua Empresa");
+        empresa.setMorada1(null);
+        empresa.setCodPostal(codPostal);
+        empresa.setLocalidade("Agueda");
+        empresa.setPais(pais);
+        empresa.setCapitalSocial(BigDecimal.ZERO);
+        empresa.setMatriculaRegistoComercial("CRC 1");
+        empresa.setCae("62010");
+        empresa.setDescricaoCae("Atividades informaticas");
+        empresa.setEmail("empresa@fac.test");
+        empresa.setWeb("https://fac.test");
+        empresaRepository.save(empresa);
 
         TipoDocumento tipoDocumento = new TipoDocumento("DCT", "Documento teste", null, null, null, null, 1, 1, 1, false);
         tipoDocumentoRepository.save(tipoDocumento);
@@ -359,6 +380,63 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void consultaImpressaoDocumentoComercialSemMarcarComoImpresso() throws Exception {
+        String documentoLocation = mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoDocumentoId": "DCT",
+                                  "serie": "A",
+                                  "dataEmissao": "2026-06-06",
+                                  "clienteId": %d,
+                                  "armazemCargaId": %d,
+                                  "pPagamentoId": "P30"
+                                }
+                                """.formatted(cliente.getId(), armazem.getId())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+
+        mockMvc.perform(post(documentoLocation + "/linhas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "artigoId": "ARTLINHA",
+                                  "quantidade": 2,
+                                  "precoUnitario": 10
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post(documentoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "emissorId": "EMISSOR"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get(documentoLocation + "/impressao"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.empresa.nome").value("Empresa FAC"))
+                .andExpect(jsonPath("$.empresa.nif").value("500000000"))
+                .andExpect(jsonPath("$.documento.tipoDocumentoId").value("DCT"))
+                .andExpect(jsonPath("$.documento.serie").value("A"))
+                .andExpect(jsonPath("$.documento.numeroDocumento").value(1))
+                .andExpect(jsonPath("$.documento.clienteNome").value("Cliente Documento"))
+                .andExpect(jsonPath("$.documento.valorTotal").value(24.600000))
+                .andExpect(jsonPath("$.documento.impresso").value(false))
+                .andExpect(jsonPath("$.linhas[0].numeroLinha").value(1))
+                .andExpect(jsonPath("$.linhas[0].artigoId").value("ARTLINHA"))
+                .andExpect(jsonPath("$.linhas[0].valorLinha").value(20.000000));
+
+        DocumentoComercial documento = documentoRepository.findAll().get(0);
+        org.assertj.core.api.Assertions.assertThat(documento.isImpresso()).isFalse();
+    }
+
+    @Test
     void documentoEmitidoPodeSerAnuladoSeNaoTiverLiquidacao() throws Exception {
         String documentoLocation = mockMvc.perform(post("/documentos-comerciais")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -505,6 +583,19 @@ class DocumentoComercialControllerTests {
         mockMvc.perform(get(financeiroLocation))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.numeroDocumento").value(1));
+
+        mockMvc.perform(get(financeiroLocation + "/impressao"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.empresa.nome").value("Empresa FAC"))
+                .andExpect(jsonPath("$.empresa.nif").value("500000000"))
+                .andExpect(jsonPath("$.documento.tipoDocumentoId").value("RCB"))
+                .andExpect(jsonPath("$.documento.numeroDocumento").value(1))
+                .andExpect(jsonPath("$.documento.valorPagamentoBruto").value(10.000000))
+                .andExpect(jsonPath("$.documento.valorPagamentoLiquido").value(9.000000))
+                .andExpect(jsonPath("$.documento.impresso").value(false))
+                .andExpect(jsonPath("$.documento.linhas[0].tipoDocumentoId").value("DCT"))
+                .andExpect(jsonPath("$.documento.linhas[0].numeroDocumento").value(1))
+                .andExpect(jsonPath("$.documento.linhas[0].valorALiquidar").value(10.000000));
 
         Pendente pendenteAtualizado = pendenteRepository.findById(pendente.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteAtualizado.getValorPendente()).isEqualByComparingTo("14.600000");

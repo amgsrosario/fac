@@ -2,6 +2,7 @@ package com.ar2lda.fac.controller;
 
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroCreateDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDto;
+import com.ar2lda.fac.controller.dto.DocumentoFinanceiroImpressaoDto;
 import com.ar2lda.fac.service.DocumentoFinanceiroService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,11 @@ public class DocumentoFinanceiroController implements GenericController {
     @GetMapping("/{id}")
     public DocumentoFinanceiroDto getById(@PathVariable Long id) {
         return service.getById(id);
+    }
+
+    @GetMapping("/{id}/impressao")
+    public DocumentoFinanceiroImpressaoDto getImpressao(@PathVariable Long id) {
+        return service.getImpressao(id);
     }
 
     @PostMapping("/{id}/anular")
