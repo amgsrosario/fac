@@ -54,6 +54,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -448,6 +449,15 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.linhas[0].artigoId").value("ARTLINHA"))
                 .andExpect(jsonPath("$.linhas[0].valorLinha").value(20.000000));
 
+        mockMvc.perform(get(documentoLocation + "/diagnostico/html"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Relatorio de conferencia do documento comercial")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Nao e documento fiscal")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("DCT A/1")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Artigo Linha")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("24.600000")));
+
         DocumentoComercial documento = documentoRepository.findAll().get(0);
         org.assertj.core.api.Assertions.assertThat(documento.isImpresso()).isFalse();
     }
@@ -612,6 +622,27 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.documento.linhas[0].tipoDocumentoId").value("DCT"))
                 .andExpect(jsonPath("$.documento.linhas[0].numeroDocumento").value(1))
                 .andExpect(jsonPath("$.documento.linhas[0].valorALiquidar").value(10.000000));
+
+        mockMvc.perform(get(financeiroLocation + "/diagnostico"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.documentoId").exists())
+                .andExpect(jsonPath("$.referencia").value("RCB A/1"))
+                .andExpect(jsonPath("$.temLinhas").value(true))
+                .andExpect(jsonPath("$.podeAnular").value(true))
+                .andExpect(jsonPath("$.totais.coerente").value(true))
+                .andExpect(jsonPath("$.totais.cabecalhoValorPagamentoBruto").value(10.000000))
+                .andExpect(jsonPath("$.totais.linhasValorALiquidar").value(10.000000))
+                .andExpect(jsonPath("$.totais.cabecalhoValorPagamentoLiquido").value(9.000000))
+                .andExpect(jsonPath("$.totais.linhasValorPagamentoLiquido").value(9.000000));
+
+        mockMvc.perform(get(financeiroLocation + "/diagnostico/html"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Relatorio de conferencia do documento financeiro")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Nao e documento fiscal")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("RCB A/1")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("DCT A/1")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("9.000000")));
 
         mockMvc.perform(get(documentoLocation + "/diagnostico"))
                 .andExpect(status().isOk())

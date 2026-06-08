@@ -189,6 +189,55 @@ public class DocumentoComercialService {
         );
     }
 
+    public String getDiagnosticoHtml(Long id) {
+        DocumentoComercialImpressaoDto impressao = getImpressao(id);
+        DocumentoComercialDiagnosticoDto diagnostico = getDiagnostico(id);
+
+        StringBuilder html = new StringBuilder();
+        html.append("""
+                <!doctype html>
+                <html lang="pt">
+                <head>
+                  <meta charset="utf-8">
+                  <title>Relatorio de conferencia</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; margin: 32px; color: #222; }
+                    h1, h2 { margin-bottom: 8px; }
+                    .aviso { padding: 12px; border: 1px solid #b45309; background: #fff7ed; margin-bottom: 24px; }
+                    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+                    .card { border: 1px solid #ddd; padding: 12px; border-radius: 4px; }
+                    table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background: #f3f4f6; }
+                    .ok { color: #166534; font-weight: bold; }
+                    .erro { color: #991b1b; font-weight: bold; }
+                    .muted { color: #666; }
+                  </style>
+                </head>
+                <body>
+                """);
+        html.append("<h1>Relatorio de conferencia do documento comercial</h1>");
+        html.append("<div class=\"aviso\"><strong>Nao e documento fiscal.</strong> Este relatorio serve apenas para conferir dados, linhas, totais, alertas e bloqueios antes do reporting final.</div>");
+
+        html.append("<div class=\"grid\">");
+        appendEmpresa(html, impressao.empresa());
+        appendDocumento(html, impressao.documento(), diagnostico);
+        html.append("</div>");
+
+        appendCliente(html, impressao.documento());
+        appendLinhas(html, impressao.linhas());
+        appendTotais(html, diagnostico.totais());
+        appendPendente(html, diagnostico.pendente());
+        appendMensagens(html, "Alertas", diagnostico.alertas());
+        appendMensagens(html, "Bloqueios", diagnostico.bloqueios());
+
+        html.append("""
+                </body>
+                </html>
+                """);
+        return html.toString();
+    }
+
     @Transactional
     public DocumentoComercialDto update(Long id, DocumentoComercialUpdateDto dto) {
         DocumentoComercial documento = findDocumento(id);
@@ -505,6 +554,135 @@ public class DocumentoComercialService {
             return ZERO;
         }
         return value.setScale(6, RoundingMode.HALF_UP);
+    }
+
+    private void appendEmpresa(StringBuilder html, com.ar2lda.fac.controller.dto.EmpresaDto empresa) {
+        html.append("<section class=\"card\"><h2>Empresa</h2>");
+        appendLine(html, "Nome", empresa.nome());
+        appendLine(html, "NIF", empresa.nif());
+        appendLine(html, "Morada", empresa.morada());
+        appendLine(html, "Codigo postal", empresa.codPostalId());
+        appendLine(html, "Localidade", empresa.localidade());
+        appendLine(html, "Pais", empresa.paisId());
+        appendLine(html, "Email", empresa.email());
+        html.append("</section>");
+    }
+
+    private void appendDocumento(StringBuilder html, DocumentoComercialDto documento, DocumentoComercialDiagnosticoDto diagnostico) {
+        html.append("<section class=\"card\"><h2>Documento</h2>");
+        appendLine(html, "Referencia", diagnostico.referencia());
+        appendLine(html, "Estado", documento.estado());
+        appendLine(html, "Data emissao", documento.dataEmissao());
+        appendLine(html, "Data vencimento", documento.dataVencimento());
+        appendLine(html, "Moeda", documento.moedaId());
+        appendLine(html, "Regime IVA", documento.rivaId());
+        appendLine(html, "Emissor", documento.emissorId());
+        appendLine(html, "Pode emitir", diagnostico.podeEmitir() ? "Sim" : "Nao");
+        appendLine(html, "Pode anular", diagnostico.podeAnular() ? "Sim" : "Nao");
+        html.append("</section>");
+    }
+
+    private void appendCliente(StringBuilder html, DocumentoComercialDto documento) {
+        html.append("<section class=\"card\"><h2>Cliente</h2>");
+        appendLine(html, "Nome", documento.clienteNome());
+        appendLine(html, "NIF", documento.clienteNif());
+        appendLine(html, "Morada", documento.clienteMorada());
+        appendLine(html, "Codigo postal", documento.clienteCodPostal());
+        appendLine(html, "Localidade", documento.clienteLocalidade());
+        appendLine(html, "Pais", documento.clientePais());
+        html.append("</section>");
+    }
+
+    private void appendLinhas(StringBuilder html, List<LinhaDocumentoComercialDto> linhas) {
+        html.append("<h2>Linhas</h2>");
+        html.append("<table><thead><tr>");
+        html.append("<th>#</th><th>Artigo</th><th>Descricao</th><th>Qtd.</th><th>Preco</th><th>Valor linha</th><th>IVA</th>");
+        html.append("</tr></thead><tbody>");
+        for (LinhaDocumentoComercialDto linha : linhas) {
+            html.append("<tr>");
+            html.append("<td>").append(escape(linha.numeroLinha())).append("</td>");
+            html.append("<td>").append(escape(linha.artigoId())).append("</td>");
+            html.append("<td>").append(escape(linha.descricao())).append("</td>");
+            html.append("<td>").append(format(linha.quantidade())).append("</td>");
+            html.append("<td>").append(format(linha.precoUnitario())).append("</td>");
+            html.append("<td>").append(format(linha.valorLinha())).append("</td>");
+            html.append("<td>").append(escape(linha.tipoTaxaIvaId())).append(" ").append(format(linha.percentagemIva())).append("%</td>");
+            html.append("</tr>");
+        }
+        html.append("</tbody></table>");
+    }
+
+    private void appendTotais(StringBuilder html, DocumentoComercialDiagnosticoTotaisDto totais) {
+        html.append("<h2>Totais</h2>");
+        html.append("<table><thead><tr><th>Campo</th><th>Cabecalho</th><th>Linhas calculadas</th></tr></thead><tbody>");
+        appendTotalRow(html, "Valor bruto", totais.cabecalhoValorBruto(), totais.linhasValorBruto());
+        appendTotalRow(html, "Valor desconto", totais.cabecalhoValorDesconto(), totais.linhasValorDesconto());
+        appendTotalRow(html, "Valor linha", totais.cabecalhoValorLinha(), totais.linhasValorLinha());
+        appendTotalRow(html, "IVA total", totais.cabecalhoValorIvaTotal(), totais.linhasValorIvaTotal());
+        appendTotalRow(html, "Total documento", totais.cabecalhoValorTotal(), totais.linhasValorTotal());
+        html.append("</tbody></table>");
+        html.append("<p>Coerencia dos totais: <span class=\"")
+                .append(totais.coerente() ? "ok" : "erro")
+                .append("\">")
+                .append(totais.coerente() ? "OK" : "Com diferencas")
+                .append("</span></p>");
+    }
+
+    private void appendPendente(StringBuilder html, DocumentoComercialDiagnosticoPendenteDto pendente) {
+        html.append("<section class=\"card\"><h2>Pendente</h2>");
+        appendLine(html, "Existe", pendente.existe() ? "Sim" : "Nao");
+        appendLine(html, "ID", pendente.id());
+        appendLine(html, "Valor documento", format(pendente.valorDocumento()));
+        appendLine(html, "Valor pendente", format(pendente.valorPendente()));
+        html.append("</section>");
+    }
+
+    private void appendMensagens(StringBuilder html, String titulo, List<String> mensagens) {
+        html.append("<section class=\"card\"><h2>").append(escape(titulo)).append("</h2>");
+        if (mensagens.isEmpty()) {
+            html.append("<p class=\"muted\">Sem ").append(escape(titulo.toLowerCase())).append(".</p>");
+        } else {
+            html.append("<ul>");
+            for (String mensagem : mensagens) {
+                html.append("<li>").append(escape(mensagem)).append("</li>");
+            }
+            html.append("</ul>");
+        }
+        html.append("</section>");
+    }
+
+    private void appendLine(StringBuilder html, String label, Object value) {
+        html.append("<p><strong>")
+                .append(escape(label))
+                .append(":</strong> ")
+                .append(escape(value))
+                .append("</p>");
+    }
+
+    private void appendTotalRow(StringBuilder html, String label, BigDecimal cabecalho, BigDecimal linhas) {
+        html.append("<tr><td>")
+                .append(escape(label))
+                .append("</td><td>")
+                .append(format(cabecalho))
+                .append("</td><td>")
+                .append(format(linhas))
+                .append("</td></tr>");
+    }
+
+    private String format(BigDecimal value) {
+        return scale6(value).toPlainString();
+    }
+
+    private String escape(Object value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toString()
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private void validateNaoAnulado(DocumentoComercial documento) {
