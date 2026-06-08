@@ -37,6 +37,25 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("renderComercialDetail")))
 				.andExpect(content().string(containsString("renderPendenteDetail")))
 				.andExpect(content().string(containsString("pendenteStatusInfo")))
+				.andExpect(content().string(containsString("Preparar recebimento")))
+				.andExpect(content().string(containsString("Pendente liquidado")))
+				.andExpect(content().string(containsString("renderRecebimentoPreview")))
+				.andExpect(content().string(containsString("/mpagamentos")))
+				.andExpect(content().string(containsString("updateRecebimentoPayload")))
+				.andExpect(content().string(containsString("emitirDocumentoFinanceiro")))
+				.andExpect(content().string(containsString("buildRecebimentoPayload")))
+				.andExpect(content().string(containsString("validateRecebimentoPayload")))
+				.andExpect(content().string(containsString("window.confirm")))
+				.andExpect(content().string(containsString("POST")))
+				.andExpect(content().string(containsString("criado. Pendente atualizado.")))
+				.andExpect(content().string(containsString("Payload previsto")))
 				.andExpect(content().string(containsString("renderFinanceiroDetail")));
+
+		mockMvc.perform(get("/styles.css"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("preview-card")))
+				.andExpect(content().string(containsString("payload-preview")))
+				.andExpect(content().string(containsString("form-feedback")))
+				.andExpect(content().string(containsString("message.success")));
 	}
 }
