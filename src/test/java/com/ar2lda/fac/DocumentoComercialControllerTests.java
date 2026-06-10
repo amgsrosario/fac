@@ -657,6 +657,20 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.pendente.valorPendente").value(14.600000))
                 .andExpect(jsonPath("$.totais.coerente").value(true));
 
+        mockMvc.perform(get("/pendentes/conta-corrente/clientes/" + cliente.getId() + "/diagnostico"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.clienteId").value(cliente.getId()))
+                .andExpect(jsonPath("$.clienteNome").value("Cliente Documento"))
+                .andExpect(jsonPath("$.totais[0].moedaId").value("EUR"))
+                .andExpect(jsonPath("$.totais[0].documentos").value(1))
+                .andExpect(jsonPath("$.totais[0].valorDocumento").value(24.600000))
+                .andExpect(jsonPath("$.totais[0].valorRecebidoAtivo").value(10.000000))
+                .andExpect(jsonPath("$.totais[0].valorRecebidoAnulado").value(0))
+                .andExpect(jsonPath("$.totais[0].valorPendente").value(14.600000))
+                .andExpect(jsonPath("$.documentos[0].estado").value("PARCIAL"))
+                .andExpect(jsonPath("$.documentos[0].movimentos[0].documentoFinanceiroId").exists())
+                .andExpect(jsonPath("$.documentos[0].movimentos[0].anulado").value(false));
+
         Pendente pendenteAtualizado = pendenteRepository.findById(pendente.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteAtualizado.getValorPendente()).isEqualByComparingTo("14.600000");
         org.assertj.core.api.Assertions.assertThat(documentoRepository.findById(documento.getId()).orElseThrow().isLiquidado()).isTrue();
@@ -671,6 +685,14 @@ class DocumentoComercialControllerTests {
         Pendente pendenteReposto = pendenteRepository.findById(pendente.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteReposto.getValorPendente()).isEqualByComparingTo("24.600000");
         org.assertj.core.api.Assertions.assertThat(documentoRepository.findById(documento.getId()).orElseThrow().isLiquidado()).isFalse();
+
+        mockMvc.perform(get("/pendentes/conta-corrente/clientes/" + cliente.getId() + "/diagnostico"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totais[0].valorRecebidoAtivo").value(0))
+                .andExpect(jsonPath("$.totais[0].valorRecebidoAnulado").value(10.000000))
+                .andExpect(jsonPath("$.totais[0].valorPendente").value(24.600000))
+                .andExpect(jsonPath("$.documentos[0].estado").value("ABERTO"))
+                .andExpect(jsonPath("$.documentos[0].movimentos[0].anulado").value(true));
 
         mockMvc.perform(post(financeiroLocation + "/anular"))
                 .andExpect(status().isBadRequest());

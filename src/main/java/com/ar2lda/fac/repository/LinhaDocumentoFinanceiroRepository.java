@@ -5,11 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface LinhaDocumentoFinanceiroRepository extends JpaRepository<LinhaDocumentoFinanceiro, Long> {
 
     List<LinhaDocumentoFinanceiro> findByDocumentoFinanceiroIdOrderByNumeroLinha(Long documentoFinanceiroId);
+
+    List<LinhaDocumentoFinanceiro> findByPendenteIdInOrderByDocumentoFinanceiroDataEmissaoAscDocumentoFinanceiroNumeroDocumentoAscNumeroLinhaAsc(
+            Collection<Long> pendenteIds
+    );
 
     @Query("""
             select count(l) > 0

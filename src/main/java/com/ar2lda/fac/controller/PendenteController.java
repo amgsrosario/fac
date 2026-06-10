@@ -1,5 +1,6 @@
 package com.ar2lda.fac.controller;
 
+import com.ar2lda.fac.controller.dto.ContaCorrenteClienteDiagnosticoDto;
 import com.ar2lda.fac.controller.dto.PendenteDto;
 import com.ar2lda.fac.service.PendenteService;
 import lombok.RequiredArgsConstructor;
@@ -25,5 +26,10 @@ public class PendenteController {
     @GetMapping("/{id}")
     public PendenteDto getById(@PathVariable Long id) {
         return service.getById(id);
+    }
+
+    @GetMapping("/conta-corrente/clientes/{clienteId}/diagnostico")
+    public ContaCorrenteClienteDiagnosticoDto diagnosticoContaCorrenteCliente(@PathVariable Long clienteId) {
+        return service.diagnosticoContaCorrenteCliente(clienteId);
     }
 }
