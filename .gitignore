@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### FAC React frontend ###
+frontend/node_modules/
+frontend/dist/

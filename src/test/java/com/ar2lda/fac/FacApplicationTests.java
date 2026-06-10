@@ -31,6 +31,7 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("pendente-detail")))
 				.andExpect(content().string(containsString("financeiro-detail")))
 				.andExpect(content().string(containsString("conta-corrente-view")))
+				.andExpect(content().string(containsString("conta-corrente-diagnostico")))
 				.andExpect(content().string(containsString("conta-corrente-estado")))
 				.andExpect(content().string(containsString("cc-total-aberto")));
 
@@ -47,6 +48,9 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("buildContaCorrente")))
 				.andExpect(content().string(containsString("renderContaCorrenteResumo")))
 				.andExpect(content().string(containsString("filterContaCorrenteClientes")))
+				.andExpect(content().string(containsString("ensureContaCorrenteDiagnostico")))
+				.andExpect(content().string(containsString("renderContaCorrenteDiagnostico")))
+				.andExpect(content().string(containsString("/pendentes/conta-corrente/clientes/")))
 				.andExpect(content().string(containsString("estadoKey")))
 				.andExpect(content().string(containsString("valorRecebidoAtivo")))
 				.andExpect(content().string(containsString("valorRecebidoAnulado")))
@@ -88,6 +92,7 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("diagnostic-card")))
 				.andExpect(content().string(containsString("account-summary")))
 				.andExpect(content().string(containsString("account-toolbar")))
+				.andExpect(content().string(containsString("account-diagnostic")))
 				.andExpect(content().string(containsString("account-balance")))
 				.andExpect(content().string(containsString("account-card")));
 	}
