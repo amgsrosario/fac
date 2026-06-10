@@ -217,6 +217,15 @@ input {
   color: var(--fac-text-muted);
 }
 
+.fac-message {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #ead8d8;
+  border-radius: 16px;
+  color: #8a4b4b;
+  background: #fff8f8;
+}
+
 .fac-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
