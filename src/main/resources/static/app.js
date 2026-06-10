@@ -50,12 +50,12 @@ async function loadAll() {
     showMessage("");
     try {
         const [comerciais, pendentes, financeiros, mpagamentos, tiposDocumento, series] = await Promise.all([
-            fetchPage("/documentos-comerciais?size=25&sort=id,desc"),
-            fetchPage("/pendentes?size=25&sort=id,desc"),
-            fetchPage("/documentos-financeiros?size=25&sort=id,desc"),
-            fetchPage("/mpagamentos?size=100&sort=id,asc"),
-            fetchPage("/tipos-documento?size=100&sort=id,asc"),
-            fetchPage("/series?size=100")
+            fetchAllPages("/documentos-comerciais?size=100&sort=id,desc"),
+            fetchAllPages("/pendentes?size=100&sort=id,desc"),
+            fetchAllPages("/documentos-financeiros?size=100&sort=id,desc"),
+            fetchAllPages("/mpagamentos?size=100&sort=id,asc"),
+            fetchAllPages("/tipos-documento?size=100&sort=id,asc"),
+            fetchAllPages("/series?size=100")
         ]);
         state.comerciais = comerciais;
         state.pendentes = pendentes;
@@ -78,13 +78,33 @@ async function loadAll() {
     }
 }
 
+async function fetchAllPages(url, maxPages = 20) {
+    const items = [];
+    let pageNumber = 0;
+    let totalPages = 1;
+
+    while (pageNumber < totalPages && pageNumber < maxPages) {
+        const page = await fetchPage(withPage(url, pageNumber));
+        items.push(...(page.content || []));
+        totalPages = Number(page.totalPages || 1);
+        pageNumber += 1;
+    }
+
+    return items;
+}
+
 async function fetchPage(url) {
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`Erro HTTP ${response.status}`);
     }
-    const page = await response.json();
-    return page.content || [];
+    return response.json();
+}
+
+function withPage(url, pageNumber) {
+    const parsed = new URL(url, window.location.origin);
+    parsed.searchParams.set("page", pageNumber);
+    return `${parsed.pathname}${parsed.search}`;
 }
 
 function setView(view) {
