@@ -8,6 +8,7 @@ const state = {
     tiposDocumento: [],
     series: [],
     financeiroDiagnosticos: {},
+    contaCorrenteEstado: "TODOS",
     selectedComercialId: null,
     selectedPendenteId: null,
     selectedFinanceiroId: null
@@ -37,6 +38,10 @@ document.querySelector("#refresh-button").addEventListener("click", loadAll);
 document.querySelector("#global-filter").addEventListener("input", (event) => {
     state.filter = event.target.value.trim().toLowerCase();
     render();
+});
+document.querySelector("#conta-corrente-estado")?.addEventListener("change", (event) => {
+    state.contaCorrenteEstado = event.target.value;
+    renderContaCorrente();
 });
 
 loadAll();
@@ -206,7 +211,8 @@ function renderContaCorrente() {
         return;
     }
     const clientes = buildContaCorrente();
-    const rows = filtered(clientes, (cliente) => [
+    renderContaCorrenteResumo(clientes);
+    const rows = filtered(filterContaCorrenteClientes(clientes), (cliente) => [
         cliente.clienteId,
         cliente.nome,
         cliente.totalDocumento,
@@ -238,6 +244,53 @@ function renderContaCorrente() {
     `).join("");
 }
 
+function renderContaCorrenteResumo(clientes) {
+    const resumo = contaCorrenteResumo(clientes);
+    setText("#cc-total-aberto", resumoContaCorrenteTexto(resumo.ABERTO));
+    setText("#cc-total-parcial", resumoContaCorrenteTexto(resumo.PARCIAL));
+    setText("#cc-total-vencido", resumoContaCorrenteTexto(resumo.VENCIDO));
+    setText("#cc-total-liquidado", resumoContaCorrenteTexto(resumo.LIQUIDADO));
+}
+
+function contaCorrenteResumo(clientes) {
+    const resumo = {
+        ABERTO: { documentos: 0, saldo: 0 },
+        PARCIAL: { documentos: 0, saldo: 0 },
+        VENCIDO: { documentos: 0, saldo: 0 },
+        LIQUIDADO: { documentos: 0, saldo: 0 }
+    };
+    clientes.flatMap((cliente) => cliente.documentos).forEach((documento) => {
+        const item = resumo[documento.estadoKey] || resumo.ABERTO;
+        item.documentos += 1;
+        item.saldo += documento.valorPendente;
+    });
+    return resumo;
+}
+
+function resumoContaCorrenteTexto(item) {
+    return `${item.documentos} docs | ${money(item.saldo)} EUR`;
+}
+
+function filterContaCorrenteClientes(clientes) {
+    if (state.contaCorrenteEstado === "TODOS") {
+        return clientes;
+    }
+    return clientes
+        .map((cliente) => recalculateContaCorrenteCliente({
+            ...cliente,
+            documentos: cliente.documentos.filter((documento) => documento.estadoKey === state.contaCorrenteEstado)
+        }))
+        .filter((cliente) => cliente.documentos.length > 0);
+}
+
+function recalculateContaCorrenteCliente(cliente) {
+    return {
+        ...cliente,
+        totalDocumento: cliente.documentos.reduce((total, documento) => total + documento.valorDocumento, 0),
+        totalPendente: cliente.documentos.reduce((total, documento) => total + documento.valorPendente, 0)
+    };
+}
+
 function renderContaCorrenteDocumento(documento) {
     return `
         <div class="account-document">
@@ -248,9 +301,16 @@ function renderContaCorrenteDocumento(documento) {
                 </div>
                 <div class="account-values">
                     <span>Documento ${money(documento.valorDocumento)} ${escapeHtml(documento.moedaId)}</span>
+                    <span>Recebido ${money(documento.valorRecebidoAtivo)} ${escapeHtml(documento.moedaId)}</span>
                     <span>Pendente ${money(documento.valorPendente)} ${escapeHtml(documento.moedaId)}</span>
                     ${pendenteStatus(documento)}
                 </div>
+            </div>
+            <div class="account-balance">
+                <span>Original <strong>${money(documento.valorDocumento)} ${escapeHtml(documento.moedaId)}</strong></span>
+                <span>Recebido ativo <strong>${money(documento.valorRecebidoAtivo)} ${escapeHtml(documento.moedaId)}</strong></span>
+                <span>Anulado historico <strong>${money(documento.valorRecebidoAnulado)} ${escapeHtml(documento.moedaId)}</strong></span>
+                <span>Saldo <strong>${money(documento.valorPendente)} ${escapeHtml(documento.moedaId)}</strong></span>
             </div>
             <div class="account-movements">
                 ${documento.movimentos.length === 0
@@ -274,16 +334,22 @@ function renderContaCorrenteMovimento(movimento) {
 function buildContaCorrente() {
     const documentos = state.pendentes.map((pendente) => {
         const comercial = state.comerciais.find((documento) => documento.id === pendente.documentoComercialId);
+        const estado = pendenteStatusInfo(pendente);
+        const movimentos = movimentosDoPendente(pendente.id);
+        const valoresMovimento = movimentosResumo(movimentos);
         return {
             clienteId: pendente.clienteId,
             nome: comercial?.clienteNome,
             referencia: referencia(pendente.tipoDocumentoId, pendente.serieDocumento, pendente.numeroDocumento),
+            estadoKey: estado.key,
             dataDocumento: pendente.dataDocumento,
             dataVencimento: pendente.dataVencimento,
             moedaId: pendente.moedaId,
             valorDocumento: Number(pendente.valorDocumento || 0),
             valorPendente: Number(pendente.valorPendente || 0),
-            movimentos: movimentosDoPendente(pendente.id)
+            valorRecebidoAtivo: valoresMovimento.ativo,
+            valorRecebidoAnulado: valoresMovimento.anulado,
+            movimentos
         };
     });
 
@@ -317,6 +383,17 @@ function movimentosDoPendente(pendenteId) {
                 anulado: documento.anulado
             })))
         .sort((left, right) => String(left.dataEmissao).localeCompare(String(right.dataEmissao)));
+}
+
+function movimentosResumo(movimentos) {
+    return movimentos.reduce((acc, movimento) => {
+        if (movimento.anulado) {
+            acc.anulado += movimento.valor;
+        } else {
+            acc.ativo += movimento.valor;
+        }
+        return acc;
+    }, { ativo: 0, anulado: 0 });
 }
 
 function renderComercialDetail() {
@@ -880,15 +957,15 @@ function pendenteStatusInfo(pendente) {
     const valorDocumento = Number(pendente.valorDocumento || 0);
     const valorPendente = Number(pendente.valorPendente || 0);
     if (valorPendente <= 0) {
-        return { label: "Liquidado", tone: "success" };
+        return { key: "LIQUIDADO", label: "Liquidado", tone: "success" };
     }
     if (pendente.dataVencimento && pendente.dataVencimento < todayIso()) {
-        return { label: "Vencido", tone: "danger" };
+        return { key: "VENCIDO", label: "Vencido", tone: "danger" };
     }
     if (valorPendente < valorDocumento) {
-        return { label: "Parcial", tone: "warning" };
+        return { key: "PARCIAL", label: "Parcial", tone: "warning" };
     }
-    return { label: "Em aberto", tone: "neutral" };
+    return { key: "ABERTO", label: "Em aberto", tone: "neutral" };
 }
 
 function valorLiquidado(pendente) {
@@ -938,6 +1015,13 @@ function showMessage(message, tone = "error") {
     element.textContent = message;
     element.classList.toggle("success", tone === "success");
     element.classList.toggle("hidden", !message);
+}
+
+function setText(selector, value) {
+    const element = document.querySelector(selector);
+    if (element) {
+        element.textContent = value;
+    }
 }
 
 function escapeHtml(value) {

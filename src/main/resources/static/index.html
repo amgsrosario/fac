@@ -151,6 +151,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Documento</th>
+                            <th>Estado</th>
                             <th>Cliente</th>
                             <th>Data</th>
                             <th>Modo</th>
@@ -176,6 +177,36 @@
                     <h2>Conta corrente simples</h2>
                 </div>
                 <p class="hint">Visao operacional dos documentos, recebimentos e saldo em aberto.</p>
+            </div>
+            <div class="account-toolbar">
+                <label class="form-field account-filter">
+                    <span>Estado</span>
+                    <select id="conta-corrente-estado">
+                        <option value="TODOS">Todos</option>
+                        <option value="ABERTO">Em aberto</option>
+                        <option value="PARCIAL">Parcial</option>
+                        <option value="VENCIDO">Vencido</option>
+                        <option value="LIQUIDADO">Liquidado</option>
+                    </select>
+                </label>
+            </div>
+            <div class="account-summary">
+                <article class="summary-card">
+                    <span>Em aberto</span>
+                    <strong id="cc-total-aberto">-</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Parcial</span>
+                    <strong id="cc-total-parcial">-</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Vencido</span>
+                    <strong id="cc-total-vencido">-</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Liquidado</span>
+                    <strong id="cc-total-liquidado">-</strong>
+                </article>
             </div>
             <div id="conta-corrente-body" class="account-list"></div>
         </section>

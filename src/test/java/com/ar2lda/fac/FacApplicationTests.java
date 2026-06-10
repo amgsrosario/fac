@@ -30,7 +30,9 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("comercial-detail")))
 				.andExpect(content().string(containsString("pendente-detail")))
 				.andExpect(content().string(containsString("financeiro-detail")))
-				.andExpect(content().string(containsString("conta-corrente-view")));
+				.andExpect(content().string(containsString("conta-corrente-view")))
+				.andExpect(content().string(containsString("conta-corrente-estado")))
+				.andExpect(content().string(containsString("cc-total-aberto")));
 
 		mockMvc.perform(get("/app.js"))
 				.andExpect(status().isOk())
@@ -39,6 +41,12 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("renderPendenteDetail")))
 				.andExpect(content().string(containsString("renderContaCorrente")))
 				.andExpect(content().string(containsString("buildContaCorrente")))
+				.andExpect(content().string(containsString("renderContaCorrenteResumo")))
+				.andExpect(content().string(containsString("filterContaCorrenteClientes")))
+				.andExpect(content().string(containsString("estadoKey")))
+				.andExpect(content().string(containsString("valorRecebidoAtivo")))
+				.andExpect(content().string(containsString("valorRecebidoAnulado")))
+				.andExpect(content().string(containsString("movimentosResumo")))
 				.andExpect(content().string(containsString("movimentosDoPendente")))
 				.andExpect(content().string(containsString("pendenteStatusInfo")))
 				.andExpect(content().string(containsString("Preparar recebimento")))
@@ -74,6 +82,9 @@ class FacApplicationTests {
 				.andExpect(content().string(containsString("message.success")))
 				.andExpect(content().string(containsString("danger-action")))
 				.andExpect(content().string(containsString("diagnostic-card")))
+				.andExpect(content().string(containsString("account-summary")))
+				.andExpect(content().string(containsString("account-toolbar")))
+				.andExpect(content().string(containsString("account-balance")))
 				.andExpect(content().string(containsString("account-card")));
 	}
 }

@@ -306,6 +306,44 @@ button:disabled,
     gap: 16px;
 }
 
+.account-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.account-filter {
+    width: 220px;
+}
+
+.account-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.summary-card {
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+}
+
+.summary-card span {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.summary-card strong {
+    font-size: 16px;
+}
+
 .account-card {
     border: 1px solid var(--line);
     border-radius: 24px;
@@ -354,6 +392,29 @@ button:disabled,
     display: block;
     margin-top: 4px;
     color: var(--muted);
+}
+
+.account-balance {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.account-balance span {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 10px;
+    color: var(--muted);
+    background: #ffffff;
+    font-size: 12px;
+}
+
+.account-balance strong {
+    display: block;
+    margin-top: 3px;
+    color: var(--text);
+    font-size: 13px;
 }
 
 .account-movements {
@@ -599,6 +660,14 @@ tr.selected {
     }
 
     .metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .account-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .account-balance {
         grid-template-columns: 1fr;
     }
 
