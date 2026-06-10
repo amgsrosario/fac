@@ -166,6 +166,11 @@ input {
   background: var(--fac-petrol);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .fac-soft-button,
 .fac-ghost-button {
   border: 1px solid var(--fac-border);
@@ -306,6 +311,15 @@ input {
   text-align: left;
 }
 
+.fac-table tbody tr {
+  cursor: default;
+}
+
+.fac-table tbody tr:hover,
+.fac-row-selected {
+  background: var(--fac-client-soft);
+}
+
 .fac-table th {
   color: var(--fac-text-muted);
   font-size: 12px;
@@ -348,6 +362,15 @@ input {
 .fac-detail button {
   width: 100%;
   margin-top: 8px;
+}
+
+.fac-section-panel {
+  margin-top: 18px;
+}
+
+.fac-muted {
+  color: var(--fac-text-muted);
+  font-size: 13px;
 }
 
 @media (max-width: 980px) {
