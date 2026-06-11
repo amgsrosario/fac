@@ -157,6 +157,18 @@ create table parametros_aplicacao(
     constraint ck_parametros_aplicacao_decimais_valor check (decimais_valor between 0 and 6)
 );
 
+create table parametros_cliente(
+    id bigint not null primary key,
+    id_pais varchar(3) references pais(id),
+    id_moeda varchar(3) references moeda(id),
+    id_riva varchar(3) references riva(id),
+    id_mpagamento integer references mpagamento(id),
+    id_ppagamento varchar(3) references ppagamento(id),
+    id_transporte integer references transporte(id),
+    retencao boolean,
+    constraint ck_parametros_cliente_unico check (id = 1)
+);
+
 create table tipodocumento(
     id varchar(3) not null primary key,
     descricao varchar(50) not null,
