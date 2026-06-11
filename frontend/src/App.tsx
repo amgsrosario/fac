@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ArtigosView from "./ArtigosView";
+import DocumentosView from "./DocumentosView";
+import ParametrosDocumentoView from "./ParametrosDocumentoView";
 
 type Page<T> = {
   content: T[];
@@ -591,6 +593,8 @@ function App() {
             onSaveCliente={editingClienteId ? updateCliente : createCliente}
             onSelectCliente={setSelectedClienteId}
           />
+        ) : activeView === "Documentos" ? (
+          <DocumentosView />
         ) : activeView === "Artigos" ? (
           <ArtigosView />
         ) : activeView === "Configuracao" ? (
@@ -1132,6 +1136,8 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
           </button>
         </div>
       </section>
+
+      <ParametrosDocumentoView />
     </>
   );
 }

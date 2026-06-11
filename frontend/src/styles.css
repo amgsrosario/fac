@@ -343,6 +343,11 @@ button:disabled {
   font-weight: 700;
 }
 
+.fac-status.danger {
+  color: #875252;
+  background: #f8eeee;
+}
+
 .fac-detail dl {
   margin: 18px 0;
 }

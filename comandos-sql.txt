@@ -197,6 +197,20 @@ create table serie(
     )
 );
 
+create table parametros_documento_comercial(
+    id bigint not null primary key,
+    id_tipo_documento varchar(3),
+    serie varchar(10),
+    id_armazem_carga bigint references armazem(id),
+    constraint fk_parametros_documento_serie
+        foreign key (id_tipo_documento, serie) references serie(id_tipo_documento, serie),
+    constraint ck_parametros_documento_unico check (id = 1),
+    constraint ck_parametros_documento_serie_completa check (
+        (id_tipo_documento is null and serie is null)
+        or (id_tipo_documento is not null and serie is not null)
+    )
+);
+
 create table utilizador(
     codigo varchar(20) not null primary key,
     nome varchar(100) not null,
