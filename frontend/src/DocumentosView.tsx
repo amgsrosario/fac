@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Page<T> = {
   content: T[];
@@ -161,6 +161,8 @@ export default function DocumentosView() {
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
   const [utilizadores, setUtilizadores] = useState<Utilizador[]>([]);
   const [emissorId, setEmissorId] = useState("");
+  const newDocumentClientRef = useRef<HTMLSelectElement>(null);
+  const lineArticleRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     loadDocumentos();
@@ -173,6 +175,11 @@ export default function DocumentosView() {
     }
     loadLinhas(selectedId);
   }, [selectedId]);
+
+  useEffect(() => {
+    if (editorOpen) window.setTimeout(() => newDocumentClientRef.current?.focus(), 0);
+    else if (lineEditorOpen) window.setTimeout(() => lineArticleRef.current?.focus(), 0);
+  }, [editorOpen, lineEditorOpen]);
 
   async function loadDocumentos() {
     setLoading(true);
@@ -324,11 +331,12 @@ export default function DocumentosView() {
     setMessage(null);
     setNotice(null);
     try {
-      const [clientesPage, tiposPage, seriesPage, armazensPage, parametros] = await Promise.all([
+      const [clientesPage, tiposPage, seriesPage, armazensPage, artigosPage, parametros] = await Promise.all([
         fetchJson<Page<Cliente>>("/api/clientes?size=300&sort=nome,asc"),
         fetchJson<Page<TipoDocumento>>("/api/tipos-documento?size=100&sort=descricao,asc"),
         fetchJson<Page<Serie>>("/api/series?size=200&sort=serie,asc"),
         fetchJson<Page<Armazem>>("/api/armazens?size=100&sort=nome,asc"),
+        fetchJson<Page<Artigo>>("/api/artigos?size=500&sort=descricao,asc"),
         fetchOptionalJson<ParametrosDocumento>("/api/parametros-documento-comercial")
       ]);
       const comerciais = tiposPage.content.filter((tipo) => tipo.areaGestao === 1 || tipo.areaGestao === 2);
@@ -336,6 +344,8 @@ export default function DocumentosView() {
       setTiposDocumento(comerciais);
       setSeries(seriesPage.content.filter((serie) => comerciais.some((tipo) => tipo.id === serie.tipoDocumentoId)));
       setArmazens(armazensPage.content);
+      setArtigos(artigosPage.content.filter((artigo) => !artigo.inativo));
+      setLineForm(emptyLineForm);
       setDraftForm({
         ...emptyDraftForm,
         tipoDocumentoId: parametros?.tipoDocumentoId ?? "",
@@ -344,14 +354,14 @@ export default function DocumentosView() {
       });
       setEditorOpen(true);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel preparar o novo rascunho.");
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel preparar o novo documento.");
     } finally {
       setLoading(false);
     }
   }
 
   async function createDraft() {
-    const validation = validateDraft(draftForm);
+    const validation = validateDraft(draftForm) ?? validateLine(lineForm);
     if (validation) {
       setMessage(validation);
       return;
@@ -360,32 +370,46 @@ export default function DocumentosView() {
     setMessage(null);
     try {
       const created = await requestJson<DocumentoComercial>("/api/documentos-comerciais", "POST", {
-        tipoDocumentoId: draftForm.tipoDocumentoId,
-        serie: draftForm.serie,
-        dataEmissao: draftForm.dataEmissao,
-        clienteId: Number(draftForm.clienteId),
-        moradaEnvioId: null,
-        armazemCargaId: Number(draftForm.armazemCargaId),
-        moedaId: null,
-        rivaId: null,
-        mPagamentoId: null,
-        pPagamentoId: null,
-        transporteId: null,
-        dataCarga: null,
-        horaCarga: null,
-        matricula: null,
-        dataDescarga: null,
-        horaDescarga: null,
-        peso: null,
-        observacoes: blankToNull(draftForm.observacoes)
+        documento: {
+          tipoDocumentoId: draftForm.tipoDocumentoId,
+          serie: draftForm.serie,
+          dataEmissao: draftForm.dataEmissao,
+          clienteId: Number(draftForm.clienteId),
+          moradaEnvioId: null,
+          armazemCargaId: Number(draftForm.armazemCargaId),
+          moedaId: null,
+          rivaId: null,
+          mPagamentoId: null,
+          pPagamentoId: null,
+          transporteId: null,
+          dataCarga: null,
+          horaCarga: null,
+          matricula: null,
+          dataDescarga: null,
+          horaDescarga: null,
+          peso: null,
+          observacoes: blankToNull(draftForm.observacoes)
+        },
+        linha: {
+          artigoId: lineForm.artigoId,
+          descricao: blankToNull(lineForm.descricao),
+          quantidade: Number(lineForm.quantidade),
+          precoUnitario: Number(lineForm.precoUnitario),
+          tipoDesconto: lineForm.tipoDesconto,
+          desconto: Number(lineForm.desconto),
+          tipoTaxaIvaId: null,
+          peso: null
+        }
       });
       const page = await fetchJson<Page<DocumentoComercial>>("/api/documentos-comerciais?size=200&sort=id,desc");
       setDocumentos(page.content);
       setSelectedId(created.id);
       setEditorOpen(false);
-      setNotice(`Rascunho ${created.tipoDocumentoId} criado com o identificador interno ${created.id}.`);
+      setLineForm(emptyLineForm);
+      setLineEditorOpen(true);
+      setNotice(`Documento ${created.tipoDocumentoId} iniciado com a primeira linha. Podes continuar a introduzir linhas.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel criar o rascunho.");
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel criar o documento com a primeira linha.");
     } finally {
       setLoading(false);
     }
@@ -415,7 +439,7 @@ export default function DocumentosView() {
     return (
       <section className="fac-panel">
         <div className="fac-panel-header">
-          <div><p className="fac-eyebrow">Documento comercial</p><h2>Novo rascunho</h2></div>
+          <div><p className="fac-eyebrow">Documento comercial</p><h2>Novo documento</h2></div>
           <button className="fac-ghost-button" onClick={() => setEditorOpen(false)} type="button">Voltar a lista</button>
         </div>
 
@@ -436,7 +460,7 @@ export default function DocumentosView() {
           </Field>
           <Field label="Data de emissao"><input onChange={(event) => changeDraft("dataEmissao", event.target.value)} type="date" value={draftForm.dataEmissao} /></Field>
           <Field label="Cliente">
-            <select onChange={(event) => changeDraft("clienteId", event.target.value)} value={draftForm.clienteId}>
+            <select ref={newDocumentClientRef} onChange={(event) => changeDraft("clienteId", event.target.value)} value={draftForm.clienteId}>
               <option value="">Selecionar</option>
               {clientes.map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.nome} - {cliente.nif}</option>)}
             </select>
@@ -450,9 +474,31 @@ export default function DocumentosView() {
           <Field label="Observacoes"><textarea maxLength={250} onChange={(event) => changeDraft("observacoes", event.target.value)} value={draftForm.observacoes} /></Field>
         </div>
 
+        <div className="fac-panel-header">
+          <div><p className="fac-eyebrow">Primeira linha</p><h2>Conteudo do documento</h2></div>
+          <span className="fac-muted">O documento so e gravado quando esta linha for valida.</span>
+        </div>
+        <div className="fac-form-grid">
+          <Field label="Artigo">
+            <select onChange={(event) => selectArticle(event.target.value, artigos, setLineForm)} value={lineForm.artigoId}>
+              <option value="">Selecionar</option>
+              {artigos.map((artigo) => <option key={artigo.codigo} value={artigo.codigo}>{artigo.codigo} - {artigo.descricao}</option>)}
+            </select>
+          </Field>
+          <Field label="Descricao"><input maxLength={80} onChange={(event) => setLineForm((current) => ({ ...current, descricao: event.target.value }))} placeholder="Usa a descricao do artigo" value={lineForm.descricao} /></Field>
+          <Field label="Quantidade"><input min="0.000001" onChange={(event) => setLineForm((current) => ({ ...current, quantidade: event.target.value }))} step="0.000001" type="number" value={lineForm.quantidade} /></Field>
+          <Field label="Preco unitario"><input min="0" onChange={(event) => setLineForm((current) => ({ ...current, precoUnitario: event.target.value }))} step="0.000001" type="number" value={lineForm.precoUnitario} /></Field>
+          <Field label="Tipo de desconto">
+            <select onChange={(event) => setLineForm((current) => ({ ...current, tipoDesconto: event.target.value as LineForm["tipoDesconto"] }))} value={lineForm.tipoDesconto}>
+              <option value="PERCENTAGEM">Percentagem</option><option value="VALOR">Valor</option>
+            </select>
+          </Field>
+          <Field label={lineForm.tipoDesconto === "PERCENTAGEM" ? "Desconto (%)" : "Desconto (valor)"}><input min="0" onChange={(event) => setLineForm((current) => ({ ...current, desconto: event.target.value }))} step="0.000001" type="number" value={lineForm.desconto} /></Field>
+        </div>
+
         <div className="fac-form-footer">
-          <span className="fac-muted">O rascunho ainda nao recebe numero definitivo nem altera o numerador da serie.</span>
-          <button className="fac-primary-button" disabled={loading} onClick={createDraft} type="button">{loading ? "A criar..." : "Criar rascunho"}</button>
+          <span className="fac-muted">O documento fica em rascunho, sem numero definitivo, mas nunca sem linhas.</span>
+          <button className="fac-primary-button" disabled={loading} onClick={createDraft} type="button">{loading ? "A criar..." : "Criar documento e guardar primeira linha"}</button>
         </div>
       </section>
     );
@@ -487,7 +533,7 @@ export default function DocumentosView() {
         <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar documento, cliente, NIF ou estado" type="search" value={search} />
         <div className="fac-inline-actions">
           <button className="fac-soft-button" disabled={loading} onClick={loadDocumentos} type="button">Atualizar</button>
-          <button className="fac-primary-button" disabled={loading} onClick={openDraftEditor} type="button">Novo rascunho</button>
+          <button className="fac-primary-button" disabled={loading} onClick={openDraftEditor} type="button">Novo documento</button>
         </div>
       </section>
 
@@ -571,7 +617,7 @@ export default function DocumentosView() {
           <div className="fac-line-editor">
             <div className="fac-form-grid">
               <Field label="Artigo">
-                <select onChange={(event) => selectArticle(event.target.value, artigos, setLineForm)} value={lineForm.artigoId}>
+                <select ref={lineArticleRef} onChange={(event) => selectArticle(event.target.value, artigos, setLineForm)} value={lineForm.artigoId}>
                   <option value="">Selecionar</option>
                   {artigos.map((artigo) => <option key={artigo.codigo} value={artigo.codigo}>{artigo.codigo} - {artigo.descricao}</option>)}
                 </select>

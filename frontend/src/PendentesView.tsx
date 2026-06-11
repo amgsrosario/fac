@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Page<T> = { content: T[]; totalElements: number };
 type Pendente = {
@@ -47,6 +47,9 @@ type ReceiptForm = {
 type Allocations = Record<number, string>;
 
 export default function PendentesView() {
+  const receiptEditorRef = useRef<HTMLElement | null>(null);
+  const clientSelectRef = useRef<HTMLSelectElement | null>(null);
+  const newReceiptButtonRef = useRef<HTMLButtonElement | null>(null);
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [financeiros, setFinanceiros] = useState<DocumentoFinanceiro[]>([]);
@@ -63,6 +66,11 @@ export default function PendentesView() {
   const [allocations, setAllocations] = useState<Allocations>({});
 
   useEffect(() => { loadTesouraria(); }, []);
+
+  useEffect(() => {
+    if (!receiptOpen) return;
+    requestAnimationFrame(() => clientSelectRef.current?.focus());
+  }, [receiptOpen]);
 
   async function loadTesouraria() {
     setLoading(true);
@@ -117,11 +125,20 @@ export default function PendentesView() {
     }
   }
 
+  function closeReceipt() {
+    setReceiptOpen(false);
+    requestAnimationFrame(() => newReceiptButtonRef.current?.focus());
+  }
+
   function selectClient(clienteId: string) {
     const moedas = openPendentesForClient(pendentes, Number(clienteId)).map((item) => item.moedaId);
     const moedasUnicas = [...new Set(moedas)];
     setForm((current) => ({ ...current, clienteId, moedaId: moedasUnicas.length === 1 ? moedasUnicas[0] : "", valorRecebido: "" }));
     setAllocations({});
+    requestAnimationFrame(() => {
+      const selector = moedasUnicas.length === 1 ? "[data-receipt-value]" : "[data-receipt-currency]";
+      receiptEditorRef.current?.querySelector<HTMLElement>(selector)?.focus();
+    });
   }
 
   function distributeReceipt() {
@@ -139,7 +156,43 @@ export default function PendentesView() {
       remaining = round6(remaining - allocated);
     });
     setAllocations(next);
+    requestAnimationFrame(() => {
+      const firstAllocation = receiptEditorRef.current?.querySelector<HTMLInputElement>(".fac-table-input");
+      firstAllocation?.focus();
+      firstAllocation?.select();
+    });
     setMessage(remaining > 0 ? `Ficam ${money(remaining)} ${form.moedaId} por distribuir porque o valor recebido excede os pendentes disponíveis.` : null);
+  }
+
+  function handleReceiptKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeReceipt();
+      return;
+    }
+    if (event.key === "Enter" && (event.target as HTMLElement).hasAttribute("data-receipt-value")) {
+      event.preventDefault();
+      distributeReceipt();
+      return;
+    }
+    if (event.key !== "Tab") return;
+
+    const focusable = receiptEditorRef.current
+      ? Array.from(receiptEditorRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )).filter((element) => element.offsetParent !== null)
+      : [];
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   function changeAllocation(pendente: Pendente, value: string) {
@@ -180,7 +233,7 @@ export default function PendentesView() {
         }))
       });
       await loadTesouraria();
-      setReceiptOpen(false);
+      closeReceipt();
       setNotice(`${created.tipoDocumentoId} ${created.serie}/${created.numeroDocumento} emitido por ${money(created.valorPagamentoLiquido)} ${created.moedaId}. Pendentes atualizados.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Nao foi possivel emitir o recebimento.");
@@ -240,15 +293,15 @@ export default function PendentesView() {
 
     <section className="fac-list-toolbar">
       <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar pendente, cliente ou estado" type="search" value={search}/>
-      <div className="fac-inline-actions"><button className="fac-soft-button" disabled={loading} onClick={loadTesouraria} type="button">Atualizar</button><button className="fac-primary-button" disabled={loading || clientesComPendentes.length === 0} onClick={openReceipt} type="button">Novo recebimento</button></div>
+      <div className="fac-inline-actions"><button className="fac-soft-button" disabled={loading} onClick={loadTesouraria} type="button">Atualizar</button><button className="fac-primary-button" disabled={loading || clientesComPendentes.length === 0} onClick={openReceipt} ref={newReceiptButtonRef} type="button">Novo recebimento</button></div>
     </section>
 
-    {receiptOpen && <section className="fac-panel fac-section-panel fac-emission-panel">
-      <div className="fac-panel-header"><div><p className="fac-eyebrow">Novo documento financeiro</p><h2>Distribuir recebimento</h2></div><button className="fac-ghost-button" onClick={() => setReceiptOpen(false)} type="button">Cancelar</button></div>
+    {receiptOpen && <section aria-label="Novo recebimento" className="fac-panel fac-section-panel fac-emission-panel" onKeyDown={handleReceiptKeyDown} ref={receiptEditorRef}>
+      <div className="fac-panel-header"><div><p className="fac-eyebrow">Novo documento financeiro</p><h2>Distribuir recebimento</h2></div><button className="fac-ghost-button" onClick={closeReceipt} type="button">Cancelar</button></div>
       <div className="fac-form-grid">
-        <Field label="Cliente"><select onChange={(event) => selectClient(event.target.value)} value={form.clienteId}><option value="">Selecionar cliente</option>{clientesComPendentes.map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.nome} - {cliente.nif}</option>)}</select></Field>
-        <Field label="Moeda"><select disabled={!form.clienteId || clientCurrencies.length <= 1} onChange={(event) => { setForm((current) => ({ ...current, moedaId: event.target.value, valorRecebido: "" })); setAllocations({}); }} value={form.moedaId}><option value="">Selecionar moeda</option>{clientCurrencies.map((moeda) => <option key={moeda} value={moeda}>{moeda}</option>)}</select></Field>
-        <Field label="Valor recebido"><input disabled={!form.moedaId} min="0.000001" onChange={(event) => { setForm((current) => ({ ...current, valorRecebido: event.target.value })); setAllocations({}); }} step="0.000001" type="number" value={form.valorRecebido}/></Field>
+        <Field label="Cliente"><select onChange={(event) => selectClient(event.target.value)} ref={clientSelectRef} value={form.clienteId}><option value="">Selecionar cliente</option>{clientesComPendentes.map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.nome} - {cliente.nif}</option>)}</select></Field>
+        <Field label="Moeda"><select data-receipt-currency disabled={!form.clienteId || clientCurrencies.length <= 1} onChange={(event) => { setForm((current) => ({ ...current, moedaId: event.target.value, valorRecebido: "" })); setAllocations({}); requestAnimationFrame(() => receiptEditorRef.current?.querySelector<HTMLElement>("[data-receipt-value]")?.focus()); }} value={form.moedaId}><option value="">Selecionar moeda</option>{clientCurrencies.map((moeda) => <option key={moeda} value={moeda}>{moeda}</option>)}</select></Field>
+        <Field label="Valor recebido"><input data-receipt-value disabled={!form.moedaId} min="0.000001" onChange={(event) => { setForm((current) => ({ ...current, valorRecebido: event.target.value })); setAllocations({}); }} step="0.000001" type="number" value={form.valorRecebido}/></Field>
         <Field label="Modo de pagamento"><select onChange={(event) => setForm((current) => ({ ...current, mPagamentoId: event.target.value }))} value={form.mPagamentoId}><option value="">Confirmar modo</option>{modos.map((modo) => <option key={modo.id} value={modo.id}>{modo.nome}</option>)}</select></Field>
         <Field label="Tipo de documento"><select onChange={(event) => { const tipoDocumentoId = event.target.value; setForm((current) => ({ ...current, tipoDocumentoId, serie: series.find((item) => item.tipoDocumentoId === tipoDocumentoId)?.serie ?? "" })); }} value={form.tipoDocumentoId}><option value="">Selecionar</option>{tipos.map((tipo) => <option key={tipo.id} value={tipo.id}>{tipo.id} - {tipo.descricao}</option>)}</select></Field>
         <Field label="Serie"><select onChange={(event) => setForm((current) => ({ ...current, serie: event.target.value }))} value={form.serie}><option value="">Selecionar</option>{availableSeries.map((serie) => <option key={`${serie.tipoDocumentoId}-${serie.serie}`} value={serie.serie}>{serie.serie} - {serie.nome}</option>)}</select></Field>
@@ -268,9 +321,11 @@ export default function PendentesView() {
       <div className="fac-form-footer"><span className="fac-muted">O recibo só pode ser emitido quando o valor recebido estiver totalmente distribuido pelos pendentes.</span><button className="fac-gold-button" disabled={loading || receiptTarget <= 0 || difference !== 0 || allocatedLines.length === 0} onClick={issueReceipt} type="button">Emitir recebimento</button></div>
     </section>}
 
+    {!receiptOpen && <>
     <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Pendentes</p><h2>Conta corrente em aberto e liquidada</h2></div><span className="fac-muted">{filteredPendentes.length} registos</span></div><table className="fac-table"><thead><tr><th>Documento</th><th>Cliente</th><th>Estado</th><th>Vencimento</th><th>Original</th><th>Pendente</th></tr></thead><tbody>{filteredPendentes.map((item) => <tr key={item.id}><td>{referencia(item)}</td><td>{item.clienteId}</td><td><span className="fac-status">{estado(item)}</span></td><td>{datePt(item.dataVencimento)}</td><td>{money(item.valorDocumento)} {item.moedaId}</td><td>{money(item.valorPendente)} {item.moedaId}</td></tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={6}>Sem pendentes para mostrar.</td></tr>}</tbody></table></section>
 
     <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><span className="fac-muted">{financeiros.length} documentos</span></div><table className="fac-table"><thead><tr><th>Documento</th><th>Cliente</th><th>Data</th><th>Modo</th><th>Liquido</th><th>Estado</th><th>Acoes</th></tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}><td>{documento.tipoDocumentoId} {documento.serie}/{documento.numeroDocumento}</td><td>{documento.clienteId}</td><td>{datePt(documento.dataEmissao)}</td><td>{documento.mPagamentoId}</td><td>{money(documento.valorPagamentoLiquido)} {documento.moedaId}</td><td><span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span></td><td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => window.open(`/api/documentos-financeiros/${documento.id}/diagnostico/html`, "_blank", "noopener,noreferrer")} type="button">Diagnostico</button>{!documento.anulado && <button className="fac-link-danger" disabled={loading} onClick={() => annulFinancial(documento)} type="button">Anular</button>}</div></td></tr>)}{!loading && financeiros.length === 0 && <tr><td colSpan={7}>Sem documentos financeiros para mostrar.</td></tr>}</tbody></table></section>
+    </>}
   </>;
 }
 

@@ -227,20 +227,83 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void criaDocumentoComPrimeiraLinhaAtomicamente() throws Exception {
+        mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "INEXISTENTE",
+                                    "quantidade": 1,
+                                    "precoUnitario": 10
+                                  }
+                                }
+                                """.formatted(cliente.getId(), armazem.getId())))
+                .andExpect(status().isNotFound());
+
+        String location = mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 1,
+                                    "precoUnitario": 10
+                                  }
+                                }
+                                """.formatted(cliente.getId(), armazem.getId())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.valorBruto").value(10.000000))
+                .andExpect(jsonPath("$.valorIvaTotal").value(2.300000))
+                .andExpect(jsonPath("$.valorTotal").value(12.300000))
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+
+        Long documentoId = Long.valueOf(location.substring(location.lastIndexOf('/') + 1));
+        org.assertj.core.api.Assertions.assertThat(
+                linhaDocumentoComercialRepository.findByDocumentoComercialIdOrderByNumeroLinha(documentoId)
+        ).hasSize(1);
+    }
+
+    @Test
     void criaAtualizaEApagaRascunhoDocumentoComercial() throws Exception {
         String location = mockMvc.perform(post("/documentos-comerciais")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tipoDocumentoId": "DCT",
-                                  "serie": "A",
-                                  "dataEmissao": "2026-06-06",
-                                  "clienteId": %d,
-                                  "armazemCargaId": %d,
-                                  "pPagamentoId": "P30",
-                                  "matricula": "AA-00-AA",
-                                  "peso": 12.345,
-                                  "observacoes": "Rascunho inicial"
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30",
+                                    "matricula": "AA-00-AA",
+                                    "peso": 12.345,
+                                    "observacoes": "Rascunho inicial"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 1,
+                                    "precoUnitario": 10
+                                  }
                                 }
                                 """.formatted(cliente.getId(), armazem.getId())))
                 .andExpect(status().isCreated())
@@ -292,12 +355,21 @@ class DocumentoComercialControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tipoDocumentoId": "DCT",
-                                  "serie": "A",
-                                  "dataEmissao": "2026-06-06",
-                                  "clienteId": %d,
-                                  "armazemCargaId": %d,
-                                  "pPagamentoId": "P30"
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 2,
+                                    "precoUnitario": 10,
+                                    "tipoDesconto": "PERCENTAGEM",
+                                    "desconto": 10
+                                  }
                                 }
                                 """.formatted(cliente.getId(), armazem.getId())))
                 .andExpect(status().isCreated())
@@ -305,26 +377,16 @@ class DocumentoComercialControllerTests {
                 .getResponse()
                 .getHeader("Location");
 
-        mockMvc.perform(post(documentoLocation + "/linhas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "artigoId": "ARTLINHA",
-                                  "quantidade": 2,
-                                  "precoUnitario": 10,
-                                  "tipoDesconto": "PERCENTAGEM",
-                                  "desconto": 10
-                                }
-                                """))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.numeroLinha").value(1))
-                .andExpect(jsonPath("$.descricao").value("Artigo Linha"))
-                .andExpect(jsonPath("$.valorBruto").value(20.000000))
-                .andExpect(jsonPath("$.valorDesconto").value(2.000000))
-                .andExpect(jsonPath("$.valorLinha").value(18.000000))
-                .andExpect(jsonPath("$.tipoTaxaIvaId").value("NORMAL"))
-                .andExpect(jsonPath("$.percentagemIva").value(23.00))
-                .andExpect(jsonPath("$.peso").value(2.500));
+        mockMvc.perform(get(documentoLocation + "/linhas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].numeroLinha").value(1))
+                .andExpect(jsonPath("$[0].descricao").value("Artigo Linha"))
+                .andExpect(jsonPath("$[0].valorBruto").value(20.000000))
+                .andExpect(jsonPath("$[0].valorDesconto").value(2.000000))
+                .andExpect(jsonPath("$[0].valorLinha").value(18.000000))
+                .andExpect(jsonPath("$[0].tipoTaxaIvaId").value("NORMAL"))
+                .andExpect(jsonPath("$[0].percentagemIva").value(23.00))
+                .andExpect(jsonPath("$[0].peso").value(2.500));
 
         mockMvc.perform(get(documentoLocation))
                 .andExpect(status().isOk())
@@ -343,29 +405,25 @@ class DocumentoComercialControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tipoDocumentoId": "DCT",
-                                  "serie": "A",
-                                  "dataEmissao": "2026-06-06",
-                                  "clienteId": %d,
-                                  "armazemCargaId": %d,
-                                  "pPagamentoId": "P30"
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 2,
+                                    "precoUnitario": 10
+                                  }
                                 }
                                 """.formatted(cliente.getId(), armazem.getId())))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getHeader("Location");
-
-        mockMvc.perform(post(documentoLocation + "/linhas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "artigoId": "ARTLINHA",
-                                  "quantidade": 2,
-                                  "precoUnitario": 10
-                                }
-                                """))
-                .andExpect(status().isCreated());
 
         mockMvc.perform(post(documentoLocation + "/emitir")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -402,29 +460,25 @@ class DocumentoComercialControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tipoDocumentoId": "DCT",
-                                  "serie": "A",
-                                  "dataEmissao": "2026-06-06",
-                                  "clienteId": %d,
-                                  "armazemCargaId": %d,
-                                  "pPagamentoId": "P30"
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 2,
+                                    "precoUnitario": 10
+                                  }
                                 }
                                 """.formatted(cliente.getId(), armazem.getId())))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getHeader("Location");
-
-        mockMvc.perform(post(documentoLocation + "/linhas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "artigoId": "ARTLINHA",
-                                  "quantidade": 2,
-                                  "precoUnitario": 10
-                                }
-                                """))
-                .andExpect(status().isCreated());
 
         mockMvc.perform(post(documentoLocation + "/emitir")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -468,29 +522,25 @@ class DocumentoComercialControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tipoDocumentoId": "DCT",
-                                  "serie": "A",
-                                  "dataEmissao": "2026-06-06",
-                                  "clienteId": %d,
-                                  "armazemCargaId": %d,
-                                  "pPagamentoId": "P30"
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 2,
+                                    "precoUnitario": 10
+                                  }
                                 }
                                 """.formatted(cliente.getId(), armazem.getId())))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getHeader("Location");
-
-        mockMvc.perform(post(documentoLocation + "/linhas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "artigoId": "ARTLINHA",
-                                  "quantidade": 2,
-                                  "precoUnitario": 10
-                                }
-                                """))
-                .andExpect(status().isCreated());
 
         mockMvc.perform(post(documentoLocation + "/emitir")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -523,29 +573,25 @@ class DocumentoComercialControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tipoDocumentoId": "DCT",
-                                  "serie": "A",
-                                  "dataEmissao": "2026-06-06",
-                                  "clienteId": %d,
-                                  "armazemCargaId": %d,
-                                  "pPagamentoId": "P30"
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 2,
+                                    "precoUnitario": 10
+                                  }
                                 }
                                 """.formatted(cliente.getId(), armazem.getId())))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getHeader("Location");
-
-        mockMvc.perform(post(documentoLocation + "/linhas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "artigoId": "ARTLINHA",
-                                  "quantidade": 2,
-                                  "precoUnitario": 10
-                                }
-                                """))
-                .andExpect(status().isCreated());
 
         mockMvc.perform(post(documentoLocation + "/emitir")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -776,29 +822,25 @@ class DocumentoComercialControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tipoDocumentoId": "DCT",
-                                  "serie": "A",
-                                  "dataEmissao": "2026-06-06",
-                                  "clienteId": %d,
-                                  "armazemCargaId": %d,
-                                  "pPagamentoId": "P30"
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 2,
+                                    "precoUnitario": 10
+                                  }
                                 }
                                 """.formatted(cliente.getId(), armazem.getId())))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getHeader("Location");
-
-        mockMvc.perform(post(documentoLocation + "/linhas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "artigoId": "ARTLINHA",
-                                  "quantidade": 2,
-                                  "precoUnitario": 10
-                                }
-                                """))
-                .andExpect(status().isCreated());
 
         mockMvc.perform(post(documentoLocation + "/emitir")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -864,20 +906,27 @@ class DocumentoComercialControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tipoDocumentoId": "DCT",
-                                  "serie": "A",
-                                  "dataEmissao": "2026-06-06",
-                                  "clienteId": %d,
-                                  "armazemCargaId": %d,
-                                  "pPagamentoId": "P30"
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": %d,
+                                    "precoUnitario": 10
+                                  }
                                 }
-                                """.formatted(cliente.getId(), armazem.getId())))
+                                """.formatted(cliente.getId(), armazem.getId(), quantidades[0])))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getHeader("Location");
 
-        for (int quantidade : quantidades) {
+        for (int i = 1; i < quantidades.length; i++) {
             mockMvc.perform(post(location + "/linhas")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
@@ -886,7 +935,7 @@ class DocumentoComercialControllerTests {
                                       "quantidade": %d,
                                       "precoUnitario": 10
                                     }
-                                    """.formatted(quantidade)))
+                                    """.formatted(quantidades[i])))
                     .andExpect(status().isCreated());
         }
 

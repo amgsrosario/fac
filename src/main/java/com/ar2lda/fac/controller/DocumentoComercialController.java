@@ -1,12 +1,13 @@
 package com.ar2lda.fac.controller;
 
-import com.ar2lda.fac.controller.dto.DocumentoComercialCreateDto;
+import com.ar2lda.fac.controller.dto.DocumentoComercialComLinhaCreateDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialDiagnosticoDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialEmitirDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialUpdateDto;
 import com.ar2lda.fac.service.DocumentoComercialService;
+import com.ar2lda.fac.service.DocumentoComercialCriacaoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,10 +31,12 @@ import java.net.URI;
 public class DocumentoComercialController implements GenericController {
 
     private final DocumentoComercialService service;
+    private final DocumentoComercialCriacaoService criacaoService;
 
     @PostMapping
-    public ResponseEntity<DocumentoComercialDto> create(@RequestBody @Valid DocumentoComercialCreateDto dto) {
-        DocumentoComercialDto created = service.create(dto);
+    public ResponseEntity<DocumentoComercialDto> create(
+            @RequestBody @Valid DocumentoComercialComLinhaCreateDto dto) {
+        DocumentoComercialDto created = criacaoService.createComPrimeiraLinha(dto);
         URI location = gerarHeaderLocation(created.id());
         return ResponseEntity.created(location).body(created);
     }
