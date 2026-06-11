@@ -33,7 +33,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -385,6 +386,23 @@ button:disabled {
   align-items: center;
 }
 
+.fac-list-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.fac-list-toolbar input {
+  width: min(480px, 100%);
+  border: 1px solid var(--fac-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  color: var(--fac-text);
+  background: var(--fac-surface);
+  outline: none;
+}
+
 .fac-editor-message {
   margin: 0 0 18px;
   border: 1px solid #dde6d9;
@@ -413,7 +431,8 @@ button:disabled {
 }
 
 .fac-field input,
-.fac-field select {
+.fac-field select,
+.fac-field textarea {
   width: 100%;
   min-height: 44px;
   border: 1px solid var(--fac-border);
@@ -424,8 +443,14 @@ button:disabled {
   outline: none;
 }
 
+.fac-field textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
 .fac-field input:focus,
-.fac-field select:focus {
+.fac-field select:focus,
+.fac-field textarea:focus {
   border-color: #c8ced2;
   box-shadow: 0 0 0 3px rgba(68, 81, 93, 0.05);
 }
@@ -477,7 +502,8 @@ button:disabled {
   }
 
   .fac-inline-actions,
-  .fac-form-footer {
+  .fac-form-footer,
+  .fac-list-toolbar {
     align-items: stretch;
     flex-direction: column;
   }
