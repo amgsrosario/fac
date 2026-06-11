@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ArtigosView from "./ArtigosView";
 import DocumentosView from "./DocumentosView";
+import PendentesView from "./PendentesView";
 import ParametrosDocumentoView from "./ParametrosDocumentoView";
 
 type Page<T> = {
@@ -597,6 +598,8 @@ function App() {
           <DocumentosView />
         ) : activeView === "Artigos" ? (
           <ArtigosView />
+        ) : activeView === "Tesouraria" ? (
+          <PendentesView />
         ) : activeView === "Configuracao" ? (
           <ConfiguracaoView
             catalogos={clienteCatalogos}

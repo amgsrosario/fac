@@ -699,6 +699,78 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void cabecalhosComerciaisEFinanceirosSuportamVariasLinhas() throws Exception {
+        Long primeiroDocumentoId = emitirDocumentoComercialComLinhas(1, 2);
+        Long segundoDocumentoId = emitirDocumentoComercialComLinhas(4);
+
+        org.assertj.core.api.Assertions.assertThat(
+                linhaDocumentoComercialRepository.findByDocumentoComercialIdOrderByNumeroLinha(primeiroDocumentoId)
+        ).hasSize(2);
+        org.assertj.core.api.Assertions.assertThat(
+                linhaDocumentoComercialRepository.findByDocumentoComercialIdOrderByNumeroLinha(segundoDocumentoId)
+        ).hasSize(1);
+
+        Pendente primeiroPendente = pendenteRepository.findByDocumentoComercialId(primeiroDocumentoId).orElseThrow();
+        Pendente segundoPendente = pendenteRepository.findByDocumentoComercialId(segundoDocumentoId).orElseThrow();
+
+        String financeiroLocation = mockMvc.perform(post("/documentos-financeiros")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoDocumentoId": "RCB",
+                                  "serie": "A",
+                                  "dataEmissao": "2026-06-06",
+                                  "clienteId": %d,
+                                  "moedaId": "EUR",
+                                  "mPagamentoId": %d,
+                                  "emissorId": "EMISSOR",
+                                  "linhas": [
+                                    {
+                                      "pendenteId": %d,
+                                      "valorALiquidar": 10,
+                                      "descontoValor": 0
+                                    },
+                                    {
+                                      "pendenteId": %d,
+                                      "valorALiquidar": 20,
+                                      "descontoValor": 0
+                                    }
+                                  ]
+                                }
+                                """.formatted(cliente.getId(), mPagamento.getId(),
+                                primeiroPendente.getId(), segundoPendente.getId())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.valorPagamentoBruto").value(30.000000))
+                .andExpect(jsonPath("$.valorPagamentoLiquido").value(30.000000))
+                .andExpect(jsonPath("$.linhas.length()").value(2))
+                .andExpect(jsonPath("$.linhas[0].pendenteId").value(primeiroPendente.getId()))
+                .andExpect(jsonPath("$.linhas[0].novoValorPendente").value(26.900000))
+                .andExpect(jsonPath("$.linhas[1].pendenteId").value(segundoPendente.getId()))
+                .andExpect(jsonPath("$.linhas[1].novoValorPendente").value(29.200000))
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+
+        org.assertj.core.api.Assertions.assertThat(
+                pendenteRepository.findById(primeiroPendente.getId()).orElseThrow().getValorPendente()
+        ).isEqualByComparingTo("26.900000");
+        org.assertj.core.api.Assertions.assertThat(
+                pendenteRepository.findById(segundoPendente.getId()).orElseThrow().getValorPendente()
+        ).isEqualByComparingTo("29.200000");
+
+        mockMvc.perform(post(financeiroLocation + "/anular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.anulado").value(true));
+
+        org.assertj.core.api.Assertions.assertThat(
+                pendenteRepository.findById(primeiroPendente.getId()).orElseThrow().getValorPendente()
+        ).isEqualByComparingTo("36.900000");
+        org.assertj.core.api.Assertions.assertThat(
+                pendenteRepository.findById(segundoPendente.getId()).orElseThrow().getValorPendente()
+        ).isEqualByComparingTo("49.200000");
+    }
+
+    @Test
     void documentoFinanceiroNaoPermiteDataAnteriorAoUltimoDaSerie() throws Exception {
         String documentoLocation = mockMvc.perform(post("/documentos-comerciais")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -785,5 +857,48 @@ class DocumentoComercialControllerTests {
                                 """.formatted(cliente.getId(), mPagamento.getId(), pendente.getId())))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Data de emissao nao pode ser anterior ao ultimo documento financeiro emitido da serie"));
+    }
+
+    private Long emitirDocumentoComercialComLinhas(int... quantidades) throws Exception {
+        String location = mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoDocumentoId": "DCT",
+                                  "serie": "A",
+                                  "dataEmissao": "2026-06-06",
+                                  "clienteId": %d,
+                                  "armazemCargaId": %d,
+                                  "pPagamentoId": "P30"
+                                }
+                                """.formatted(cliente.getId(), armazem.getId())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+
+        for (int quantidade : quantidades) {
+            mockMvc.perform(post(location + "/linhas")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "artigoId": "ARTLINHA",
+                                      "quantidade": %d,
+                                      "precoUnitario": 10
+                                    }
+                                    """.formatted(quantidade)))
+                    .andExpect(status().isCreated());
+        }
+
+        mockMvc.perform(post(location + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "emissorId": "EMISSOR"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        return Long.valueOf(location.substring(location.lastIndexOf('/') + 1));
     }
 }

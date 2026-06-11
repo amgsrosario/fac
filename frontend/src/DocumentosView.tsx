@@ -66,6 +66,37 @@ type Armazem = {
   nome: string;
 };
 
+type Artigo = {
+  codigo: string;
+  descricao: string;
+  pvp: number;
+  inativo: boolean;
+};
+
+type Utilizador = {
+  codigo: string;
+  nome: string;
+  inativo: boolean;
+};
+
+type DiagnosticoDocumento = {
+  referencia: string;
+  podeEmitir: boolean;
+  alertas: string[];
+  bloqueios: string[];
+  pendente: {
+    existe: boolean;
+    id?: number;
+    valorDocumento?: number;
+    valorPendente?: number;
+  };
+  totais: {
+    cabecalhoValorTotal: number;
+    linhasValorTotal: number;
+    coerente: boolean;
+  };
+};
+
 type DraftForm = {
   tipoDocumentoId: string;
   serie: string;
@@ -81,6 +112,15 @@ type ParametrosDocumento = {
   armazemCargaId?: number;
 };
 
+type LineForm = {
+  artigoId: string;
+  descricao: string;
+  quantidade: string;
+  precoUnitario: string;
+  tipoDesconto: "PERCENTAGEM" | "VALOR";
+  desconto: string;
+};
+
 const emptyDraftForm: DraftForm = {
   tipoDocumentoId: "",
   serie: "",
@@ -88,6 +128,15 @@ const emptyDraftForm: DraftForm = {
   clienteId: "",
   armazemCargaId: "",
   observacoes: ""
+};
+
+const emptyLineForm: LineForm = {
+  artigoId: "",
+  descricao: "",
+  quantidade: "1",
+  precoUnitario: "0",
+  tipoDesconto: "PERCENTAGEM",
+  desconto: "0"
 };
 
 export default function DocumentosView() {
@@ -105,6 +154,13 @@ export default function DocumentosView() {
   const [tiposDocumento, setTiposDocumento] = useState<TipoDocumento[]>([]);
   const [series, setSeries] = useState<Serie[]>([]);
   const [armazens, setArmazens] = useState<Armazem[]>([]);
+  const [artigos, setArtigos] = useState<Artigo[]>([]);
+  const [lineEditorOpen, setLineEditorOpen] = useState(false);
+  const [lineForm, setLineForm] = useState<LineForm>(emptyLineForm);
+  const [emissionOpen, setEmissionOpen] = useState(false);
+  const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
+  const [utilizadores, setUtilizadores] = useState<Utilizador[]>([]);
+  const [emissorId, setEmissorId] = useState("");
 
   useEffect(() => {
     loadDocumentos();
@@ -142,6 +198,124 @@ export default function DocumentosView() {
       setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar as linhas.");
     } finally {
       setLinesLoading(false);
+    }
+  }
+
+  async function openLineEditor() {
+    if (!selected || selected.estado !== "RASCUNHO") return;
+    setMessage(null);
+    try {
+      if (artigos.length === 0) {
+        const page = await fetchJson<Page<Artigo>>("/api/artigos?size=500&sort=descricao,asc");
+        setArtigos(page.content.filter((artigo) => !artigo.inativo));
+      }
+      setLineForm(emptyLineForm);
+      setLineEditorOpen(true);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar os artigos.");
+    }
+  }
+
+  async function createLine() {
+    if (!selected) return;
+    const validation = validateLine(lineForm);
+    if (validation) {
+      setMessage(validation);
+      return;
+    }
+    setLinesLoading(true);
+    setMessage(null);
+    try {
+      await requestJson<LinhaDocumento>(`/api/documentos-comerciais/${selected.id}/linhas`, "POST", {
+        artigoId: lineForm.artigoId,
+        descricao: blankToNull(lineForm.descricao),
+        quantidade: Number(lineForm.quantidade),
+        precoUnitario: Number(lineForm.precoUnitario),
+        tipoDesconto: lineForm.tipoDesconto,
+        desconto: Number(lineForm.desconto),
+        tipoTaxaIvaId: null,
+        peso: null
+      });
+      await refreshSelectedDocument(selected.id);
+      setLineEditorOpen(false);
+      setNotice("Linha adicionada e totais do documento recalculados.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel adicionar a linha.");
+    } finally {
+      setLinesLoading(false);
+    }
+  }
+
+  async function deleteLine(lineId: number) {
+    if (!selected || !window.confirm("Remover esta linha do rascunho?")) return;
+    setLinesLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/documentos-comerciais/${selected.id}/linhas/${lineId}`, { method: "DELETE" });
+      if (!response.ok) throw new Error(await responseError(response));
+      await refreshSelectedDocument(selected.id);
+      setNotice("Linha removida e totais do documento recalculados.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel remover a linha.");
+    } finally {
+      setLinesLoading(false);
+    }
+  }
+
+  async function refreshSelectedDocument(documentoId: number) {
+    const [documento, linhasAtualizadas] = await Promise.all([
+      fetchJson<DocumentoComercial>(`/api/documentos-comerciais/${documentoId}`),
+      fetchJson<LinhaDocumento[]>(`/api/documentos-comerciais/${documentoId}/linhas`)
+    ]);
+    setDocumentos((current) => current.map((item) => item.id === documentoId ? documento : item));
+    setLinhas(linhasAtualizadas);
+  }
+
+  async function openEmission() {
+    if (!selected || selected.estado !== "RASCUNHO") return;
+    setLoading(true);
+    setMessage(null);
+    setNotice(null);
+    try {
+      const [diagnosticoAtual, utilizadoresPage] = await Promise.all([
+        fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`),
+        fetchJson<Page<Utilizador>>("/api/utilizadores?size=100&sort=nome,asc")
+      ]);
+      const ativos = utilizadoresPage.content.filter((utilizador) => !utilizador.inativo);
+      setDiagnostico(diagnosticoAtual);
+      setUtilizadores(ativos);
+      setEmissorId(ativos.length === 1 ? ativos[0].codigo : "");
+      setEmissionOpen(true);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel preparar a emissao.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function emitDocument() {
+    if (!selected || !diagnostico?.podeEmitir) return;
+    if (!emissorId) {
+      setMessage("Seleciona o emissor do documento.");
+      return;
+    }
+    if (!window.confirm(`Emitir definitivamente ${diagnostico.referencia}? Depois de emitido, o documento fica imutavel.`)) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, "POST", { emissorId });
+      const diagnosticoEmitido = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
+      setDocumentos((current) => current.map((item) => item.id === emitted.id ? emitted : item));
+      setEmissionOpen(false);
+      setDiagnostico(null);
+      setLineEditorOpen(false);
+      setNotice(diagnosticoEmitido.pendente.existe
+        ? `Documento ${reference(emitted)} emitido. Pendente ${diagnosticoEmitido.pendente.id} criado com ${money(diagnosticoEmitido.pendente.valorPendente ?? 0)} ${emitted.moedaId}.`
+        : `Documento ${reference(emitted)} emitido sem pendente por ser de liquidacao imediata.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel emitir o documento.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -231,6 +405,7 @@ export default function DocumentosView() {
   const drafts = documentos.filter((documento) => documento.estado === "RASCUNHO").length;
   const annulled = documentos.filter((documento) => documento.anulado).length;
   const availableSeries = series.filter((serie) => serie.tipoDocumentoId === draftForm.tipoDocumentoId);
+  const selectedIsDraft = selected?.estado === "RASCUNHO";
 
   function changeDraft<K extends keyof DraftForm>(field: K, value: DraftForm[K]) {
     setDraftForm((current) => ({ ...current, [field]: value }));
@@ -349,25 +524,87 @@ export default function DocumentosView() {
           </dl>
           <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openHtml(selected.id)} type="button">Diagnostico HTML</button>
           <button className="fac-ghost-button" disabled={!selected} onClick={() => selected && openJson(selected.id)} type="button">Diagnostico JSON</button>
+          {selectedIsDraft && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
         </aside>
       </section>
+
+      {emissionOpen && selectedIsDraft && diagnostico && (
+        <section className="fac-panel fac-section-panel fac-emission-panel">
+          <div className="fac-panel-header">
+            <div><p className="fac-eyebrow">Emissao definitiva</p><h2>{diagnostico.referencia}</h2></div>
+            <button className="fac-ghost-button" onClick={() => setEmissionOpen(false)} type="button">Fechar conferencia</button>
+          </div>
+
+          <div className="fac-emission-summary">
+            <div><span>Total do cabecalho</span><strong>{money(diagnostico.totais.cabecalhoValorTotal)} {selected.moedaId}</strong></div>
+            <div><span>Total calculado pelas linhas</span><strong>{money(diagnostico.totais.linhasValorTotal)} {selected.moedaId}</strong></div>
+            <div><span>Coerencia dos totais</span><strong>{diagnostico.totais.coerente ? "Confirmada" : "Com diferencas"}</strong></div>
+          </div>
+
+          {diagnostico.bloqueios.length > 0 && <div className="fac-check-list danger"><strong>Emissao bloqueada</strong>{diagnostico.bloqueios.map((item) => <p key={item}>{item}</p>)}</div>}
+          {diagnostico.alertas.length > 0 && <div className="fac-check-list warning"><strong>Alertas</strong>{diagnostico.alertas.map((item) => <p key={item}>{item}</p>)}</div>}
+          {diagnostico.podeEmitir && diagnostico.alertas.length === 0 && <p className="fac-check-ok">O backend confirmou que o documento esta coerente e pode ser emitido.</p>}
+
+          <div className="fac-form-footer">
+            <Field label="Emissor">
+              <select onChange={(event) => setEmissorId(event.target.value)} value={emissorId}>
+                <option value="">Selecionar utilizador</option>
+                {utilizadores.map((utilizador) => <option key={utilizador.codigo} value={utilizador.codigo}>{utilizador.nome} ({utilizador.codigo})</option>)}
+              </select>
+            </Field>
+            <button className="fac-gold-button" disabled={loading || !diagnostico.podeEmitir || !emissorId} onClick={emitDocument} type="button">Emitir documento</button>
+          </div>
+          <p className="fac-muted">A emissao atribui o numero definitivo, avanca o numerador da serie e torna o documento imutavel.</p>
+        </section>
+      )}
 
       <section className="fac-panel fac-section-panel">
         <div className="fac-panel-header">
           <div><p className="fac-eyebrow">Linhas</p><h2>{selected ? reference(selected) : "Sem documento"}</h2></div>
-          <span className="fac-muted">{linesLoading ? "A carregar..." : `${linhas.length} linhas`}</span>
+          <div className="fac-inline-actions">
+            <span className="fac-muted">{linesLoading ? "A carregar..." : `${linhas.length} linhas`}</span>
+            {selectedIsDraft && <button className="fac-primary-button" disabled={linesLoading} onClick={openLineEditor} type="button">Adicionar linha</button>}
+          </div>
         </div>
+
+        {lineEditorOpen && selectedIsDraft && (
+          <div className="fac-line-editor">
+            <div className="fac-form-grid">
+              <Field label="Artigo">
+                <select onChange={(event) => selectArticle(event.target.value, artigos, setLineForm)} value={lineForm.artigoId}>
+                  <option value="">Selecionar</option>
+                  {artigos.map((artigo) => <option key={artigo.codigo} value={artigo.codigo}>{artigo.codigo} - {artigo.descricao}</option>)}
+                </select>
+              </Field>
+              <Field label="Descricao"><input maxLength={80} onChange={(event) => setLineForm((current) => ({ ...current, descricao: event.target.value }))} placeholder="Usa a descricao do artigo" value={lineForm.descricao} /></Field>
+              <Field label="Quantidade"><input min="0.000001" onChange={(event) => setLineForm((current) => ({ ...current, quantidade: event.target.value }))} step="0.000001" type="number" value={lineForm.quantidade} /></Field>
+              <Field label="Preco unitario"><input min="0" onChange={(event) => setLineForm((current) => ({ ...current, precoUnitario: event.target.value }))} step="0.000001" type="number" value={lineForm.precoUnitario} /></Field>
+              <Field label="Tipo de desconto">
+                <select onChange={(event) => setLineForm((current) => ({ ...current, tipoDesconto: event.target.value as LineForm["tipoDesconto"] }))} value={lineForm.tipoDesconto}>
+                  <option value="PERCENTAGEM">Percentagem</option><option value="VALOR">Valor</option>
+                </select>
+              </Field>
+              <Field label={lineForm.tipoDesconto === "PERCENTAGEM" ? "Desconto (%)" : "Desconto (valor)"}><input min="0" onChange={(event) => setLineForm((current) => ({ ...current, desconto: event.target.value }))} step="0.000001" type="number" value={lineForm.desconto} /></Field>
+            </div>
+            <div className="fac-form-footer">
+              <span className="fac-muted">IVA, peso e totais sao calculados pelo backend a partir do artigo e do regime do documento.</span>
+              <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setLineEditorOpen(false)} type="button">Cancelar</button><button className="fac-primary-button" disabled={linesLoading} onClick={createLine} type="button">Guardar linha</button></div>
+            </div>
+          </div>
+        )}
+
         <table className="fac-table">
-          <thead><tr><th>Linha</th><th>Artigo</th><th>Descricao</th><th>Quantidade</th><th>Preco</th><th>IVA</th><th>Valor</th></tr></thead>
+          <thead><tr><th>Linha</th><th>Artigo</th><th>Descricao</th><th>Quantidade</th><th>Preco</th><th>IVA</th><th>Valor</th>{selectedIsDraft && <th>Acoes</th>}</tr></thead>
           <tbody>
             {linhas.map((linha) => (
               <tr key={linha.id}>
                 <td>{linha.numeroLinha}</td><td>{linha.artigoId}</td><td>{linha.descricao}</td>
                 <td>{decimal(linha.quantidade)}</td><td>{money(linha.precoUnitario)}</td>
                 <td>{decimal(linha.percentagemIva)}%</td><td>{money(linha.valorLinha)}</td>
+                {selectedIsDraft && <td><button className="fac-link-danger" disabled={linesLoading} onClick={() => deleteLine(linha.id)} type="button">Remover</button></td>}
               </tr>
             ))}
-            {!linesLoading && linhas.length === 0 && <tr><td colSpan={7}>Documento sem linhas.</td></tr>}
+            {!linesLoading && linhas.length === 0 && <tr><td colSpan={selectedIsDraft ? 8 : 7}>Documento sem linhas.</td></tr>}
           </tbody>
         </table>
       </section>
@@ -439,6 +676,25 @@ function validateDraft(form: DraftForm) {
   if (!form.clienteId) return "Seleciona o cliente.";
   if (!form.armazemCargaId) return "Seleciona o armazem de carga.";
   return null;
+}
+
+function validateLine(form: LineForm) {
+  if (!form.artigoId) return "Seleciona o artigo.";
+  if (!form.quantidade || Number(form.quantidade) <= 0) return "A quantidade deve ser superior a zero.";
+  if (form.precoUnitario === "" || Number(form.precoUnitario) < 0) return "O preco unitario nao pode ser negativo.";
+  if (form.desconto === "" || Number(form.desconto) < 0) return "O desconto nao pode ser negativo.";
+  if (form.tipoDesconto === "PERCENTAGEM" && Number(form.desconto) > 100) return "O desconto percentual nao pode exceder 100%.";
+  return null;
+}
+
+function selectArticle(codigo: string, artigos: Artigo[], setForm: React.Dispatch<React.SetStateAction<LineForm>>) {
+  const artigo = artigos.find((item) => item.codigo === codigo);
+  setForm((current) => ({
+    ...current,
+    artigoId: codigo,
+    descricao: "",
+    precoUnitario: artigo ? String(artigo.pvp ?? 0) : "0"
+  }));
 }
 
 function blankToNull(value: string) {
