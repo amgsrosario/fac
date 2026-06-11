@@ -19,6 +19,10 @@
   box-sizing: border-box;
 }
 
+.fac-hidden {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -28,7 +32,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -373,6 +378,79 @@ button:disabled {
   font-size: 13px;
 }
 
+.fac-inline-actions,
+.fac-form-footer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.fac-editor-message {
+  margin: 0 0 18px;
+  border: 1px solid #dde6d9;
+  border-radius: 16px;
+  padding: 11px 13px;
+  color: var(--fac-petrol);
+  background: var(--fac-client-soft);
+}
+
+.fac-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.fac-field {
+  display: grid;
+  gap: 7px;
+}
+
+.fac-field > span,
+.fac-check-field span {
+  color: var(--fac-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fac-field input,
+.fac-field select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--fac-border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: var(--fac-text);
+  background: var(--fac-surface);
+  outline: none;
+}
+
+.fac-field input:focus,
+.fac-field select:focus {
+  border-color: #c8ced2;
+  box-shadow: 0 0 0 3px rgba(68, 81, 93, 0.05);
+}
+
+.fac-check-field {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  min-height: 44px;
+  padding-top: 19px;
+}
+
+.fac-check-field input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--fac-petrol);
+}
+
+.fac-form-footer {
+  justify-content: space-between;
+  margin-top: 20px;
+  border-top: 1px solid var(--fac-border);
+  padding-top: 18px;
+}
+
 @media (max-width: 980px) {
   .fac-shell,
   .fac-hero,
@@ -393,8 +471,15 @@ button:disabled {
 
   .fac-topbar-actions,
   .fac-metrics,
-  .fac-balance-strip {
+  .fac-balance-strip,
+  .fac-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .fac-inline-actions,
+  .fac-form-footer {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .fac-topbar-actions {

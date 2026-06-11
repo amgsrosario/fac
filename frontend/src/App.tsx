@@ -27,6 +27,53 @@ type Cliente = {
   transporteId?: number;
 };
 
+type CatalogoString = {
+  id: string;
+  nome: string;
+};
+
+type CatalogoNumero = {
+  id: number;
+  nome: string;
+};
+
+type ParametrosCliente = {
+  id: number;
+  paisId?: string;
+  moedaId?: string;
+  rivaId?: string;
+  mPagamentoId?: number;
+  pPagamentoId?: string;
+  transporteId?: number;
+  retencao?: boolean;
+};
+
+type ClienteForm = {
+  nome: string;
+  nif: string;
+  email: string;
+  morada: string;
+  morada1: string;
+  codPostalId: string;
+  localidade: string;
+  paisId: string;
+  moedaId: string;
+  rivaId: string;
+  mPagamentoId: string;
+  pPagamentoId: string;
+  transporteId: string;
+  retencao: boolean;
+};
+
+type ClienteCatalogos = {
+  paises: CatalogoString[];
+  moedas: CatalogoString[];
+  regimesIva: CatalogoString[];
+  modosPagamento: CatalogoNumero[];
+  prazosPagamento: CatalogoString[];
+  transportes: CatalogoNumero[];
+};
+
 type DocumentoComercial = {
   id: number;
   tipoDocumentoId: string;
@@ -114,6 +161,23 @@ const menu: { label: ViewKey; hint: string }[] = [
   { label: "Configuracao", hint: "Base FAC" }
 ];
 
+const emptyClienteForm: ClienteForm = {
+  nome: "",
+  nif: "",
+  email: "",
+  morada: "",
+  morada1: "",
+  codPostalId: "",
+  localidade: "",
+  paisId: "",
+  moedaId: "",
+  rivaId: "",
+  mPagamentoId: "",
+  pPagamentoId: "",
+  transporteId: "",
+  retencao: false
+};
+
 function App() {
   const [activeView, setActiveView] = useState<ViewKey>("Dashboard");
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -124,6 +188,10 @@ function App() {
   const [clientesLoading, setClientesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clienteSearch, setClienteSearch] = useState("");
+  const [clienteEditorOpen, setClienteEditorOpen] = useState(false);
+  const [clienteForm, setClienteForm] = useState<ClienteForm>(emptyClienteForm);
+  const [clienteCatalogos, setClienteCatalogos] = useState<ClienteCatalogos | null>(null);
+  const [editorMessage, setEditorMessage] = useState<string | null>(null);
 
   async function loadDashboard() {
     setLoading(true);
@@ -166,6 +234,63 @@ function App() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nao foi possivel carregar a conta corrente.");
       setContaCorrente(null);
+    } finally {
+      setClientesLoading(false);
+    }
+  }
+
+  async function openClienteEditor() {
+    setClienteEditorOpen(true);
+    setClienteForm(emptyClienteForm);
+    setEditorMessage(null);
+    if (clienteCatalogos) {
+      return;
+    }
+    setClientesLoading(true);
+    try {
+      const [paises, moedas, regimesIva, modosPagamento, prazosPagamento, transportes] = await Promise.all([
+        fetchPage<CatalogoString>("/api/paises?size=300&sort=nome,asc"),
+        fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
+        fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
+        fetchPage<CatalogoNumero>("/api/mpagamentos?size=100&sort=nome,asc"),
+        fetchPage<CatalogoString>("/api/p-pagamentos?size=100&sort=nome,asc"),
+        fetchPage<CatalogoNumero>("/api/transportes?size=100&sort=nome,asc")
+      ]);
+      setClienteCatalogos({
+        paises: paises.content,
+        moedas: moedas.content,
+        regimesIva: regimesIva.content,
+        modosPagamento: modosPagamento.content,
+        prazosPagamento: prazosPagamento.content,
+        transportes: transportes.content
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nao foi possivel carregar os catalogos de cliente.");
+    } finally {
+      setClientesLoading(false);
+    }
+  }
+
+  async function applyMatrizZero() {
+    setClientesLoading(true);
+    setEditorMessage(null);
+    try {
+      const matriz = await fetchJson<ParametrosCliente>("/api/parametros-cliente");
+      setClienteForm((current) => ({
+        ...current,
+        paisId: matriz.paisId ?? current.paisId,
+        moedaId: matriz.moedaId ?? current.moedaId,
+        rivaId: matriz.rivaId ?? current.rivaId,
+        mPagamentoId: matriz.mPagamentoId != null ? String(matriz.mPagamentoId) : current.mPagamentoId,
+        pPagamentoId: matriz.pPagamentoId ?? current.pPagamentoId,
+        transporteId: matriz.transporteId != null ? String(matriz.transporteId) : current.transporteId,
+        retencao: matriz.retencao ?? current.retencao
+      }));
+      setEditorMessage("Matriz 0 aplicada aos campos configurados.");
+    } catch (err) {
+      setEditorMessage(err instanceof Error && err.message.includes("404")
+        ? "A Matriz 0 ainda nao foi configurada."
+        : "Nao foi possivel aplicar a Matriz 0.");
     } finally {
       setClientesLoading(false);
     }
@@ -282,12 +407,20 @@ function App() {
 
         {activeView === "Clientes" ? (
           <ClientesView
+            catalogos={clienteCatalogos}
             clientes={filteredClientes}
+            editorMessage={editorMessage}
+            form={clienteForm}
+            editorOpen={clienteEditorOpen}
             contaCorrente={contaCorrente}
             contaResumo={contaResumo}
             loading={clientesLoading}
             selectedCliente={selectedCliente}
             selectedClienteId={selectedClienteId}
+            onApplyMatrizZero={applyMatrizZero}
+            onChangeForm={setClienteForm}
+            onCloseEditor={() => setClienteEditorOpen(false)}
+            onOpenEditor={openClienteEditor}
             onSelectCliente={setSelectedClienteId}
           />
         ) : (
@@ -436,27 +569,47 @@ function DashboardView({
 }
 
 type ClientesViewProps = {
+  catalogos: ClienteCatalogos | null;
   clientes: Cliente[];
+  editorMessage: string | null;
+  form: ClienteForm;
+  editorOpen: boolean;
   contaCorrente: ContaCorrenteDiagnostico | null;
   contaResumo: ContaCorrenteResumo | null;
   loading: boolean;
   selectedCliente: Cliente | null;
   selectedClienteId: number | null;
+  onApplyMatrizZero: () => void;
+  onChangeForm: (form: ClienteForm) => void;
+  onCloseEditor: () => void;
+  onOpenEditor: () => void;
   onSelectCliente: (clienteId: number) => void;
 };
 
 function ClientesView({
+  catalogos,
   clientes,
+  editorMessage,
+  form,
+  editorOpen,
   contaCorrente,
   contaResumo,
   loading,
   selectedCliente,
   selectedClienteId,
+  onApplyMatrizZero,
+  onChangeForm,
+  onCloseEditor,
+  onOpenEditor,
   onSelectCliente
 }: ClientesViewProps) {
+  function changeField<K extends keyof ClienteForm>(field: K, value: ClienteForm[K]) {
+    onChangeForm({ ...form, [field]: value });
+  }
+
   return (
     <>
-      <section className="fac-hero">
+      <section className={`fac-hero ${editorOpen ? "fac-hidden" : ""}`}>
         <div>
           <p className="fac-eyebrow">Clientes</p>
           <h2>Consulta simples com conta corrente integrada</h2>
@@ -472,7 +625,7 @@ function ClientesView({
         </div>
       </section>
 
-      <section className="fac-metrics" aria-label="Indicadores de cliente">
+      <section className={`fac-metrics ${editorOpen ? "fac-hidden" : ""}`} aria-label="Indicadores de cliente">
         <article className="fac-metric client">
           <span>Saldo pendente</span>
           <strong>{contaResumo ? `${money(contaResumo.valorPendente)} ${contaResumo.moedaId}` : "-"}</strong>
@@ -491,14 +644,14 @@ function ClientesView({
         </article>
       </section>
 
-      <section className="fac-content-grid">
+      <section className={`fac-content-grid ${editorOpen ? "fac-hidden" : ""}`}>
         <article className="fac-panel fac-panel-main">
           <div className="fac-panel-header">
             <div>
               <p className="fac-eyebrow">Consulta</p>
               <h2>Clientes</h2>
             </div>
-            <button className="fac-soft-button" disabled type="button">Novo cliente em breve</button>
+            <button className="fac-soft-button" onClick={onOpenEditor} type="button">Novo cliente</button>
           </div>
 
           <table className="fac-table">
@@ -551,7 +704,81 @@ function ClientesView({
         </aside>
       </section>
 
-      <section className="fac-panel fac-section-panel">
+      {editorOpen && (
+        <section className="fac-panel fac-section-panel">
+          <div className="fac-panel-header">
+            <div>
+              <p className="fac-eyebrow">Editor</p>
+              <h2>Novo cliente</h2>
+            </div>
+            <div className="fac-inline-actions">
+              <button className="fac-soft-button" disabled={loading} onClick={onApplyMatrizZero} type="button">
+                Aplicar Matriz 0
+              </button>
+              <button className="fac-ghost-button" onClick={onCloseEditor} type="button">Voltar a lista</button>
+            </div>
+          </div>
+
+          {editorMessage && <p className="fac-editor-message">{editorMessage}</p>}
+
+          <div className="fac-form-grid">
+            <Field label="Nome"><input maxLength={80} onChange={(event) => changeField("nome", event.target.value)} value={form.nome} /></Field>
+            <Field label="NIF"><input maxLength={9} onChange={(event) => changeField("nif", event.target.value)} value={form.nif} /></Field>
+            <Field label="Email"><input maxLength={120} onChange={(event) => changeField("email", event.target.value)} type="email" value={form.email} /></Field>
+            <Field label="Morada"><input maxLength={60} onChange={(event) => changeField("morada", event.target.value)} value={form.morada} /></Field>
+            <Field label="Morada complementar"><input maxLength={60} onChange={(event) => changeField("morada1", event.target.value)} value={form.morada1} /></Field>
+            <Field label="Codigo postal"><input onChange={(event) => changeField("codPostalId", event.target.value)} value={form.codPostalId} /></Field>
+            <Field label="Localidade"><input maxLength={50} onChange={(event) => changeField("localidade", event.target.value)} value={form.localidade} /></Field>
+            <Field label="Pais">
+              <select onChange={(event) => changeField("paisId", event.target.value)} value={form.paisId}>
+                <option value="">Sem valor</option>
+                {catalogos?.paises.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+              </select>
+            </Field>
+            <Field label="Moeda">
+              <select onChange={(event) => changeField("moedaId", event.target.value)} value={form.moedaId}>
+                <option value="">Sem valor</option>
+                {catalogos?.moedas.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+              </select>
+            </Field>
+            <Field label="Regime de IVA">
+              <select onChange={(event) => changeField("rivaId", event.target.value)} value={form.rivaId}>
+                <option value="">Sem valor</option>
+                {catalogos?.regimesIva.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+              </select>
+            </Field>
+            <Field label="Modo de pagamento">
+              <select onChange={(event) => changeField("mPagamentoId", event.target.value)} value={form.mPagamentoId}>
+                <option value="">Sem valor</option>
+                {catalogos?.modosPagamento.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+              </select>
+            </Field>
+            <Field label="Prazo de pagamento">
+              <select onChange={(event) => changeField("pPagamentoId", event.target.value)} value={form.pPagamentoId}>
+                <option value="">Sem valor</option>
+                {catalogos?.prazosPagamento.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+              </select>
+            </Field>
+            <Field label="Transporte">
+              <select onChange={(event) => changeField("transporteId", event.target.value)} value={form.transporteId}>
+                <option value="">Sem valor</option>
+                {catalogos?.transportes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+              </select>
+            </Field>
+            <label className="fac-check-field">
+              <input checked={form.retencao} onChange={(event) => changeField("retencao", event.target.checked)} type="checkbox" />
+              <span>Cliente sujeito a retencao</span>
+            </label>
+          </div>
+
+          <div className="fac-form-footer">
+            <span className="fac-muted">Nesta fase o editor valida o preenchimento e a Matriz 0. A gravacao sera o passo seguinte.</span>
+            <button className="fac-primary-button" disabled type="button">Gravar cliente</button>
+          </div>
+        </section>
+      )}
+
+      <section className={`fac-panel fac-section-panel ${editorOpen ? "fac-hidden" : ""}`}>
         <div className="fac-panel-header">
           <div>
             <p className="fac-eyebrow">Conta corrente</p>
@@ -593,6 +820,15 @@ function ClientesView({
         </table>
       </section>
     </>
+  );
+}
+
+function Field({ children, label }: { children: React.ReactNode; label: string }) {
+  return (
+    <label className="fac-field">
+      <span>{label}</span>
+      {children}
+    </label>
   );
 }
 
