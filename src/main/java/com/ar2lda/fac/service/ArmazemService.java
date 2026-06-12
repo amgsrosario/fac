@@ -51,6 +51,7 @@ public class ArmazemService {
 
     public void delete(Long id) {
         armazemRepository.delete(findEntityById(id));
+        armazemRepository.flush();
     }
 
     private Armazem findEntityById(Long id) {

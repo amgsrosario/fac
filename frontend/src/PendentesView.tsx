@@ -64,6 +64,7 @@ export default function PendentesView() {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [form, setForm] = useState<ReceiptForm>(emptyReceiptForm());
   const [allocations, setAllocations] = useState<Allocations>({});
+  const [manualReceiptValue, setManualReceiptValue] = useState(false);
 
   useEffect(() => { loadTesouraria(); }, []);
 
@@ -117,6 +118,7 @@ export default function PendentesView() {
         emissorId: ativos.length === 1 ? ativos[0].codigo : ""
       });
       setAllocations({});
+      setManualReceiptValue(false);
       setReceiptOpen(true);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Nao foi possivel preparar o recebimento.");
@@ -135,6 +137,7 @@ export default function PendentesView() {
     const moedasUnicas = [...new Set(moedas)];
     setForm((current) => ({ ...current, clienteId, moedaId: moedasUnicas.length === 1 ? moedasUnicas[0] : "", valorRecebido: "" }));
     setAllocations({});
+    setManualReceiptValue(false);
     requestAnimationFrame(() => {
       const selector = moedasUnicas.length === 1 ? "[data-receipt-value]" : "[data-receipt-currency]";
       receiptEditorRef.current?.querySelector<HTMLElement>(selector)?.focus();
@@ -196,12 +199,53 @@ export default function PendentesView() {
   }
 
   function changeAllocation(pendente: Pendente, value: string) {
-    if (value === "") {
-      setAllocations((current) => ({ ...current, [pendente.id]: "" }));
+    const amount = value === ""
+      ? ""
+      : String(round6(Math.max(0, Math.min(Number(value), Number(pendente.valorPendente)))));
+    const next = { ...allocations, [pendente.id]: amount };
+    const total = round6(sum(Object.values(next).map((item) => Number(item || 0))));
+    setAllocations(next);
+    if (!manualReceiptValue) {
+      setForm((current) => ({ ...current, valorRecebido: total > 0 ? String(total) : "" }));
+    }
+  }
+
+  function clearAllocations() {
+    setAllocations({});
+    if (!manualReceiptValue) {
+      setForm((current) => ({ ...current, valorRecebido: "" }));
+    }
+  }
+
+  function toggleAllocation(pendente: Pendente) {
+    const currentAmount = round6(Number(allocations[pendente.id] || 0));
+    if (currentAmount > 0) {
+      changeAllocation(pendente, "");
       return;
     }
-    const amount = Math.max(0, Math.min(Number(value), Number(pendente.valorPendente)));
-    setAllocations((current) => ({ ...current, [pendente.id]: String(round6(amount)) }));
+
+    const allocatedElsewhere = round6(sum(
+      Object.entries(allocations)
+        .filter(([id]) => Number(id) !== pendente.id)
+        .map(([, value]) => Number(value || 0))
+    ));
+    const available = manualReceiptValue
+      ? round6(Math.max(0, Number(form.valorRecebido || 0) - allocatedElsewhere))
+      : Number(pendente.valorPendente);
+
+    if (available <= 0) {
+      setMessage("O valor recebido ja esta totalmente distribuido.");
+      return;
+    }
+
+    setMessage(null);
+    changeAllocation(pendente, String(Math.min(Number(pendente.valorPendente), available)));
+  }
+
+  function handleAllocationInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>, pendente: Pendente) {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    toggleAllocation(pendente);
   }
 
   async function issueReceipt() {
@@ -300,8 +344,8 @@ export default function PendentesView() {
       <div className="fac-panel-header"><div><p className="fac-eyebrow">Novo documento financeiro</p><h2>Distribuir recebimento</h2></div><button className="fac-ghost-button" onClick={closeReceipt} type="button">Cancelar</button></div>
       <div className="fac-form-grid">
         <Field label="Cliente"><select onChange={(event) => selectClient(event.target.value)} ref={clientSelectRef} value={form.clienteId}><option value="">Selecionar cliente</option>{clientesComPendentes.map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.nome} - {cliente.nif}</option>)}</select></Field>
-        <Field label="Moeda"><select data-receipt-currency disabled={!form.clienteId || clientCurrencies.length <= 1} onChange={(event) => { setForm((current) => ({ ...current, moedaId: event.target.value, valorRecebido: "" })); setAllocations({}); requestAnimationFrame(() => receiptEditorRef.current?.querySelector<HTMLElement>("[data-receipt-value]")?.focus()); }} value={form.moedaId}><option value="">Selecionar moeda</option>{clientCurrencies.map((moeda) => <option key={moeda} value={moeda}>{moeda}</option>)}</select></Field>
-        <Field label="Valor recebido"><input data-receipt-value disabled={!form.moedaId} min="0.000001" onChange={(event) => { setForm((current) => ({ ...current, valorRecebido: event.target.value })); setAllocations({}); }} step="0.000001" type="number" value={form.valorRecebido}/></Field>
+        <Field label="Moeda"><select data-receipt-currency disabled={!form.clienteId || clientCurrencies.length <= 1} onChange={(event) => { setForm((current) => ({ ...current, moedaId: event.target.value, valorRecebido: "" })); setAllocations({}); setManualReceiptValue(false); requestAnimationFrame(() => receiptEditorRef.current?.querySelector<HTMLElement>("[data-receipt-value]")?.focus()); }} value={form.moedaId}><option value="">Selecionar moeda</option>{clientCurrencies.map((moeda) => <option key={moeda} value={moeda}>{moeda}</option>)}</select></Field>
+        <Field label="Valor recebido"><input data-receipt-value disabled={!form.moedaId} min="0.000001" onChange={(event) => { const value = event.target.value; setForm((current) => ({ ...current, valorRecebido: value })); setAllocations({}); setManualReceiptValue(value !== ""); }} step="0.000001" type="number" value={form.valorRecebido}/></Field>
         <Field label="Modo de pagamento"><select onChange={(event) => setForm((current) => ({ ...current, mPagamentoId: event.target.value }))} value={form.mPagamentoId}><option value="">Confirmar modo</option>{modos.map((modo) => <option key={modo.id} value={modo.id}>{modo.nome}</option>)}</select></Field>
         <Field label="Tipo de documento"><select onChange={(event) => { const tipoDocumentoId = event.target.value; setForm((current) => ({ ...current, tipoDocumentoId, serie: series.find((item) => item.tipoDocumentoId === tipoDocumentoId)?.serie ?? "" })); }} value={form.tipoDocumentoId}><option value="">Selecionar</option>{tipos.map((tipo) => <option key={tipo.id} value={tipo.id}>{tipo.id} - {tipo.descricao}</option>)}</select></Field>
         <Field label="Serie"><select onChange={(event) => setForm((current) => ({ ...current, serie: event.target.value }))} value={form.serie}><option value="">Selecionar</option>{availableSeries.map((serie) => <option key={`${serie.tipoDocumentoId}-${serie.serie}`} value={serie.serie}>{serie.serie} - {serie.nome}</option>)}</select></Field>
@@ -310,10 +354,10 @@ export default function PendentesView() {
       </div>
 
       <div className="fac-receipt-totals"><div><span>Valor recebido</span><strong>{money(receiptTarget)} {form.moedaId}</strong></div><div><span>Distribuido</span><strong>{money(allocatedTotal)} {form.moedaId}</strong></div><div className={difference === 0 && receiptTarget > 0 ? "balanced" : "unbalanced"}><span>Diferenca</span><strong>{money(difference)} {form.moedaId}</strong></div></div>
-      <div className="fac-inline-actions"><button className="fac-soft-button" disabled={!form.valorRecebido || !form.moedaId} onClick={distributeReceipt} type="button">Distribuir por antiguidade</button><button className="fac-ghost-button" disabled={allocatedTotal === 0} onClick={() => setAllocations({})} type="button">Limpar distribuicao</button></div>
+      <div className="fac-inline-actions"><button className="fac-soft-button" disabled={!form.valorRecebido || !form.moedaId} onClick={distributeReceipt} type="button">Distribuir por antiguidade</button><button className="fac-ghost-button" disabled={allocatedTotal === 0} onClick={clearAllocations} type="button">Limpar distribuicao</button></div>
 
       <table className="fac-table fac-allocation-table"><thead><tr><th>Documento</th><th>Emissao</th><th>Vencimento</th><th>Valor original</th><th>Pendente antes</th><th>Valor a liquidar</th><th>Novo pendente</th></tr></thead><tbody>
-        {receiptPendentes.map((pendente) => { const amount = round6(Number(allocations[pendente.id] || 0)); return <tr key={pendente.id}><td>{referencia(pendente)}</td><td>{datePt(pendente.dataDocumento)}</td><td>{datePt(pendente.dataVencimento)}</td><td>{money(pendente.valorDocumento)} {pendente.moedaId}</td><td>{money(pendente.valorPendente)} {pendente.moedaId}</td><td><input className="fac-table-input" max={pendente.valorPendente} min="0" onChange={(event) => changeAllocation(pendente, event.target.value)} step="0.000001" type="number" value={allocations[pendente.id] ?? ""}/></td><td>{money(round6(pendente.valorPendente - amount))} {pendente.moedaId}</td></tr>; })}
+        {receiptPendentes.map((pendente) => { const amount = round6(Number(allocations[pendente.id] || 0)); return <tr aria-label={`${referencia(pendente)}: clicar para atribuir ou limpar o valor a liquidar`} className={`fac-allocation-row ${amount > 0 ? "allocated" : ""}`} key={pendente.id} onClick={(event) => { if (!(event.target as HTMLElement).closest("input, button, select, textarea")) toggleAllocation(pendente); }}><td>{referencia(pendente)}</td><td>{datePt(pendente.dataDocumento)}</td><td>{datePt(pendente.dataVencimento)}</td><td>{money(pendente.valorDocumento)} {pendente.moedaId}</td><td>{money(pendente.valorPendente)} {pendente.moedaId}</td><td><input aria-label={`Valor a liquidar de ${referencia(pendente)}`} className="fac-table-input" max={pendente.valorPendente} min="0" onChange={(event) => changeAllocation(pendente, event.target.value)} onKeyDown={(event) => handleAllocationInputKeyDown(event, pendente)} step="0.000001" type="number" value={allocations[pendente.id] ?? ""}/></td><td>{money(round6(pendente.valorPendente - amount))} {pendente.moedaId}</td></tr>; })}
         {form.clienteId && form.moedaId && receiptPendentes.length === 0 && <tr><td colSpan={7}>Este cliente nao tem pendentes em aberto nesta moeda.</td></tr>}
       </tbody></table>
 

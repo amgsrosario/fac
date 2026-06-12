@@ -59,6 +59,7 @@ public class RIvaService {
 
     public void delete(String id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private RIva findEntityById(String id) {

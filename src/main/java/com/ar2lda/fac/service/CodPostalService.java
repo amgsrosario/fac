@@ -43,6 +43,7 @@ public class CodPostalService {
 
     public void delete(String id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private CodPostal findEntityById(String id) {

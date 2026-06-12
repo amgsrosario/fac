@@ -3,6 +3,7 @@ import ArtigosView from "./ArtigosView";
 import DocumentosView from "./DocumentosView";
 import PendentesView from "./PendentesView";
 import ParametrosDocumentoView from "./ParametrosDocumentoView";
+import TabelasView from "./TabelasView";
 
 type Page<T> = {
   content: T[];
@@ -1053,6 +1054,8 @@ type ConfiguracaoViewProps = {
 };
 
 function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeForm, onSave }: ConfiguracaoViewProps) {
+  const [area, setArea] = useState<"EMPRESA" | "PARAMETROS" | "TABELAS">("PARAMETROS");
+
   function changeField<K extends keyof ParametrosClienteForm>(field: K, value: ParametrosClienteForm[K]) {
     onChangeForm({ ...form, [field]: value });
   }
@@ -1062,26 +1065,38 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
       <section className="fac-hero">
         <div>
           <p className="fac-eyebrow">Configuracao</p>
-          <h2>Matriz 0 para novos clientes</h2>
-          <p>
-            Define apenas os valores que devem ser sugeridos na criacao de clientes. Campos vazios
-            continuam vazios e nunca alteram clientes existentes.
-          </p>
+          <h2>Base de funcionamento do FAC</h2>
+          <p>Dados da empresa, valores sugeridos e tabelas de apoio, separados das operacoes diarias.</p>
         </div>
         <div className="fac-hero-card">
-          <span>Estado da matriz</span>
-          <strong>{loading ? "A carregar..." : exists ? "Configurada" : "Ainda vazia"}</strong>
-          <small>Registo tecnico unico, separado da tabela de clientes</small>
+          <span>Area atual</span>
+          <strong>{area === "EMPRESA" ? "Empresa" : area === "PARAMETROS" ? "Parametros" : "Tabelas"}</strong>
+          <small>Configuracao simples, explicita e centralizada</small>
         </div>
       </section>
 
+      <nav aria-label="Areas de configuracao" className="fac-config-nav">
+        <button className={area === "EMPRESA" ? "active" : ""} onClick={() => setArea("EMPRESA")} type="button"><strong>Empresa</strong><span>Identificacao e dados fiscais</span></button>
+        <button className={area === "PARAMETROS" ? "active" : ""} onClick={() => setArea("PARAMETROS")} type="button"><strong>Parametros</strong><span>Valores sugeridos da aplicacao</span></button>
+        <button className={area === "TABELAS" ? "active" : ""} onClick={() => setArea("TABELAS")} type="button"><strong>Tabelas</strong><span>Catalogos de apoio</span></button>
+      </nav>
+
+      {area === "EMPRESA" && <section className="fac-panel">
+        <div className="fac-panel-header">
+          <div><p className="fac-eyebrow">Empresa proprietaria</p><h2>Identificacao da entidade emissora</h2></div>
+          <span className="fac-status">Proximo editor</span>
+        </div>
+        <p className="fac-muted">Esta area concentrara os dados legais, fiscais e de contacto usados nos documentos. O editor sera ligado diretamente a ficha unica da empresa.</p>
+      </section>}
+
+      {area === "PARAMETROS" && <>
       <section className="fac-panel">
         <div className="fac-panel-header">
           <div>
-            <p className="fac-eyebrow">Valores sugeridos</p>
-            <h2>Matriz 0</h2>
+            <p className="fac-eyebrow">Valores base</p>
+            <h2>Valores base para novos clientes</h2>
           </div>
-          <span className="fac-muted">Todos os campos sao opcionais</span>
+          <span className="fac-muted">{loading ? "A carregar..." : exists ? "Configurada" : "Ainda vazia"}</span>
         </div>
 
         {message && <p className="fac-editor-message">{message}</p>}
@@ -1133,7 +1148,7 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
         </div>
 
         <div className="fac-form-footer">
-          <span className="fac-muted">A matriz so e aplicada quando se carrega em Aplicar Matriz 0 no novo cliente.</span>
+          <span className="fac-muted">A Matriz 0 aplica estes valores base apenas quando solicitada no novo cliente.</span>
           <button className="fac-primary-button" disabled={loading} onClick={onSave} type="button">
             {loading ? "A guardar..." : "Guardar Matriz 0"}
           </button>
@@ -1141,6 +1156,9 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
       </section>
 
       <ParametrosDocumentoView />
+      </>}
+
+      {area === "TABELAS" && <TabelasView />}
     </>
   );
 }

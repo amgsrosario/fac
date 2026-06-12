@@ -43,6 +43,7 @@ public class FreguesiaService {
 
     public void delete(String codigo) {
         repository.delete(findEntityByCodigo(codigo));
+        repository.flush();
     }
 
     private Freguesia findEntityByCodigo(String codigo) {

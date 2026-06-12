@@ -65,6 +65,7 @@ public class UtilizadorService {
 
     public void delete(String codigo) {
         repository.delete(findEntityByCodigo(codigo));
+        repository.flush();
     }
 
     private Utilizador findEntityByCodigo(String codigo) {

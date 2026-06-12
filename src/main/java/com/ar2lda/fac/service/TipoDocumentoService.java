@@ -43,6 +43,7 @@ public class TipoDocumentoService {
 
     public void delete(String id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private TipoDocumento findEntityById(String id) {

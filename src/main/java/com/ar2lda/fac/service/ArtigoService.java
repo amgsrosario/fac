@@ -65,6 +65,7 @@ public class ArtigoService {
     @Transactional
     public void delete(String codigo) {
         artigoRepository.delete(findEntityByCodigo(codigo));
+        artigoRepository.flush();
     }
 
     private Artigo findEntityByCodigo(String codigo) {

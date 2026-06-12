@@ -39,6 +39,7 @@ public class TransporteService {
 
     public void delete(Integer id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private Transporte findEntityById(Integer id) {

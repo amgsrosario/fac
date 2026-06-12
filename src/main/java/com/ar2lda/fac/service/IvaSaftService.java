@@ -43,6 +43,7 @@ public class IvaSaftService {
 
     public void delete(String id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private IvaSaft findEntityById(String id) {

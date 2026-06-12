@@ -39,6 +39,7 @@ public class FamiliaService {
 
     public void delete(Long id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private Familia findEntityById(Long id) {

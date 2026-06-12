@@ -56,6 +56,7 @@ public class SerieService {
 
     public void delete(String tipoDocumentoId, String serie) {
         repository.delete(findEntityById(tipoDocumentoId, serie));
+        repository.flush();
     }
 
     @Transactional

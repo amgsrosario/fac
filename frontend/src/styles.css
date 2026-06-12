@@ -551,10 +551,110 @@ button:disabled {
   background: var(--fac-surface);
 }
 
+.fac-allocation-row {
+  cursor: pointer;
+}
+
+.fac-allocation-row:hover {
+  background: var(--fac-treasury-soft);
+}
+
+.fac-allocation-row.allocated {
+  background: var(--fac-client-soft);
+}
+
 .fac-form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 15px;
+}
+
+.fac-config-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.fac-config-nav button {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--fac-border);
+  border-radius: 16px;
+  color: var(--fac-text);
+  background: var(--fac-surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.fac-config-nav button span,
+.fac-table-group small {
+  color: var(--fac-text-muted);
+}
+
+.fac-config-nav button.active {
+  border-color: #d9cba7;
+  background: var(--fac-document-soft);
+}
+
+.fac-table-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.fac-table-group {
+  padding: 16px;
+  border: 1px solid var(--fac-border);
+  border-radius: 14px;
+  background: var(--fac-sidebar);
+}
+
+.fac-table-group > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--fac-border);
+}
+
+.fac-table-group > div:last-child {
+  border-bottom: 0;
+}
+
+.fac-table-link {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--fac-border);
+  color: var(--fac-text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fac-table-link:hover span {
+  color: var(--fac-gold);
+}
+
+.fac-table-editor {
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid var(--fac-border);
+  border-radius: 14px;
+  background: var(--fac-sidebar);
+}
+
+@media (max-width: 800px) {
+  .fac-config-nav,
+  .fac-table-groups {
+    grid-template-columns: 1fr;
+  }
 }
 
 .fac-field {

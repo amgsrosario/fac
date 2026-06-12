@@ -49,6 +49,7 @@ public class MIsencaoService {
 
     public void delete(String id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private MIsencao findEntityById(String id) {

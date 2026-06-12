@@ -43,6 +43,7 @@ public class PPagamentoService {
 
     public void delete(String id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private PPagamento findEntityById(String id) {

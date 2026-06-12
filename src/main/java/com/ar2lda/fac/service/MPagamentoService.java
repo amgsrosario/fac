@@ -39,6 +39,7 @@ public class MPagamentoService {
 
     public void delete(Integer id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private MPagamento findEntityById(Integer id) {

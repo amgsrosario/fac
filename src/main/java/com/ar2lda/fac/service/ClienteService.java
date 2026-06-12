@@ -78,6 +78,7 @@ public class ClienteService {
     @Transactional
     public void delete(Long id) {
         clienteRepository.delete(findEntityById(id));
+        clienteRepository.flush();
     }
 
     private Cliente findEntityById(Long id) {

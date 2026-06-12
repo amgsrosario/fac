@@ -43,6 +43,7 @@ public class TipoTaxaIvaService {
 
     public void delete(String id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private TipoTaxaIva findEntityById(String id) {

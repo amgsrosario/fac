@@ -43,6 +43,7 @@ public class PaisService {
 
     public void delete(String id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private Pais findEntityById(String id) {

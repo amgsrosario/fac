@@ -39,7 +39,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<?> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.CONFLICT, "Operação viola integridade de dados", request.getRequestURI(), null);
+        return buildError(HttpStatus.CONFLICT,
+                "Registo nao pode ser eliminado ou alterado porque esta em utilizacao",
+                request.getRequestURI(), null);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

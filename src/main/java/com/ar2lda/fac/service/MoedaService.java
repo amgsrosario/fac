@@ -43,6 +43,7 @@ public class MoedaService {
 
     public void delete(String id) {
         repository.delete(findEntityById(id));
+        repository.flush();
     }
 
     private Moeda findEntityById(String id) {
