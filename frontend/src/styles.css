@@ -417,6 +417,72 @@ button:disabled {
   background: var(--fac-client-soft);
 }
 
+.fac-editor-message-info {
+  border-color: #dce3e7;
+  background: var(--fac-product-soft);
+}
+
+.fac-editor-message-success {
+  border-color: #d8e5d3;
+  background: var(--fac-client-soft);
+}
+
+.fac-editor-message-error {
+  border-color: #ead8d8;
+  color: #8a4b4b;
+  background: #fff8f8;
+}
+
+.fac-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(68, 81, 93, 0.22);
+  backdrop-filter: blur(2px);
+}
+
+.fac-dialog {
+  width: min(520px, 100%);
+  border: 1px solid var(--fac-border);
+  border-radius: 22px;
+  padding: 26px;
+  color: var(--fac-text);
+  background: var(--fac-surface);
+  box-shadow: 0 18px 50px rgba(68, 81, 93, 0.14);
+}
+
+.fac-dialog h3 {
+  margin: 6px 0 16px;
+  color: var(--fac-petrol);
+}
+
+.fac-dialog p:not(.fac-eyebrow) {
+  line-height: 1.55;
+}
+
+.fac-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.fac-danger-button {
+  border: 1px solid #d9bcbc;
+  border-radius: 14px;
+  padding: 11px 16px;
+  color: #7d4141;
+  background: #fff6f6;
+  cursor: pointer;
+}
+
+.fac-danger-button:hover {
+  background: #fcecec;
+}
+
 .fac-line-editor {
   margin-bottom: 20px;
   padding: 18px;

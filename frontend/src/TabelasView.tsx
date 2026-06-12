@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 type Page<T> = { content: T[] };
 type Row = Record<string, string | number | boolean | null>;
 type Values = Record<string, string | boolean>;
+type Feedback = { kind: "info" | "success" | "error"; text: string };
 type Field = { key: string; label: string; type?: "text" | "number" | "checkbox"; required?: boolean; maxLength?: number; createOnly?: boolean };
 type Config = { key: string; label: string; group: string; endpoint: string; fields: Field[]; columns: Field[] };
 
@@ -35,7 +36,8 @@ export default function TabelasView() {
   const [values, setValues] = useState<Values>({});
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<Feedback | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Row | null>(null);
 
   useEffect(() => { if (active) load(active); }, [active?.key]);
 
@@ -44,7 +46,7 @@ export default function TabelasView() {
     try {
       const page = await get<Page<Row>>(`${config.endpoint}?size=500&sort=id,asc`);
       setRows(page.content); reset(config);
-    } catch (error) { setMessage(errorMessage(error)); }
+    } catch (error) { setMessage({ kind: "error", text: errorMessage(error) }); }
     finally { setLoading(false); }
   }
 
@@ -63,24 +65,43 @@ export default function TabelasView() {
 
   async function save() {
     if (!active) return;
-    for (const field of active.fields) if (field.required && !(field.createOnly && editingId != null) && String(values[field.key] ?? "").trim() === "") { setMessage(`${field.label} e obrigatorio.`); return; }
+    for (const field of active.fields) if (field.required && !(field.createOnly && editingId != null) && String(values[field.key] ?? "").trim() === "") { setMessage({ kind: "error", text: `${field.label} e obrigatorio.` }); return; }
     setLoading(true); setMessage(null);
     try {
       const editing = editingId != null;
       const response = await fetch(editing ? `${active.endpoint}/${encodeURIComponent(String(editingId))}` : active.endpoint, { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(toPayload(active, values, editing)) });
       if (!response.ok) throw new Error(await responseError(response));
-      await load(active); setMessage(editing ? "Registo atualizado." : "Registo criado.");
-    } catch (error) { setMessage(errorMessage(error)); setLoading(false); }
+      await load(active); setMessage({ kind: "success", text: editing ? "Registo atualizado com sucesso." : "Registo criado com sucesso." });
+    } catch (error) { setMessage({ kind: "error", text: errorMessage(error) }); setLoading(false); }
   }
 
   async function remove(row: Row) {
-    if (!active || !window.confirm(`Eliminar ${active.label}: ${row.id}? A operacao sera recusada se o registo estiver em utilizacao.`)) return;
-    setLoading(true); setMessage(null);
+    if (!active) return;
+    setPendingDelete(row);
+  }
+
+  async function confirmRemove() {
+    if (!active || !pendingDelete) return;
+    const row = pendingDelete;
+    const reference = rowReference(active, row);
+    setPendingDelete(null);
+    setLoading(true); setMessage({ kind: "info", text: `A verificar se ${reference} pode ser eliminado...` });
     try {
       const response = await fetch(`${active.endpoint}/${encodeURIComponent(String(row.id))}`, { method: "DELETE" });
-      if (!response.ok) throw new Error(await responseError(response));
-      await load(active); setMessage("Registo eliminado.");
-    } catch (error) { setMessage(errorMessage(error)); setLoading(false); }
+      if (!response.ok) {
+        const detail = await responseError(response);
+        if (response.status === 409) {
+          setMessage({ kind: "error", text: `${reference} nao foi eliminado. O registo esta em utilizacao e permanece nesta tabela. ${detail}` });
+          setLoading(false);
+          return;
+        }
+        throw new Error(detail);
+      }
+      await load(active); setMessage({ kind: "success", text: `${reference} foi eliminado com sucesso.` });
+    } catch (error) {
+      setMessage({ kind: "error", text: `${reference} nao foi eliminado e permanece nesta tabela. ${errorMessage(error)}` });
+      setLoading(false);
+    }
   }
 
   if (!active) return <section className="fac-panel">
@@ -93,15 +114,28 @@ export default function TabelasView() {
 
   return <section className="fac-panel">
     <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabela</p><h2>{active.label}</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setActive(null)} type="button">Voltar</button><button className="fac-primary-button" onClick={() => reset()} type="button">Novo registo</button></div></div>
-    {message && <p className="fac-editor-message">{message}</p>}
+    {message && <p className={`fac-editor-message fac-editor-message-${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>{message.text}</p>}
     <div className="fac-table-editor"><div className="fac-form-grid">{active.fields.map((field) => field.type === "checkbox" ? <label className="fac-check-field" key={field.key}><input checked={Boolean(values[field.key])} onChange={(event) => setValues((current) => ({ ...current, [field.key]: event.target.checked }))} type="checkbox"/><span>{field.label}</span></label> : <label className="fac-field" key={field.key}><span>{field.label}</span><input disabled={field.createOnly && editingId != null} maxLength={field.maxLength} min={field.type === "number" ? 0 : undefined} onChange={(event) => setValues((current) => ({ ...current, [field.key]: event.target.value }))} step={field.type === "number" ? "0.000001" : undefined} type={field.type ?? "text"} value={String(values[field.key] ?? "")}/></label>)}</div><div className="fac-form-footer"><span className="fac-muted">{editingId == null ? "Novo registo" : `A editar ${editingId}`}</span><button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar"}</button></div></div>
     <p className="fac-muted">A eliminacao so e aceite para registos nunca utilizados. As relacoes sao validadas pelo backend e pelo PostgreSQL.</p>
     <table className="fac-table"><thead><tr>{active.columns.map((column) => <th key={column.key}>{column.label}</th>)}<th>Acoes</th></tr></thead><tbody>{rows.map((row) => <tr key={String(row.id)}>{active.columns.map((column) => <td key={column.key}>{display(column.key, row[column.key])}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => edit(row)} type="button">Editar</button><button className="fac-link-danger" disabled={loading} onClick={() => remove(row)} type="button">Eliminar</button></div></td></tr>)}{!loading && rows.length === 0 && <tr><td colSpan={active.columns.length + 1}>Sem registos.</td></tr>}</tbody></table>
+    {pendingDelete && <div className="fac-dialog-backdrop" role="presentation">
+      <div aria-labelledby="fac-delete-title" aria-modal="true" className="fac-dialog" role="dialog">
+        <p className="fac-eyebrow">Confirmar eliminacao</p>
+        <h3 id="fac-delete-title">{rowReference(active, pendingDelete)}</h3>
+        <p>O FAC vai verificar se este registo ja foi utilizado em clientes, documentos, na empresa ou noutras tabelas relacionadas.</p>
+        <p><strong>Se estiver em utilizacao, nao sera eliminado e permanecera nesta tabela.</strong></p>
+        <div className="fac-dialog-actions">
+          <button className="fac-ghost-button" onClick={() => setPendingDelete(null)} type="button">Cancelar</button>
+          <button className="fac-danger-button" onClick={confirmRemove} type="button">Verificar e eliminar</button>
+        </div>
+      </div>
+    </div>}
   </section>;
 }
 
 function toPayload(config: Config, values: Values, editing: boolean) { return Object.fromEntries(config.fields.filter((field) => !(editing && field.createOnly)).map((field) => [field.key, field.type === "number" ? (values[field.key] === "" ? null : Number(values[field.key])) : field.type === "checkbox" ? Boolean(values[field.key]) : String(values[field.key] ?? "").trim()])); }
 function display(key: string, value: Row[string]) { if (typeof value === "boolean") return key === "inativo" ? (value ? "Inativo" : "Ativo") : value ? "Sim" : "Nao"; return value ?? "-"; }
+function rowReference(config: Config, row: Row) { const description = config.columns.find((column) => column.key !== "id" && row[column.key] != null); const detail = description ? ` - ${String(row[description.key])}` : ""; return `${config.label} ${String(row.id)}${detail}`; }
 async function get<T>(url: string): Promise<T> { const response = await fetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
 async function responseError(response: Response) { try { const payload = await response.json(); return payload.message || payload.error || `Erro HTTP ${response.status}`; } catch { return `Erro HTTP ${response.status}`; } }
 function errorMessage(error: unknown) { return error instanceof Error ? error.message : "Nao foi possivel concluir a operacao."; }
