@@ -102,6 +102,28 @@ type ClienteCatalogos = {
   transportes: CatalogoNumero[];
 };
 
+type ClienteColumnKey = "id" | "nome" | "nif" | "email" | "tel" | "localidade" | "paisId" | "moedaId" | "rivaId" | "estado";
+
+type ClienteColumn = {
+  key: ClienteColumnKey;
+  label: string;
+  visible: boolean;
+};
+
+const CLIENT_COLUMNS_STORAGE = "fac.clientes.colunas";
+const DEFAULT_CLIENT_COLUMNS: ClienteColumn[] = [
+  { key: "id", label: "Codigo", visible: true },
+  { key: "nome", label: "Nome", visible: true },
+  { key: "nif", label: "NIF", visible: true },
+  { key: "email", label: "Email", visible: true },
+  { key: "tel", label: "Telefone", visible: false },
+  { key: "localidade", label: "Localidade", visible: false },
+  { key: "paisId", label: "Pais", visible: false },
+  { key: "moedaId", label: "Moeda", visible: false },
+  { key: "rivaId", label: "Regime IVA", visible: false },
+  { key: "estado", label: "Estado", visible: true }
+];
+
 type DocumentoComercial = {
   id: number;
   tipoDocumentoId: string;
@@ -804,9 +826,36 @@ function ClientesView({
   onSaveCliente,
   onSelectCliente
 }: ClientesViewProps) {
+  const [columnEditorOpen, setColumnEditorOpen] = useState(false);
+  const [columns, setColumns] = useState<ClienteColumn[]>(loadClientColumns);
+
+  useEffect(() => {
+    window.localStorage.setItem(CLIENT_COLUMNS_STORAGE, JSON.stringify(columns));
+  }, [columns]);
+
   function changeField<K extends keyof ClienteForm>(field: K, value: ClienteForm[K]) {
     onChangeForm({ ...form, [field]: value });
   }
+
+  function toggleColumn(key: ClienteColumnKey) {
+    setColumns((current) => {
+      const target = current.find((column) => column.key === key);
+      if (target?.visible && current.filter((column) => column.visible).length === 1) return current;
+      return current.map((column) => column.key === key ? { ...column, visible: !column.visible } : column);
+    });
+  }
+
+  function moveColumn(index: number, direction: -1 | 1) {
+    setColumns((current) => {
+      const destination = index + direction;
+      if (destination < 0 || destination >= current.length) return current;
+      const next = [...current];
+      [next[index], next[destination]] = [next[destination], next[index]];
+      return next;
+    });
+  }
+
+  const visibleColumns = columns.filter((column) => column.visible);
 
   return (
     <>
@@ -853,17 +902,32 @@ function ClientesView({
               <p className="fac-eyebrow">Consulta</p>
               <h2>Clientes</h2>
             </div>
-            <button className="fac-soft-button" onClick={onOpenEditor} type="button">Novo cliente</button>
+            <div className="fac-inline-actions">
+              <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({visibleColumns.length})</button>
+              <button className="fac-soft-button" onClick={onOpenEditor} type="button">Novo cliente</button>
+            </div>
           </div>
+
+          {columnEditorOpen && <div className="fac-column-editor">
+            <div className="fac-column-editor-header">
+              <div><strong>Colunas da listagem</strong><span>Marca os campos visiveis e define a respetiva ordem.</span></div>
+              <button className="fac-ghost-button" onClick={() => setColumns(DEFAULT_CLIENT_COLUMNS)} type="button">Repor base</button>
+            </div>
+            <div className="fac-column-list">
+              {columns.map((column, index) => <div className="fac-column-item" key={column.key}>
+                <label><input checked={column.visible} onChange={() => toggleColumn(column.key)} type="checkbox" />{column.label}</label>
+                <div className="fac-column-order">
+                  <button aria-label={`Subir ${column.label}`} disabled={index === 0} onClick={() => moveColumn(index, -1)} type="button">↑</button>
+                  <button aria-label={`Descer ${column.label}`} disabled={index === columns.length - 1} onClick={() => moveColumn(index, 1)} type="button">↓</button>
+                </div>
+              </div>)}
+            </div>
+          </div>}
 
           <table className="fac-table">
             <thead>
               <tr>
-                <th>Codigo</th>
-                <th>Nome</th>
-                <th>NIF</th>
-                <th>Email</th>
-                <th>Estado</th>
+                {visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -873,16 +937,12 @@ function ClientesView({
                   key={cliente.id}
                   onClick={() => onSelectCliente(cliente.id)}
                 >
-                  <td>{cliente.id}</td>
-                  <td>{cliente.nome}</td>
-                  <td>{cliente.nif}</td>
-                  <td>{cliente.email ?? "-"}</td>
-                  <td><span className="fac-status">{cliente.inativo ? "Inativo" : "Ativo"}</span></td>
+                  {visibleColumns.map((column) => <td key={column.key}>{clientColumnValue(cliente, column.key)}</td>)}
                 </tr>
               ))}
               {!loading && clientes.length === 0 && (
                 <tr>
-                  <td colSpan={5}>Sem clientes para mostrar.</td>
+                  <td colSpan={visibleColumns.length}>Sem clientes para mostrar.</td>
                 </tr>
               )}
             </tbody>
@@ -1046,6 +1106,34 @@ function ClientesView({
       </section>
     </>
   );
+}
+
+function loadClientColumns(): ClienteColumn[] {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(CLIENT_COLUMNS_STORAGE) ?? "null") as ClienteColumn[] | null;
+    if (!Array.isArray(stored)) return DEFAULT_CLIENT_COLUMNS;
+    const known = new Map(DEFAULT_CLIENT_COLUMNS.map((column) => [column.key, column]));
+    const valid = stored.filter((column) => known.has(column.key)).map((column) => ({ ...known.get(column.key)!, visible: Boolean(column.visible) }));
+    for (const column of DEFAULT_CLIENT_COLUMNS) if (!valid.some((item) => item.key === column.key)) valid.push(column);
+    return valid.some((column) => column.visible) ? valid : DEFAULT_CLIENT_COLUMNS;
+  } catch {
+    return DEFAULT_CLIENT_COLUMNS;
+  }
+}
+
+function clientColumnValue(cliente: Cliente, key: ClienteColumnKey) {
+  switch (key) {
+    case "id": return cliente.id;
+    case "nome": return cliente.nome;
+    case "nif": return cliente.nif;
+    case "email": return cliente.email ?? "-";
+    case "tel": return cliente.tel ?? cliente.tm ?? "-";
+    case "localidade": return cliente.localidade ?? "-";
+    case "paisId": return cliente.paisId ?? "-";
+    case "moedaId": return cliente.moedaId ?? "-";
+    case "rivaId": return cliente.rivaId ?? "-";
+    case "estado": return <span className="fac-status">{cliente.inativo ? "Inativo" : "Ativo"}</span>;
+  }
 }
 
 type ConfiguracaoViewProps = {

@@ -407,6 +407,76 @@ button:disabled {
   background: var(--fac-client-soft);
 }
 
+.fac-column-editor {
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid var(--fac-border);
+  border-radius: 14px;
+  background: var(--fac-sidebar);
+}
+
+.fac-column-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.fac-column-editor-header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.fac-column-editor-header span {
+  color: var(--fac-text-muted);
+  font-size: 13px;
+}
+
+.fac-column-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fac-column-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 7px 9px;
+  border: 1px solid var(--fac-border);
+  border-radius: 10px;
+  background: var(--fac-surface);
+}
+
+.fac-column-item label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+}
+
+.fac-column-order {
+  display: flex;
+  gap: 4px;
+}
+
+.fac-column-order button {
+  width: 30px;
+  min-height: 28px;
+  padding: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: 8px;
+  color: var(--fac-petrol);
+  background: var(--fac-bg);
+}
+
+.fac-column-order button:disabled {
+  opacity: .35;
+}
+
 .fac-table th {
   color: var(--fac-text-muted);
   font-size: 12px;
@@ -799,8 +869,14 @@ button:disabled {
 
 @media (max-width: 800px) {
   .fac-config-nav,
-  .fac-table-groups {
+  .fac-table-groups,
+  .fac-column-list {
     grid-template-columns: 1fr;
+  }
+
+  .fac-column-editor-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 
