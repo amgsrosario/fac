@@ -11,6 +11,7 @@ import com.ar2lda.fac.exception.BadRequestException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.DocumentoFinanceiroMapper;
 import com.ar2lda.fac.mapper.EmpresaMapper;
+import com.ar2lda.fac.mapper.ClienteMapper;
 import com.ar2lda.fac.model.Cliente;
 import com.ar2lda.fac.model.DocumentoFinanceiro;
 import com.ar2lda.fac.model.Empresa;
@@ -61,6 +62,7 @@ public class DocumentoFinanceiroService {
     private final SerieService serieService;
     private final DocumentoFinanceiroMapper mapper;
     private final EmpresaMapper empresaMapper;
+    private final ClienteMapper clienteMapper;
 
     @Transactional
     public DocumentoFinanceiroDto create(DocumentoFinanceiroCreateDto dto) {
@@ -121,8 +123,15 @@ public class DocumentoFinanceiroService {
 
         return new DocumentoFinanceiroImpressaoDto(
                 empresaMapper.toDTO(empresa),
+                clienteMapper.toDTO(documento.getCliente()),
                 toDTO(documento)
         );
+    }
+
+    @Transactional
+    public void marcarComoImpresso(Long id) {
+        DocumentoFinanceiro documento = findDocumento(id);
+        documento.setImpresso(true);
     }
 
     public DocumentoFinanceiroDiagnosticoDto getDiagnostico(Long id) {

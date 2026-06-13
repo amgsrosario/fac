@@ -132,6 +132,12 @@ public class DocumentoComercialService {
         );
     }
 
+    @Transactional
+    public void marcarComoImpresso(Long id) {
+        DocumentoComercial documento = findDocumento(id);
+        documento.setImpresso(true);
+    }
+
     public DocumentoComercialDiagnosticoDto getDiagnostico(Long id) {
         DocumentoComercial documento = findDocumento(id);
         List<LinhaDocumentoComercial> linhas = linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(id);

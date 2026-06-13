@@ -303,6 +303,23 @@ export default function PendentesView() {
     }
   }
 
+  async function openFinancialPdf(documento: DocumentoFinanceiro) {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await apiFetch(`/api/documentos-financeiros/${documento.id}/pdf`);
+      if (!response.ok) throw new Error(await responseError(response));
+      const url = URL.createObjectURL(await response.blob());
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setFinanceiros((current) => current.map((item) => item.id === documento.id ? { ...item, impresso: true } : item));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel gerar o PDF do recibo.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const abertas = pendentes.filter((item) => Number(item.valorPendente) > 0);
   const clientesComPendentes = clientes.filter((cliente) => !cliente.inativo && abertas.some((item) => item.clienteId === cliente.id));
   const receiptPendentes = openPendentesForClient(pendentes, Number(form.clienteId))
@@ -364,7 +381,7 @@ export default function PendentesView() {
     {!receiptOpen && <>
     <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Pendentes</p><h2>Conta corrente em aberto e liquidada</h2></div><span className="fac-muted">{filteredPendentes.length} registos</span></div><table className="fac-table"><thead><tr><th>Documento</th><th>Cliente</th><th>Estado</th><th>Vencimento</th><th>Original</th><th>Pendente</th></tr></thead><tbody>{filteredPendentes.map((item) => <tr key={item.id}><td>{referencia(item)}</td><td>{item.clienteId}</td><td><span className="fac-status">{estado(item)}</span></td><td>{datePt(item.dataVencimento)}</td><td>{money(item.valorDocumento)} {item.moedaId}</td><td>{money(item.valorPendente)} {item.moedaId}</td></tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={6}>Sem pendentes para mostrar.</td></tr>}</tbody></table></section>
 
-    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><span className="fac-muted">{financeiros.length} documentos</span></div><table className="fac-table"><thead><tr><th>Documento</th><th>Cliente</th><th>Data</th><th>Modo</th><th>Liquido</th><th>Estado</th><th>Acoes</th></tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}><td>{documento.tipoDocumentoId} {documento.serie}/{documento.numeroDocumento}</td><td>{documento.clienteId}</td><td>{datePt(documento.dataEmissao)}</td><td>{documento.mPagamentoId}</td><td>{money(documento.valorPagamentoLiquido)} {documento.moedaId}</td><td><span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span></td><td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => window.open(`/api/documentos-financeiros/${documento.id}/diagnostico/html`, "_blank", "noopener,noreferrer")} type="button">Diagnostico</button>{!documento.anulado && <button className="fac-link-danger" disabled={loading} onClick={() => annulFinancial(documento)} type="button">Anular</button>}</div></td></tr>)}{!loading && financeiros.length === 0 && <tr><td colSpan={7}>Sem documentos financeiros para mostrar.</td></tr>}</tbody></table></section>
+    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><span className="fac-muted">{financeiros.length} documentos</span></div><table className="fac-table"><thead><tr><th>Documento</th><th>Cliente</th><th>Data</th><th>Modo</th><th>Liquido</th><th>Estado</th><th>Acoes</th></tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}><td>{documento.tipoDocumentoId} {documento.serie}/{documento.numeroDocumento}</td><td>{documento.clienteId}</td><td>{datePt(documento.dataEmissao)}</td><td>{documento.mPagamentoId}</td><td>{money(documento.valorPagamentoLiquido)} {documento.moedaId}</td><td><span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span></td><td><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => openFinancialPdf(documento)} type="button">Abrir PDF</button><button className="fac-ghost-button" onClick={() => window.open(`/api/documentos-financeiros/${documento.id}/diagnostico/html`, "_blank", "noopener,noreferrer")} type="button">Diagnostico</button>{!documento.anulado && <button className="fac-link-danger" disabled={loading} onClick={() => annulFinancial(documento)} type="button">Anular</button>}</div></td></tr>)}{!loading && financeiros.length === 0 && <tr><td colSpan={7}>Sem documentos financeiros para mostrar.</td></tr>}</tbody></table></section>
     </>}
   </>;
 }

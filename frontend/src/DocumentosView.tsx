@@ -309,6 +309,23 @@ export default function DocumentosView() {
     }
   }
 
+  async function openPdf(id: number) {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await apiFetch(`/api/documentos-comerciais/${id}/pdf`);
+      if (!response.ok) throw new Error(await readError(response));
+      const url = URL.createObjectURL(await response.blob());
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setDocumentos((current) => current.map((item) => item.id === id ? { ...item, impresso: true } : item));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel gerar o PDF.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function openDraftEditor() {
     setLoading(true);
     setMessage(null);
@@ -553,6 +570,7 @@ export default function DocumentosView() {
           </dl>
           <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openHtml(selected.id)} type="button">Diagnostico HTML</button>
           <button className="fac-ghost-button" disabled={!selected} onClick={() => selected && openJson(selected.id)} type="button">Diagnostico JSON</button>
+          {selected?.estado === "EMITIDO" && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
           {selectedIsDraft && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
         </aside>
       </section>

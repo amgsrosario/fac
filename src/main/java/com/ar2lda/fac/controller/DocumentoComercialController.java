@@ -8,11 +8,13 @@ import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialUpdateDto;
 import com.ar2lda.fac.service.DocumentoComercialService;
 import com.ar2lda.fac.service.DocumentoComercialCriacaoService;
+import com.ar2lda.fac.service.DocumentoComercialPdfService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +34,7 @@ public class DocumentoComercialController implements GenericController {
 
     private final DocumentoComercialService service;
     private final DocumentoComercialCriacaoService criacaoService;
+    private final DocumentoComercialPdfService pdfService;
 
     @PostMapping
     public ResponseEntity<DocumentoComercialDto> create(
@@ -54,6 +57,15 @@ public class DocumentoComercialController implements GenericController {
     @GetMapping("/{id}/impressao")
     public DocumentoComercialImpressaoDto getImpressao(@PathVariable Long id) {
         return service.getImpressao(id);
+    }
+
+    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> getPdf(@PathVariable Long id) {
+        DocumentoComercialPdfService.PdfDocumento pdf = pdfService.gerar(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + pdf.filename() + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf.content());
     }
 
     @GetMapping("/{id}/diagnostico")
