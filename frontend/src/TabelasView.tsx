@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "./api";
+import TabelasEspecificasView, { specificTables } from "./TabelasEspecificasView";
 
 type Page<T> = { content: T[] };
 type Row = Record<string, string | number | boolean | null>;
@@ -24,15 +25,9 @@ const configs: Config[] = [
   { key: "isencoes", label: "Motivos de isencao", group: "Fiscalidade", endpoint: "/api/motivos-isencao", fields: [text("id", "Codigo", 3, true, true), text("nome", "Nome", 60, true), text("ivaSaftId", "IVA SAF-T", 3, true)], columns: [text("id", "Codigo", 0), text("nome", "Nome", 0), text("ivaSaftId", "IVA SAF-T", 0)] }
 ];
 
-const specific = [
-  ["Documentos", ["Tipos de documento", "Series"]],
-  ["Fiscalidade", ["Regimes de IVA"]],
-  ["Localizacao", ["Codigos postais", "Freguesias"]],
-  ["Sistema", ["Armazens", "Utilizadores"]]
-] as const;
-
 export default function TabelasView() {
   const [active, setActive] = useState<Config | null>(null);
+  const [specificActive, setSpecificActive] = useState<(typeof specificTables)[number]["key"] | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [values, setValues] = useState<Values>({});
   const [editingId, setEditingId] = useState<string | number | null>(null);
@@ -105,11 +100,13 @@ export default function TabelasView() {
     }
   }
 
+  if (specificActive) return <TabelasEspecificasView onBack={() => setSpecificActive(null)} tableKey={specificActive} />;
+
   if (!active) return <section className="fac-panel">
     <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabelas</p><h2>Catalogos de apoio</h2></div><span className="fac-muted">Seleciona uma tabela</span></div>
     <div className="fac-table-groups">
       {[...new Set(configs.map((item) => item.group))].map((group) => <article className="fac-table-group" key={group}><p className="fac-eyebrow">{group}</p>{configs.filter((item) => item.group === group).map((item) => <button className="fac-table-link" key={item.key} onClick={() => setActive(item)} type="button"><span>{item.label}</span><small>Abrir</small></button>)}</article>)}
-      {specific.map(([group, items]) => <article className="fac-table-group" key={`${group}-${items[0]}`}><p className="fac-eyebrow">{group}</p>{items.map((item) => <div key={item}><span>{item}</span><small>Editor especifico</small></div>)}</article>)}
+      {[...new Set(specificTables.map((item) => item.group))].map((group) => <article className="fac-table-group" key={`specific-${group}`}><p className="fac-eyebrow">{group}</p>{specificTables.filter((item) => item.group === group).map((item) => <button className="fac-table-link" key={item.key} onClick={() => setSpecificActive(item.key)} type="button"><span>{item.label}</span><small>Abrir</small></button>)}</article>)}
     </div>
   </section>;
 
