@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { apiFetch, getAuthSession } from "./api";
 
 type Page<T> = { content: T[]; totalElements: number };
 type Pendente = {
@@ -18,7 +19,6 @@ type Cliente = { id: number; nome: string; nif: string; inativo: boolean };
 type TipoDocumento = { id: string; descricao: string; areaGestao: number };
 type Serie = { serie: string; tipoDocumentoId: string; nome: string };
 type MPagamento = { id: number; nome: string };
-type Utilizador = { codigo: string; nome: string; inativo: boolean };
 type DocumentoFinanceiro = {
   id: number;
   clienteId: number;
@@ -56,7 +56,6 @@ export default function PendentesView() {
   const [tipos, setTipos] = useState<TipoDocumento[]>([]);
   const [series, setSeries] = useState<Serie[]>([]);
   const [modos, setModos] = useState<MPagamento[]>([]);
-  const [utilizadores, setUtilizadores] = useState<Utilizador[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -97,25 +96,22 @@ export default function PendentesView() {
     setMessage(null);
     setNotice(null);
     try {
-      const [tiposPage, seriesPage, modosPage, utilizadoresPage] = await Promise.all([
+      const [tiposPage, seriesPage, modosPage] = await Promise.all([
         fetchJson<Page<TipoDocumento>>("/api/tipos-documento?size=100&sort=descricao,asc"),
         fetchJson<Page<Serie>>("/api/series?size=200&sort=serie,asc"),
-        fetchJson<Page<MPagamento>>("/api/mpagamentos?size=100&sort=nome,asc"),
-        fetchJson<Page<Utilizador>>("/api/utilizadores?size=100&sort=nome,asc")
+        fetchJson<Page<MPagamento>>("/api/mpagamentos?size=100&sort=nome,asc")
       ]);
       const financeirosTipos = tiposPage.content.filter((tipo) => tipo.areaGestao === 3);
       const seriesFinanceiras = seriesPage.content.filter((serie) => financeirosTipos.some((tipo) => tipo.id === serie.tipoDocumentoId));
-      const ativos = utilizadoresPage.content.filter((utilizador) => !utilizador.inativo);
       const tipoInicial = financeirosTipos[0]?.id ?? "";
       setTipos(financeirosTipos);
       setSeries(seriesFinanceiras);
       setModos(modosPage.content);
-      setUtilizadores(ativos);
       setForm({
         ...emptyReceiptForm(),
         tipoDocumentoId: tipoInicial,
         serie: seriesFinanceiras.find((serie) => serie.tipoDocumentoId === tipoInicial)?.serie ?? "",
-        emissorId: ativos.length === 1 ? ativos[0].codigo : ""
+        emissorId: getAuthSession()?.codigo ?? ""
       });
       setAllocations({});
       setManualReceiptValue(false);
@@ -350,7 +346,7 @@ export default function PendentesView() {
         <Field label="Tipo de documento"><select onChange={(event) => { const tipoDocumentoId = event.target.value; setForm((current) => ({ ...current, tipoDocumentoId, serie: series.find((item) => item.tipoDocumentoId === tipoDocumentoId)?.serie ?? "" })); }} value={form.tipoDocumentoId}><option value="">Selecionar</option>{tipos.map((tipo) => <option key={tipo.id} value={tipo.id}>{tipo.id} - {tipo.descricao}</option>)}</select></Field>
         <Field label="Serie"><select onChange={(event) => setForm((current) => ({ ...current, serie: event.target.value }))} value={form.serie}><option value="">Selecionar</option>{availableSeries.map((serie) => <option key={`${serie.tipoDocumentoId}-${serie.serie}`} value={serie.serie}>{serie.serie} - {serie.nome}</option>)}</select></Field>
         <Field label="Data de emissao"><input onChange={(event) => setForm((current) => ({ ...current, dataEmissao: event.target.value }))} type="date" value={form.dataEmissao}/></Field>
-        <Field label="Emissor"><select onChange={(event) => setForm((current) => ({ ...current, emissorId: event.target.value }))} value={form.emissorId}><option value="">Selecionar</option>{utilizadores.map((utilizador) => <option key={utilizador.codigo} value={utilizador.codigo}>{utilizador.nome} ({utilizador.codigo})</option>)}</select></Field>
+        <Field label="Emissor"><input disabled value={getAuthSession()?.nome ?? "Utilizador autenticado"}/></Field>
       </div>
 
       <div className="fac-receipt-totals"><div><span>Valor recebido</span><strong>{money(receiptTarget)} {form.moedaId}</strong></div><div><span>Distribuido</span><strong>{money(allocatedTotal)} {form.moedaId}</strong></div><div className={difference === 0 && receiptTarget > 0 ? "balanced" : "unbalanced"}><span>Diferenca</span><strong>{money(difference)} {form.moedaId}</strong></div></div>
@@ -373,9 +369,9 @@ export default function PendentesView() {
   </>;
 }
 
-function emptyReceiptForm(): ReceiptForm { return { clienteId: "", moedaId: "", tipoDocumentoId: "", serie: "", dataEmissao: todayIso(), valorRecebido: "", mPagamentoId: "", emissorId: "", observacoes: "" }; }
+function emptyReceiptForm(): ReceiptForm { return { clienteId: "", moedaId: "", tipoDocumentoId: "", serie: "", dataEmissao: todayIso(), valorRecebido: "", mPagamentoId: "", emissorId: getAuthSession()?.codigo ?? "", observacoes: "" }; }
 function openPendentesForClient(pendentes: Pendente[], clienteId: number) { return clienteId ? pendentes.filter((item) => item.clienteId === clienteId && Number(item.valorPendente) > 0) : []; }
-function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations) { if (!form.clienteId) return "Seleciona o cliente."; if (!form.moedaId) return "Seleciona a moeda."; if (!form.tipoDocumentoId) return "Seleciona o tipo de documento financeiro."; if (!form.serie) return "Seleciona a serie."; if (!form.dataEmissao) return "A data de emissao e obrigatoria."; if (!form.mPagamentoId) return "Confirma o modo de pagamento."; if (!form.emissorId) return "Seleciona o emissor."; const target = round6(Number(form.valorRecebido)); if (!Number.isFinite(target) || target <= 0) return "O valor recebido deve ser positivo."; const total = round6(sum(pendentes.map((item) => Number(allocations[item.id] || 0)))); if (total <= 0) return "Distribui o recebimento por pelo menos um pendente."; if (round6(target - total) !== 0) return "O valor recebido e a distribuicao pelos pendentes nao coincidem."; return null; }
+function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations) { if (!form.clienteId) return "Seleciona o cliente."; if (!form.moedaId) return "Seleciona a moeda."; if (!form.tipoDocumentoId) return "Seleciona o tipo de documento financeiro."; if (!form.serie) return "Seleciona a serie."; if (!form.dataEmissao) return "A data de emissao e obrigatoria."; if (!form.mPagamentoId) return "Confirma o modo de pagamento."; const target = round6(Number(form.valorRecebido)); if (!Number.isFinite(target) || target <= 0) return "O valor recebido deve ser positivo."; const total = round6(sum(pendentes.map((item) => Number(allocations[item.id] || 0)))); if (total <= 0) return "Distribui o recebimento por pelo menos um pendente."; if (round6(target - total) !== 0) return "O valor recebido e a distribuicao pelos pendentes nao coincidem."; return null; }
 function estado(item: Pendente) { if (Number(item.valorPendente) <= 0) return "LIQUIDADO"; if (item.dataVencimento < todayIso()) return "VENCIDO"; if (Number(item.valorPendente) < Number(item.valorDocumento)) return "PARCIAL"; return "ABERTO"; }
 function referencia(item: Pendente) { return `${item.tipoDocumentoId} ${item.serieDocumento}/${item.numeroDocumento}`; }
 function datePt(value: string) { return value ? value.split("-").reverse().join("/") : "-"; }
@@ -385,6 +381,6 @@ function round6(value: number) { return Math.round((value + Number.EPSILON) * 1_
 function todayIso() { const now = new Date(); const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000); return local.toISOString().slice(0, 10); }
 function blankToNull(value: string) { return value.trim() || null; }
 function Field({ children, label }: { children: React.ReactNode; label: string }) { return <label className="fac-field"><span>{label}</span>{children}</label>; }
-async function fetchJson<T>(url: string): Promise<T> { const response = await fetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
-async function sendJson<T>(url: string, body: unknown): Promise<T> { const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body == null ? undefined : JSON.stringify(body) }); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
+async function fetchJson<T>(url: string): Promise<T> { const response = await apiFetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
+async function sendJson<T>(url: string, body: unknown): Promise<T> { const response = await apiFetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body == null ? undefined : JSON.stringify(body) }); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
 async function responseError(response: Response) { try { const payload = await response.json(); return payload.message || payload.error || `Erro HTTP ${response.status}`; } catch { return `Erro HTTP ${response.status}`; } }

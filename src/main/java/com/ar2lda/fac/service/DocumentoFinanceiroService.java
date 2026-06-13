@@ -30,7 +30,6 @@ import com.ar2lda.fac.repository.MoedaRepository;
 import com.ar2lda.fac.repository.PendenteRepository;
 import com.ar2lda.fac.repository.SerieRepository;
 import com.ar2lda.fac.repository.TipoDocumentoRepository;
-import com.ar2lda.fac.repository.UtilizadorRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -58,7 +57,7 @@ public class DocumentoFinanceiroService {
     private final SerieRepository serieRepository;
     private final MoedaRepository moedaRepository;
     private final MPagamentoRepository mPagamentoRepository;
-    private final UtilizadorRepository utilizadorRepository;
+    private final CurrentUserService currentUserService;
     private final SerieService serieService;
     private final DocumentoFinanceiroMapper mapper;
     private final EmpresaMapper empresaMapper;
@@ -71,7 +70,7 @@ public class DocumentoFinanceiroService {
         validateDataEmissao(dto.tipoDocumentoId(), dto.serie(), dto.dataEmissao());
         Moeda moeda = findMoeda(dto.moedaId());
         MPagamento mPagamento = findMPagamento(dto.mPagamentoId());
-        Utilizador emissor = findEmissor(dto.emissorId());
+        Utilizador emissor = currentUserService.resolve(dto.emissorId(), "emitir documento financeiro");
 
         DocumentoFinanceiro documento = new DocumentoFinanceiro();
         documento.setCliente(cliente);
@@ -373,15 +372,6 @@ public class DocumentoFinanceiroService {
     private MPagamento findMPagamento(Integer id) {
         return mPagamentoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Modo de pagamento nao encontrado: " + id));
-    }
-
-    private Utilizador findEmissor(String id) {
-        Utilizador emissor = utilizadorRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Emissor nao encontrado: " + id));
-        if (emissor.isInativo()) {
-            throw new BadRequestException("Emissor inativo nao pode emitir documento financeiro");
-        }
-        return emissor;
     }
 
     private Pendente findPendente(Long id) {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { apiFetch } from "./api";
 
 type Page<T> = {
   content: T[];
@@ -279,13 +280,13 @@ function Field({ children, label }: { children: React.ReactNode; label: string }
 }
 
 async function fetchPage<T>(url: string): Promise<Page<T>> {
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();
 }
 
 async function request(url: string, method: "POST" | "PUT", body: unknown) {
-  const response = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const response = await apiFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (!response.ok) throw new Error(await responseError(response));
 }
 

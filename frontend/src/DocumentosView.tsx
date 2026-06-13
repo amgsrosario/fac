@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { apiFetch, getAuthSession } from "./api";
 
 type Page<T> = {
   content: T[];
@@ -70,12 +71,6 @@ type Artigo = {
   codigo: string;
   descricao: string;
   pvp: number;
-  inativo: boolean;
-};
-
-type Utilizador = {
-  codigo: string;
-  nome: string;
   inativo: boolean;
 };
 
@@ -159,8 +154,6 @@ export default function DocumentosView() {
   const [lineForm, setLineForm] = useState<LineForm>(emptyLineForm);
   const [emissionOpen, setEmissionOpen] = useState(false);
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
-  const [utilizadores, setUtilizadores] = useState<Utilizador[]>([]);
-  const [emissorId, setEmissorId] = useState("");
   const newDocumentClientRef = useRef<HTMLSelectElement>(null);
   const lineArticleRef = useRef<HTMLSelectElement>(null);
 
@@ -258,7 +251,7 @@ export default function DocumentosView() {
     setLinesLoading(true);
     setMessage(null);
     try {
-      const response = await fetch(`/api/documentos-comerciais/${selected.id}/linhas/${lineId}`, { method: "DELETE" });
+      const response = await apiFetch(`/api/documentos-comerciais/${selected.id}/linhas/${lineId}`, { method: "DELETE" });
       if (!response.ok) throw new Error(await responseError(response));
       await refreshSelectedDocument(selected.id);
       setNotice("Linha removida e totais do documento recalculados.");
@@ -284,14 +277,8 @@ export default function DocumentosView() {
     setMessage(null);
     setNotice(null);
     try {
-      const [diagnosticoAtual, utilizadoresPage] = await Promise.all([
-        fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`),
-        fetchJson<Page<Utilizador>>("/api/utilizadores?size=100&sort=nome,asc")
-      ]);
-      const ativos = utilizadoresPage.content.filter((utilizador) => !utilizador.inativo);
+      const diagnosticoAtual = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
       setDiagnostico(diagnosticoAtual);
-      setUtilizadores(ativos);
-      setEmissorId(ativos.length === 1 ? ativos[0].codigo : "");
       setEmissionOpen(true);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Nao foi possivel preparar a emissao.");
@@ -302,15 +289,11 @@ export default function DocumentosView() {
 
   async function emitDocument() {
     if (!selected || !diagnostico?.podeEmitir) return;
-    if (!emissorId) {
-      setMessage("Seleciona o emissor do documento.");
-      return;
-    }
     if (!window.confirm(`Emitir definitivamente ${diagnostico.referencia}? Depois de emitido, o documento fica imutavel.`)) return;
     setLoading(true);
     setMessage(null);
     try {
-      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, "POST", { emissorId });
+      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, "POST", { emissorId: getAuthSession()?.codigo });
       const diagnosticoEmitido = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
       setDocumentos((current) => current.map((item) => item.id === emitted.id ? emitted : item));
       setEmissionOpen(false);
@@ -592,13 +575,8 @@ export default function DocumentosView() {
           {diagnostico.podeEmitir && diagnostico.alertas.length === 0 && <p className="fac-check-ok">O backend confirmou que o documento esta coerente e pode ser emitido.</p>}
 
           <div className="fac-form-footer">
-            <Field label="Emissor">
-              <select onChange={(event) => setEmissorId(event.target.value)} value={emissorId}>
-                <option value="">Selecionar utilizador</option>
-                {utilizadores.map((utilizador) => <option key={utilizador.codigo} value={utilizador.codigo}>{utilizador.nome} ({utilizador.codigo})</option>)}
-              </select>
-            </Field>
-            <button className="fac-gold-button" disabled={loading || !diagnostico.podeEmitir || !emissorId} onClick={emitDocument} type="button">Emitir documento</button>
+            <span className="fac-muted">Emissor: {getAuthSession()?.nome}</span>
+            <button className="fac-gold-button" disabled={loading || !diagnostico.podeEmitir} onClick={emitDocument} type="button">Emitir documento</button>
           </div>
           <p className="fac-muted">A emissao atribui o numero definitivo, avanca o numerador da serie e torna o documento imutavel.</p>
         </section>
@@ -659,20 +637,20 @@ export default function DocumentosView() {
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();
 }
 
 async function fetchOptionalJson<T>(url: string): Promise<T | null> {
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();
 }
 
 async function requestJson<T>(url: string, method: "POST" | "PUT", body: unknown): Promise<T> {
-  const response = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const response = await apiFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();
 }

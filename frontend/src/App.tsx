@@ -4,6 +4,7 @@ import DocumentosView from "./DocumentosView";
 import PendentesView from "./PendentesView";
 import ParametrosDocumentoView from "./ParametrosDocumentoView";
 import TabelasView from "./TabelasView";
+import { apiFetch, AuthSession } from "./api";
 
 type Page<T> = {
   content: T[];
@@ -222,7 +223,9 @@ const emptyParametrosClienteForm: ParametrosClienteForm = {
   retencao: ""
 };
 
-function App() {
+type AppProps = { currentUser: AuthSession; onLogout: () => void };
+
+function App({ currentUser, onLogout }: AppProps) {
   const [activeView, setActiveView] = useState<ViewKey>("Dashboard");
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [clientes, setClientes] = useState<Page<Cliente> | null>(null);
@@ -562,6 +565,7 @@ function App() {
             <h1>{viewTitle(activeView)}</h1>
           </div>
           <div className="fac-topbar-actions">
+            <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.codigo}</small></div>
             <input
               onChange={(event) => setClienteSearch(event.target.value)}
               disabled={activeView === "Configuracao"}
@@ -570,6 +574,7 @@ function App() {
               value={activeView === "Clientes" ? clienteSearch : ""}
             />
             <button onClick={refreshActiveView} type="button">Atualizar</button>
+            <button className="fac-ghost-button" onClick={onLogout} type="button">Sair</button>
           </div>
         </header>
 
@@ -1177,7 +1182,7 @@ async function fetchPage<T>(url: string): Promise<Page<T>> {
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) {
     throw new Error(await responseError(response));
   }
@@ -1185,14 +1190,14 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 async function fetchOptionalJson<T>(url: string): Promise<T | null> {
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();
 }
 
 async function sendJson<T>(url: string, body: unknown): Promise<T> {
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
@@ -1204,7 +1209,7 @@ async function sendJson<T>(url: string, body: unknown): Promise<T> {
 }
 
 async function putJson(url: string, body: unknown): Promise<void> {
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)

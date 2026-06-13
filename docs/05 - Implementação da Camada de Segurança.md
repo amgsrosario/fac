@@ -6,10 +6,27 @@
 |---------|---------|
 | Documento | 05 - Implementação da Camada de Segurança |
 | Projeto | FAC |
-| Versão | 1.0 |
-| Estado | Draft |
+| Versão | 1.1 |
+| Estado | Implementado - Fase 1 |
 | Data | 12-06-2026 |
 | Autor | António Rosário |
+
+---
+
+## Decisões da Fase 1
+
+A implementação inicial foi concluída com as seguintes decisões de simplificação:
+
+- A entidade existente `Utilizador` é também a identidade de autenticação. Não foi criada uma entidade duplicada `AppUser`;
+- O login aceita o código do utilizador ou o email;
+- As passwords continuam armazenadas exclusivamente com BCrypt;
+- A API está protegida por defeito e utiliza JWT stateless;
+- A validação do JWT usa o suporte oficial de Resource Server do Spring Security, sem um filtro personalizado redundante;
+- O emissor dos documentos comerciais e financeiros é o utilizador autenticado;
+- Registo público, refresh tokens, MFA, SSO, multiempresa e permissões por módulo ficam adiados;
+- Os perfis `ADMIN` e `USER` ficam adiados até existir uma necessidade concreta de autorização diferenciada.
+
+Esta fase implementa autenticação e proteção da aplicação. A autorização por perfis não faz ainda parte do comportamento operacional.
 
 ---
 

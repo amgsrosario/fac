@@ -164,7 +164,7 @@ values (
     'DEMO',
     'Utilizador Demo',
     'utilizador@fac.demo',
-    '$2a$10$123456789012345678901uZVXKMcIlbsK8PL5kN1l4I2zxIlW85ee',
+    '$2a$10$Ig5Tm6ex2e27iy2z2InRqOqIa0pQmTF0ZIQySWuR5CmMiYP3LxkEy',
     false
 )
 on conflict (codigo) do update set

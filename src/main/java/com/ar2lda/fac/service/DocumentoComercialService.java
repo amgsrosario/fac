@@ -44,7 +44,6 @@ import com.ar2lda.fac.repository.RIvaRepository;
 import com.ar2lda.fac.repository.SerieRepository;
 import com.ar2lda.fac.repository.TipoDocumentoRepository;
 import com.ar2lda.fac.repository.TransporteRepository;
-import com.ar2lda.fac.repository.UtilizadorRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -78,7 +77,7 @@ public class DocumentoComercialService {
     private final PPagamentoRepository pPagamentoRepository;
     private final TransporteRepository transporteRepository;
     private final LinhaDocumentoComercialRepository linhaRepository;
-    private final UtilizadorRepository utilizadorRepository;
+    private final CurrentUserService currentUserService;
     private final PendenteRepository pendenteRepository;
     private final SerieService serieService;
     private final PendenteService pendenteService;
@@ -265,7 +264,7 @@ public class DocumentoComercialService {
         validateTemLinhas(documento);
         validateDataEmissao(documento);
 
-        Utilizador emissor = findEmissor(dto.emissorId());
+        Utilizador emissor = currentUserService.resolve(dto.emissorId(), "emitir documento comercial");
         documento.setNumeroDocumento(serieService.proximoNumero(
                 documento.getTipoDocumento().getId(),
                 documento.getSerie()
@@ -471,15 +470,6 @@ public class DocumentoComercialService {
         if (ultimaData != null && documento.getDataEmissao().isBefore(ultimaData)) {
             throw new BadRequestException("Data de emissao nao pode ser anterior ao ultimo documento emitido da serie");
         }
-    }
-
-    private Utilizador findEmissor(String id) {
-        Utilizador emissor = utilizadorRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Emissor nao encontrado: " + id));
-        if (emissor.isInativo()) {
-            throw new BadRequestException("Emissor inativo nao pode emitir documento comercial");
-        }
-        return emissor;
     }
 
     private DocumentoComercialDiagnosticoPendenteDto buildDiagnosticoPendente(Optional<Pendente> pendente) {

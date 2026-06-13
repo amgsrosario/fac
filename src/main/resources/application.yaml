@@ -27,3 +27,10 @@ spring:
   jackson:
     deserialization:
       fail-on-unknown-properties: true
+
+fac:
+  security:
+    enabled: ${FAC_SECURITY_ENABLED:true}
+    jwt:
+      secret: ${FAC_JWT_SECRET:}
+      expiration-minutes: ${FAC_JWT_EXPIRATION_MINUTES:60}

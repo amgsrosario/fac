@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "./api";
 
 type Page<T> = { content: T[] };
 type TipoDocumento = { id: string; descricao: string; areaGestao: number };
@@ -62,7 +63,7 @@ export default function ParametrosDocumentoView() {
     setLoading(true);
     setMessage(null);
     try {
-      const response = await fetch("/api/parametros-documento-comercial", {
+      const response = await apiFetch("/api/parametros-documento-comercial", {
         method: exists ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -126,13 +127,13 @@ function Field({ children, label }: { children: React.ReactNode; label: string }
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();
 }
 
 async function fetchOptional<T>(url: string): Promise<T | null> {
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();

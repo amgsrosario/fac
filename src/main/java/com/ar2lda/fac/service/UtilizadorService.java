@@ -11,7 +11,6 @@ import com.ar2lda.fac.repository.UtilizadorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +22,7 @@ public class UtilizadorService {
 
     private final UtilizadorRepository repository;
     private final UtilizadorMapper mapper;
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
     public UtilizadorDto create(UtilizadorCreateDto dto) {
         String codigo = normalizeCodigo(dto.codigo());

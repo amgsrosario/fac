@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "./api";
 
 type Page<T> = { content: T[] };
 type Row = Record<string, string | number | boolean | null>;
@@ -69,7 +70,7 @@ export default function TabelasView() {
     setLoading(true); setMessage(null);
     try {
       const editing = editingId != null;
-      const response = await fetch(editing ? `${active.endpoint}/${encodeURIComponent(String(editingId))}` : active.endpoint, { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(toPayload(active, values, editing)) });
+      const response = await apiFetch(editing ? `${active.endpoint}/${encodeURIComponent(String(editingId))}` : active.endpoint, { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(toPayload(active, values, editing)) });
       if (!response.ok) throw new Error(await responseError(response));
       await load(active); setMessage({ kind: "success", text: editing ? "Registo atualizado com sucesso." : "Registo criado com sucesso." });
     } catch (error) { setMessage({ kind: "error", text: errorMessage(error) }); setLoading(false); }
@@ -87,7 +88,7 @@ export default function TabelasView() {
     setPendingDelete(null);
     setLoading(true); setMessage({ kind: "info", text: `A verificar se ${reference} pode ser eliminado...` });
     try {
-      const response = await fetch(`${active.endpoint}/${encodeURIComponent(String(row.id))}`, { method: "DELETE" });
+      const response = await apiFetch(`${active.endpoint}/${encodeURIComponent(String(row.id))}`, { method: "DELETE" });
       if (!response.ok) {
         const detail = await responseError(response);
         if (response.status === 409) {
@@ -136,6 +137,6 @@ export default function TabelasView() {
 function toPayload(config: Config, values: Values, editing: boolean) { return Object.fromEntries(config.fields.filter((field) => !(editing && field.createOnly)).map((field) => [field.key, field.type === "number" ? (values[field.key] === "" ? null : Number(values[field.key])) : field.type === "checkbox" ? Boolean(values[field.key]) : String(values[field.key] ?? "").trim()])); }
 function display(key: string, value: Row[string]) { if (typeof value === "boolean") return key === "inativo" ? (value ? "Inativo" : "Ativo") : value ? "Sim" : "Nao"; return value ?? "-"; }
 function rowReference(config: Config, row: Row) { const description = config.columns.find((column) => column.key !== "id" && row[column.key] != null); const detail = description ? ` - ${String(row[description.key])}` : ""; return `${config.label} ${String(row.id)}${detail}`; }
-async function get<T>(url: string): Promise<T> { const response = await fetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
+async function get<T>(url: string): Promise<T> { const response = await apiFetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
 async function responseError(response: Response) { try { const payload = await response.json(); return payload.message || payload.error || `Erro HTTP ${response.status}`; } catch { return `Erro HTTP ${response.status}`; } }
 function errorMessage(error: unknown) { return error instanceof Error ? error.message : "Nao foi possivel concluir a operacao."; }
