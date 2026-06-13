@@ -35,6 +35,7 @@ import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.DocumentoComercialRepository;
 import com.ar2lda.fac.repository.EmpresaRepository;
 import com.ar2lda.fac.repository.LinhaDocumentoComercialRepository;
+import com.ar2lda.fac.repository.LinhaDocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.MPagamentoRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
 import com.ar2lda.fac.repository.MoradaRepository;
@@ -77,6 +78,7 @@ public class DocumentoComercialService {
     private final PPagamentoRepository pPagamentoRepository;
     private final TransporteRepository transporteRepository;
     private final LinhaDocumentoComercialRepository linhaRepository;
+    private final LinhaDocumentoFinanceiroRepository linhaDocumentoFinanceiroRepository;
     private final CurrentUserService currentUserService;
     private final PendenteRepository pendenteRepository;
     private final SerieService serieService;
@@ -142,6 +144,7 @@ public class DocumentoComercialService {
         DocumentoComercial documento = findDocumento(id);
         List<LinhaDocumentoComercial> linhas = linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(id);
         Optional<Pendente> pendente = pendenteRepository.findByDocumentoComercialId(id);
+        boolean temRecebimentosAtivos = linhaDocumentoFinanceiroRepository.existsActiveLinesForDocumentoComercial(id);
 
         List<String> alertas = new ArrayList<>();
         List<String> bloqueios = new ArrayList<>();
@@ -155,8 +158,8 @@ public class DocumentoComercialService {
         if (documento.isAnulado()) {
             bloqueios.add("Documento comercial encontra-se anulado");
         }
-        if (documento.isLiquidado()) {
-            bloqueios.add("Documento comercial ja tem liquidacao associada");
+        if (temRecebimentosAtivos) {
+            bloqueios.add("Documento comercial tem recebimentos ativos. Anule primeiro os respetivos documentos financeiros");
         }
         if (documento.getEstado() == EstadoDocumentoComercial.EMITIDO && pendente.isEmpty()
                 && !documento.getTipoDocumento().isLiquidacaoImediata() && !documento.isAnulado()) {
@@ -174,7 +177,7 @@ public class DocumentoComercialService {
                 && totais.coerente();
         boolean podeAnular = documento.getEstado() == EstadoDocumentoComercial.EMITIDO
                 && !documento.isAnulado()
-                && !documento.isLiquidado()
+                && !temRecebimentosAtivos
                 && pendente.map(p -> p.getValorPendente().compareTo(p.getValorDocumento()) == 0).orElse(true);
 
         return new DocumentoComercialDiagnosticoDto(
@@ -289,11 +292,18 @@ public class DocumentoComercialService {
         DocumentoComercial documento = findDocumento(id);
         validatePodeAnular(documento);
 
+        if (linhaDocumentoFinanceiroRepository.existsActiveLinesForDocumentoComercial(documento.getId())) {
+            throw new BadRequestException(
+                    "Documento comercial tem recebimentos ativos. Anule primeiro os respetivos documentos financeiros"
+            );
+        }
+
         pendenteRepository.findByDocumentoComercialId(documento.getId()).ifPresent(pendente -> {
             if (pendente.getValorPendente().compareTo(pendente.getValorDocumento()) != 0) {
                 throw new BadRequestException("Documento com pendente movimentado nao pode ser anulado");
             }
-            pendenteRepository.delete(pendente);
+            pendente.setValorPendente(BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP));
+            pendenteRepository.save(pendente);
         });
 
         documento.setAnulado(true);
@@ -693,9 +703,6 @@ public class DocumentoComercialService {
         }
         if (documento.isAnulado()) {
             throw new BadRequestException("Documento comercial ja se encontra anulado");
-        }
-        if (documento.isLiquidado()) {
-            throw new BadRequestException("Documento liquidado nao pode ser anulado");
         }
     }
 }

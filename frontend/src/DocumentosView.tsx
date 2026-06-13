@@ -326,6 +326,23 @@ export default function DocumentosView() {
     }
   }
 
+  async function annulDocument() {
+    if (!selected || selected.estado !== "EMITIDO" || selected.anulado) return;
+    if (!window.confirm(`Anular ${reference(selected)}? Esta operacao so e permitida quando nao existem recebimentos ativos.`)) return;
+    setLoading(true);
+    setMessage(null);
+    setNotice(null);
+    try {
+      const annulled = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/anular`, "POST", null);
+      setDocumentos((current) => current.map((item) => item.id === annulled.id ? annulled : item));
+      setNotice(`${reference(annulled)} anulado.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel anular o documento.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function openDraftEditor() {
     setLoading(true);
     setMessage(null);
@@ -571,6 +588,7 @@ export default function DocumentosView() {
           <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openHtml(selected.id)} type="button">Diagnostico HTML</button>
           <button className="fac-ghost-button" disabled={!selected} onClick={() => selected && openJson(selected.id)} type="button">Diagnostico JSON</button>
           {selected?.estado === "EMITIDO" && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
+          {selected?.estado === "EMITIDO" && !selected.anulado && <button className="fac-link-danger" disabled={loading} onClick={annulDocument} type="button">Anular fatura</button>}
           {selectedIsDraft && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
         </aside>
       </section>

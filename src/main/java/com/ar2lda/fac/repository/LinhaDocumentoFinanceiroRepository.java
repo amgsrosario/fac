@@ -27,4 +27,14 @@ public interface LinhaDocumentoFinanceiroRepository extends JpaRepository<LinhaD
             @Param("documentoComercialId") Long documentoComercialId,
             @Param("documentoFinanceiroId") Long documentoFinanceiroId
     );
+
+    @Query("""
+            select count(l) > 0
+            from LinhaDocumentoFinanceiro l
+            where l.pendente.documentoComercial.id = :documentoComercialId
+              and l.documentoFinanceiro.anulado = false
+            """)
+    boolean existsActiveLinesForDocumentoComercial(
+            @Param("documentoComercialId") Long documentoComercialId
+    );
 }

@@ -154,6 +154,9 @@ public class PendenteService {
     }
 
     private String estadoPendente(Pendente pendente) {
+        if (pendente.getDocumentoComercial().isAnulado()) {
+            return "ANULADO";
+        }
         if (pendente.getValorPendente().compareTo(BigDecimal.ZERO) <= 0) {
             return "LIQUIDADO";
         }
