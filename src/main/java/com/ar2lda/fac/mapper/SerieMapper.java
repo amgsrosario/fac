@@ -21,7 +21,8 @@ public interface SerieMapper {
                 entity.getNome(),
                 entity.getCodigoAt(),
                 entity.getDataCodigoAt(),
-                entity.getNumerador()
+                entity.getNumerador(),
+                entity.temCodigoAt()
         );
     }
 

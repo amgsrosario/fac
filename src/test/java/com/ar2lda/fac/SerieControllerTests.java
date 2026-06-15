@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -51,7 +52,8 @@ class SerieControllerTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.serie").value("Z97A"))
                 .andExpect(jsonPath("$.tipoDocumentoId").value("Z97"))
-                .andExpect(jsonPath("$.numerador").value(0));
+                .andExpect(jsonPath("$.numerador").value(0))
+                .andExpect(jsonPath("$.temCodigoAt").value(true));
 
         mockMvc.perform(get("/series/Z97/Z97A"))
                 .andExpect(status().isOk())
@@ -123,6 +125,174 @@ class SerieControllerTests {
                 .andExpect(jsonPath("$.message").value("Código AT e data do código AT devem ser preenchidos em conjunto"));
     }
 
+    @Test
+    void normalizaDadosTextuaisAntesDePersistirEProcurar() throws Exception {
+        mockMvc.perform(post("/series")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "serie": "  NORM  ",
+                                  "tipoDocumentoId": " Z97 ",
+                                  "nome": "  Série normalizada  ",
+                                  "codigoAt": "  AT-NORM  ",
+                                  "dataCodigoAt": "2026-06-06"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.serie").value("NORM"))
+                .andExpect(jsonPath("$.tipoDocumentoId").value("Z97"))
+                .andExpect(jsonPath("$.nome").value("Série normalizada"))
+                .andExpect(jsonPath("$.codigoAt").value("AT-NORM"));
+
+        assertThat(serieService.getById(" Z97 ", " NORM ").serie()).isEqualTo("NORM");
+    }
+
+    @Test
+    void rejeitaSerieDuplicadaDepoisDeNormalizar() throws Exception {
+        createSerie("Z97", "DUP", "Primeira série");
+
+        mockMvc.perform(post("/series")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "serie": " DUP ",
+                                  "tipoDocumentoId": " Z97 ",
+                                  "nome": "Duplicada"
+                                }
+                                """))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void rejeitaTipoDocumentoInexistenteEComprimentosInvalidos() throws Exception {
+        mockMvc.perform(post("/series")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "serie": "A",
+                                  "tipoDocumentoId": "X99",
+                                  "nome": "Tipo inexistente"
+                                }
+                                """))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(post("/series")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "serie": "12345678901",
+                                  "tipoDocumentoId": "Z97",
+                                  "nome": "Série longa"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/series")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "serie": "CURTA",
+                                  "tipoDocumentoId": "Z9",
+                                  "nome": "Tipo curto"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Tipo de documento deve ter 3 caracteres"));
+    }
+
+    @Test
+    void permiteAtualizarCodigoAtAntesDaUtilizacaoENormalizaValores() throws Exception {
+        createSerie("Z97", "EDIT", "Série editável");
+
+        mockMvc.perform(put("/series/Z97/EDIT")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "  Nome atualizado  ",
+                                  "codigoAt": "  AT-EDIT  ",
+                                  "dataCodigoAt": "2026-06-07"
+                                }
+                                """))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/series/Z97/EDIT"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Nome atualizado"))
+                .andExpect(jsonPath("$.codigoAt").value("AT-EDIT"))
+                .andExpect(jsonPath("$.numerador").value(0));
+    }
+
+    @Test
+    void impedeAlterarCodigoAtOuEliminarSerieUtilizadaMasPermiteAlterarNome() throws Exception {
+        createSerieWithCodigoAt("Z97", "USED", "Série utilizada", "AT-USED", "2026-06-08");
+        assertThat(serieService.proximoNumero("Z97", "USED")).isEqualTo(1L);
+
+        mockMvc.perform(put("/series/Z97/USED")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "Outro nome",
+                                  "codigoAt": "AT-NEW",
+                                  "dataCodigoAt": "2026-06-09"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Não é possível alterar o código AT de uma série já utilizada"));
+
+        mockMvc.perform(put("/series/Z97/USED")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "  Nome permitido  ",
+                                  "codigoAt": " AT-USED ",
+                                  "dataCodigoAt": "2026-06-08"
+                                }
+                                """))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(delete("/series/Z97/USED"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Não é possível eliminar uma série já utilizada"));
+    }
+
+    @Test
+    void atualizacaoNaoAceitaCamposDaIdentidadeOuNumerador() throws Exception {
+        createSerie("Z97", "IMM", "Série imutável");
+
+        mockMvc.perform(put("/series/Z97/IMM")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "Tentativa",
+                                  "tipoDocumentoId": "Z96",
+                                  "serie": "OUTRA",
+                                  "numerador": 99
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/series/Z97/IMM"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tipoDocumentoId").value("Z97"))
+                .andExpect(jsonPath("$.serie").value("IMM"))
+                .andExpect(jsonPath("$.numerador").value(0));
+    }
+
+    @Test
+    void listaSeriesEDevolveNotFoundParaChaveInexistente() throws Exception {
+        createSerie("Z97", "LISTA", "Série listada");
+
+        mockMvc.perform(get("/series?size=1000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(org.hamcrest.Matchers.greaterThanOrEqualTo(1))));
+
+        mockMvc.perform(get("/series/Z97/NAOEXISTE"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(delete("/series/Z97/NAOEXISTE"))
+                .andExpect(status().isNotFound());
+    }
+
     private void createTipoDocumento(String id, String descricao) throws Exception {
         mockMvc.perform(post("/tipos-documento")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -149,6 +319,27 @@ class SerieControllerTests {
                                   "nome": "%s"
                                 }
                                 """.formatted(serie, tipoDocumentoId, nome)))
+                .andExpect(status().isCreated());
+    }
+
+    private void createSerieWithCodigoAt(
+            String tipoDocumentoId,
+            String serie,
+            String nome,
+            String codigoAt,
+            String dataCodigoAt
+    ) throws Exception {
+        mockMvc.perform(post("/series")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "serie": "%s",
+                                  "tipoDocumentoId": "%s",
+                                  "nome": "%s",
+                                  "codigoAt": "%s",
+                                  "dataCodigoAt": "%s"
+                                }
+                                """.formatted(serie, tipoDocumentoId, nome, codigoAt, dataCodigoAt)))
                 .andExpect(status().isCreated());
     }
 }

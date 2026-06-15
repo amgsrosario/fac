@@ -12,6 +12,8 @@ import java.util.List;
 
 public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFinanceiro, Long> {
 
+    boolean existsByTipoDocumentoIdAndSerie(String tipoDocumentoId, String serie);
+
     @Query("""
             select max(d.dataEmissao)
             from DocumentoFinanceiro d

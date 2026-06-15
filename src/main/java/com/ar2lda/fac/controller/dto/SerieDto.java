@@ -8,6 +8,7 @@ public record SerieDto(
         String nome,
         String codigoAt,
         LocalDate dataCodigoAt,
-        Long numerador
+        Long numerador,
+        boolean temCodigoAt
 ) {
 }

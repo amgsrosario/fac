@@ -10,6 +10,8 @@ import com.ar2lda.fac.mapper.SerieMapper;
 import com.ar2lda.fac.model.Serie;
 import com.ar2lda.fac.model.SerieId;
 import com.ar2lda.fac.model.TipoDocumento;
+import com.ar2lda.fac.repository.DocumentoComercialRepository;
+import com.ar2lda.fac.repository.DocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.SerieRepository;
 import com.ar2lda.fac.repository.TipoDocumentoRepository;
 import jakarta.transaction.Transactional;
@@ -26,15 +28,20 @@ public class SerieService {
 
     private final SerieRepository repository;
     private final TipoDocumentoRepository tipoDocumentoRepository;
+    private final DocumentoComercialRepository documentoComercialRepository;
+    private final DocumentoFinanceiroRepository documentoFinanceiroRepository;
     private final SerieMapper mapper;
 
+    @Transactional
     public SerieDto create(SerieCreateDto dto) {
-        SerieId id = new SerieId(dto.tipoDocumentoId(), dto.serie());
+        SerieCreateDto normalized = normalize(dto);
+        TipoDocumento tipoDocumento = findTipoDocumento(normalized.tipoDocumentoId());
+        SerieId id = new SerieId(normalized.tipoDocumentoId(), normalized.serie());
         if (repository.existsById(id)) {
             throw new ConflictException("Série já existe: " + formatId(id));
         }
-        validateCodigoAt(dto.codigoAt(), dto.dataCodigoAt());
-        Serie entity = mapper.fromCreateDTO(dto, findTipoDocumento(dto.tipoDocumentoId()));
+        validateCodigoAt(normalized.codigoAt(), normalized.dataCodigoAt());
+        Serie entity = mapper.fromCreateDTO(normalized, tipoDocumento);
         return mapper.toDTO(repository.save(entity));
     }
 
@@ -46,28 +53,46 @@ public class SerieService {
         return mapper.toDTO(findEntityById(tipoDocumentoId, serie));
     }
 
+    @Transactional
     public void update(String tipoDocumentoId, String serie, SerieUpdateDto dto) {
-        validateCodigoAt(dto.codigoAt(), dto.dataCodigoAt());
+        SerieUpdateDto normalized = normalize(dto);
+        validateCodigoAt(normalized.codigoAt(), normalized.dataCodigoAt());
         Serie existing = findEntityById(tipoDocumentoId, serie);
-        mapper.applyUpdate(dto, existing);
+        if (existing.getNumerador() > 0 && codigoAtChanged(existing, normalized)) {
+            throw new BadRequestException("Não é possível alterar o código AT de uma série já utilizada");
+        }
+        mapper.applyUpdate(normalized, existing);
         repository.save(existing);
     }
 
+    @Transactional
     public void delete(String tipoDocumentoId, String serie) {
-        repository.delete(findEntityById(tipoDocumentoId, serie));
+        Serie existing = findEntityById(tipoDocumentoId, serie);
+        String normalizedTipoDocumentoId = existing.getTipoDocumento().getId();
+        String normalizedSerie = existing.getSerie();
+        boolean hasDocuments = documentoComercialRepository
+                .existsByTipoDocumentoIdAndSerie(normalizedTipoDocumentoId, normalizedSerie)
+                || documentoFinanceiroRepository
+                .existsByTipoDocumentoIdAndSerie(normalizedTipoDocumentoId, normalizedSerie);
+        if (existing.getNumerador() > 0 || hasDocuments) {
+            throw new BadRequestException("Não é possível eliminar uma série já utilizada");
+        }
+        repository.delete(existing);
         repository.flush();
     }
 
     @Transactional
     public Long proximoNumero(String tipoDocumentoId, String serie) {
-        SerieId id = new SerieId(tipoDocumentoId, serie);
-        Serie entity = repository.findForUpdate(tipoDocumentoId, serie)
+        String normalizedTipoDocumentoId = normalizeTipoDocumentoId(tipoDocumentoId);
+        String normalizedSerie = normalizeSerie(serie);
+        SerieId id = new SerieId(normalizedTipoDocumentoId, normalizedSerie);
+        Serie entity = repository.findForUpdate(normalizedTipoDocumentoId, normalizedSerie)
                 .orElseThrow(() -> new NotFoundException("Série não encontrada: " + formatId(id)));
         return entity.proximoNumero();
     }
 
     private Serie findEntityById(String tipoDocumentoId, String serie) {
-        SerieId id = new SerieId(tipoDocumentoId, serie);
+        SerieId id = new SerieId(normalizeTipoDocumentoId(tipoDocumentoId), normalizeSerie(serie));
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Série não encontrada: " + formatId(id)));
     }
@@ -83,6 +108,65 @@ public class SerieService {
         if (hasCodigoAt != hasDataCodigoAt) {
             throw new BadRequestException("Código AT e data do código AT devem ser preenchidos em conjunto");
         }
+    }
+
+    private SerieCreateDto normalize(SerieCreateDto dto) {
+        return new SerieCreateDto(
+                normalizeSerie(dto.serie()),
+                normalizeTipoDocumentoId(dto.tipoDocumentoId()),
+                normalizeRequired(dto.nome(), "Nome da série", 50),
+                normalizeOptional(dto.codigoAt(), "Código AT", 100),
+                dto.dataCodigoAt()
+        );
+    }
+
+    private SerieUpdateDto normalize(SerieUpdateDto dto) {
+        return new SerieUpdateDto(
+                normalizeRequired(dto.nome(), "Nome da série", 50),
+                normalizeOptional(dto.codigoAt(), "Código AT", 100),
+                dto.dataCodigoAt()
+        );
+    }
+
+    private String normalizeSerie(String value) {
+        return normalizeRequired(value, "Série", 10);
+    }
+
+    private String normalizeTipoDocumentoId(String value) {
+        String normalized = normalizeRequired(value, "Tipo de documento", 3);
+        if (normalized.length() != 3) {
+            throw new BadRequestException("Tipo de documento deve ter 3 caracteres");
+        }
+        return normalized;
+    }
+
+    private String normalizeRequired(String value, String field, int maxLength) {
+        String normalized = value == null ? "" : value.trim();
+        if (normalized.isEmpty()) {
+            throw new BadRequestException(field + " é obrigatório");
+        }
+        if (normalized.length() > maxLength) {
+            throw new BadRequestException(field + " deve ter no máximo " + maxLength + " caracteres");
+        }
+        return normalized;
+    }
+
+    private String normalizeOptional(String value, String field, int maxLength) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (normalized.length() > maxLength) {
+            throw new BadRequestException(field + " deve ter no máximo " + maxLength + " caracteres");
+        }
+        return normalized;
+    }
+
+    private boolean codigoAtChanged(Serie existing, SerieUpdateDto normalized) {
+        return !java.util.Objects.equals(
+                normalizeOptional(existing.getCodigoAt(), "Código AT", 100),
+                normalized.codigoAt())
+                || !java.util.Objects.equals(existing.getDataCodigoAt(), normalized.dataCodigoAt());
     }
 
     private String formatId(SerieId id) {
