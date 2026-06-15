@@ -34,8 +34,7 @@ public class SerieService {
             throw new ConflictException("Série já existe: " + formatId(id));
         }
         validateCodigoAt(dto.codigoAt(), dto.dataCodigoAt());
-        Serie entity = mapper.fromCreateDTO(dto);
-        entity.setTipoDocumento(findTipoDocumento(dto.tipoDocumentoId()));
+        Serie entity = mapper.fromCreateDTO(dto, findTipoDocumento(dto.tipoDocumentoId()));
         return mapper.toDTO(repository.save(entity));
     }
 

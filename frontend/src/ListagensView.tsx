@@ -117,6 +117,8 @@ export default function ListagensView() {
   const [extratoDataInicial, setExtratoDataInicial] = useState("");
   const [extratoDataFinal, setExtratoDataFinal] = useState("");
   const [extrato, setExtrato] = useState<ExtratoCliente | null>(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
   const configured = useConfiguredColumns(`fac.listagens.${source}.colunas`, COLUMNS[source]);
 
   useEffect(() => { loadSource(source); }, [source]);
@@ -171,6 +173,38 @@ export default function ListagensView() {
     }
   }
 
+  async function exportarExtrato(format: "pdf" | "xlsx") {
+    setMessage(null);
+    if (!extratoClienteId || !extratoDataInicial || !extratoDataFinal) {
+      setMessage("Seleciona o cliente, a data inicial e a data final.");
+      return;
+    }
+    if (extratoDataInicial > extratoDataFinal) {
+      setMessage("A data inicial nao pode ser posterior a data final.");
+      return;
+    }
+    const setExporting = format === "pdf" ? setExportingPdf : setExportingExcel;
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({ dataInicial: extratoDataInicial, dataFinal: extratoDataFinal });
+      const response = await apiFetch(`/api/extratos/clientes/${extratoClienteId}/exportar/${format}?${params}`);
+      if (!response.ok) throw new Error(await responseError(response));
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = downloadFilename(response.headers.get("Content-Disposition"), `extrato-cliente.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel exportar o extrato.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const rows = useMemo(() => {
     const base: unknown[] = source === "extratoCliente" ? []
       : source === "comerciais" ? comerciais
@@ -201,6 +235,8 @@ export default function ListagensView() {
         <label><span>Data inicial</span><input onChange={(event) => setExtratoDataInicial(event.target.value)} type="date" value={extratoDataInicial}/></label>
         <label><span>Data final</span><input onChange={(event) => setExtratoDataFinal(event.target.value)} type="date" value={extratoDataFinal}/></label>
         <button className="fac-primary-button" disabled={loading} onClick={consultarExtrato} type="button">Consultar extrato</button>
+        <button className="fac-soft-button" disabled={exportingPdf || exportingExcel} onClick={() => exportarExtrato("pdf")} type="button">{exportingPdf ? "A gerar PDF..." : "Exportar PDF"}</button>
+        <button className="fac-soft-button" disabled={exportingPdf || exportingExcel} onClick={() => exportarExtrato("xlsx")} type="button">{exportingExcel ? "A gerar Excel..." : "Exportar Excel"}</button>
         <button className="fac-ghost-button" onClick={() => { setExtratoClienteId(""); setExtratoDataInicial(""); setExtratoDataFinal(""); setExtrato(null); setMessage(null); }} type="button">Limpar</button>
       </div>}
       <ColumnSelector columns={configured.columns} open={columnsOpen} onMove={configured.moveColumn} onReset={configured.resetColumns} onToggle={configured.toggleColumn}/>
@@ -315,3 +351,9 @@ function rowKey(source: SourceKey, row: unknown, index: number) {
 async function fetchPage<T>(url: string): Promise<Page<T>> { return fetchJson<Page<T>>(url); }
 async function fetchJson<T>(url: string): Promise<T> { const response = await apiFetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
 async function responseError(response: Response) { try { const payload = await response.json(); return payload.message || payload.error || `Erro HTTP ${response.status}`; } catch { return `Erro HTTP ${response.status}`; } }
+function downloadFilename(contentDisposition: string | null, fallback: string) {
+  if (!contentDisposition) return fallback;
+  const encoded = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  if (encoded) return decodeURIComponent(encoded.replace(/^"|"$/g, ""));
+  return contentDisposition.match(/filename="?([^";]+)"?/i)?.[1] ?? fallback;
+}

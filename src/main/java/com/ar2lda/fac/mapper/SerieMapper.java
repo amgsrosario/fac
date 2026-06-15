@@ -4,6 +4,7 @@ import com.ar2lda.fac.controller.dto.SerieCreateDto;
 import com.ar2lda.fac.controller.dto.SerieDto;
 import com.ar2lda.fac.controller.dto.SerieUpdateDto;
 import com.ar2lda.fac.model.Serie;
+import com.ar2lda.fac.model.TipoDocumento;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
@@ -24,11 +25,11 @@ public interface SerieMapper {
         );
     }
 
-    default Serie fromCreateDTO(SerieCreateDto dto) {
+    default Serie fromCreateDTO(SerieCreateDto dto, TipoDocumento tipoDocumento) {
         if (dto == null) {
             return null;
         }
-        return new Serie(null, dto.serie(), dto.nome(), dto.codigoAt(), dto.dataCodigoAt());
+        return new Serie(tipoDocumento, dto.serie(), dto.nome(), dto.codigoAt(), dto.dataCodigoAt());
     }
 
     default void applyUpdate(SerieUpdateDto dto, @MappingTarget Serie entity) {

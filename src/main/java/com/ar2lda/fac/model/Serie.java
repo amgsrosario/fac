@@ -24,7 +24,6 @@ public class Serie {
     @Id
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tipo_documento", nullable = false)
-    @Setter
     @ToString.Include
     private TipoDocumento tipoDocumento;
 
@@ -50,10 +49,16 @@ public class Serie {
     @ToString.Include
     private Long numerador = 0L;
 
-    public Serie() {
+    protected Serie() {
     }
 
-    public Serie(TipoDocumento tipoDocumento, String serie, String nome, String codigoAt, LocalDate dataCodigoAt) {
+    public Serie(
+            TipoDocumento tipoDocumento,
+            String serie,
+            String nome,
+            String codigoAt,
+            LocalDate dataCodigoAt
+    ) {
         this.tipoDocumento = tipoDocumento;
         this.serie = serie;
         this.nome = nome;
@@ -64,5 +69,9 @@ public class Serie {
     public Long proximoNumero() {
         numerador++;
         return numerador;
+    }
+
+    public boolean temCodigoAt() {
+        return codigoAt != null && !codigoAt.isBlank();
     }
 }
