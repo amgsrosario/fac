@@ -1,10 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, getAuthSession } from "./api";
+import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 
 type Page<T> = {
   content: T[];
   totalElements: number;
 };
+
+const DOCUMENTO_COLUMNS: ConfigurableColumn[] = [
+  { key: "documento", label: "Documento", visible: true },
+  { key: "cliente", label: "Cliente", visible: true },
+  { key: "nif", label: "NIF", visible: false },
+  { key: "emissao", label: "Emissao", visible: true },
+  { key: "vencimento", label: "Vencimento", visible: false },
+  { key: "moeda", label: "Moeda", visible: false },
+  { key: "bruto", label: "Bruto", visible: false },
+  { key: "desconto", label: "Desconto", visible: false },
+  { key: "iva", label: "IVA", visible: false },
+  { key: "total", label: "Total", visible: true },
+  { key: "estado", label: "Estado", visible: true },
+  { key: "impresso", label: "Impresso", visible: false },
+  { key: "liquidado", label: "Liquidado", visible: false }
+];
 
 type DocumentoComercial = {
   id: number;
@@ -154,6 +171,8 @@ export default function DocumentosView() {
   const [lineForm, setLineForm] = useState<LineForm>(emptyLineForm);
   const [emissionOpen, setEmissionOpen] = useState(false);
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
+  const [columnEditorOpen, setColumnEditorOpen] = useState(false);
+  const documentoColumns = useConfiguredColumns("fac.documentos.colunas", DOCUMENTO_COLUMNS);
   const newDocumentClientRef = useRef<HTMLSelectElement>(null);
   const lineArticleRef = useRef<HTMLSelectElement>(null);
 
@@ -314,7 +333,7 @@ export default function DocumentosView() {
     setMessage(null);
     try {
       const response = await apiFetch(`/api/documentos-comerciais/${id}/pdf`);
-      if (!response.ok) throw new Error(await readError(response));
+      if (!response.ok) throw new Error(await responseError(response));
       const url = URL.createObjectURL(await response.blob());
       window.open(url, "_blank", "noopener,noreferrer");
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
@@ -550,25 +569,22 @@ export default function DocumentosView() {
         <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar documento, cliente, NIF ou estado" type="search" value={search} />
         <div className="fac-inline-actions">
           <button className="fac-soft-button" disabled={loading} onClick={loadDocumentos} type="button">Atualizar</button>
-          <button className="fac-primary-button" disabled={loading} onClick={openDraftEditor} type="button">Novo documento</button>
+          <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({documentoColumns.visibleColumns.length})</button><button className="fac-primary-button" disabled={loading} onClick={openDraftEditor} type="button">Novo documento</button></div>
         </div>
       </section>
 
       <section className="fac-content-grid">
         <article className="fac-panel fac-panel-main">
+          <ColumnSelector columns={documentoColumns.columns} open={columnEditorOpen} onMove={documentoColumns.moveColumn} onReset={documentoColumns.resetColumns} onToggle={documentoColumns.toggleColumn} />
           <table className="fac-table">
-            <thead><tr><th>Documento</th><th>Cliente</th><th>Data</th><th>Estado</th><th>Total</th></tr></thead>
+            <thead><tr>{documentoColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead>
             <tbody>
               {filtered.map((documento) => (
                 <tr className={documento.id === selectedId ? "fac-row-selected" : ""} key={documento.id} onClick={() => setSelectedId(documento.id)}>
-                  <td>{reference(documento)}</td>
-                  <td>{documento.clienteNome}</td>
-                  <td>{datePt(documento.dataEmissao)}</td>
-                  <td><span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documentState(documento)}</span></td>
-                  <td>{money(documento.valorTotal)} {documento.moedaId}</td>
+                  {documentoColumns.visibleColumns.map((column) => <td key={column.key}>{documentoColumnValue(documento, column.key)}</td>)}
                 </tr>
               ))}
-              {!loading && filtered.length === 0 && <tr><td colSpan={5}>Sem documentos para mostrar.</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={documentoColumns.visibleColumns.length}>Sem documentos para mostrar.</td></tr>}
             </tbody>
           </table>
         </article>
@@ -710,6 +726,25 @@ function openJson(id: number) {
 
 function reference(documento: DocumentoComercial) {
   return `${documento.tipoDocumentoId} ${documento.serie}/${documento.numeroDocumento ?? "rascunho"}`;
+}
+
+function documentoColumnValue(documento: DocumentoComercial, key: string) {
+  switch (key) {
+    case "documento": return reference(documento);
+    case "cliente": return documento.clienteNome;
+    case "nif": return documento.clienteNif;
+    case "emissao": return datePt(documento.dataEmissao);
+    case "vencimento": return documento.dataVencimento ? datePt(documento.dataVencimento) : "-";
+    case "moeda": return documento.moedaId;
+    case "bruto": return money(documento.valorBruto);
+    case "desconto": return money(documento.valorDesconto);
+    case "iva": return money(documento.valorIvaTotal);
+    case "total": return `${money(documento.valorTotal)} ${documento.moedaId}`;
+    case "estado": return <span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documentState(documento)}</span>;
+    case "impresso": return documento.impresso ? "Sim" : "Nao";
+    case "liquidado": return documento.liquidado ? "Sim" : "Nao";
+    default: return "-";
+  }
 }
 
 function documentState(documento: DocumentoComercial) {

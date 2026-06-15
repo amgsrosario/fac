@@ -4,6 +4,7 @@ import DocumentosView from "./DocumentosView";
 import PendentesView from "./PendentesView";
 import ParametrosDocumentoView from "./ParametrosDocumentoView";
 import TabelasView from "./TabelasView";
+import ListagensView from "./ListagensView";
 import { apiFetch, AuthSession } from "./api";
 
 type Page<T> = {
@@ -11,7 +12,7 @@ type Page<T> = {
   totalElements: number;
 };
 
-type ViewKey = "Dashboard" | "Clientes" | "Documentos" | "Artigos" | "Tesouraria" | "Configuracao";
+type ViewKey = "Dashboard" | "Clientes" | "Documentos" | "Artigos" | "Tesouraria" | "Listagens" | "Configuracao";
 
 type Cliente = {
   id: number;
@@ -208,6 +209,7 @@ const menu: { label: ViewKey; hint: string }[] = [
   { label: "Documentos", hint: "Faturacao" },
   { label: "Artigos", hint: "Catalogo" },
   { label: "Tesouraria", hint: "Recebimentos" },
+  { label: "Listagens", hint: "Consulta e analise" },
   { label: "Configuracao", hint: "Base FAC" }
 ];
 
@@ -527,11 +529,6 @@ function App({ currentUser, onLogout }: AppProps) {
     [dashboardData]
   );
 
-  const selectedPendente = dashboardData?.pendentes.content[0] ?? null;
-  const selectedDocumento = selectedPendente
-    ? dashboardData?.comerciais.content.find((documento) => documento.id === selectedPendente.documentoComercialId)
-    : null;
-
   const filteredClientes = useMemo(() => {
     const term = clienteSearch.trim().toLowerCase();
     if (!term) {
@@ -590,12 +587,12 @@ function App({ currentUser, onLogout }: AppProps) {
             <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.codigo}</small></div>
             <input
               onChange={(event) => setClienteSearch(event.target.value)}
-              disabled={activeView === "Configuracao"}
-              placeholder={activeView === "Clientes" ? "Pesquisar cliente, NIF ou email" : activeView === "Configuracao" ? "Configuracao da aplicacao" : "Pesquisar documento, cliente ou artigo"}
+              disabled={activeView === "Configuracao" || activeView === "Listagens"}
+              placeholder={activeView === "Clientes" ? "Pesquisar cliente, NIF ou email" : activeView === "Configuracao" ? "Configuracao da aplicacao" : activeView === "Listagens" ? "Pesquisa disponivel dentro da listagem" : "Pesquisar documento, cliente ou artigo"}
               type="search"
               value={activeView === "Clientes" ? clienteSearch : ""}
             />
-            <button onClick={refreshActiveView} type="button">Atualizar</button>
+            {activeView !== "Listagens" && <button onClick={refreshActiveView} type="button">Atualizar</button>}
             <button className="fac-ghost-button" onClick={onLogout} type="button">Sair</button>
           </div>
         </header>
@@ -628,6 +625,8 @@ function App({ currentUser, onLogout }: AppProps) {
           <ArtigosView />
         ) : activeView === "Tesouraria" ? (
           <PendentesView />
+        ) : activeView === "Listagens" ? (
+          <ListagensView />
         ) : activeView === "Configuracao" ? (
           <ConfiguracaoView
             catalogos={clienteCatalogos}
@@ -640,14 +639,10 @@ function App({ currentUser, onLogout }: AppProps) {
           />
         ) : (
           <DashboardView
-            data={dashboardData}
             error={error}
             loading={loading}
             metrics={metrics}
-            recebidoAtivo={recebidoAtivo}
-            saldoPendente={saldoPendente}
-            selectedDocumento={selectedDocumento}
-            selectedPendente={selectedPendente}
+            onNavigate={setActiveView}
           />
         )}
 
@@ -658,25 +653,17 @@ function App({ currentUser, onLogout }: AppProps) {
 }
 
 type DashboardViewProps = {
-  data: DashboardData | null;
   error: string | null;
   loading: boolean;
   metrics: { label: string; value: string; tone: string }[];
-  recebidoAtivo: number;
-  saldoPendente: number;
-  selectedDocumento?: DocumentoComercial | null;
-  selectedPendente?: Pendente | null;
+  onNavigate: (view: ViewKey) => void;
 };
 
 function DashboardView({
-  data,
   error,
   loading,
   metrics,
-  recebidoAtivo,
-  saldoPendente,
-  selectedDocumento,
-  selectedPendente
+  onNavigate
 }: DashboardViewProps) {
   return (
     <>
@@ -705,79 +692,29 @@ function DashboardView({
         ))}
       </section>
 
-      <section className="fac-content-grid">
-        <article className="fac-panel fac-panel-main">
-          <div className="fac-panel-header">
-            <div>
-              <p className="fac-eyebrow">Conta corrente</p>
-              <h2>{selectedPendente ? `Cliente ${selectedPendente.clienteId}` : "Sem pendentes"}</h2>
-            </div>
-            <button className="fac-soft-button" type="button">Diagnostico backend</button>
+      <section className="fac-panel fac-dashboard-actions">
+        <div className="fac-panel-header">
+          <div>
+            <p className="fac-eyebrow">Operacao diaria</p>
+            <h2>Continuar o trabalho</h2>
           </div>
+          <span className="fac-muted">As consultas detalhadas estao concentradas em Listagens.</span>
+        </div>
 
-          <div className="fac-balance-strip">
-            <div>
-              <span>Original</span>
-              <strong>{money(sum(data?.pendentes.content.map((pendente) => pendente.valorDocumento) ?? []))} EUR</strong>
-            </div>
-            <div>
-              <span>Recebido ativo</span>
-              <strong>{money(recebidoAtivo)} EUR</strong>
-            </div>
-            <div>
-              <span>Documentos</span>
-              <strong>{data?.pendentes.totalElements ?? 0}</strong>
-            </div>
-            <div>
-              <span>Saldo</span>
-              <strong>{money(saldoPendente)} EUR</strong>
-            </div>
-          </div>
-
-          <table className="fac-table">
-            <thead>
-              <tr>
-                <th>Documento</th>
-                <th>Cliente</th>
-                <th>Estado</th>
-                <th>Data</th>
-                <th>Valor</th>
-                <th>Pendente</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(data?.pendentes.content ?? []).map((pendente) => (
-                <tr key={pendente.id}>
-                  <td>{referencia(pendente.tipoDocumentoId, pendente.serieDocumento, pendente.numeroDocumento)}</td>
-                  <td>{pendente.clienteId}</td>
-                  <td><span className="fac-status">{estadoPendente(pendente)}</span></td>
-                  <td>{datePt(pendente.dataDocumento)}</td>
-                  <td>{money(pendente.valorDocumento)} {pendente.moedaId}</td>
-                  <td>{money(pendente.valorPendente)} {pendente.moedaId}</td>
-                </tr>
-              ))}
-              {!loading && (data?.pendentes.content.length ?? 0) === 0 && (
-                <tr>
-                  <td colSpan={6}>Sem pendentes para mostrar.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </article>
-
-        <aside className="fac-panel fac-detail">
-          <p className="fac-eyebrow">Conferencia</p>
-          <h2>{selectedPendente ? referencia(selectedPendente.tipoDocumentoId, selectedPendente.serieDocumento, selectedPendente.numeroDocumento) : "Sem documento"}</h2>
-          <dl>
-            <div><dt>Estado</dt><dd>{selectedPendente ? estadoPendente(selectedPendente) : "-"}</dd></div>
-            <div><dt>Vencimento</dt><dd>{selectedPendente ? datePt(selectedPendente.dataVencimento) : "-"}</dd></div>
-            <div><dt>Documento origem</dt><dd>{selectedDocumento?.id ?? "-"}</dd></div>
-            <div><dt>Total</dt><dd>{selectedPendente ? `${money(selectedPendente.valorDocumento)} ${selectedPendente.moedaId}` : "-"}</dd></div>
-            <div><dt>Pendente</dt><dd>{selectedPendente ? `${money(selectedPendente.valorPendente)} ${selectedPendente.moedaId}` : "-"}</dd></div>
-          </dl>
-          <button className="fac-primary-button" type="button">Preparar recebimento</button>
-          <button className="fac-ghost-button" type="button">Abrir diagnostico</button>
-        </aside>
+        <div className="fac-dashboard-action-grid">
+          <button onClick={() => onNavigate("Documentos")} type="button">
+            <strong>Documentos</strong>
+            <span>Criar e acompanhar faturacao</span>
+          </button>
+          <button onClick={() => onNavigate("Tesouraria")} type="button">
+            <strong>Tesouraria</strong>
+            <span>Receber e consultar pendentes</span>
+          </button>
+          <button onClick={() => onNavigate("Listagens")} type="button">
+            <strong>Listagens</strong>
+            <span>Analisar documentos, linhas e recebimentos</span>
+          </button>
+        </div>
       </section>
     </>
   );
@@ -1354,6 +1291,7 @@ function parametrosClientePayload(form: ParametrosClienteForm) {
 
 function viewTitle(view: ViewKey) {
   if (view === "Clientes") return "Clientes e conta corrente";
+  if (view === "Listagens") return "Listagens e analise operacional";
   if (view === "Configuracao") return "Configuracao simples e explicita";
   return "Faturacao simples, clara e operacional";
 }
@@ -1419,10 +1357,6 @@ function numberOrNull(value: string) {
   return value ? Number(value) : null;
 }
 
-function sum(values: number[]) {
-  return values.reduce((total, value) => total + Number(value || 0), 0);
-}
-
 function money(value: number) {
   return Number(value || 0).toLocaleString("pt-PT", {
     minimumFractionDigits: 2,
@@ -1432,19 +1366,6 @@ function money(value: number) {
 
 function referencia(tipo: string, serie: string, numero: number | null) {
   return `${tipo} ${serie}/${numero ?? "rascunho"}`;
-}
-
-function estadoPendente(pendente: Pendente) {
-  if (Number(pendente.valorPendente || 0) <= 0) {
-    return "Liquidado";
-  }
-  if (pendente.dataVencimento < todayIso()) {
-    return "Vencido";
-  }
-  if (Number(pendente.valorPendente || 0) < Number(pendente.valorDocumento || 0)) {
-    return "Parcial";
-  }
-  return "Aberto";
 }
 
 function datePt(value: string) {

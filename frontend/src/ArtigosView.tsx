@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "./api";
+import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 
 type Page<T> = {
   content: T[];
@@ -65,6 +66,21 @@ const emptyForm: ArtigoForm = {
   observacoes: ""
 };
 
+const ARTIGO_COLUMNS: ConfigurableColumn[] = [
+  { key: "codigo", label: "Codigo", visible: true },
+  { key: "descricao", label: "Descricao", visible: true },
+  { key: "abreviatura", label: "Abreviatura", visible: false },
+  { key: "codigoIdentificacao", label: "Identificacao", visible: false },
+  { key: "familia", label: "Familia", visible: false },
+  { key: "unidade", label: "Unidade", visible: true },
+  { key: "ivaCompra", label: "IVA compra", visible: false },
+  { key: "ivaVenda", label: "IVA venda", visible: false },
+  { key: "pvp", label: "PVP", visible: true },
+  { key: "peso", label: "Peso", visible: false },
+  { key: "retencao", label: "Retencao", visible: false },
+  { key: "estado", label: "Estado", visible: true }
+];
+
 export default function ArtigosView() {
   const [artigos, setArtigos] = useState<Artigo[]>([]);
   const [familias, setFamilias] = useState<Familia[]>([]);
@@ -73,6 +89,8 @@ export default function ArtigosView() {
   const [search, setSearch] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingCodigo, setEditingCodigo] = useState<string | null>(null);
+  const [columnEditorOpen, setColumnEditorOpen] = useState(false);
+  const artigoColumns = useConfiguredColumns("fac.artigos.colunas", ARTIGO_COLUMNS);
   const [form, setForm] = useState<ArtigoForm>(emptyForm);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -238,21 +256,21 @@ export default function ArtigosView() {
 
       <section className="fac-list-toolbar">
         <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar codigo, descricao ou identificacao" type="search" value={search} />
-        <button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button>
+        <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button><button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button></div>
       </section>
 
       <section className="fac-content-grid">
         <article className="fac-panel fac-panel-main">
+          <ColumnSelector columns={artigoColumns.columns} open={columnEditorOpen} onMove={artigoColumns.moveColumn} onReset={artigoColumns.resetColumns} onToggle={artigoColumns.toggleColumn} />
           <table className="fac-table">
-            <thead><tr><th>Codigo</th><th>Descricao</th><th>Unidade</th><th>PVP</th><th>Estado</th></tr></thead>
+            <thead><tr>{artigoColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead>
             <tbody>
               {filtered.map((artigo) => (
                 <tr className={artigo.codigo === selectedCodigo ? "fac-row-selected" : ""} key={artigo.codigo} onClick={() => setSelectedCodigo(artigo.codigo)}>
-                  <td>{artigo.codigo}</td><td>{artigo.descricao}</td><td>{artigo.unidade}</td><td>{money(artigo.pvp)}</td>
-                  <td><span className="fac-status">{artigo.inativo ? "Inativo" : "Ativo"}</span></td>
+                  {artigoColumns.visibleColumns.map((column) => <td key={column.key}>{artigoColumnValue(artigo, column.key, familias)}</td>)}
                 </tr>
               ))}
-              {!loading && filtered.length === 0 && <tr><td colSpan={5}>Sem artigos para mostrar.</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={artigoColumns.visibleColumns.length}>Sem artigos para mostrar.</td></tr>}
             </tbody>
           </table>
         </article>
@@ -273,6 +291,24 @@ export default function ArtigosView() {
       </section>
     </>
   );
+}
+
+function artigoColumnValue(artigo: Artigo, key: string, familias: Familia[]) {
+  switch (key) {
+    case "codigo": return artigo.codigo;
+    case "descricao": return artigo.descricao;
+    case "abreviatura": return artigo.abreviatura ?? "-";
+    case "codigoIdentificacao": return artigo.codigoIdentificacao ?? "-";
+    case "familia": return familias.find((familia) => familia.id === artigo.familiaId)?.descricao ?? artigo.familiaId;
+    case "unidade": return artigo.unidade;
+    case "ivaCompra": return artigo.ivaCompraId;
+    case "ivaVenda": return artigo.ivaVendaId;
+    case "pvp": return money(artigo.pvp);
+    case "peso": return artigo.peso ?? 0;
+    case "retencao": return artigo.retencao ? "Sim" : "Nao";
+    case "estado": return <span className="fac-status">{artigo.inativo ? "Inativo" : "Ativo"}</span>;
+    default: return "-";
+  }
 }
 
 function Field({ children, label }: { children: React.ReactNode; label: string }) {

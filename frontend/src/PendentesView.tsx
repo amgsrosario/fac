@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, getAuthSession } from "./api";
+import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 
 type Page<T> = { content: T[]; totalElements: number };
 type Pendente = {
@@ -46,6 +47,19 @@ type ReceiptForm = {
 };
 type Allocations = Record<number, string>;
 
+const PENDENTE_COLUMNS: ConfigurableColumn[] = [
+  { key: "documento", label: "Documento", visible: true }, { key: "cliente", label: "Cliente", visible: true },
+  { key: "emissao", label: "Emissao", visible: false }, { key: "vencimento", label: "Vencimento", visible: true },
+  { key: "moeda", label: "Moeda", visible: false }, { key: "original", label: "Original", visible: true },
+  { key: "pendente", label: "Pendente", visible: true }, { key: "estado", label: "Estado", visible: true }
+];
+const FINANCEIRO_COLUMNS: ConfigurableColumn[] = [
+  { key: "documento", label: "Documento", visible: true }, { key: "cliente", label: "Cliente", visible: true },
+  { key: "data", label: "Data", visible: true }, { key: "modo", label: "Modo", visible: true },
+  { key: "moeda", label: "Moeda", visible: false }, { key: "liquido", label: "Liquido", visible: true },
+  { key: "emissor", label: "Emissor", visible: false }, { key: "estado", label: "Estado", visible: true }
+];
+
 export default function PendentesView() {
   const receiptEditorRef = useRef<HTMLElement | null>(null);
   const clientSelectRef = useRef<HTMLSelectElement | null>(null);
@@ -64,6 +78,10 @@ export default function PendentesView() {
   const [form, setForm] = useState<ReceiptForm>(emptyReceiptForm());
   const [allocations, setAllocations] = useState<Allocations>({});
   const [manualReceiptValue, setManualReceiptValue] = useState(false);
+  const [pendenteColumnsOpen, setPendenteColumnsOpen] = useState(false);
+  const [financeiroColumnsOpen, setFinanceiroColumnsOpen] = useState(false);
+  const pendenteColumns = useConfiguredColumns("fac.pendentes.colunas", PENDENTE_COLUMNS);
+  const financeiroColumns = useConfiguredColumns("fac.recebimentos.colunas", FINANCEIRO_COLUMNS);
 
   useEffect(() => { loadTesouraria(); }, []);
 
@@ -379,9 +397,9 @@ export default function PendentesView() {
     </section>}
 
     {!receiptOpen && <>
-    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Pendentes</p><h2>Conta corrente em aberto e liquidada</h2></div><span className="fac-muted">{filteredPendentes.length} registos</span></div><table className="fac-table"><thead><tr><th>Documento</th><th>Cliente</th><th>Estado</th><th>Vencimento</th><th>Original</th><th>Pendente</th></tr></thead><tbody>{filteredPendentes.map((item) => <tr key={item.id}><td>{referencia(item)}</td><td>{item.clienteId}</td><td><span className="fac-status">{estado(item)}</span></td><td>{datePt(item.dataVencimento)}</td><td>{money(item.valorDocumento)} {item.moedaId}</td><td>{money(item.valorPendente)} {item.moedaId}</td></tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={6}>Sem pendentes para mostrar.</td></tr>}</tbody></table></section>
+    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Pendentes</p><h2>Conta corrente em aberto e liquidada</h2></div><div className="fac-inline-actions"><span className="fac-muted">{filteredPendentes.length} registos</span><button className="fac-ghost-button" onClick={() => setPendenteColumnsOpen((current) => !current)} type="button">Colunas ({pendenteColumns.visibleColumns.length})</button></div></div><ColumnSelector columns={pendenteColumns.columns} open={pendenteColumnsOpen} onMove={pendenteColumns.moveColumn} onReset={pendenteColumns.resetColumns} onToggle={pendenteColumns.toggleColumn}/><table className="fac-table"><thead><tr>{pendenteColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{filteredPendentes.map((item) => <tr key={item.id}>{pendenteColumns.visibleColumns.map((column) => <td key={column.key}>{pendenteColumnValue(item, column.key)}</td>)}</tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={pendenteColumns.visibleColumns.length}>Sem pendentes para mostrar.</td></tr>}</tbody></table></section>
 
-    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><span className="fac-muted">{financeiros.length} documentos</span></div><table className="fac-table"><thead><tr><th>Documento</th><th>Cliente</th><th>Data</th><th>Modo</th><th>Liquido</th><th>Estado</th><th>Acoes</th></tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}><td>{documento.tipoDocumentoId} {documento.serie}/{documento.numeroDocumento}</td><td>{documento.clienteId}</td><td>{datePt(documento.dataEmissao)}</td><td>{documento.mPagamentoId}</td><td>{money(documento.valorPagamentoLiquido)} {documento.moedaId}</td><td><span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span></td><td><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => openFinancialPdf(documento)} type="button">Abrir PDF</button><button className="fac-ghost-button" onClick={() => window.open(`/api/documentos-financeiros/${documento.id}/diagnostico/html`, "_blank", "noopener,noreferrer")} type="button">Diagnostico</button>{!documento.anulado && <button className="fac-link-danger" disabled={loading} onClick={() => annulFinancial(documento)} type="button">Anular</button>}</div></td></tr>)}{!loading && financeiros.length === 0 && <tr><td colSpan={7}>Sem documentos financeiros para mostrar.</td></tr>}</tbody></table></section>
+    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><div className="fac-inline-actions"><span className="fac-muted">{financeiros.length} documentos</span><button className="fac-ghost-button" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div></div><ColumnSelector columns={financeiroColumns.columns} open={financeiroColumnsOpen} onMove={financeiroColumns.moveColumn} onReset={financeiroColumns.resetColumns} onToggle={financeiroColumns.toggleColumn}/><table className="fac-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}<th>Acoes</th></tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td key={column.key}>{financeiroColumnValue(documento, column.key)}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => openFinancialPdf(documento)} type="button">Abrir PDF</button><button className="fac-ghost-button" onClick={() => window.open(`/api/documentos-financeiros/${documento.id}/diagnostico/html`, "_blank", "noopener,noreferrer")} type="button">Diagnostico</button>{!documento.anulado && <button className="fac-link-danger" disabled={loading} onClick={() => annulFinancial(documento)} type="button">Anular</button>}</div></td></tr>)}{!loading && financeiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length + 1}>Sem documentos financeiros para mostrar.</td></tr>}</tbody></table></section>
     </>}
   </>;
 }
@@ -391,6 +409,8 @@ function openPendentesForClient(pendentes: Pendente[], clienteId: number) { retu
 function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations) { if (!form.clienteId) return "Seleciona o cliente."; if (!form.moedaId) return "Seleciona a moeda."; if (!form.tipoDocumentoId) return "Seleciona o tipo de documento financeiro."; if (!form.serie) return "Seleciona a serie."; if (!form.dataEmissao) return "A data de emissao e obrigatoria."; if (!form.mPagamentoId) return "Confirma o modo de pagamento."; const target = round6(Number(form.valorRecebido)); if (!Number.isFinite(target) || target <= 0) return "O valor recebido deve ser positivo."; const total = round6(sum(pendentes.map((item) => Number(allocations[item.id] || 0)))); if (total <= 0) return "Distribui o recebimento por pelo menos um pendente."; if (round6(target - total) !== 0) return "O valor recebido e a distribuicao pelos pendentes nao coincidem."; return null; }
 function estado(item: Pendente) { if (Number(item.valorPendente) <= 0) return "LIQUIDADO"; if (item.dataVencimento < todayIso()) return "VENCIDO"; if (Number(item.valorPendente) < Number(item.valorDocumento)) return "PARCIAL"; return "ABERTO"; }
 function referencia(item: Pendente) { return `${item.tipoDocumentoId} ${item.serieDocumento}/${item.numeroDocumento}`; }
+function pendenteColumnValue(item: Pendente, key: string) { switch (key) { case "documento": return referencia(item); case "cliente": return item.clienteId; case "emissao": return datePt(item.dataDocumento); case "vencimento": return datePt(item.dataVencimento); case "moeda": return item.moedaId; case "original": return `${money(item.valorDocumento)} ${item.moedaId}`; case "pendente": return `${money(item.valorPendente)} ${item.moedaId}`; case "estado": return <span className="fac-status">{estado(item)}</span>; default: return "-"; } }
+function financeiroColumnValue(documento: DocumentoFinanceiro, key: string) { switch (key) { case "documento": return `${documento.tipoDocumentoId} ${documento.serie}/${documento.numeroDocumento}`; case "cliente": return documento.clienteId; case "data": return datePt(documento.dataEmissao); case "modo": return documento.mPagamentoId; case "moeda": return documento.moedaId; case "liquido": return `${money(documento.valorPagamentoLiquido)} ${documento.moedaId}`; case "emissor": return documento.emissorId; case "estado": return <span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span>; default: return "-"; } }
 function datePt(value: string) { return value ? value.split("-").reverse().join("/") : "-"; }
 function money(value: number) { return Number(value || 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function sum(values: number[]) { return values.reduce((total, value) => total + Number(value || 0), 0); }
