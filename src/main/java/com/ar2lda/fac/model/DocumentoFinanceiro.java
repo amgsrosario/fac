@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -44,6 +45,14 @@ public class DocumentoFinanceiro {
     @Column(nullable = false)
     @ToString.Include
     private Long numeroDocumento;
+
+    @Column(name = "codigo_validacao_at", length = 100)
+    @Setter(AccessLevel.NONE)
+    private String codigoValidacaoAt;
+
+    @Column(name = "atcud", length = 150)
+    @Setter(AccessLevel.NONE)
+    private String atcud;
 
     @Column(nullable = false)
     private LocalDate dataEmissao;
@@ -83,4 +92,15 @@ public class DocumentoFinanceiro {
 
     @Column(nullable = false)
     private boolean impresso = false;
+
+    public void atribuirAtcud(String codigoValidacaoAt, String atcud) {
+        if (this.atcud != null || this.codigoValidacaoAt != null) {
+            throw new IllegalStateException("O ATCUD do documento financeiro já foi atribuído");
+        }
+        if (codigoValidacaoAt == null || codigoValidacaoAt.isBlank() || atcud == null || atcud.isBlank()) {
+            throw new IllegalArgumentException("Código de validação da AT e ATCUD são obrigatórios");
+        }
+        this.codigoValidacaoAt = codigoValidacaoAt.trim();
+        this.atcud = atcud.trim();
+    }
 }

@@ -60,6 +60,7 @@ public class DocumentoFinanceiroService {
     private final MPagamentoRepository mPagamentoRepository;
     private final CurrentUserService currentUserService;
     private final SerieService serieService;
+    private final AtcudService atcudService;
     private final DocumentoFinanceiroMapper mapper;
     private final EmpresaMapper empresaMapper;
     private final ClienteMapper clienteMapper;
@@ -78,7 +79,12 @@ public class DocumentoFinanceiroService {
         documento.setCliente(cliente);
         documento.setTipoDocumento(tipoDocumento);
         documento.setSerie(dto.serie());
-        documento.setNumeroDocumento(serieService.proximoNumero(dto.tipoDocumentoId(), dto.serie()));
+        SerieNumeracao numeracao = serieService.proximoNumeroParaEmissao(dto.tipoDocumentoId(), dto.serie());
+        documento.setNumeroDocumento(numeracao.numeroSequencial());
+        documento.atribuirAtcud(
+                numeracao.codigoValidacaoAt(),
+                atcudService.gerar(numeracao.codigoValidacaoAt(), numeracao.numeroSequencial())
+        );
         documento.setDataEmissao(dto.dataEmissao());
         documento.setMoeda(moeda);
         documento.setMPagamento(mPagamento);

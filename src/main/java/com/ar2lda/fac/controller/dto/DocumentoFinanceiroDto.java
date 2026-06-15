@@ -11,6 +11,7 @@ public record DocumentoFinanceiroDto(
         String tipoDocumentoId,
         String serie,
         Long numeroDocumento,
+        String atcud,
         LocalDate dataEmissao,
         String moedaId,
         BigDecimal valorPagamentoBruto,

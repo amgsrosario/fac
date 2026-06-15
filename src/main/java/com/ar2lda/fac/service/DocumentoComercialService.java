@@ -83,6 +83,7 @@ public class DocumentoComercialService {
     private final PendenteRepository pendenteRepository;
     private final SerieService serieService;
     private final PendenteService pendenteService;
+    private final AtcudService atcudService;
     private final DocumentoComercialMapper mapper;
     private final LinhaDocumentoComercialMapper linhaMapper;
     private final EmpresaMapper empresaMapper;
@@ -274,10 +275,15 @@ public class DocumentoComercialService {
         validateDataEmissao(documento);
 
         Utilizador emissor = currentUserService.resolve(dto.emissorId(), "emitir documento comercial");
-        documento.setNumeroDocumento(serieService.proximoNumero(
+        SerieNumeracao numeracao = serieService.proximoNumeroParaEmissao(
                 documento.getTipoDocumento().getId(),
                 documento.getSerie()
-        ));
+        );
+        documento.setNumeroDocumento(numeracao.numeroSequencial());
+        documento.atribuirAtcud(
+                numeracao.codigoValidacaoAt(),
+                atcudService.gerar(numeracao.codigoValidacaoAt(), numeracao.numeroSequencial())
+        );
         documento.setEstado(EstadoDocumentoComercial.EMITIDO);
         documento.setMomentoEmissao(OffsetDateTime.now());
         documento.setEmissor(emissor);

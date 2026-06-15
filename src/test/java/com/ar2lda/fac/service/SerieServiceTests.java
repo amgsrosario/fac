@@ -17,7 +17,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -50,9 +52,9 @@ class SerieServiceTests {
                 mapper
         );
         TipoDocumento tipoDocumento = mock(TipoDocumento.class);
-        when(tipoDocumento.getId()).thenReturn("FT1");
+        lenient().when(tipoDocumento.getId()).thenReturn("FT1");
         serie = new Serie(tipoDocumento, "2026", "Faturas 2026", null, null);
-        when(repository.findById(new SerieId("FT1", "2026"))).thenReturn(Optional.of(serie));
+        lenient().when(repository.findById(new SerieId("FT1", "2026"))).thenReturn(Optional.of(serie));
     }
 
     @Test
@@ -75,5 +77,28 @@ class SerieServiceTests {
                 .hasMessage("Não é possível eliminar uma série já utilizada");
 
         verify(repository, never()).delete(serie);
+    }
+
+    @Test
+    void rejeitaNumeracaoDeEmissaoSemCodigoAtSemConsumirNumero() {
+        when(repository.findForUpdate("FT1", "2026")).thenReturn(Optional.of(serie));
+
+        assertThatThrownBy(() -> service.proximoNumeroParaEmissao("FT1", "2026"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("A série selecionada não possui código de validação atribuído pela AT.");
+
+        assertThat(serie.getNumerador()).isZero();
+    }
+
+    @Test
+    void devolveNumeroECodigoAtSobBloqueioDeEmissao() {
+        serie.setCodigoAt("  ABCD1234  ");
+        when(repository.findForUpdate("FT1", "2026")).thenReturn(Optional.of(serie));
+
+        SerieNumeracao numeracao = service.proximoNumeroParaEmissao(" FT1 ", " 2026 ");
+
+        assertThat(numeracao.numeroSequencial()).isEqualTo(1L);
+        assertThat(numeracao.codigoValidacaoAt()).isEqualTo("ABCD1234");
+        verify(repository).findForUpdate("FT1", "2026");
     }
 }

@@ -46,6 +46,7 @@ class DocumentoFinanceiroPdfServiceTests {
                 new BigDecimal("123.00"), new BigDecimal("123.00"), new BigDecimal("50.00"),
                 BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("50.00"), new BigDecimal("73.00"), "EUR");
         DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", "2026", 3L,
+                "ABCD1234-3",
                 LocalDate.of(2026, 6, 9), "EUR", new BigDecimal("50.00"), BigDecimal.ZERO,
                 new BigDecimal("50.00"), 1001, OffsetDateTime.parse("2026-06-09T10:00:00Z"), "DEMO",
                 OffsetDateTime.parse("2026-06-09T10:00:00Z"), "Recebimento parcial", false, false, List.of(linha));

@@ -183,8 +183,8 @@ class DocumentoComercialControllerTests {
         tipoDocumentoRepository.save(tipoDocumento);
         TipoDocumento tipoDocumentoFinanceiro = new TipoDocumento("RCB", "Recibo teste", null, null, null, null, 3, 1, 2, true);
         tipoDocumentoRepository.save(tipoDocumentoFinanceiro);
-        serieRepository.save(new Serie(tipoDocumentoFinanceiro, "A", "Serie recibo", null, null));
-        serieRepository.save(new Serie(tipoDocumento, "A", "Série A", null, null));
+        serieRepository.save(new Serie(tipoDocumentoFinanceiro, "A", "Serie recibo", "RCB2026", java.time.LocalDate.of(2026, 1, 1)));
+        serieRepository.save(new Serie(tipoDocumento, "A", "Série A", "DCT2026", java.time.LocalDate.of(2026, 1, 1)));
 
         cliente = new Cliente();
         cliente.setNome("Cliente Documento");
@@ -435,9 +435,12 @@ class DocumentoComercialControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("EMITIDO"))
                 .andExpect(jsonPath("$.numeroDocumento").value(1))
+                .andExpect(jsonPath("$.atcud").value("DCT2026-1"))
                 .andExpect(jsonPath("$.emissorId").value("EMISSOR"));
 
         DocumentoComercial documento = documentoRepository.findAll().get(0);
+        org.assertj.core.api.Assertions.assertThat(documento.getCodigoValidacaoAt()).isEqualTo("DCT2026");
+        org.assertj.core.api.Assertions.assertThat(documento.getAtcud()).isEqualTo("DCT2026-1");
         Pendente pendente = pendenteRepository.findByDocumentoComercialId(documento.getId()).orElseThrow();
 
         mockMvc.perform(get("/pendentes/" + pendente.getId()))
@@ -452,6 +455,55 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.dataDocumento").value("2026-06-06"))
                 .andExpect(jsonPath("$.dataVencimento").value("2026-07-06"))
                 .andExpect(jsonPath("$.moedaId").value("EUR"));
+    }
+
+    @Test
+    void rejeitaEmissaoSemCodigoAtSemConsumirNumeracao() throws Exception {
+        TipoDocumento tipoDocumento = tipoDocumentoRepository.findById("DCT").orElseThrow();
+        serieRepository.save(new Serie(tipoDocumento, "SEMAT", "Série sem código AT", null, null));
+
+        String documentoLocation = mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "SEMAT",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 1,
+                                    "precoUnitario": 10
+                                  }
+                                }
+                                """.formatted(cliente.getId(), armazem.getId())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+
+        mockMvc.perform(post(documentoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "emissorId": "EMISSOR"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "A série selecionada não possui código de validação atribuído pela AT."
+                ));
+
+        Serie serie = serieRepository.findById(new com.ar2lda.fac.model.SerieId("DCT", "SEMAT")).orElseThrow();
+        DocumentoComercial documento = documentoRepository.findAll().get(0);
+        org.assertj.core.api.Assertions.assertThat(serie.getNumerador()).isZero();
+        org.assertj.core.api.Assertions.assertThat(documento.getEstado()).isEqualTo(com.ar2lda.fac.model.EstadoDocumentoComercial.RASCUNHO);
+        org.assertj.core.api.Assertions.assertThat(documento.getNumeroDocumento()).isNull();
+        org.assertj.core.api.Assertions.assertThat(documento.getAtcud()).isNull();
     }
 
     @Test
@@ -496,6 +548,7 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.documento.tipoDocumentoId").value("DCT"))
                 .andExpect(jsonPath("$.documento.serie").value("A"))
                 .andExpect(jsonPath("$.documento.numeroDocumento").value(1))
+                .andExpect(jsonPath("$.documento.atcud").value("DCT2026-1"))
                 .andExpect(jsonPath("$.documento.clienteNome").value("Cliente Documento"))
                 .andExpect(jsonPath("$.documento.valorTotal").value(24.600000))
                 .andExpect(jsonPath("$.documento.impresso").value(false))
@@ -632,6 +685,7 @@ class DocumentoComercialControllerTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.tipoDocumentoId").value("RCB"))
                 .andExpect(jsonPath("$.numeroDocumento").value(1))
+                .andExpect(jsonPath("$.atcud").value("RCB2026-1"))
                 .andExpect(jsonPath("$.valorPagamentoBruto").value(10.000000))
                 .andExpect(jsonPath("$.valorDescontoFinanceiro").value(1.000000))
                 .andExpect(jsonPath("$.valorPagamentoLiquido").value(9.000000))
@@ -653,6 +707,10 @@ class DocumentoComercialControllerTests {
                 .getResponse()
                 .getHeader("Location");
 
+        com.ar2lda.fac.model.DocumentoFinanceiro documentoFinanceiro = documentoFinanceiroRepository.findAll().get(0);
+        org.assertj.core.api.Assertions.assertThat(documentoFinanceiro.getCodigoValidacaoAt()).isEqualTo("RCB2026");
+        org.assertj.core.api.Assertions.assertThat(documentoFinanceiro.getAtcud()).isEqualTo("RCB2026-1");
+
         mockMvc.perform(get(financeiroLocation))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.numeroDocumento").value(1));
@@ -663,6 +721,7 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.empresa.nif").value("500000000"))
                 .andExpect(jsonPath("$.documento.tipoDocumentoId").value("RCB"))
                 .andExpect(jsonPath("$.documento.numeroDocumento").value(1))
+                .andExpect(jsonPath("$.documento.atcud").value("RCB2026-1"))
                 .andExpect(jsonPath("$.documento.valorPagamentoBruto").value(10.000000))
                 .andExpect(jsonPath("$.documento.valorPagamentoLiquido").value(9.000000))
                 .andExpect(jsonPath("$.documento.impresso").value(false))
@@ -730,7 +789,8 @@ class DocumentoComercialControllerTests {
 
         mockMvc.perform(post(financeiroLocation + "/anular"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.anulado").value(true));
+                .andExpect(jsonPath("$.anulado").value(true))
+                .andExpect(jsonPath("$.atcud").value("RCB2026-1"));
 
         Pendente pendenteReposto = pendenteRepository.findById(pendente.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteReposto.getValorPendente()).isEqualByComparingTo("24.600000");
@@ -738,7 +798,8 @@ class DocumentoComercialControllerTests {
 
         mockMvc.perform(post(documentoLocation + "/anular"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.anulado").value(true));
+                .andExpect(jsonPath("$.anulado").value(true))
+                .andExpect(jsonPath("$.atcud").value("DCT2026-1"));
 
         mockMvc.perform(get("/pendentes/conta-corrente/clientes/" + cliente.getId() + "/diagnostico"))
                 .andExpect(status().isOk())

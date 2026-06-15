@@ -83,12 +83,24 @@ public class SerieService {
 
     @Transactional
     public Long proximoNumero(String tipoDocumentoId, String serie) {
+        return findForUpdate(tipoDocumentoId, serie).proximoNumero();
+    }
+
+    @Transactional
+    public SerieNumeracao proximoNumeroParaEmissao(String tipoDocumentoId, String serie) {
+        Serie entity = findForUpdate(tipoDocumentoId, serie);
+        if (!entity.temCodigoAt()) {
+            throw new BadRequestException("A série selecionada não possui código de validação atribuído pela AT.");
+        }
+        return new SerieNumeracao(entity.proximoNumero(), entity.getCodigoAt().trim());
+    }
+
+    private Serie findForUpdate(String tipoDocumentoId, String serie) {
         String normalizedTipoDocumentoId = normalizeTipoDocumentoId(tipoDocumentoId);
         String normalizedSerie = normalizeSerie(serie);
         SerieId id = new SerieId(normalizedTipoDocumentoId, normalizedSerie);
-        Serie entity = repository.findForUpdate(normalizedTipoDocumentoId, normalizedSerie)
+        return repository.findForUpdate(normalizedTipoDocumentoId, normalizedSerie)
                 .orElseThrow(() -> new NotFoundException("Série não encontrada: " + formatId(id)));
-        return entity.proximoNumero();
     }
 
     private Serie findEntityById(String tipoDocumentoId, String serie) {

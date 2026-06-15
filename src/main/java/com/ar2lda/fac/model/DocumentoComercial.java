@@ -46,6 +46,12 @@ public class DocumentoComercial {
     @ToString.Include
     private Long numeroDocumento;
 
+    @Column(name = "codigo_validacao_at", length = 100)
+    private String codigoValidacaoAt;
+
+    @Column(name = "atcud", length = 150)
+    private String atcud;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     @Setter
@@ -287,4 +293,15 @@ public class DocumentoComercial {
     @Column(nullable = false)
     @Setter
     private boolean liquidado = false;
+
+    public void atribuirAtcud(String codigoValidacaoAt, String atcud) {
+        if (this.atcud != null || this.codigoValidacaoAt != null) {
+            throw new IllegalStateException("O ATCUD do documento comercial já foi atribuído");
+        }
+        if (codigoValidacaoAt == null || codigoValidacaoAt.isBlank() || atcud == null || atcud.isBlank()) {
+            throw new IllegalArgumentException("Código de validação da AT e ATCUD são obrigatórios");
+        }
+        this.codigoValidacaoAt = codigoValidacaoAt.trim();
+        this.atcud = atcud.trim();
+    }
 }

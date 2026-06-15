@@ -16,6 +16,7 @@ public interface DocumentoComercialMapper {
                 e.getTipoDocumento() != null ? e.getTipoDocumento().getId() : null,
                 e.getSerie(),
                 e.getNumeroDocumento(),
+                e.getAtcud(),
                 e.getEstado(),
                 e.getDataEmissao(),
                 e.getDataVencimento(),

@@ -12,6 +12,7 @@ public record DocumentoComercialDto(
         String tipoDocumentoId,
         String serie,
         Long numeroDocumento,
+        String atcud,
         EstadoDocumentoComercial estado,
         LocalDate dataEmissao,
         LocalDate dataVencimento,
