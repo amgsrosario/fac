@@ -13,6 +13,7 @@ public record DocumentoComercialDto(
         String serie,
         Long numeroDocumento,
         String atcud,
+        boolean temQrFiscal,
         EstadoDocumentoComercial estado,
         LocalDate dataEmissao,
         LocalDate dataVencimento,

@@ -12,6 +12,7 @@ public record DocumentoFinanceiroDto(
         String serie,
         Long numeroDocumento,
         String atcud,
+        boolean temQrFiscal,
         LocalDate dataEmissao,
         String moedaId,
         BigDecimal valorPagamentoBruto,

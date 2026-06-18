@@ -54,6 +54,14 @@ public class DocumentoFinanceiro {
     @Setter(AccessLevel.NONE)
     private String atcud;
 
+    @Column(name = "qr_payload", columnDefinition = "TEXT")
+    @Setter(AccessLevel.NONE)
+    private String qrPayload;
+
+    @Column(name = "qr_payload_version", length = 20)
+    @Setter(AccessLevel.NONE)
+    private String qrPayloadVersion;
+
     @Column(nullable = false)
     private LocalDate dataEmissao;
 
@@ -102,5 +110,20 @@ public class DocumentoFinanceiro {
         }
         this.codigoValidacaoAt = codigoValidacaoAt.trim();
         this.atcud = atcud.trim();
+    }
+
+    public void atribuirQrFiscal(String qrPayload, String qrPayloadVersion) {
+        if (this.qrPayload != null || this.qrPayloadVersion != null) {
+            throw new IllegalStateException("O payload QR do documento financeiro já foi atribuído");
+        }
+        if (qrPayload == null || qrPayload.isBlank() || qrPayloadVersion == null || qrPayloadVersion.isBlank()) {
+            throw new IllegalArgumentException("Payload e versão do QR fiscal são obrigatórios");
+        }
+        this.qrPayload = qrPayload.trim();
+        this.qrPayloadVersion = qrPayloadVersion.trim();
+    }
+
+    public boolean temQrFiscal() {
+        return qrPayload != null && !qrPayload.isBlank();
     }
 }

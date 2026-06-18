@@ -52,6 +52,12 @@ public class DocumentoComercial {
     @Column(name = "atcud", length = 150)
     private String atcud;
 
+    @Column(name = "qr_payload", columnDefinition = "TEXT")
+    private String qrPayload;
+
+    @Column(name = "qr_payload_version", length = 20)
+    private String qrPayloadVersion;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     @Setter
@@ -303,5 +309,20 @@ public class DocumentoComercial {
         }
         this.codigoValidacaoAt = codigoValidacaoAt.trim();
         this.atcud = atcud.trim();
+    }
+
+    public void atribuirQrFiscal(String qrPayload, String qrPayloadVersion) {
+        if (this.qrPayload != null || this.qrPayloadVersion != null) {
+            throw new IllegalStateException("O payload QR do documento comercial já foi atribuído");
+        }
+        if (qrPayload == null || qrPayload.isBlank() || qrPayloadVersion == null || qrPayloadVersion.isBlank()) {
+            throw new IllegalArgumentException("Payload e versão do QR fiscal são obrigatórios");
+        }
+        this.qrPayload = qrPayload.trim();
+        this.qrPayloadVersion = qrPayloadVersion.trim();
+    }
+
+    public boolean temQrFiscal() {
+        return qrPayload != null && !qrPayload.isBlank();
     }
 }
