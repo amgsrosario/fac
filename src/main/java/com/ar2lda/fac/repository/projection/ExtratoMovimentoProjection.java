@@ -15,5 +15,6 @@ public interface ExtratoMovimentoProjection {
     LocalDate getDataVencimento();
     String getMoedaId();
     Integer getSinalContabilistico();
+    Boolean getLiquidacaoImediata();
     BigDecimal getValor();
 }

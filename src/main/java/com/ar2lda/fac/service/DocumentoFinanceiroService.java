@@ -61,6 +61,7 @@ public class DocumentoFinanceiroService {
     private final CurrentUserService currentUserService;
     private final SerieService serieService;
     private final AtcudService atcudService;
+    private final FiscalQrService fiscalQrService;
     private final DocumentoFinanceiroMapper mapper;
     private final EmpresaMapper empresaMapper;
     private final ClienteMapper clienteMapper;
@@ -109,6 +110,7 @@ public class DocumentoFinanceiroService {
         documento.setValorPagamentoBruto(valorPagamentoBruto.setScale(6, RoundingMode.HALF_UP));
         documento.setValorDescontoFinanceiro(valorDescontoFinanceiro.setScale(6, RoundingMode.HALF_UP));
         documento.setValorPagamentoLiquido(valorPagamentoLiquido.setScale(6, RoundingMode.HALF_UP));
+        atribuirQrFiscal(documento);
         documento = documentoRepository.save(documento);
 
         return toDTO(documento);
@@ -354,6 +356,18 @@ public class DocumentoFinanceiroService {
     private DocumentoFinanceiro findDocumento(Long id) {
         return documentoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Documento financeiro nao encontrado: " + id));
+    }
+
+    private void atribuirQrFiscal(DocumentoFinanceiro documento) {
+        Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID)
+                .orElseThrow(() -> new NotFoundException("Empresa proprietaria nao encontrada"));
+        DocumentoFinanceiroImpressaoDto impressao = new DocumentoFinanceiroImpressaoDto(
+                empresaMapper.toDTO(empresa),
+                clienteMapper.toDTO(documento.getCliente()),
+                toDTO(documento)
+        );
+        fiscalQrService.buildDocumentoFinanceiro(impressao)
+                .ifPresent(qr -> documento.atribuirQrFiscal(qr.payload(), qr.version()));
     }
 
     private Cliente findCliente(Long id) {

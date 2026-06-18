@@ -84,6 +84,7 @@ public class DocumentoComercialService {
     private final SerieService serieService;
     private final PendenteService pendenteService;
     private final AtcudService atcudService;
+    private final FiscalQrService fiscalQrService;
     private final DocumentoComercialMapper mapper;
     private final LinhaDocumentoComercialMapper linhaMapper;
     private final EmpresaMapper empresaMapper;
@@ -284,6 +285,7 @@ public class DocumentoComercialService {
                 numeracao.codigoValidacaoAt(),
                 atcudService.gerar(numeracao.codigoValidacaoAt(), numeracao.numeroSequencial())
         );
+        atribuirQrFiscal(documento);
         documento.setEstado(EstadoDocumentoComercial.EMITIDO);
         documento.setMomentoEmissao(OffsetDateTime.now());
         documento.setEmissor(emissor);
@@ -492,6 +494,23 @@ public class DocumentoComercialService {
         if (ultimaData != null && documento.getDataEmissao().isBefore(ultimaData)) {
             throw new BadRequestException("Data de emissao nao pode ser anterior ao ultimo documento emitido da serie");
         }
+    }
+
+    private void atribuirQrFiscal(DocumentoComercial documento) {
+        Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID)
+                .orElseThrow(() -> new NotFoundException("Empresa proprietaria nao encontrada"));
+        List<LinhaDocumentoComercialDto> linhas = linhaRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documento.getId())
+                .stream()
+                .map(linhaMapper::toDTO)
+                .toList();
+        DocumentoComercialImpressaoDto impressao = new DocumentoComercialImpressaoDto(
+                empresaMapper.toDTO(empresa),
+                mapper.toDTO(documento),
+                linhas
+        );
+        fiscalQrService.buildDocumentoComercial(impressao)
+                .ifPresent(qr -> documento.atribuirQrFiscal(qr.payload(), qr.version()));
     }
 
     private DocumentoComercialDiagnosticoPendenteDto buildDiagnosticoPendente(Optional<Pendente> pendente) {

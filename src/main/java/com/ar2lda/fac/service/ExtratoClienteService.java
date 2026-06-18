@@ -88,25 +88,17 @@ public class ExtratoClienteService {
             if (!moedaId.equals(projection.getMoedaId())) {
                 continue;
             }
-            BigDecimal valor = scale(projection.getValor());
-            BigDecimal debito = projection.getSinalContabilistico() == 1 ? valor : ZERO;
-            BigDecimal credito = projection.getSinalContabilistico() == 2 ? valor : ZERO;
-            periodo.add(debito, credito);
-            saldo = scale(saldo.add(debito).subtract(credito));
-            movimentos.add(new ExtratoClienteMovimentoDto(
-                    projection.getId(),
-                    fonte.origem(),
-                    projection.getData(),
-                    projection.getMomento(),
-                    projection.getTipoDocumentoId(),
-                    projection.getSerie(),
-                    projection.getNumeroDocumento(),
-                    projection.getDescricao(),
-                    projection.getDataVencimento(),
-                    debito,
-                    credito,
-                    saldo
-            ));
+            saldo = addMovimento(movimentos, periodo, fonte, projection, saldo);
+            if (fonte.comercial() && Boolean.TRUE.equals(projection.getLiquidacaoImediata())
+                    && projection.getSinalContabilistico() == 1) {
+                saldo = addMovimento(
+                        movimentos,
+                        periodo,
+                        fonte,
+                        new RecebimentoImediatoProjection(projection),
+                        saldo
+                );
+            }
         }
 
         TotaisMutaveis totalFinal = anterior.plus(periodo);
@@ -131,7 +123,37 @@ public class ExtratoClienteService {
             String origem,
             List<ExtratoMovimentoProjection> projections
     ) {
-        projections.forEach(projection -> target.add(new MovimentoFonte(origem, projection)));
+        boolean comercial = "COMERCIAL".equals(origem);
+        projections.forEach(projection -> target.add(new MovimentoFonte(origem, comercial, projection)));
+    }
+
+    private BigDecimal addMovimento(
+            List<ExtratoClienteMovimentoDto> movimentos,
+            TotaisMutaveis periodo,
+            MovimentoFonte fonte,
+            ExtratoMovimentoProjection projection,
+            BigDecimal saldoAtual
+    ) {
+        BigDecimal valor = scale(projection.getValor());
+        BigDecimal debito = projection.getSinalContabilistico() == 1 ? valor : ZERO;
+        BigDecimal credito = projection.getSinalContabilistico() == 2 ? valor : ZERO;
+        periodo.add(debito, credito);
+        BigDecimal novoSaldo = scale(saldoAtual.add(debito).subtract(credito));
+        movimentos.add(new ExtratoClienteMovimentoDto(
+                projection.getId(),
+                fonte.origem(),
+                projection.getData(),
+                projection.getMomento(),
+                projection.getTipoDocumentoId(),
+                projection.getSerie(),
+                projection.getNumeroDocumento(),
+                projection.getDescricao(),
+                projection.getDataVencimento(),
+                debito,
+                credito,
+                novoSaldo
+        ));
+        return novoSaldo;
     }
 
     private void validatePeriodo(LocalDate dataInicial, LocalDate dataFinal) {
@@ -153,7 +175,69 @@ public class ExtratoClienteService {
             .thenComparing(MovimentoFonte::origem)
             .thenComparing(movimento -> movimento.projection().getId());
 
-    private record MovimentoFonte(String origem, ExtratoMovimentoProjection projection) {
+    private record MovimentoFonte(String origem, boolean comercial, ExtratoMovimentoProjection projection) {
+    }
+
+    private record RecebimentoImediatoProjection(ExtratoMovimentoProjection base) implements ExtratoMovimentoProjection {
+        @Override
+        public Long getId() {
+            return base.getId();
+        }
+
+        @Override
+        public LocalDate getData() {
+            return base.getData();
+        }
+
+        @Override
+        public OffsetDateTime getMomento() {
+            return base.getMomento();
+        }
+
+        @Override
+        public String getTipoDocumentoId() {
+            return base.getTipoDocumentoId();
+        }
+
+        @Override
+        public String getSerie() {
+            return base.getSerie();
+        }
+
+        @Override
+        public Long getNumeroDocumento() {
+            return base.getNumeroDocumento();
+        }
+
+        @Override
+        public String getDescricao() {
+            return "Recebimento imediato - " + base.getDescricao();
+        }
+
+        @Override
+        public LocalDate getDataVencimento() {
+            return null;
+        }
+
+        @Override
+        public String getMoedaId() {
+            return base.getMoedaId();
+        }
+
+        @Override
+        public Integer getSinalContabilistico() {
+            return 2;
+        }
+
+        @Override
+        public Boolean getLiquidacaoImediata() {
+            return false;
+        }
+
+        @Override
+        public BigDecimal getValor() {
+            return base.getValor();
+        }
     }
 
     private static class TotaisMutaveis {

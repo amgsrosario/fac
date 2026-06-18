@@ -45,7 +45,9 @@ public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFi
                    d.tipoDocumento.id as tipoDocumentoId, d.serie as serie,
                    d.numeroDocumento as numeroDocumento, d.tipoDocumento.descricao as descricao,
                    null as dataVencimento, d.moeda.id as moedaId,
-                   d.tipoDocumento.sinalContabilistico as sinalContabilistico, d.valorPagamentoBruto as valor
+                   d.tipoDocumento.sinalContabilistico as sinalContabilistico,
+                   false as liquidacaoImediata,
+                   d.valorPagamentoBruto as valor
             from DocumentoFinanceiro d
             where d.cliente.id = :clienteId
               and d.anulado = false
