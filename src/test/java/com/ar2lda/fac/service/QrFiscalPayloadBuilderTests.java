@@ -88,6 +88,7 @@ class QrFiscalPayloadBuilderTests {
                 1L,
                 "ABCD1234-1",
                 false,
+                null,
                 EstadoDocumentoComercial.EMITIDO,
                 LocalDate.of(2026, 6, 15),
                 LocalDate.of(2026, 7, 15),

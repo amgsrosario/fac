@@ -23,6 +23,7 @@ public interface DocumentoFinanceiroMapper {
                 entity.getNumeroDocumento(),
                 entity.getAtcud(),
                 entity.temQrFiscal(),
+                entity.getQrPayload(),
                 entity.getDataEmissao(),
                 entity.getMoeda() != null ? entity.getMoeda().getId() : null,
                 entity.getValorPagamentoBruto(),

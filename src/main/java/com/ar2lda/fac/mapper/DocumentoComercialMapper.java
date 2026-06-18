@@ -18,6 +18,7 @@ public interface DocumentoComercialMapper {
                 e.getNumeroDocumento(),
                 e.getAtcud(),
                 e.temQrFiscal(),
+                e.getQrPayload(),
                 e.getEstado(),
                 e.getDataEmissao(),
                 e.getDataVencimento(),

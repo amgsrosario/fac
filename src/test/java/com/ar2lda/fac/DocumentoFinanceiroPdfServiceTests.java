@@ -7,9 +7,13 @@ import com.ar2lda.fac.controller.dto.EmpresaDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoFinanceiroDto;
 import com.ar2lda.fac.service.DocumentoFinanceiroPdfService;
 import com.ar2lda.fac.service.DocumentoFinanceiroService;
+import com.ar2lda.fac.service.QrCodeImageService;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -29,11 +33,15 @@ class DocumentoFinanceiroPdfServiceTests {
     @Mock
     private DocumentoFinanceiroService documentoService;
 
-    @InjectMocks
     private DocumentoFinanceiroPdfService pdfService;
 
+    @BeforeEach
+    void setUp() {
+        pdfService = new DocumentoFinanceiroPdfService(documentoService, new QrCodeImageService());
+    }
+
     @Test
-    void geraPdfDoReciboEMarcaDocumentoComoImpresso() {
+    void geraPdfDoReciboComAtcudEQrCodeEMarcaDocumentoComoImpresso() throws Exception {
         Long documentoId = 29L;
         EmpresaDto empresa = new EmpresaDto(1L, "FAC Lda", "500000000", "Rua da Empresa, 1", null,
                 "3750-001", "Agueda", "PT", null, null, null, null, null,
@@ -45,8 +53,9 @@ class DocumentoFinanceiroPdfServiceTests {
                 LocalDate.of(2026, 6, 8), LocalDate.of(2026, 7, 8), "FT", 9L, "2026",
                 new BigDecimal("123.00"), new BigDecimal("123.00"), new BigDecimal("50.00"),
                 BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("50.00"), new BigDecimal("73.00"), "EUR");
+        String qrPayload = "A:500000000*B:509999990*C:PT*D:RC*E:N*F:20260609*G:RC 2026/3*H:ABCD1234-3*I1:PT*N:0.00*O:50.00*Q:YhGV*R:9999";
         DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", "2026", 3L,
-                "ABCD1234-3", false,
+                "ABCD1234-3", true, qrPayload,
                 LocalDate.of(2026, 6, 9), "EUR", new BigDecimal("50.00"), BigDecimal.ZERO,
                 new BigDecimal("50.00"), 1001, OffsetDateTime.parse("2026-06-09T10:00:00Z"), "DEMO",
                 OffsetDateTime.parse("2026-06-09T10:00:00Z"), "Recebimento parcial", false, false, List.of(linha));
@@ -58,6 +67,11 @@ class DocumentoFinanceiroPdfServiceTests {
         assertThat(pdf.filename()).isEqualTo("RC-2026-3.pdf");
         assertThat(new String(pdf.content(), 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
         assertThat(pdf.content().length).isGreaterThan(1_000);
+        try (PDDocument pdfDocument = Loader.loadPDF(pdf.content())) {
+            String text = new PDFTextStripper().getText(pdfDocument);
+            assertThat(text).contains("ATCUD");
+            assertThat(text).contains("ABCD1234-3");
+        }
         verify(documentoService).marcarComoImpresso(documentoId);
     }
 }

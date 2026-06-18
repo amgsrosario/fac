@@ -14,6 +14,7 @@ public record DocumentoComercialDto(
         Long numeroDocumento,
         String atcud,
         boolean temQrFiscal,
+        String qrPayload,
         EstadoDocumentoComercial estado,
         LocalDate dataEmissao,
         LocalDate dataVencimento,

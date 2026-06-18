@@ -25,6 +25,7 @@ public class DocumentoComercialPdfService {
     private static final Locale PT = Locale.forLanguageTag("pt-PT");
 
     private final DocumentoComercialService documentoService;
+    private final QrCodeImageService qrCodeImageService;
 
     public PdfDocumento gerar(Long id) {
         DocumentoComercialImpressaoDto impressao = documentoService.getImpressao(id);
@@ -105,6 +106,10 @@ public class DocumentoComercialPdfService {
                     .totals td { padding: 5px 2px; border-bottom: 1px solid #e2e4e5; }
                     .totals td:last-child { text-align: right; white-space: nowrap; }
                     .grand td { font-size: 12pt; font-weight: bold; color: #44515d; border-top: 2px solid #ba963c; }
+                    .fiscal { width: 100%%; margin-top: 12px; padding-top: 8px; border-top: 1px solid #dfe2e3; page-break-inside: avoid; }
+                    .fiscal-card { width: 42mm; margin-left: auto; text-align: center; }
+                    .fiscal-atcud { font-size: 7.5pt; font-weight: bold; color: #111; margin-bottom: 3mm; }
+                    .qr { width: 40mm; height: 40mm; }
                     .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #dfe2e3; font-size: 7.5pt; color: #777f87; line-height: 1.4; }
                     .watermark { position: fixed; top: 44%%; left: 18%%; width: 64%%; transform: rotate(-28deg); text-align: center; font-size: 58pt; font-weight: bold; color: #efdede; }
                   </style>
@@ -139,7 +144,8 @@ public class DocumentoComercialPdfService {
 
                 %s
                 %s
-                <div class="footer">Emitido por %s em %s. Capital social: %s EUR. Matricula comercial: %s. CAE: %s - %s.<br />FAC em desenvolvimento - documento ainda sem elementos de certificacao fiscal.</div>
+                %s
+                <div class="footer">Emitido por %s em %s. Capital social: %s EUR. Matricula comercial: %s. CAE: %s - %s.</div>
                 </body></html>
                 """.formatted(
                 anulada,
@@ -158,6 +164,7 @@ public class DocumentoComercialPdfService {
                 money(documento.valorTotal()), esc(documento.moedaId()),
                 transporte,
                 hasText(documento.observacoes()) ? "<div class=\"box\"><div class=\"section-title\">Observacoes</div>" + esc(documento.observacoes()) + "</div>" : "",
+                fiscal(documento.atcud(), documento.qrPayload()),
                 esc(documento.emissorId()), documento.momentoEmissao() == null ? "-" : esc(documento.momentoEmissao().toString()),
                 money(empresa.capitalSocial()), esc(empresa.matriculaRegistoComercial()), esc(empresa.cae()), esc(empresa.descricaoCae())
         );
@@ -170,6 +177,17 @@ public class DocumentoComercialPdfService {
                 + "</td><td><strong>Descarga</strong><br />" + date(d.dataDescarga()) + " " + time(d.horaDescarga()) + "<br />"
                 + address(d.descargaMorada(), d.descargaMorada1()) + "<br />" + esc(joinPostal(d.descargaCodPostal(), d.descargaLocalidade()))
                 + "<br />Matricula: " + esc(d.matricula()) + "</td></tr></table></div>";
+    }
+
+    private String fiscal(String atcud, String qrPayload) {
+        if (!hasText(atcud) && !hasText(qrPayload)) {
+            return "";
+        }
+        String qr = hasText(qrPayload)
+                ? "<img class=\"qr\" src=\"" + qrCodeImageService.toPngDataUri(qrPayload) + "\" alt=\"QR Code fiscal\" />"
+                : "";
+        return "<div class=\"fiscal\"><div class=\"fiscal-card\"><div class=\"fiscal-atcud\">ATCUD: "
+                + esc(atcud) + "</div>" + qr + "</div></div>";
     }
 
     private String td(String text, String cssClass) {

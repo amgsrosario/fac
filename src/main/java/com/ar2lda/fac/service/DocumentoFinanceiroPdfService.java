@@ -23,6 +23,7 @@ public class DocumentoFinanceiroPdfService {
     private static final Locale PT = Locale.forLanguageTag("pt-PT");
 
     private final DocumentoFinanceiroService documentoService;
+    private final QrCodeImageService qrCodeImageService;
 
     public PdfDocumento gerar(Long id) {
         DocumentoFinanceiroImpressaoDto impressao = documentoService.getImpressao(id);
@@ -95,6 +96,10 @@ public class DocumentoFinanceiroPdfService {
                   .totals td { padding: 6px 2px; border-bottom: 1px solid #e2e4e5; }
                   .totals td:last-child { text-align: right; white-space: nowrap; }
                   .grand td { font-size: 12pt; font-weight: bold; color: #44515d; border-top: 2px solid #ba963c; }
+                  .fiscal { width: 100%%; margin-top: 12px; padding-top: 8px; border-top: 1px solid #dfe2e3; page-break-inside: avoid; }
+                  .fiscal-card { width: 42mm; margin-left: auto; text-align: center; }
+                  .fiscal-atcud { font-size: 7.5pt; font-weight: bold; color: #111; margin-bottom: 3mm; }
+                  .qr { width: 40mm; height: 40mm; }
                   .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #dfe2e3; font-size: 7.5pt; color: #777f87; line-height: 1.4; }
                   .watermark { position: fixed; top: 44%%; left: 18%%; width: 64%%; transform: rotate(-28deg); text-align: center; font-size: 58pt; font-weight: bold; color: #efdede; }
                 </style></head><body>
@@ -113,7 +118,8 @@ public class DocumentoFinanceiroPdfService {
 
                 <table class="totals"><tr><td>Valor aplicado</td><td>%s %s</td></tr><tr><td>Desconto financeiro</td><td>%s %s</td></tr><tr class="grand"><td>Valor recebido</td><td>%s %s</td></tr></table>
                 %s
-                <div class="footer">Emitido por %s em %s. Capital social: %s EUR. Matricula comercial: %s. CAE: %s - %s.<br />FAC em desenvolvimento - documento ainda sem elementos de certificacao fiscal.</div>
+                %s
+                <div class="footer">Emitido por %s em %s. Capital social: %s EUR. Matricula comercial: %s. CAE: %s - %s.</div>
                 </body></html>
                 """.formatted(
                 anulada,
@@ -124,6 +130,7 @@ public class DocumentoFinanceiroPdfService {
                 linhas,
                 money(documento.valorPagamentoBruto()), esc(documento.moedaId()), money(documento.valorDescontoFinanceiro()), esc(documento.moedaId()), money(documento.valorPagamentoLiquido()), esc(documento.moedaId()),
                 observacoes,
+                fiscal(documento.atcud(), documento.qrPayload()),
                 esc(documento.emissorId()), documento.momentoEmissao() == null ? "-" : esc(documento.momentoEmissao().toString()),
                 money(empresa.capitalSocial()), esc(empresa.matriculaRegistoComercial()), esc(empresa.cae()), esc(empresa.descricaoCae())
         );
@@ -139,6 +146,17 @@ public class DocumentoFinanceiroPdfService {
 
     private String joinPostal(String postal, String localidade) {
         return (value(postal) + " " + value(localidade)).trim();
+    }
+
+    private String fiscal(String atcud, String qrPayload) {
+        if (!hasText(atcud) && !hasText(qrPayload)) {
+            return "";
+        }
+        String qr = hasText(qrPayload)
+                ? "<img class=\"qr\" src=\"" + qrCodeImageService.toPngDataUri(qrPayload) + "\" alt=\"QR Code fiscal\" />"
+                : "";
+        return "<div class=\"fiscal\"><div class=\"fiscal-card\"><div class=\"fiscal-atcud\">ATCUD: "
+                + esc(atcud) + "</div>" + qr + "</div></div>";
     }
 
     private String date(java.time.LocalDate value) {
