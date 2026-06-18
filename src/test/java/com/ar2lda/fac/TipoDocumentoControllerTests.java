@@ -73,6 +73,24 @@ class TipoDocumentoControllerTests {
     }
 
     @Test
+    void criaTipoDocumentoComDoisCaracteres() throws Exception {
+        mockMvc.perform(post("/tipos-documento")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "id": "QY",
+                                  "descricao": "Tipo de dois caracteres",
+                                  "areaGestao": 2,
+                                  "entidade": 1,
+                                  "sinalContabilistico": 1,
+                                  "liquidacaoImediata": false
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value("QY"));
+    }
+
+    @Test
     void rejeitaSinalContabilisticoInvalido() throws Exception {
         mockMvc.perform(post("/tipos-documento")
                         .contentType(MediaType.APPLICATION_JSON)

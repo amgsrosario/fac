@@ -98,6 +98,18 @@ class SerieControllerTests {
     }
 
     @Test
+    void aceitaTipoDocumentoSaftComDoisCaracteres() throws Exception {
+        createTipoDocumento("QZ", "Tipo de dois caracteres");
+
+        createSerie("QZ", "AZ26", "Série dois caracteres");
+
+        mockMvc.perform(get("/series/QZ/AZ26"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tipoDocumentoId").value("QZ"))
+                .andExpect(jsonPath("$.serie").value("AZ26"));
+    }
+
+    @Test
     void avancaNumeradorDaSerieSequencialmente() throws Exception {
         createSerie("Z97", "NUM", "Série numerada");
 
@@ -192,12 +204,12 @@ class SerieControllerTests {
                         .content("""
                                 {
                                   "serie": "CURTA",
-                                  "tipoDocumentoId": "Z9",
+                                  "tipoDocumentoId": "Z",
                                   "nome": "Tipo curto"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Tipo de documento deve ter 3 caracteres"));
+                .andExpect(jsonPath("$.message").value("Tipo de documento deve ter pelo menos 2 caracteres"));
     }
 
     @Test

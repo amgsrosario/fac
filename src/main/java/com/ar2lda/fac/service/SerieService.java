@@ -146,8 +146,8 @@ public class SerieService {
 
     private String normalizeTipoDocumentoId(String value) {
         String normalized = normalizeRequired(value, "Tipo de documento", 3);
-        if (normalized.length() != 3) {
-            throw new BadRequestException("Tipo de documento deve ter 3 caracteres");
+        if (normalized.length() < 2) {
+            throw new BadRequestException("Tipo de documento deve ter pelo menos 2 caracteres");
         }
         return normalized;
     }

@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 
 public record TipoDocumentoCreateDto(
         @NotBlank(message = "Código é obrigatório")
-        @Size(min = 3, max = 3, message = "Código deve ter 3 caracteres")
+        @Size(min = 2, max = 3, message = "Código deve ter entre 2 e 3 caracteres")
         String id,
         @NotBlank(message = "Descrição é obrigatória")
         @Size(max = 50, message = "Descrição deve ter no máximo 50 caracteres")
