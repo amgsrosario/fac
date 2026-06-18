@@ -40,7 +40,7 @@ public class QrFiscalPayloadBuilder {
         add(fields, "A", requiredDigits(empresa.nif(), "NIF do emitente"));
         add(fields, "B", adquirenteNif(documento.clienteNif()));
         add(fields, "C", required(documento.clientePais(), "País do adquirente"));
-        add(fields, "D", required(documento.tipoDocumentoId(), "Tipo de documento"));
+        add(fields, "D", required(codigoFiscal(documento.tipoDocumentoCodigoFiscal(), documento.tipoDocumentoId()), "Tipo de documento fiscal"));
         add(fields, "E", "N");
         add(fields, "F", documento.dataEmissao().format(QR_DATE));
         add(fields, "G", documento.tipoDocumentoId() + " " + documento.serie() + "/" + documento.numeroDocumento());
@@ -84,7 +84,7 @@ public class QrFiscalPayloadBuilder {
         add(fields, "A", requiredDigits(impressao.empresa().nif(), "NIF do emitente"));
         add(fields, "B", adquirenteNif(impressao.cliente().nif()));
         add(fields, "C", required(impressao.cliente().paisId(), "País do adquirente"));
-        add(fields, "D", required(documento.tipoDocumentoId(), "Tipo de documento"));
+        add(fields, "D", required(codigoFiscal(documento.tipoDocumentoCodigoFiscal(), documento.tipoDocumentoId()), "Tipo de documento fiscal"));
         add(fields, "E", "N");
         add(fields, "F", documento.dataEmissao().format(QR_DATE));
         add(fields, "G", documento.tipoDocumentoId() + " " + documento.serie() + "/" + documento.numeroDocumento());
@@ -148,6 +148,10 @@ public class QrFiscalPayloadBuilder {
             return "999999990";
         }
         return nif.trim().replaceAll("\\s+", "");
+    }
+
+    private String codigoFiscal(String codigoFiscal, String fallback) {
+        return codigoFiscal == null || codigoFiscal.isBlank() ? fallback : codigoFiscal;
     }
 
     private String money(BigDecimal value) {

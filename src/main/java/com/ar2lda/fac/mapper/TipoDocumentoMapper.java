@@ -17,6 +17,7 @@ public interface TipoDocumentoMapper {
         return new TipoDocumentoDto(
                 entity.getId(),
                 entity.getDescricao(),
+                entity.getCodigoFiscal(),
                 entity.getModeloEmissao1(),
                 entity.getModeloEmissao2(),
                 entity.getModeloEmissao3(),
@@ -35,6 +36,7 @@ public interface TipoDocumentoMapper {
         return new TipoDocumento(
                 dto.id(),
                 dto.descricao(),
+                normalize(dto.codigoFiscal()),
                 dto.modeloEmissao1(),
                 dto.modeloEmissao2(),
                 dto.modeloEmissao3(),
@@ -51,6 +53,7 @@ public interface TipoDocumentoMapper {
             return;
         }
         entity.setDescricao(dto.descricao());
+        entity.setCodigoFiscal(normalize(dto.codigoFiscal()));
         entity.setModeloEmissao1(dto.modeloEmissao1());
         entity.setModeloEmissao2(dto.modeloEmissao2());
         entity.setModeloEmissao3(dto.modeloEmissao3());
@@ -59,5 +62,9 @@ public interface TipoDocumentoMapper {
         entity.setEntidade(dto.entidade());
         entity.setSinalContabilistico(dto.sinalContabilistico());
         entity.setLiquidacaoImediata(dto.liquidacaoImediata());
+    }
+
+    private String normalize(String value) {
+        return value == null || value.isBlank() ? null : value.trim().toUpperCase();
     }
 }

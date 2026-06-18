@@ -24,6 +24,11 @@ public class TipoDocumento {
     @ToString.Include
     private String descricao;
 
+    @Column(name = "codigo_fiscal", length = 2)
+    @Setter
+    @ToString.Include
+    private String codigoFiscal;
+
     @Column(length = 25)
     @Setter
     private String modeloEmissao1;
@@ -66,8 +71,16 @@ public class TipoDocumento {
     public TipoDocumento(String id, String descricao, String modeloEmissao1, String modeloEmissao2,
                          String modeloEmissao3, String modeloEmissao4, Integer areaGestao, Integer entidade,
                          Integer sinalContabilistico, boolean liquidacaoImediata) {
+        this(id, descricao, null, modeloEmissao1, modeloEmissao2, modeloEmissao3, modeloEmissao4,
+                areaGestao, entidade, sinalContabilistico, liquidacaoImediata);
+    }
+
+    public TipoDocumento(String id, String descricao, String codigoFiscal, String modeloEmissao1, String modeloEmissao2,
+                         String modeloEmissao3, String modeloEmissao4, Integer areaGestao, Integer entidade,
+                         Integer sinalContabilistico, boolean liquidacaoImediata) {
         this.id = id;
         this.descricao = descricao;
+        this.codigoFiscal = codigoFiscal;
         this.modeloEmissao1 = modeloEmissao1;
         this.modeloEmissao2 = modeloEmissao2;
         this.modeloEmissao3 = modeloEmissao3;

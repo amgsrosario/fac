@@ -19,6 +19,7 @@ public interface DocumentoFinanceiroMapper {
                 entity.getId(),
                 entity.getCliente() != null ? entity.getCliente().getId() : null,
                 entity.getTipoDocumento() != null ? entity.getTipoDocumento().getId() : null,
+                entity.getTipoDocumento() != null ? entity.getTipoDocumento().getCodigoFiscal() : null,
                 entity.getSerie(),
                 entity.getNumeroDocumento(),
                 entity.getAtcud(),

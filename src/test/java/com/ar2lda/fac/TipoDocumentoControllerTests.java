@@ -31,6 +31,7 @@ class TipoDocumentoControllerTests {
                                 {
                                   "id": "Z99",
                                   "descricao": "Documento de teste",
+                                  "codigoFiscal": "fr",
                                   "modeloEmissao1": "Modelo 1",
                                   "areaGestao": 2,
                                   "entidade": 1,
@@ -40,6 +41,7 @@ class TipoDocumentoControllerTests {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("Z99"))
+                .andExpect(jsonPath("$.codigoFiscal").value("FR"))
                 .andExpect(jsonPath("$.descricao").value("Documento de teste"));
 
         mockMvc.perform(get("/tipos-documento/Z99"))
@@ -52,6 +54,7 @@ class TipoDocumentoControllerTests {
                         .content("""
                                 {
                                   "descricao": "Documento atualizado",
+                                  "codigoFiscal": "FT",
                                   "modeloEmissao1": "Modelo A",
                                   "modeloEmissao2": "Modelo B",
                                   "areaGestao": 3,
@@ -65,6 +68,7 @@ class TipoDocumentoControllerTests {
         mockMvc.perform(get("/tipos-documento/Z99"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.descricao").value("Documento atualizado"))
+                .andExpect(jsonPath("$.codigoFiscal").value("FT"))
                 .andExpect(jsonPath("$.sinalContabilistico").value(2))
                 .andExpect(jsonPath("$.liquidacaoImediata").value(true));
 

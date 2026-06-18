@@ -10,6 +10,7 @@ import java.time.OffsetDateTime;
 public record DocumentoComercialDto(
         Long id,
         String tipoDocumentoId,
+        String tipoDocumentoCodigoFiscal,
         String serie,
         Long numeroDocumento,
         String atcud,

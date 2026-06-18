@@ -13,6 +13,8 @@ public record TipoDocumentoCreateDto(
         @NotBlank(message = "Descrição é obrigatória")
         @Size(max = 50, message = "Descrição deve ter no máximo 50 caracteres")
         String descricao,
+        @Size(min = 2, max = 2, message = "Código fiscal deve ter 2 caracteres")
+        String codigoFiscal,
         @Size(max = 25, message = "Modelo de emissão 1 deve ter no máximo 25 caracteres")
         String modeloEmissao1,
         @Size(max = 25, message = "Modelo de emissão 2 deve ter no máximo 25 caracteres")

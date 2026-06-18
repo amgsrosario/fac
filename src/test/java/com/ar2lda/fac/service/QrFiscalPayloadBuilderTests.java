@@ -41,6 +41,16 @@ class QrFiscalPayloadBuilderTests {
     }
 
     @Test
+    void usaCodigoFiscalDoTipoDocumentoNoCampoD() {
+        DocumentoComercialDto documento = documento("509999990", "FRC", "FR");
+        DocumentoComercialImpressaoDto impressao = new DocumentoComercialImpressaoDto(empresa(), documento, List.of());
+
+        String payload = builder.buildDocumentoComercial(impressao, "YhGV", "9999");
+
+        assertThat(payload).contains("*D:FR*");
+    }
+
+    @Test
     void exigeHashECertificado() {
         DocumentoComercialImpressaoDto impressao = impressaoComercial();
 
@@ -81,9 +91,14 @@ class QrFiscalPayloadBuilderTests {
     }
 
     private DocumentoComercialDto documento(String clienteNif) {
+        return documento(clienteNif, "FT", null);
+    }
+
+    private DocumentoComercialDto documento(String clienteNif, String tipoDocumentoId, String codigoFiscal) {
         return new DocumentoComercialDto(
                 10L,
-                "FT",
+                tipoDocumentoId,
+                codigoFiscal,
                 "2026",
                 1L,
                 "ABCD1234-1",

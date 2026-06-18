@@ -14,6 +14,7 @@ public interface DocumentoComercialMapper {
         return new DocumentoComercialDto(
                 e.getId(),
                 e.getTipoDocumento() != null ? e.getTipoDocumento().getId() : null,
+                e.getTipoDocumento() != null ? e.getTipoDocumento().getCodigoFiscal() : null,
                 e.getSerie(),
                 e.getNumeroDocumento(),
                 e.getAtcud(),

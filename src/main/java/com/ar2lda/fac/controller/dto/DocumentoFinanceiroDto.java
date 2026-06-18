@@ -9,6 +9,7 @@ public record DocumentoFinanceiroDto(
         Long id,
         Long clienteId,
         String tipoDocumentoId,
+        String tipoDocumentoCodigoFiscal,
         String serie,
         Long numeroDocumento,
         String atcud,
