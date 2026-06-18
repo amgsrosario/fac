@@ -34,3 +34,10 @@ fac:
     jwt:
       secret: ${FAC_JWT_SECRET:}
       expiration-minutes: ${FAC_JWT_EXPIRATION_MINUTES:60}
+  fiscal:
+    software-certificate-number: ${FAC_FISCAL_SOFTWARE_CERTIFICATE_NUMBER:9999}
+    qr:
+      enabled: ${FAC_FISCAL_QR_ENABLED:true}
+      # Valor de demonstração para ambiente de desenvolvimento. Em certificação,
+      # este campo deve vir dos 4 caracteres legalmente aplicáveis do hash fiscal.
+      hash-characters: ${FAC_FISCAL_QR_HASH_CHARACTERS:YhGV}

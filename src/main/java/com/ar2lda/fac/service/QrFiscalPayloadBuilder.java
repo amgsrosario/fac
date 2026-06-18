@@ -2,6 +2,8 @@ package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.DocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
+import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDto;
+import com.ar2lda.fac.controller.dto.DocumentoFinanceiroImpressaoDto;
 import com.ar2lda.fac.controller.dto.EmpresaDto;
 import com.ar2lda.fac.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
@@ -66,9 +68,50 @@ public class QrFiscalPayloadBuilder {
         return QrFiscalValidator.PAYLOAD_VERSION;
     }
 
+    public String buildDocumentoFinanceiro(
+            DocumentoFinanceiroImpressaoDto impressao,
+            String hashCharacters,
+            String certificateNumber
+    ) {
+        if (impressao == null || impressao.empresa() == null || impressao.cliente() == null || impressao.documento() == null) {
+            throw new BadRequestException("Documento financeiro é obrigatório para gerar o QR fiscal");
+        }
+
+        DocumentoFinanceiroDto documento = impressao.documento();
+        validateDocumentoFinanceiro(documento);
+        List<String> fields = new ArrayList<>();
+
+        add(fields, "A", requiredDigits(impressao.empresa().nif(), "NIF do emitente"));
+        add(fields, "B", adquirenteNif(impressao.cliente().nif()));
+        add(fields, "C", required(impressao.cliente().paisId(), "País do adquirente"));
+        add(fields, "D", required(documento.tipoDocumentoId(), "Tipo de documento"));
+        add(fields, "E", "N");
+        add(fields, "F", documento.dataEmissao().format(QR_DATE));
+        add(fields, "G", documento.tipoDocumentoId() + " " + documento.serie() + "/" + documento.numeroDocumento());
+        add(fields, "H", required(documento.atcud(), "ATCUD"));
+        add(fields, "I1", "PT");
+        add(fields, "N", money(BigDecimal.ZERO));
+        add(fields, "O", money(documento.valorPagamentoLiquido()));
+        add(fields, "Q", required(hashCharacters, "4 caracteres do hash"));
+        add(fields, "R", required(certificateNumber, "Número do certificado"));
+
+        String payload = String.join("*", fields);
+        validator.validate(payload);
+        return payload;
+    }
+
     private void validateDocumento(DocumentoComercialDto documento) {
         if (documento.numeroDocumento() == null || documento.numeroDocumento() <= 0) {
             throw new BadRequestException("Documento comercial deve estar emitido para gerar o QR fiscal");
+        }
+        if (documento.dataEmissao() == null) {
+            throw new BadRequestException("Data de emissão é obrigatória para gerar o QR fiscal");
+        }
+    }
+
+    private void validateDocumentoFinanceiro(DocumentoFinanceiroDto documento) {
+        if (documento.numeroDocumento() == null || documento.numeroDocumento() <= 0) {
+            throw new BadRequestException("Documento financeiro deve estar emitido para gerar o QR fiscal");
         }
         if (documento.dataEmissao() == null) {
             throw new BadRequestException("Data de emissão é obrigatória para gerar o QR fiscal");

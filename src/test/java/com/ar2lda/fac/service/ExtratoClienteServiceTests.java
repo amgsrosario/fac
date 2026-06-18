@@ -114,6 +114,28 @@ class ExtratoClienteServiceTests {
     }
 
     @Test
+    void documentoComercialDeLiquidacaoImediataGeraRecebimentoNoExtrato() {
+        ExtratoMovimentoProjection frc = movimento(30L, "2026-06-12T11:00:00Z", "FRC", 1, "123.45", "EUR", true);
+        when(documentoComercialRepository.findExtratoMovimentos(CLIENTE_ID, INICIAL, FINAL))
+                .thenReturn(List.of(frc));
+
+        ExtratoClienteMoedaDto eur = service.getExtrato(CLIENTE_ID, INICIAL, FINAL).moedas().getFirst();
+
+        assertThat(eur.movimentos()).hasSize(2);
+        assertThat(eur.movimentos().get(0).descricao()).isEqualTo("Recibo");
+        assertThat(eur.movimentos().get(0).debito()).isEqualByComparingTo("123.450000");
+        assertThat(eur.movimentos().get(0).credito()).isEqualByComparingTo("0.000000");
+        assertThat(eur.movimentos().get(0).saldoAcumulado()).isEqualByComparingTo("123.450000");
+        assertThat(eur.movimentos().get(1).descricao()).isEqualTo("Recebimento imediato - Recibo");
+        assertThat(eur.movimentos().get(1).debito()).isEqualByComparingTo("0.000000");
+        assertThat(eur.movimentos().get(1).credito()).isEqualByComparingTo("123.450000");
+        assertThat(eur.movimentos().get(1).saldoAcumulado()).isEqualByComparingTo("0.000000");
+        assertThat(eur.totalPeriodo().debito()).isEqualByComparingTo("123.450000");
+        assertThat(eur.totalPeriodo().credito()).isEqualByComparingTo("123.450000");
+        assertThat(eur.totalFinal().saldo()).isEqualByComparingTo("0.000000");
+    }
+
+    @Test
     void apresentaAnteriorQuandoPeriodoNaoTemMovimentos() {
         ExtratoAnteriorProjection anterior = anterior("EUR", "75", "25");
         when(documentoComercialRepository.findExtratoAnterior(CLIENTE_ID, INICIAL))
@@ -200,6 +222,20 @@ class ExtratoClienteServiceTests {
 
     private ExtratoMovimentoProjection movimento(
             Long id,
+            String momento,
+            String tipo,
+            int sinal,
+            String valor,
+            String moedaId,
+            boolean liquidacaoImediata
+    ) {
+        ExtratoMovimentoProjection projection = movimento(id, OffsetDateTime.parse(momento), tipo, sinal, valor, moedaId);
+        when(projection.getLiquidacaoImediata()).thenReturn(liquidacaoImediata);
+        return projection;
+    }
+
+    private ExtratoMovimentoProjection movimento(
+            Long id,
             OffsetDateTime momento,
             String tipo,
             int sinal,
@@ -216,6 +252,7 @@ class ExtratoClienteServiceTests {
         when(projection.getDescricao()).thenReturn(tipo.equals("FT") ? "Fatura" : "Recibo");
         when(projection.getMoedaId()).thenReturn(moedaId);
         when(projection.getSinalContabilistico()).thenReturn(sinal);
+        when(projection.getLiquidacaoImediata()).thenReturn(false);
         when(projection.getValor()).thenReturn(new BigDecimal(valor));
         return projection;
     }

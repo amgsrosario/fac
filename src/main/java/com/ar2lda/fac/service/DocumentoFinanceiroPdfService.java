@@ -24,6 +24,7 @@ public class DocumentoFinanceiroPdfService {
 
     private final DocumentoFinanceiroService documentoService;
     private final QrCodeImageService qrCodeImageService;
+    private final FiscalQrService fiscalQrService;
 
     public PdfDocumento gerar(Long id) {
         DocumentoFinanceiroImpressaoDto impressao = documentoService.getImpressao(id);
@@ -130,7 +131,7 @@ public class DocumentoFinanceiroPdfService {
                 linhas,
                 money(documento.valorPagamentoBruto()), esc(documento.moedaId()), money(documento.valorDescontoFinanceiro()), esc(documento.moedaId()), money(documento.valorPagamentoLiquido()), esc(documento.moedaId()),
                 observacoes,
-                fiscal(documento.atcud(), documento.qrPayload()),
+                fiscal(documento.atcud(), qrPayload(impressao)),
                 esc(documento.emissorId()), documento.momentoEmissao() == null ? "-" : esc(documento.momentoEmissao().toString()),
                 money(empresa.capitalSocial()), esc(empresa.matriculaRegistoComercial()), esc(empresa.cae()), esc(empresa.descricaoCae())
         );
@@ -157,6 +158,15 @@ public class DocumentoFinanceiroPdfService {
                 : "";
         return "<div class=\"fiscal\"><div class=\"fiscal-card\"><div class=\"fiscal-atcud\">ATCUD: "
                 + esc(atcud) + "</div>" + qr + "</div></div>";
+    }
+
+    private String qrPayload(DocumentoFinanceiroImpressaoDto impressao) {
+        if (hasText(impressao.documento().qrPayload())) {
+            return impressao.documento().qrPayload();
+        }
+        return fiscalQrService.buildDocumentoFinanceiro(impressao)
+                .map(FiscalQrService.QrFiscal::payload)
+                .orElse("");
     }
 
     private String date(java.time.LocalDate value) {

@@ -29,7 +29,11 @@ public interface DocumentoComercialRepository extends JpaRepository<DocumentoCom
     @Query("""
             select d.moeda.id as moedaId,
                    sum(case when d.tipoDocumento.sinalContabilistico = 1 then d.valorTotal else 0 end) as debito,
-                   sum(case when d.tipoDocumento.sinalContabilistico = 2 then d.valorTotal else 0 end) as credito
+                   sum(case
+                        when d.tipoDocumento.sinalContabilistico = 2 then d.valorTotal
+                        when d.tipoDocumento.sinalContabilistico = 1 and d.tipoDocumento.liquidacaoImediata = true then d.valorTotal
+                        else 0
+                   end) as credito
             from DocumentoComercial d
             where d.cliente.id = :clienteId
               and d.estado = com.ar2lda.fac.model.EstadoDocumentoComercial.EMITIDO
@@ -48,7 +52,9 @@ public interface DocumentoComercialRepository extends JpaRepository<DocumentoCom
                    d.tipoDocumento.id as tipoDocumentoId, d.serie as serie,
                    d.numeroDocumento as numeroDocumento, d.tipoDocumento.descricao as descricao,
                    d.dataVencimento as dataVencimento, d.moeda.id as moedaId,
-                   d.tipoDocumento.sinalContabilistico as sinalContabilistico, d.valorTotal as valor
+                   d.tipoDocumento.sinalContabilistico as sinalContabilistico,
+                   d.tipoDocumento.liquidacaoImediata as liquidacaoImediata,
+                   d.valorTotal as valor
             from DocumentoComercial d
             where d.cliente.id = :clienteId
               and d.estado = com.ar2lda.fac.model.EstadoDocumentoComercial.EMITIDO

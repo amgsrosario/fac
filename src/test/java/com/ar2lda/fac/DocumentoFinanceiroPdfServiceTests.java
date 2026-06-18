@@ -7,6 +7,7 @@ import com.ar2lda.fac.controller.dto.EmpresaDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoFinanceiroDto;
 import com.ar2lda.fac.service.DocumentoFinanceiroPdfService;
 import com.ar2lda.fac.service.DocumentoFinanceiroService;
+import com.ar2lda.fac.service.FiscalQrService;
 import com.ar2lda.fac.service.QrCodeImageService;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -33,11 +34,14 @@ class DocumentoFinanceiroPdfServiceTests {
     @Mock
     private DocumentoFinanceiroService documentoService;
 
+    @Mock
+    private FiscalQrService fiscalQrService;
+
     private DocumentoFinanceiroPdfService pdfService;
 
     @BeforeEach
     void setUp() {
-        pdfService = new DocumentoFinanceiroPdfService(documentoService, new QrCodeImageService());
+        pdfService = new DocumentoFinanceiroPdfService(documentoService, new QrCodeImageService(), fiscalQrService);
     }
 
     @Test
