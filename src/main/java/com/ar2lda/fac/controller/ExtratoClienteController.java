@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/extratos/clientes")
@@ -26,6 +27,35 @@ public class ExtratoClienteController {
     private final ExtratoClienteService service;
     private final ExtratoClientePdfExporter pdfExporter;
     private final ExtratoClienteExcelExporter excelExporter;
+
+    @GetMapping
+    public List<ExtratoClienteDto> getExtratos(
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal
+    ) {
+        return service.getExtratos(clienteIds, dataInicial, dataFinal);
+    }
+
+    @GetMapping("/exportar/pdf")
+    public ResponseEntity<byte[]> exportPdf(
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal
+    ) {
+        var file = pdfExporter.export(clienteIds, dataInicial, dataFinal);
+        return download(file.filename(), ExtratoClientePdfExporter.MEDIA_TYPE, file.content());
+    }
+
+    @GetMapping("/exportar/xlsx")
+    public ResponseEntity<byte[]> exportExcel(
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal
+    ) {
+        var file = excelExporter.export(clienteIds, dataInicial, dataFinal);
+        return download(file.filename(), ExtratoClienteExcelExporter.MEDIA_TYPE, file.content());
+    }
 
     @GetMapping("/{clienteId}")
     public ExtratoClienteDto getExtrato(

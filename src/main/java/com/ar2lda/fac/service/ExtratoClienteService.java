@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -36,6 +37,19 @@ public class ExtratoClienteService {
     private final ClienteRepository clienteRepository;
     private final DocumentoComercialRepository documentoComercialRepository;
     private final DocumentoFinanceiroRepository documentoFinanceiroRepository;
+
+    @Transactional(readOnly = true)
+    public List<ExtratoClienteDto> getExtratos(
+            List<Long> clienteIds,
+            LocalDate dataInicial,
+            LocalDate dataFinal
+    ) {
+        validatePeriodo(dataInicial, dataFinal);
+        List<Long> ids = resolveClienteIds(clienteIds);
+        return ids.stream()
+                .map(clienteId -> getExtrato(clienteId, dataInicial, dataFinal))
+                .toList();
+    }
 
     @Transactional(readOnly = true)
     public ExtratoClienteDto getExtrato(Long clienteId, LocalDate dataInicial, LocalDate dataFinal) {
@@ -163,6 +177,17 @@ public class ExtratoClienteService {
         if (dataInicial.isAfter(dataFinal)) {
             throw new BadRequestException("Data inicial nao pode ser posterior a data final");
         }
+    }
+
+    private List<Long> resolveClienteIds(List<Long> clienteIds) {
+        if (clienteIds == null || clienteIds.isEmpty()) {
+            return clienteRepository.findAll().stream()
+                    .sorted(Comparator.comparing(Cliente::getNome, String.CASE_INSENSITIVE_ORDER)
+                            .thenComparing(Cliente::getId))
+                    .map(Cliente::getId)
+                    .toList();
+        }
+        return List.copyOf(new LinkedHashSet<>(clienteIds));
     }
 
     private static BigDecimal scale(BigDecimal value) {

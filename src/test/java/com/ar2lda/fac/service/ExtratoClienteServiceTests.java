@@ -158,6 +158,21 @@ class ExtratoClienteServiceTests {
     }
 
     @Test
+    void semSelecaoDeClientesConsideraTodosOrdenadosPorNome() {
+        Cliente zulu = cliente(2002L, "Zulu");
+        Cliente alfa = cliente(2001L, "Alfa");
+        when(clienteRepository.findAll()).thenReturn(List.of(zulu, alfa));
+        when(clienteRepository.findById(2001L)).thenReturn(Optional.of(alfa));
+        when(clienteRepository.findById(2002L)).thenReturn(Optional.of(zulu));
+        stubExtratoVazio(2001L);
+        stubExtratoVazio(2002L);
+
+        List<ExtratoClienteDto> extratos = service.getExtratos(List.of(), INICIAL, FINAL);
+
+        assertThat(extratos).extracting(ExtratoClienteDto::clienteId).containsExactly(2001L, 2002L);
+    }
+
+    @Test
     void separaTotaisPorMoeda() {
         ExtratoAnteriorProjection anteriorUsd = anterior("USD", "50", "0");
         ExtratoMovimentoProjection faturaEur = movimento(1L, "2026-06-10T10:00:00Z", "FT", 1, "20", "EUR");
@@ -187,6 +202,24 @@ class ExtratoClienteServiceTests {
         when(projection.getDebito()).thenReturn(new BigDecimal(debito));
         when(projection.getCredito()).thenReturn(new BigDecimal(credito));
         return projection;
+    }
+
+    private Cliente cliente(Long id, String nome) {
+        Cliente cliente = mock(Cliente.class);
+        Moeda moeda = mock(Moeda.class);
+        when(cliente.getId()).thenReturn(id);
+        when(cliente.getNome()).thenReturn(nome);
+        when(cliente.getNif()).thenReturn("500000001");
+        when(cliente.getMoeda()).thenReturn(moeda);
+        when(moeda.getId()).thenReturn("EUR");
+        return cliente;
+    }
+
+    private void stubExtratoVazio(Long clienteId) {
+        when(documentoComercialRepository.findExtratoAnterior(clienteId, INICIAL)).thenReturn(List.of());
+        when(documentoFinanceiroRepository.findExtratoAnterior(clienteId, INICIAL)).thenReturn(List.of());
+        when(documentoComercialRepository.findExtratoMovimentos(clienteId, INICIAL, FINAL)).thenReturn(List.of());
+        when(documentoFinanceiroRepository.findExtratoMovimentos(clienteId, INICIAL, FINAL)).thenReturn(List.of());
     }
 
     private ExtratoMovimentoProjection movimento(

@@ -21,6 +21,9 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +41,10 @@ public class ExtratoClienteExcelExporter {
         return export(dataService.getData(clienteId, dataInicial, dataFinal));
     }
 
+    public ExportedExcel export(List<Long> clienteIds, java.time.LocalDate dataInicial, java.time.LocalDate dataFinal) {
+        return export(dataService.getData(clienteIds, dataInicial, dataFinal));
+    }
+
     ExportedExcel export(ExtratoClienteReportData data) {
         try (XSSFWorkbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream output = new ByteArrayOutputStream()) {
@@ -52,6 +59,30 @@ public class ExtratoClienteExcelExporter {
         }
     }
 
+    ExportedExcel export(ExtratoClientesReportData data) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            Styles styles = new Styles(workbook);
+            Set<String> usedNames = new HashSet<>();
+            for (var extrato : data.extratos()) {
+                ExtratoClienteReportData clientData = new ExtratoClienteReportData(data.empresa(), extrato);
+                for (ExtratoClienteMoedaDto moeda : extrato.moedas()) {
+                    String baseName = "%06d %s".formatted(extrato.clienteId(), moeda.moedaId());
+                    createSheet(workbook, clientData, moeda, uniqueSheetName(baseName, usedNames), styles);
+                }
+            }
+            if (workbook.getNumberOfSheets() == 0) {
+                workbook.createSheet("Sem clientes").createRow(0).createCell(0)
+                        .setCellValue("Sem clientes para apresentar.");
+            }
+            workbook.write(output);
+            String filename = "extratos-clientes-%s-%s.xlsx".formatted(data.dataInicial(), data.dataFinal());
+            return new ExportedExcel(filename, output.toByteArray());
+        } catch (IOException exception) {
+            throw new IllegalStateException("Nao foi possivel gerar o Excel dos extratos de clientes", exception);
+        }
+    }
+
     private void createSheet(
             XSSFWorkbook workbook,
             ExtratoClienteReportData data,
@@ -60,6 +91,16 @@ public class ExtratoClienteExcelExporter {
             Styles styles
     ) {
         String name = index == 0 ? "Extrato Cliente" : WorkbookUtil.createSafeSheetName("Extrato " + moeda.moedaId());
+        createSheet(workbook, data, moeda, name, styles);
+    }
+
+    private void createSheet(
+            XSSFWorkbook workbook,
+            ExtratoClienteReportData data,
+            ExtratoClienteMoedaDto moeda,
+            String name,
+            Styles styles
+    ) {
         Sheet sheet = workbook.createSheet(name);
         var extrato = data.extrato();
         var empresa = data.empresa();
@@ -101,6 +142,17 @@ public class ExtratoClienteExcelExporter {
             sheet.setColumnWidth(column, widths[column] * 256);
         }
         sheet.setRepeatingRows(CellRangeAddress.valueOf((headerRowIndex + 1) + ":" + (headerRowIndex + 1)));
+    }
+
+    private String uniqueSheetName(String rawName, Set<String> usedNames) {
+        String safe = WorkbookUtil.createSafeSheetName(rawName);
+        String candidate = safe;
+        int suffix = 2;
+        while (!usedNames.add(candidate)) {
+            String marker = " (" + suffix++ + ")";
+            candidate = safe.substring(0, Math.min(safe.length(), 31 - marker.length())) + marker;
+        }
+        return candidate;
     }
 
     private void metadata(Sheet sheet, int rowIndex, String label, String text, CellStyle style) {

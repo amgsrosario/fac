@@ -32,7 +32,7 @@ const field = (key: string, label: string, options: Partial<Field> = {}): Field 
 const configs: Record<TableKey, Config> = {
   "tipos-documento": {
     key: "tipos-documento", label: "Tipos de documento", endpoint: "/api/tipos-documento",
-    fields: [field("id", "Codigo", { required: true, maxLength: 3, createOnly: true }), field("descricao", "Descricao", { required: true, maxLength: 50 }), field("codigoFiscal", "Codigo fiscal", { maxLength: 2 }), field("modeloEmissao1", "Modelo de emissao 1", { maxLength: 25 }), field("modeloEmissao2", "Modelo de emissao 2", { maxLength: 25 }), field("modeloEmissao3", "Modelo de emissao 3", { maxLength: 25 }), field("modeloEmissao4", "Modelo de emissao 4", { maxLength: 25 }), field("areaGestao", "Area de gestao", { type: "number", required: true }), field("entidade", "Entidade", { type: "number", required: true }), field("sinalContabilistico", "Sinal contabilistico", { type: "select", required: true, options: "sinais" }), field("liquidacaoImediata", "Liquidacao imediata", { type: "checkbox" })],
+    fields: [field("id", "Codigo", { required: true, maxLength: 3, createOnly: true }), field("descricao", "Descricao", { required: true, maxLength: 50 }), field("codigoFiscal", "Codigo fiscal", { type: "select", maxLength: 2, options: "codigosFiscais" }), field("modeloEmissao1", "Modelo de emissao 1", { maxLength: 25 }), field("modeloEmissao2", "Modelo de emissao 2", { maxLength: 25 }), field("modeloEmissao3", "Modelo de emissao 3", { maxLength: 25 }), field("modeloEmissao4", "Modelo de emissao 4", { maxLength: 25 }), field("areaGestao", "Area de gestao", { type: "select", required: true, options: "areasGestao" }), field("entidade", "Entidade", { type: "select", required: true, options: "entidadesDocumento" }), field("sinalContabilistico", "Sinal contabilistico", { type: "select", required: true, options: "sinais" }), field("liquidacaoImediata", "Liquidacao imediata", { type: "checkbox" })],
     columns: [{ key: "id", label: "Codigo" }, { key: "codigoFiscal", label: "Fiscal" }, { key: "descricao", label: "Descricao" }, { key: "areaGestao", label: "Area" }, { key: "liquidacaoImediata", label: "Liquidacao imediata" }],
     rowId: (row) => String(row.id), itemUrl: (row) => `/api/tipos-documento/${encodeURIComponent(String(row.id))}`
   },
@@ -86,7 +86,42 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
   const [rows, setRows] = useState<Row[]>([]);
   const [values, setValues] = useState<Values>({});
   const [editing, setEditing] = useState<Row | null>(null);
-  const [options, setOptions] = useState<Record<string, Option[]>>({ sinais: [{ value: "1", label: "1 - Debito" }, { value: "2", label: "2 - Credito" }] });
+  const [options, setOptions] = useState<Record<string, Option[]>>({
+    sinais: [{ value: "1", label: "1 - Debito" }, { value: "2", label: "2 - Credito" }],
+    areasGestao: [
+      { value: "1", label: "1 - Documento comercial (area 1)" },
+      { value: "2", label: "2 - Documento comercial / faturacao" },
+      { value: "3", label: "3 - Documento financeiro / tesouraria" }
+    ],
+    entidadesDocumento: [{ value: "1", label: "1 - Cliente" }],
+    codigosFiscais: [
+      { value: "FT", label: "FT - Fatura" },
+      { value: "FS", label: "FS - Fatura simplificada" },
+      { value: "FR", label: "FR - Fatura-recibo" },
+      { value: "ND", label: "ND - Nota de debito" },
+      { value: "NC", label: "NC - Nota de credito" },
+      { value: "VD", label: "VD - Venda a dinheiro" },
+      { value: "TV", label: "TV - Talao de venda" },
+      { value: "TD", label: "TD - Talao de devolucao" },
+      { value: "AA", label: "AA - Alienacao de ativos" },
+      { value: "DA", label: "DA - Devolucao de ativos" },
+      { value: "RP", label: "RP - Recibo de premio" },
+      { value: "RE", label: "RE - Estorno ou recibo de estorno" },
+      { value: "CS", label: "CS - Imputacao a co-seguradoras" },
+      { value: "LD", label: "LD - Imputacao a co-seguradora lider" },
+      { value: "RA", label: "RA - Resseguro aceite" },
+      { value: "CM", label: "CM - Consulta de mesa" },
+      { value: "CC", label: "CC - Credito de consignacao" },
+      { value: "FC", label: "FC - Fatura de consignacao" },
+      { value: "GR", label: "GR - Guia de remessa" },
+      { value: "GT", label: "GT - Guia de transporte" },
+      { value: "GA", label: "GA - Guia de movimentacao de ativos proprios" },
+      { value: "GC", label: "GC - Guia de consignacao" },
+      { value: "GD", label: "GD - Guia ou nota de devolucao" },
+      { value: "RC", label: "RC - Recibo" },
+      { value: "RG", label: "RG - Outros recibos emitidos" }
+    ]
+  });
   const [rates, setRates] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -108,7 +143,8 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
     const required = new Set(config.fields.map((item) => item.options).filter(Boolean));
     if (isRiva) required.add("tiposTaxa");
     const result: Record<string, Option[]> = {};
-    await Promise.all([...required].filter((key) => key !== "sinais").map(async (key) => {
+    const staticOptions = new Set(["sinais", "areasGestao", "entidadesDocumento", "codigosFiscais"]);
+    await Promise.all([...required].filter((key) => !staticOptions.has(key!)).map(async (key) => {
       const definitions: Record<string, [string, (row: Row) => Option]> = {
         tiposDocumento: ["/api/tipos-documento?size=500&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.descricao}` })],
         codigosPostais: ["/api/codpostal?size=1000&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.nome}` })],

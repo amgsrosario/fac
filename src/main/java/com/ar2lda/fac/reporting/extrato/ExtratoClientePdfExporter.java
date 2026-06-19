@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -29,17 +30,50 @@ public class ExtratoClientePdfExporter {
         return export(dataService.getData(clienteId, dataInicial, dataFinal));
     }
 
+    public ExportedPdf export(List<Long> clienteIds, LocalDate dataInicial, LocalDate dataFinal) {
+        return export(dataService.getData(clienteIds, dataInicial, dataFinal));
+    }
+
     ExportedPdf export(ExtratoClienteReportData data) {
+        return render(buildHtml(data), ExtratoClienteFileName.build(data, "pdf"));
+    }
+
+    ExportedPdf export(ExtratoClientesReportData data) {
+        String filename = "extratos-clientes-%s-%s.pdf".formatted(data.dataInicial(), data.dataFinal());
+        return render(buildHtml(data), filename);
+    }
+
+    private ExportedPdf render(String html, String filename) {
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
-            builder.withHtmlContent(buildHtml(data), null);
+            builder.withHtmlContent(html, null);
             builder.toStream(output);
             builder.run();
-            return new ExportedPdf(ExtratoClienteFileName.build(data, "pdf"), output.toByteArray());
+            return new ExportedPdf(filename, output.toByteArray());
         } catch (Exception exception) {
             throw new IllegalStateException("Nao foi possivel gerar o PDF do extrato de cliente", exception);
         }
+    }
+
+    private String buildHtml(ExtratoClientesReportData data) {
+        if (data.extratos().isEmpty()) {
+            return "<html><head><meta charset=\"UTF-8\" /></head><body>Sem clientes para apresentar.</body></html>";
+        }
+        String first = buildHtml(new ExtratoClienteReportData(data.empresa(), data.extratos().getFirst()));
+        int bodyStart = first.indexOf("<body>") + "<body>".length();
+        int bodyEnd = first.lastIndexOf("</body>");
+        StringBuilder html = new StringBuilder(first.substring(0, bodyStart));
+        for (int index = 0; index < data.extratos().size(); index++) {
+            String clientHtml = buildHtml(new ExtratoClienteReportData(data.empresa(), data.extratos().get(index)));
+            int clientBodyStart = clientHtml.indexOf("<body>") + "<body>".length();
+            int clientBodyEnd = clientHtml.lastIndexOf("</body>");
+            String style = index == 0 ? "" : " style=\"page-break-before: always;\"";
+            html.append("<div class=\"client-page\"").append(style).append(">")
+                    .append(clientHtml, clientBodyStart, clientBodyEnd)
+                    .append("</div>");
+        }
+        return html.append(first.substring(bodyEnd)).toString();
     }
 
     private String buildHtml(ExtratoClienteReportData data) {

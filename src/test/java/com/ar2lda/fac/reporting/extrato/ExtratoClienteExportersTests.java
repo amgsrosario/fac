@@ -105,6 +105,28 @@ class ExtratoClienteExportersTests {
         }
     }
 
+    @Test
+    void exportaVariosClientesNoMesmoPdfEEmFolhasExcelSeparadas() throws Exception {
+        ExtratoClienteReportData first = reportData(movements(1));
+        ExtratoClienteDto second = new ExtratoClienteDto(
+                126L, "Cliente Madeira", "500000126", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30),
+                OffsetDateTime.parse("2026-06-30T18:30:00Z"), first.extrato().moedas());
+        ExtratoClientesReportData batch = new ExtratoClientesReportData(
+                first.empresa(), List.of(first.extrato(), second),
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30));
+
+        var excel = new ExtratoClienteExcelExporter(mock(ExtratoClienteReportDataService.class)).export(batch);
+        var pdf = new ExtratoClientePdfExporter(mock(ExtratoClienteReportDataService.class)).export(batch);
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(excel.content()));
+             var document = Loader.loadPDF(pdf.content())) {
+            assertThat(workbook.getSheet("000125 EUR")).isNotNull();
+            assertThat(workbook.getSheet("000126 EUR")).isNotNull();
+            assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(2);
+            assertThat(new PDFTextStripper().getText(document)).contains("Cliente Açores", "Cliente Madeira");
+        }
+    }
+
     private ExtratoClienteReportData reportData(List<ExtratoClienteMovimentoDto> movements) {
         EmpresaDto empresa = new EmpresaDto(
                 1L, "FAC Portugal, Lda.", "509000001", "Rua Central", null, "1000-001", "Lisboa", "PT",

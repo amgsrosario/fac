@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
+import { currentYearDateRange } from "./dateFilters";
+import { MultiSelectFilter } from "./MultiSelectFilter";
 
 type Page<T> = { content: T[]; totalElements: number };
 type SourceKey = "comerciais" | "linhasComerciais" | "financeiros" | "linhasFinanceiras" | "relacaoComercial" | "relacaoFinanceira" | "extratoCliente";
@@ -113,10 +115,10 @@ export default function ListagensView() {
   const [message, setMessage] = useState<string | null>(null);
   const [columnsOpen, setColumnsOpen] = useState(false);
   const [clientesExtrato, setClientesExtrato] = useState<ClienteOption[]>([]);
-  const [extratoClienteId, setExtratoClienteId] = useState("");
-  const [extratoDataInicial, setExtratoDataInicial] = useState("");
-  const [extratoDataFinal, setExtratoDataFinal] = useState("");
-  const [extrato, setExtrato] = useState<ExtratoCliente | null>(null);
+  const [extratoClienteIds, setExtratoClienteIds] = useState<number[]>([]);
+  const [extratoDataInicial, setExtratoDataInicial] = useState(() => currentYearDateRange().dataInicial);
+  const [extratoDataFinal, setExtratoDataFinal] = useState(() => currentYearDateRange().dataFinal);
+  const [extratos, setExtratos] = useState<ExtratoCliente[] | null>(null);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const configured = useConfiguredColumns(`fac.listagens.${source}.colunas`, COLUMNS[source]);
@@ -153,9 +155,9 @@ export default function ListagensView() {
 
   async function consultarExtrato() {
     setMessage(null);
-    setExtrato(null);
-    if (!extratoClienteId || !extratoDataInicial || !extratoDataFinal) {
-      setMessage("Seleciona o cliente, a data inicial e a data final.");
+    setExtratos(null);
+    if (!extratoDataInicial || !extratoDataFinal) {
+      setMessage("Indica a data inicial e a data final.");
       return;
     }
     if (extratoDataInicial > extratoDataFinal) {
@@ -164,8 +166,8 @@ export default function ListagensView() {
     }
     setLoading(true);
     try {
-      const params = new URLSearchParams({ dataInicial: extratoDataInicial, dataFinal: extratoDataFinal });
-      setExtrato(await fetchJson<ExtratoCliente>(`/api/extratos/clientes/${extratoClienteId}?${params}`));
+      const params = extratoParams(extratoClienteIds, extratoDataInicial, extratoDataFinal);
+      setExtratos(await fetchJson<ExtratoCliente[]>(`/api/extratos/clientes?${params}`));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar o extrato.");
     } finally {
@@ -175,8 +177,8 @@ export default function ListagensView() {
 
   async function exportarExtrato(format: "pdf" | "xlsx") {
     setMessage(null);
-    if (!extratoClienteId || !extratoDataInicial || !extratoDataFinal) {
-      setMessage("Seleciona o cliente, a data inicial e a data final.");
+    if (!extratoDataInicial || !extratoDataFinal) {
+      setMessage("Indica a data inicial e a data final.");
       return;
     }
     if (extratoDataInicial > extratoDataFinal) {
@@ -186,8 +188,8 @@ export default function ListagensView() {
     const setExporting = format === "pdf" ? setExportingPdf : setExportingExcel;
     setExporting(true);
     try {
-      const params = new URLSearchParams({ dataInicial: extratoDataInicial, dataFinal: extratoDataFinal });
-      const response = await apiFetch(`/api/extratos/clientes/${extratoClienteId}/exportar/${format}?${params}`);
+      const params = extratoParams(extratoClienteIds, extratoDataInicial, extratoDataFinal);
+      const response = await apiFetch(`/api/extratos/clientes/exportar/${format}?${params}`);
       if (!response.ok) throw new Error(await responseError(response));
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -219,7 +221,7 @@ export default function ListagensView() {
   return <>
     <section className="fac-hero">
       <div><p className="fac-eyebrow">Listagens</p><h2>Consulta transversal dos dados do FAC</h2><p>Escolhe uma fonte, define as colunas necessarias e consulta cabecalhos ou linhas sem interferir com a operacao diaria.</p></div>
-      <div className="fac-hero-card"><span>Fonte atual</span><strong>{SOURCES.find((item) => item.key === source)?.label}</strong><small>{loading ? "A carregar..." : source === "extratoCliente" ? extrato ? `${extrato.moedas.reduce((total, moeda) => total + moeda.movimentos.length, 0)} movimentos` : "A aguardar consulta" : `${rows.length} registos`}</small></div>
+      <div className="fac-hero-card"><span>Fonte atual</span><strong>{SOURCES.find((item) => item.key === source)?.label}</strong><small>{loading ? "A carregar..." : source === "extratoCliente" ? extratos ? `${extratos.reduce((total, extrato) => total + extrato.moedas.reduce((subtotal, moeda) => subtotal + moeda.movimentos.length, 0), 0)} movimentos` : "A aguardar consulta" : `${rows.length} registos`}</small></div>
     </section>
 
     <section className="fac-report-source-grid">
@@ -231,16 +233,16 @@ export default function ListagensView() {
       {message && <p className="fac-message">{message}</p>}
       {source === "extratoCliente" && <p className="fac-muted">Extrato oficial calculado pelo backend. Os documentos anulados nao integram os movimentos contabilisticos e cada moeda e apresentada separadamente.</p>}
       {source === "extratoCliente" && <div className="fac-extrato-filters">
-        <label><span>Cliente</span><select onChange={(event) => { setExtratoClienteId(event.target.value); setExtrato(null); }} value={extratoClienteId}><option value="">Selecionar cliente</option>{clientesExtrato.map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.id} - {cliente.nome}</option>)}</select></label>
+        <div className="fac-filter-field"><span>Clientes</span><MultiSelectFilter allLabel="Todos os clientes" options={clientesExtrato.map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}` }))} selectedValues={extratoClienteIds} onChange={(values) => { setExtratoClienteIds(values); setExtratos(null); }}/></div>
         <label><span>Data inicial</span><input onChange={(event) => setExtratoDataInicial(event.target.value)} type="date" value={extratoDataInicial}/></label>
         <label><span>Data final</span><input onChange={(event) => setExtratoDataFinal(event.target.value)} type="date" value={extratoDataFinal}/></label>
         <button className="fac-primary-button" disabled={loading} onClick={consultarExtrato} type="button">Consultar extrato</button>
         <button className="fac-soft-button" disabled={exportingPdf || exportingExcel} onClick={() => exportarExtrato("pdf")} type="button">{exportingPdf ? "A gerar PDF..." : "Exportar PDF"}</button>
         <button className="fac-soft-button" disabled={exportingPdf || exportingExcel} onClick={() => exportarExtrato("xlsx")} type="button">{exportingExcel ? "A gerar Excel..." : "Exportar Excel"}</button>
-        <button className="fac-ghost-button" onClick={() => { setExtratoClienteId(""); setExtratoDataInicial(""); setExtratoDataFinal(""); setExtrato(null); setMessage(null); }} type="button">Limpar</button>
+        <button className="fac-ghost-button" onClick={() => { const period = currentYearDateRange(); setExtratoClienteIds([]); setExtratoDataInicial(period.dataInicial); setExtratoDataFinal(period.dataFinal); setExtratos(null); setMessage(null); }} type="button">Limpar</button>
       </div>}
       <ColumnSelector columns={configured.columns} open={columnsOpen} onMove={configured.moveColumn} onReset={configured.resetColumns} onToggle={configured.toggleColumn}/>
-      {source === "extratoCliente" && <ExtratoTable extrato={extrato} loading={loading} columns={configured.visibleColumns}/>}
+      {source === "extratoCliente" && <ExtratoTable extratos={extratos} loading={loading} columns={configured.visibleColumns}/>}
       {source !== "extratoCliente" &&
       <div className="fac-table-scroll"><table className="fac-table"><thead><tr>{configured.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>
         {rows.map((row, index) => <tr key={rowKey(source, row, index)}>{configured.visibleColumns.map((column) => <td key={column.key}>{cellValue(source, row, column.key)}</td>)}</tr>)}
@@ -250,11 +252,13 @@ export default function ListagensView() {
   </>;
 }
 
-function ExtratoTable({ extrato, loading, columns }: { extrato: ExtratoCliente | null; loading: boolean; columns: ConfigurableColumn[] }) {
+function ExtratoTable({ extratos, loading, columns }: { extratos: ExtratoCliente[] | null; loading: boolean; columns: ConfigurableColumn[] }) {
   if (loading) return <p className="fac-empty-state">A calcular o extrato...</p>;
-  if (!extrato) return <p className="fac-empty-state">Seleciona um cliente e um intervalo de datas para consultar o extrato.</p>;
+  if (!extratos) return <p className="fac-empty-state">Sem seleção de clientes serão considerados todos.</p>;
+  if (extratos.length === 0) return <p className="fac-empty-state">Sem clientes para mostrar.</p>;
 
   return <div className="fac-extrato-result">
+    {extratos.map((extrato) => <section className="fac-extrato-cliente-result" key={extrato.clienteId}>
     <header className="fac-extrato-header">
       <div><span>Cliente {extrato.clienteId}</span><strong>{extrato.clienteNome}</strong><small>NIF {extrato.clienteNif || "-"}</small></div>
       <div><span>Periodo</span><strong>{datePt(extrato.dataInicial)} a {datePt(extrato.dataFinal)}</strong><small>Gerado em {dateTimePt(extrato.geradoEm)}</small></div>
@@ -268,6 +272,7 @@ function ExtratoTable({ extrato, loading, columns }: { extrato: ExtratoCliente |
         <ExtratoTotalRow className="fac-extrato-periodo" label="Total do periodo" moeda={moeda.moedaId} totals={moeda.totalPeriodo} columns={columns}/>
         <ExtratoTotalRow className="fac-extrato-total" label="Total final" moeda={moeda.moedaId} totals={moeda.totalFinal} columns={columns}/>
       </tbody></table></div>
+    </section>)}
     </section>)}
   </div>;
 }
@@ -303,6 +308,7 @@ function c(key: string, label: string, visible = false): ConfigurableColumn { re
 function reference(tipo: string, serie: string, numero: number | null) { return `${tipo} ${serie}/${numero ?? "rascunho"}`; }
 function datePt(value?: string) { return value ? value.split("-").reverse().join("/") : "-"; }
 function dateTimePt(value?: string) { return value ? new Date(value).toLocaleString("pt-PT") : "-"; }
+function extratoParams(clienteIds: number[], dataInicial: string, dataFinal: string) { const params = new URLSearchParams({ dataInicial, dataFinal }); clienteIds.forEach((id) => params.append("clienteIds", String(id))); return params; }
 function money(value: number) { return Number(value || 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function decimal(value: number) { return Number(value || 0).toLocaleString("pt-PT", { maximumFractionDigits: 6 }); }
 function yesNo(value: boolean) { return value ? "Sim" : "Nao"; }

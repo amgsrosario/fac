@@ -9,8 +9,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -21,14 +23,46 @@ class ExtratoClienteControllerTests {
 
     private ExtratoClientePdfExporter pdfExporter;
     private ExtratoClienteExcelExporter excelExporter;
+    private ExtratoClienteService service;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setup() {
         pdfExporter = mock(ExtratoClientePdfExporter.class);
         excelExporter = mock(ExtratoClienteExcelExporter.class);
+        service = mock(ExtratoClienteService.class);
         mockMvc = MockMvcBuilders.standaloneSetup(new ExtratoClienteController(
-                mock(ExtratoClienteService.class), pdfExporter, excelExporter)).build();
+                service, pdfExporter, excelExporter)).build();
+    }
+
+    @Test
+    void consultaVariosClientes() throws Exception {
+        LocalDate initial = LocalDate.of(2026, 1, 1);
+        LocalDate end = LocalDate.of(2026, 6, 30);
+        when(service.getExtratos(List.of(125L, 126L), initial, end)).thenReturn(List.of());
+
+        mockMvc.perform(get("/extratos/clientes")
+                        .param("clienteIds", "125", "126")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-06-30"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+
+        verify(service).getExtratos(List.of(125L, 126L), initial, end);
+    }
+
+    @Test
+    void exportaTodosQuandoClienteNaoFoiSelecionado() throws Exception {
+        LocalDate initial = LocalDate.of(2026, 1, 1);
+        LocalDate end = LocalDate.of(2026, 6, 30);
+        when(pdfExporter.export((List<Long>) null, initial, end)).thenReturn(new ExtratoClientePdfExporter.ExportedPdf(
+                "extratos-clientes-2026-01-01-2026-06-30.pdf", new byte[]{7, 8, 9}));
+
+        mockMvc.perform(get("/extratos/clientes/exportar/pdf")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-06-30"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{7, 8, 9}));
     }
 
     @Test
