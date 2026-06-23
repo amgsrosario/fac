@@ -24,18 +24,14 @@ public class FiscalQrService {
     @Value("${fac.fiscal.software-certificate-number:9999}")
     private String certificateNumber;
 
-    public Optional<QrFiscal> buildDocumentoComercial(DocumentoComercialImpressaoDto impressao) {
+    public QrFiscal buildDocumentoComercial(DocumentoComercialImpressaoDto impressao) {
         if (!enabled) {
-            return Optional.empty();
+            throw new BadRequestException("A geração do payload QR fiscal está desativada");
         }
-        try {
-            return Optional.of(new QrFiscal(
-                    payloadBuilder.buildDocumentoComercial(impressao, hashCharacters, certificateNumber),
-                    payloadBuilder.payloadVersion()
-            ));
-        } catch (BadRequestException exception) {
-            return Optional.empty();
-        }
+        return new QrFiscal(
+                payloadBuilder.buildDocumentoComercial(impressao, hashCharacters, certificateNumber),
+                payloadBuilder.payloadVersion()
+        );
     }
 
     public Optional<QrFiscal> buildDocumentoFinanceiro(DocumentoFinanceiroImpressaoDto impressao) {

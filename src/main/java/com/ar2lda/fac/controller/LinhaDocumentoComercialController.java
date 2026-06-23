@@ -7,6 +7,7 @@ import com.ar2lda.fac.service.LinhaDocumentoComercialService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +28,7 @@ public class LinhaDocumentoComercialController {
     private final LinhaDocumentoComercialService service;
 
     @PostMapping
+    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EDITAR_RASCUNHO')")
     public ResponseEntity<LinhaDocumentoComercialDto> create(
             @PathVariable Long documentoId,
             @RequestBody @Valid LinhaDocumentoComercialCreateDto dto) {
@@ -37,16 +39,19 @@ public class LinhaDocumentoComercialController {
     }
 
     @GetMapping
+    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
     public List<LinhaDocumentoComercialDto> list(@PathVariable Long documentoId) {
         return service.list(documentoId);
     }
 
     @GetMapping("/{linhaId}")
+    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
     public LinhaDocumentoComercialDto getById(@PathVariable Long documentoId, @PathVariable Long linhaId) {
         return service.getById(documentoId, linhaId);
     }
 
     @PutMapping("/{linhaId}")
+    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EDITAR_RASCUNHO')")
     public ResponseEntity<Void> update(
             @PathVariable Long documentoId,
             @PathVariable Long linhaId,
@@ -56,6 +61,7 @@ public class LinhaDocumentoComercialController {
     }
 
     @DeleteMapping("/{linhaId}")
+    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EDITAR_RASCUNHO')")
     public ResponseEntity<Void> delete(@PathVariable Long documentoId, @PathVariable Long linhaId) {
         service.delete(documentoId, linhaId);
         return ResponseEntity.noContent().build();

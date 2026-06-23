@@ -2,6 +2,8 @@ package com.ar2lda.fac.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -38,6 +40,11 @@ public class Utilizador {
     @ToString.Include
     private boolean inativo;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    @Setter
+    private PapelUtilizador papel = PapelUtilizador.ADMIN;
+
     public Utilizador() {
     }
 
@@ -47,5 +54,6 @@ public class Utilizador {
         this.email = email;
         this.passwordHash = passwordHash;
         this.inativo = inativo;
+        this.papel = PapelUtilizador.ADMIN;
     }
 }

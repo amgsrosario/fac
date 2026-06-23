@@ -19,6 +19,10 @@ public record LinhaDocumentoComercialDto(
         BigDecimal valorLinha,
         String tipoTaxaIvaId,
         BigDecimal percentagemIva,
-        BigDecimal peso
+        BigDecimal peso,
+        String unidade,
+        BigDecimal baseTributavel,
+        BigDecimal valorImposto,
+        BigDecimal totalLinha
 ) {
 }

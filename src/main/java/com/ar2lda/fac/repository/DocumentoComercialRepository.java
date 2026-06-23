@@ -4,13 +4,20 @@ import com.ar2lda.fac.model.DocumentoComercial;
 import com.ar2lda.fac.repository.projection.ExtratoAnteriorProjection;
 import com.ar2lda.fac.repository.projection.ExtratoMovimentoProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface DocumentoComercialRepository extends JpaRepository<DocumentoComercial, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select d from DocumentoComercial d where d.id = :id")
+    java.util.Optional<DocumentoComercial> findByIdForUpdate(@Param("id") Long id);
 
     boolean existsByTipoDocumentoIdAndSerie(String tipoDocumentoId, String serie);
 
@@ -19,7 +26,7 @@ public interface DocumentoComercialRepository extends JpaRepository<DocumentoCom
             from DocumentoComercial d
             where d.tipoDocumento.id = :tipoDocumentoId
               and d.serie = :serie
-              and d.estado = com.ar2lda.fac.model.EstadoDocumentoComercial.EMITIDO
+              and d.estado <> com.ar2lda.fac.model.EstadoDocumentoComercial.RASCUNHO
             """)
     LocalDate findUltimaDataEmissao(
             @Param("tipoDocumentoId") String tipoDocumentoId,
@@ -38,7 +45,6 @@ public interface DocumentoComercialRepository extends JpaRepository<DocumentoCom
             where d.cliente.id = :clienteId
               and d.estado = com.ar2lda.fac.model.EstadoDocumentoComercial.EMITIDO
               and d.numeroDocumento is not null
-              and d.anulado = false
               and d.dataEmissao < :dataInicial
             group by d.moeda.id
             """)
@@ -59,7 +65,6 @@ public interface DocumentoComercialRepository extends JpaRepository<DocumentoCom
             where d.cliente.id = :clienteId
               and d.estado = com.ar2lda.fac.model.EstadoDocumentoComercial.EMITIDO
               and d.numeroDocumento is not null
-              and d.anulado = false
               and d.dataEmissao >= :dataInicial
               and d.dataEmissao <= :dataFinal
             order by d.dataEmissao, d.momentoEmissao, d.id

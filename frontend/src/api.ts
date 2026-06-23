@@ -4,7 +4,13 @@ export type AuthSession = {
   expiresIn: number;
   codigo: string;
   nome: string;
+  papel: "ADMIN" | "OPERADOR" | "CONSULTA";
+  permissoes: string[];
 };
+
+export function hasPermission(permission: string) {
+  return getAuthSession()?.permissoes?.includes(permission) ?? false;
+}
 
 const SESSION_KEY = "fac.auth.session";
 

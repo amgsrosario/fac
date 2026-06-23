@@ -13,7 +13,9 @@ public record DocumentoComercialDto(
         String tipoDocumentoCodigoFiscal,
         String serie,
         Long numeroDocumento,
+        String numeroDocumentoCompleto,
         String atcud,
+        boolean fiscalmenteConsolidado,
         boolean temQrFiscal,
         String qrPayload,
         EstadoDocumentoComercial estado,
@@ -73,7 +75,20 @@ public record DocumentoComercialDto(
         OffsetDateTime momentoEmissao,
         String emissorId,
         boolean anulado,
+        String motivoAnulacao,
+        OffsetDateTime dataHoraAnulacao,
+        String anuladoPorUtilizadorId,
+        String anuladoPorNome,
         boolean impresso,
-        boolean liquidado
+        boolean liquidado,
+        Integer fiscalSnapshotVersion,
+        String qrPayloadVersion,
+        String tipoDocumentoDescricao,
+        String serieDescricao,
+        String moedaCodigo,
+        String moedaSimbolo,
+        Integer moedaCasasDecimais,
+        BigDecimal taxaCambio,
+        String regimeIvaCodigo
 ) {
 }

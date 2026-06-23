@@ -1,6 +1,7 @@
 package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.DocumentoComercialCreateDto;
+import com.ar2lda.fac.controller.dto.AnularDocumentoRequest;
 import com.ar2lda.fac.controller.dto.DocumentoComercialDiagnosticoDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialDiagnosticoPendenteDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialDiagnosticoTotaisDto;
@@ -8,8 +9,10 @@ import com.ar2lda.fac.controller.dto.DocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialEmitirDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialUpdateDto;
+import com.ar2lda.fac.controller.dto.EmitenteFiscalSnapshotDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialDto;
 import com.ar2lda.fac.exception.BadRequestException;
+import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.DocumentoComercialMapper;
 import com.ar2lda.fac.mapper.EmpresaMapper;
@@ -26,8 +29,10 @@ import com.ar2lda.fac.model.Morada;
 import com.ar2lda.fac.model.PPagamento;
 import com.ar2lda.fac.model.Pendente;
 import com.ar2lda.fac.model.RIva;
+import com.ar2lda.fac.model.Serie;
 import com.ar2lda.fac.model.SerieId;
 import com.ar2lda.fac.model.TipoDocumento;
+import com.ar2lda.fac.model.TipoAuditoriaEvento;
 import com.ar2lda.fac.model.Transporte;
 import com.ar2lda.fac.model.Utilizador;
 import com.ar2lda.fac.repository.ArmazemRepository;
@@ -85,9 +90,11 @@ public class DocumentoComercialService {
     private final PendenteService pendenteService;
     private final AtcudService atcudService;
     private final FiscalQrService fiscalQrService;
+    private final LinhaDocumentoComercialService linhaDocumentoComercialService;
     private final DocumentoComercialMapper mapper;
     private final LinhaDocumentoComercialMapper linhaMapper;
     private final EmpresaMapper empresaMapper;
+    private final AuditoriaService auditoriaService;
 
     @Transactional
     public DocumentoComercialDto create(DocumentoComercialCreateDto dto) {
@@ -108,7 +115,10 @@ public class DocumentoComercialService {
                 dto.observacoes());
         snapshotCliente(documento, cliente);
 
-        return mapper.toDTO(documentoRepository.save(documento));
+        DocumentoComercial saved = documentoRepository.save(documento);
+        auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_CRIADO, "DOCUMENTO_COMERCIAL", saved.getId(),
+                "Rascunho criado", "{\"versao\":1,\"estado\":\"RASCUNHO\"}");
+        return mapper.toDTO(saved);
     }
 
     public Page<DocumentoComercialDto> list(Pageable pageable) {
@@ -121,18 +131,44 @@ public class DocumentoComercialService {
 
     public DocumentoComercialImpressaoDto getImpressao(Long id) {
         DocumentoComercial documento = findDocumento(id);
-        Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID)
-                .orElseThrow(() -> new NotFoundException("Empresa proprietaria nao encontrada"));
+        return buildImpressao(documento);
+    }
+
+    private DocumentoComercialImpressaoDto buildImpressao(DocumentoComercial documento) {
         List<LinhaDocumentoComercialDto> linhas = linhaRepository
-                .findByDocumentoComercialIdOrderByNumeroLinha(id)
+                .findByDocumentoComercialIdOrderByNumeroLinha(documento.getId())
                 .stream()
-                .map(linhaMapper::toDTO)
+                .map(linha -> linhaMapper.toDTO(linha, documento.getFiscalSnapshotVersion() != null))
                 .toList();
 
         return new DocumentoComercialImpressaoDto(
-                empresaMapper.toDTO(empresa),
+                buildEmitenteImpressao(documento),
                 mapper.toDTO(documento),
                 linhas
+        );
+    }
+
+    private EmitenteFiscalSnapshotDto buildEmitenteImpressao(DocumentoComercial documento) {
+        if (documento.getFiscalSnapshotVersion() != null) {
+            return new EmitenteFiscalSnapshotDto(
+                    documento.getEmitenteNome(), documento.getEmitenteNif(), documento.getEmitenteMorada(),
+                    documento.getEmitenteMorada1(), documento.getEmitenteCodPostal(), documento.getEmitenteLocalidade(),
+                    documento.getEmitentePais(), documento.getEmitenteEmail(), documento.getEmitenteWeb(),
+                    documento.getEmitenteCapitalSocial(), documento.getEmitenteMatriculaRegisto(),
+                    documento.getEmitenteCae(), documento.getEmitenteDescricaoCae()
+            );
+        }
+        if (documento.getEstado() != EstadoDocumentoComercial.RASCUNHO) {
+            return new EmitenteFiscalSnapshotDto(null, null, null, null, null, null, null, null, null,
+                    null, null, null, null);
+        }
+        Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID)
+                .orElseThrow(() -> new NotFoundException("Empresa proprietaria nao encontrada"));
+        return new EmitenteFiscalSnapshotDto(
+                empresa.getNome(), empresa.getNif(), empresa.getMorada(), empresa.getMorada1(),
+                empresa.getCodPostal().getId(), empresa.getLocalidade(), empresa.getPais().getId(),
+                empresa.getEmail(), empresa.getWeb(), empresa.getCapitalSocial(),
+                empresa.getMatriculaRegistoComercial(), empresa.getCae(), empresa.getDescricaoCae()
         );
     }
 
@@ -250,30 +286,42 @@ public class DocumentoComercialService {
 
     @Transactional
     public DocumentoComercialDto update(Long id, DocumentoComercialUpdateDto dto) {
-        DocumentoComercial documento = findDocumento(id);
+        DocumentoComercial documento = findDocumentoForUpdate(id);
         validateRascunho(documento);
         documento.setDataEmissao(dto.dataEmissao());
         applyEditableFields(documento, documento.getCliente(), dto.moradaEnvioId(), dto.armazemCargaId(), dto.moedaId(),
                 dto.rivaId(), dto.mPagamentoId(), dto.pPagamentoId(), dto.transporteId(), dto.dataCarga(),
                 dto.horaCarga(), dto.matricula(), dto.dataDescarga(), dto.horaDescarga(), dto.peso(),
                 dto.observacoes());
-        return mapper.toDTO(documentoRepository.save(documento));
+        DocumentoComercial saved = documentoRepository.save(documento);
+        auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_ALTERADO, "DOCUMENTO_COMERCIAL", id,
+                "Rascunho alterado", "{\"versao\":1}");
+        return mapper.toDTO(saved);
     }
 
     @Transactional
     public void delete(Long id) {
-        DocumentoComercial documento = findDocumento(id);
+        DocumentoComercial documento = findDocumentoForUpdate(id);
         validateRascunho(documento);
         documentoRepository.delete(documento);
+        auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_ELIMINADO_RASCUNHO, "DOCUMENTO_COMERCIAL", id,
+                "Rascunho eliminado", "{\"versao\":1}");
     }
 
     @Transactional
     public DocumentoComercialDto emitir(Long id, DocumentoComercialEmitirDto dto) {
-        DocumentoComercial documento = findDocumento(id);
+        DocumentoComercial documento = findDocumentoForUpdate(id);
         validateRascunho(documento);
         validateNaoAnulado(documento);
         validateTemLinhas(documento);
         validateDataEmissao(documento);
+
+        linhaDocumentoComercialService.recalcularTotais(documento);
+        validateTotaisCoerentes(documento);
+
+        snapshotCliente(documento, documento.getCliente());
+        Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID)
+                .orElseThrow(() -> new NotFoundException("Empresa proprietaria nao encontrada"));
 
         Utilizador emissor = currentUserService.resolve(dto.emissorId(), "emitir documento comercial");
         SerieNumeracao numeracao = serieService.proximoNumeroParaEmissao(
@@ -281,10 +329,16 @@ public class DocumentoComercialService {
                 documento.getSerie()
         );
         documento.setNumeroDocumento(numeracao.numeroSequencial());
+        documento.atribuirNumeroDocumentoCompleto(buildNumeroDocumentoCompleto(documento));
         documento.atribuirAtcud(
                 numeracao.codigoValidacaoAt(),
                 atcudService.gerar(numeracao.codigoValidacaoAt(), numeracao.numeroSequencial())
         );
+        Serie serieUtilizada = serieRepository.findById(new SerieId(
+                        documento.getTipoDocumento().getId(), documento.getSerie()))
+                .orElseThrow(() -> new NotFoundException("Série não encontrada para consolidar o snapshot fiscal"));
+        linhaDocumentoComercialService.consolidarSnapshotsFiscais(documento);
+        documento.consolidarSnapshotFiscal(empresa, serieUtilizada);
         atribuirQrFiscal(documento);
         documento.setEstado(EstadoDocumentoComercial.EMITIDO);
         documento.setMomentoEmissao(OffsetDateTime.now());
@@ -292,13 +346,19 @@ public class DocumentoComercialService {
 
         DocumentoComercial saved = documentoRepository.save(documento);
         pendenteService.criarDeDocumento(saved);
+        auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_EMITIDO, "DOCUMENTO_COMERCIAL", saved.getId(),
+                "Documento emitido", "{\"versao\":1,\"numero\":" + saved.getNumeroDocumento() + "}");
         return mapper.toDTO(saved);
     }
 
     @Transactional
-    public DocumentoComercialDto anular(Long id) {
-        DocumentoComercial documento = findDocumento(id);
+    public DocumentoComercialDto anular(Long id, AnularDocumentoRequest request) {
+        DocumentoComercial documento = findDocumentoForUpdate(id);
         validatePodeAnular(documento);
+        String motivo = request.motivo() == null ? "" : request.motivo().trim();
+        if (motivo.length() < 5 || motivo.length() > 500) {
+            throw new BadRequestException("Motivo da anulacao deve ter entre 5 e 500 caracteres");
+        }
 
         if (linhaDocumentoFinanceiroRepository.existsActiveLinesForDocumentoComercial(documento.getId())) {
             throw new BadRequestException(
@@ -314,8 +374,14 @@ public class DocumentoComercialService {
             pendenteRepository.save(pendente);
         });
 
-        documento.setAnulado(true);
-        return mapper.toDTO(documentoRepository.save(documento));
+        Utilizador utilizador = currentUserService.resolve(
+                documento.getEmissor() == null ? null : documento.getEmissor().getCodigo(),
+                "anular documento comercial");
+        documento.anular(motivo, utilizador, OffsetDateTime.now());
+        DocumentoComercial saved = documentoRepository.save(documento);
+        auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_ANULADO, "DOCUMENTO_COMERCIAL", saved.getId(),
+                "Documento anulado", "{\"versao\":1,\"motivo\":\"" + jsonEscape(motivo) + "\"}");
+        return mapper.toDTO(saved);
     }
 
     private void applyEditableFields(DocumentoComercial documento, Cliente cliente, Long moradaEnvioId, Long armazemCargaId,
@@ -399,6 +465,11 @@ public class DocumentoComercialService {
                 .orElseThrow(() -> new NotFoundException("Documento comercial não encontrado: " + id));
     }
 
+    private DocumentoComercial findDocumentoForUpdate(Long id) {
+        return documentoRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new NotFoundException("Documento comercial não encontrado: " + id));
+    }
+
     private TipoDocumento findTipoDocumento(String id) {
         return tipoDocumentoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Tipo de documento não encontrado: " + id));
@@ -477,7 +548,7 @@ public class DocumentoComercialService {
 
     private void validateRascunho(DocumentoComercial documento) {
         if (documento.getEstado() != EstadoDocumentoComercial.RASCUNHO) {
-            throw new BadRequestException("Documento emitido não pode ser alterado ou apagado");
+            throw new ConflictException("Documento comercial já foi emitido ou está num estado incompatível");
         }
     }
     private void validateTemLinhas(DocumentoComercial documento) {
@@ -497,20 +568,21 @@ public class DocumentoComercialService {
     }
 
     private void atribuirQrFiscal(DocumentoComercial documento) {
-        Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID)
-                .orElseThrow(() -> new NotFoundException("Empresa proprietaria nao encontrada"));
-        List<LinhaDocumentoComercialDto> linhas = linhaRepository
-                .findByDocumentoComercialIdOrderByNumeroLinha(documento.getId())
-                .stream()
-                .map(linhaMapper::toDTO)
-                .toList();
-        DocumentoComercialImpressaoDto impressao = new DocumentoComercialImpressaoDto(
-                empresaMapper.toDTO(empresa),
-                mapper.toDTO(documento),
-                linhas
-        );
-        fiscalQrService.buildDocumentoComercial(impressao)
-                .ifPresent(qr -> documento.atribuirQrFiscal(qr.payload(), qr.version()));
+        DocumentoComercialImpressaoDto impressao = buildImpressao(documento);
+        FiscalQrService.QrFiscal qr = fiscalQrService.buildDocumentoComercial(impressao);
+        documento.atribuirQrFiscal(qr.payload(), qr.version());
+    }
+
+    private void validateTotaisCoerentes(DocumentoComercial documento) {
+        List<LinhaDocumentoComercial> linhas = linhaRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documento.getId());
+        if (!buildDiagnosticoTotais(documento, linhas).coerente()) {
+            throw new BadRequestException("Totais do documento não coincidem com as linhas após recálculo");
+        }
+    }
+
+    private String buildNumeroDocumentoCompleto(DocumentoComercial documento) {
+        return documento.getTipoDocumento().getId() + " " + documento.getSerie() + "/" + documento.getNumeroDocumento();
     }
 
     private DocumentoComercialDiagnosticoPendenteDto buildDiagnosticoPendente(Optional<Pendente> pendente) {
@@ -570,6 +642,9 @@ public class DocumentoComercialService {
     }
 
     private String buildReferencia(DocumentoComercial documento) {
+        if (documento.getNumeroDocumentoCompleto() != null && !documento.getNumeroDocumentoCompleto().isBlank()) {
+            return documento.getNumeroDocumentoCompleto();
+        }
         if (documento.getNumeroDocumento() == null) {
             return documento.getTipoDocumento().getId() + " " + documento.getSerie() + "/RASCUNHO-" + documento.getId();
         }
@@ -587,14 +662,14 @@ public class DocumentoComercialService {
         return value.setScale(6, RoundingMode.HALF_UP);
     }
 
-    private void appendEmpresa(StringBuilder html, com.ar2lda.fac.controller.dto.EmpresaDto empresa) {
+    private void appendEmpresa(StringBuilder html, EmitenteFiscalSnapshotDto empresa) {
         html.append("<section class=\"card\"><h2>Empresa</h2>");
         appendLine(html, "Nome", empresa.nome());
         appendLine(html, "NIF", empresa.nif());
         appendLine(html, "Morada", empresa.morada());
-        appendLine(html, "Codigo postal", empresa.codPostalId());
+        appendLine(html, "Codigo postal", empresa.codPostal());
         appendLine(html, "Localidade", empresa.localidade());
-        appendLine(html, "Pais", empresa.paisId());
+        appendLine(html, "Pais", empresa.pais());
         appendLine(html, "Email", empresa.email());
         html.append("</section>");
     }
@@ -724,10 +799,14 @@ public class DocumentoComercialService {
 
     private void validatePodeAnular(DocumentoComercial documento) {
         if (documento.getEstado() != EstadoDocumentoComercial.EMITIDO) {
-            throw new BadRequestException("Apenas documentos emitidos podem ser anulados");
+            throw new ConflictException(documento.getEstado() == EstadoDocumentoComercial.ANULADO
+                    ? "Documento comercial ja se encontra anulado"
+                    : "Apenas documentos emitidos podem ser anulados");
         }
-        if (documento.isAnulado()) {
-            throw new BadRequestException("Documento comercial ja se encontra anulado");
-        }
+    }
+
+    private String jsonEscape(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"")
+                .replace("\r", "\\r").replace("\n", "\\n");
     }
 }

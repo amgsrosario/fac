@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,8 @@ public class JwtService {
                 .subject(utilizador.getCodigo())
                 .claim("email", utilizador.getEmail())
                 .claim("nome", utilizador.getNome())
+                .claim("papel", utilizador.getPapel().name())
+                .claim("authorities", utilizador.getPapel().permissoes().stream().map(Enum::name).sorted().toList())
                 .build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

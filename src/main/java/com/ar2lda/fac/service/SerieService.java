@@ -10,10 +10,13 @@ import com.ar2lda.fac.mapper.SerieMapper;
 import com.ar2lda.fac.model.Serie;
 import com.ar2lda.fac.model.SerieId;
 import com.ar2lda.fac.model.TipoDocumento;
+import com.ar2lda.fac.model.TipoAuditoriaEvento;
+import com.ar2lda.fac.model.PermissaoFuncional;
 import com.ar2lda.fac.repository.DocumentoComercialRepository;
 import com.ar2lda.fac.repository.DocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.SerieRepository;
 import com.ar2lda.fac.repository.TipoDocumentoRepository;
+import com.ar2lda.fac.security.FunctionalAuthorization;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,6 +34,8 @@ public class SerieService {
     private final DocumentoComercialRepository documentoComercialRepository;
     private final DocumentoFinanceiroRepository documentoFinanceiroRepository;
     private final SerieMapper mapper;
+    private final AuditoriaService auditoriaService;
+    private final FunctionalAuthorization authorization;
 
     @Transactional
     public SerieDto create(SerieCreateDto dto) {
@@ -41,8 +46,12 @@ public class SerieService {
             throw new ConflictException("Série já existe: " + formatId(id));
         }
         validateCodigoAt(normalized.codigoAt(), normalized.dataCodigoAt());
+        if (normalized.codigoAt() != null) authorization.require(PermissaoFuncional.SERIE_CONFIGURAR_AT);
         Serie entity = mapper.fromCreateDTO(normalized, tipoDocumento);
-        return mapper.toDTO(repository.save(entity));
+        Serie saved = repository.save(entity);
+        auditoriaService.registar(TipoAuditoriaEvento.SERIE_CRIADA, "SERIE", formatId(id),
+                "Serie criada", "{\"versao\":1}");
+        return mapper.toDTO(saved);
     }
 
     public Page<SerieDto> list(Pageable pageable) {
@@ -58,11 +67,18 @@ public class SerieService {
         SerieUpdateDto normalized = normalize(dto);
         validateCodigoAt(normalized.codigoAt(), normalized.dataCodigoAt());
         Serie existing = findEntityById(tipoDocumentoId, serie);
-        if (existing.getNumerador() > 0 && codigoAtChanged(existing, normalized)) {
+        boolean codigoAtAlterado = codigoAtChanged(existing, normalized);
+        if (codigoAtAlterado) authorization.require(PermissaoFuncional.SERIE_CONFIGURAR_AT);
+        if (existing.getNumerador() > 0 && codigoAtAlterado) {
             throw new BadRequestException("Não é possível alterar o código AT de uma série já utilizada");
         }
         mapper.applyUpdate(normalized, existing);
         repository.save(existing);
+        String entityId = formatId(new SerieId(existing.getTipoDocumento().getId(), existing.getSerie()));
+        auditoriaService.registar(TipoAuditoriaEvento.SERIE_ALTERADA, "SERIE", entityId,
+                "Serie alterada", "{\"versao\":1}");
+        if (codigoAtAlterado) auditoriaService.registar(TipoAuditoriaEvento.SERIE_CODIGO_AT_ALTERADO, "SERIE", entityId,
+                "Codigo AT da serie alterado", "{\"versao\":1}");
     }
 
     @Transactional
@@ -79,6 +95,8 @@ public class SerieService {
         }
         repository.delete(existing);
         repository.flush();
+        auditoriaService.registar(TipoAuditoriaEvento.SERIE_ELIMINADA, "SERIE", normalizedTipoDocumentoId + "/" + normalizedSerie,
+                "Serie eliminada", "{\"versao\":1}");
     }
 
     @Transactional
@@ -92,7 +110,7 @@ public class SerieService {
         if (!entity.temCodigoAt()) {
             throw new BadRequestException("A série selecionada não possui código de validação atribuído pela AT.");
         }
-        return new SerieNumeracao(entity.proximoNumero(), entity.getCodigoAt().trim());
+        return new SerieNumeracao(entity.proximoNumero(), entity.getCodigoAt().trim(), entity.getNome());
     }
 
     private Serie findForUpdate(String tipoDocumentoId, String serie) {

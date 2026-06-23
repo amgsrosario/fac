@@ -11,13 +11,16 @@ public interface DocumentoComercialMapper {
         if (e == null) {
             return null;
         }
+        boolean snapshotDisponivel = e.getFiscalSnapshotVersion() != null;
         return new DocumentoComercialDto(
                 e.getId(),
-                e.getTipoDocumento() != null ? e.getTipoDocumento().getId() : null,
-                e.getTipoDocumento() != null ? e.getTipoDocumento().getCodigoFiscal() : null,
+                snapshotDisponivel ? e.getTipoDocumentoCodigo() : e.getTipoDocumento() != null ? e.getTipoDocumento().getId() : null,
+                snapshotDisponivel ? e.getTipoDocumentoCodigoFiscal() : e.getTipoDocumento() != null ? e.getTipoDocumento().getCodigoFiscal() : null,
                 e.getSerie(),
                 e.getNumeroDocumento(),
+                e.getNumeroDocumentoCompleto(),
                 e.getAtcud(),
+                e.isFiscalmenteConsolidado(),
                 e.temQrFiscal(),
                 e.getQrPayload(),
                 e.getEstado(),
@@ -26,8 +29,8 @@ public interface DocumentoComercialMapper {
                 e.getCliente() != null ? e.getCliente().getId() : null,
                 e.getMoradaEnvio() != null ? e.getMoradaEnvio().getId() : null,
                 e.getArmazemCarga() != null ? e.getArmazemCarga().getId() : null,
-                e.getMoeda() != null ? e.getMoeda().getId() : null,
-                e.getRiva() != null ? e.getRiva().getId() : null,
+                snapshotDisponivel ? e.getMoedaCodigo() : e.getMoeda() != null ? e.getMoeda().getId() : null,
+                snapshotDisponivel ? e.getRegimeIvaCodigo() : e.getRiva() != null ? e.getRiva().getId() : null,
                 e.getMPagamento() != null ? e.getMPagamento().getId() : null,
                 e.getPPagamento() != null ? e.getPPagamento().getId() : null,
                 e.getTransporte() != null ? e.getTransporte().getId() : null,
@@ -77,8 +80,21 @@ public interface DocumentoComercialMapper {
                 e.getMomentoEmissao(),
                 e.getEmissor() != null ? e.getEmissor().getCodigo() : null,
                 e.isAnulado(),
+                e.getMotivoAnulacao(),
+                e.getDataHoraAnulacao(),
+                e.getAnuladoPorUtilizadorId(),
+                e.getAnuladoPorNome(),
                 e.isImpresso(),
-                e.isLiquidado()
+                e.isLiquidado(),
+                e.getFiscalSnapshotVersion(),
+                e.getQrPayloadVersion(),
+                e.getTipoDocumentoDescricao(),
+                e.getSerieDescricao(),
+                e.getMoedaCodigo(),
+                e.getMoedaSimbolo(),
+                e.getMoedaCasasDecimais(),
+                e.getTaxaCambio(),
+                e.getRegimeIvaCodigo()
         );
     }
 }

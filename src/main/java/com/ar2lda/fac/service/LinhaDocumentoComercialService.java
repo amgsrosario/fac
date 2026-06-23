@@ -4,6 +4,7 @@ import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialCreateDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialUpdateDto;
 import com.ar2lda.fac.exception.BadRequestException;
+import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.LinhaDocumentoComercialMapper;
 import com.ar2lda.fac.model.Artigo;
@@ -141,7 +142,7 @@ public class LinhaDocumentoComercialService {
         return artigo.getPeso().multiply(quantidade).setScale(3, RoundingMode.HALF_UP);
     }
 
-    private void recalcularTotais(DocumentoComercial documento) {
+    public void recalcularTotais(DocumentoComercial documento) {
         List<LinhaDocumentoComercial> linhas = linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(documento.getId());
 
         BigDecimal valorBruto = ZERO;
@@ -207,8 +208,20 @@ public class LinhaDocumentoComercialService {
         documentoRepository.save(documento);
     }
 
+    public void consolidarSnapshotsFiscais(DocumentoComercial documento) {
+        List<LinhaDocumentoComercial> linhas = linhaRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documento.getId());
+        for (LinhaDocumentoComercial linha : linhas) {
+            BigDecimal base = linha.getValorLinha().setScale(6, RoundingMode.HALF_UP);
+            BigDecimal imposto = base.multiply(linha.getPercentagemIva())
+                    .divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+            linha.consolidarSnapshotFiscal(base, imposto, base.add(imposto).setScale(6, RoundingMode.HALF_UP));
+        }
+        linhaRepository.saveAll(linhas);
+    }
+
     private DocumentoComercial findDocumento(Long id) {
-        return documentoRepository.findById(id)
+        return documentoRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new NotFoundException("Documento comercial não encontrado: " + id));
     }
 
@@ -240,10 +253,10 @@ public class LinhaDocumentoComercialService {
 
     private void validateRascunho(DocumentoComercial documento) {
         if (documento.isAnulado()) {
-            throw new BadRequestException("Documento comercial anulado nao pode ter linhas alteradas");
+            throw new ConflictException("Documento comercial anulado nao pode ter linhas alteradas");
         }
         if (documento.getEstado() != EstadoDocumentoComercial.RASCUNHO) {
-            throw new BadRequestException("Documento emitido não pode ter linhas alteradas");
+            throw new ConflictException("Documento emitido não pode ter linhas alteradas");
         }
     }
 }
