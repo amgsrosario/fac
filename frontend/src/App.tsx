@@ -565,7 +565,7 @@ function App({ currentUser, onLogout }: AppProps) {
         </div>
 
         <nav className="fac-menu" aria-label="Navegacao principal">
-          {menu.filter(item => item.label !== "Auditoria" || currentUser.permissoes.includes("AUDITORIA_CONSULTAR")).map((item) => (
+          {menu.filter(item => item.label !== "Auditoria" || currentUser.permissoes?.includes("AUDITORIA_CONSULTAR")).map((item) => (
             <button
               className={activeView === item.label ? "active" : ""}
               key={item.label}

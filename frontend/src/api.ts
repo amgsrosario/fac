@@ -18,7 +18,13 @@ export function getAuthSession(): AuthSession | null {
   const stored = window.localStorage.getItem(SESSION_KEY);
   if (!stored) return null;
   try {
-    return JSON.parse(stored) as AuthSession;
+    const session = JSON.parse(stored) as Partial<AuthSession>;
+    if (!session.token || !session.type || !session.codigo || !session.nome
+        || !session.papel || !Array.isArray(session.permissoes)) {
+      window.localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return session as AuthSession;
   } catch {
     window.localStorage.removeItem(SESSION_KEY);
     return null;
