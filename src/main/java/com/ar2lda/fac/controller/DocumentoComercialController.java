@@ -101,7 +101,6 @@ public class DocumentoComercialController implements GenericController {
     }
 
     @PostMapping("/{id}/anular")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_ANULAR')")
     public DocumentoComercialDto anular(@PathVariable Long id, @RequestBody @Valid AnularDocumentoRequest request) {
         return service.anular(id, request);
     }

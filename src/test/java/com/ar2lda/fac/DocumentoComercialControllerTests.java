@@ -39,6 +39,8 @@ import com.ar2lda.fac.repository.TipoTaxaIvaRepository;
 import com.ar2lda.fac.repository.TipoDocumentoRepository;
 import com.ar2lda.fac.repository.TransporteRepository;
 import com.ar2lda.fac.repository.UtilizadorRepository;
+import com.ar2lda.fac.repository.AuditoriaEventoRepository;
+import com.ar2lda.fac.model.TipoAuditoriaEvento;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,6 +130,9 @@ class DocumentoComercialControllerTests {
 
     @Autowired
     private UtilizadorRepository utilizadorRepository;
+
+    @Autowired
+    private AuditoriaEventoRepository auditoriaEventoRepository;
 
     private Cliente cliente;
     private Armazem armazem;
@@ -621,6 +626,11 @@ class DocumentoComercialControllerTests {
 
         Pendente pendenteAnulado = pendenteRepository.findByDocumentoComercialId(documento.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteAnulado.getValorPendente()).isEqualByComparingTo("0.000000");
+        org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
+                .anyMatch(evento -> evento.getTipoEvento() == TipoAuditoriaEvento.DOCUMENTO_ANULADO
+                        && documento.getId().toString().equals(evento.getEntidadeId())
+                        && "EMISSOR".equals(evento.getUtilizadorId())
+                        && evento.getDadosEssenciais().contains("Erro confirmado no documento"));
 
         mockMvc.perform(post(documentoLocation + "/anular")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -791,9 +801,9 @@ class DocumentoComercialControllerTests {
         mockMvc.perform(post(documentoLocation + "/anular")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"motivo\":\"Erro confirmado no documento\"}"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(
-                        "Documento comercial tem recebimentos ativos. Anule primeiro os respetivos documentos financeiros"
+                        "O documento nao pode ser anulado porque possui movimentos financeiros associados"
                 ));
 
         mockMvc.perform(post(financeiroLocation + "/anular"))

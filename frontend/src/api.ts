@@ -4,7 +4,7 @@ export type AuthSession = {
   expiresIn: number;
   codigo: string;
   nome: string;
-  papel: "ADMIN" | "OPERADOR" | "CONSULTA";
+  papel: "ADMINISTRADOR" | "OPERADOR" | "CONSULTA";
   permissoes: string[];
 };
 

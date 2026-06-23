@@ -5,6 +5,7 @@ import PendentesView from "./PendentesView";
 import ParametrosDocumentoView from "./ParametrosDocumentoView";
 import TabelasView from "./TabelasView";
 import ListagensView from "./ListagensView";
+import AuditoriaView from "./AuditoriaView";
 import { apiFetch, AuthSession } from "./api";
 
 type Page<T> = {
@@ -12,7 +13,7 @@ type Page<T> = {
   totalElements: number;
 };
 
-type ViewKey = "Dashboard" | "Clientes" | "Documentos" | "Artigos" | "Tesouraria" | "Listagens" | "Configuracao";
+type ViewKey = "Dashboard" | "Clientes" | "Documentos" | "Artigos" | "Tesouraria" | "Listagens" | "Auditoria" | "Configuracao";
 
 type Cliente = {
   id: number;
@@ -210,6 +211,7 @@ const menu: { label: ViewKey; hint: string }[] = [
   { label: "Artigos", hint: "Catalogo" },
   { label: "Tesouraria", hint: "Recebimentos" },
   { label: "Listagens", hint: "Consulta e analise" },
+  { label: "Auditoria", hint: "Rastreabilidade" },
   { label: "Configuracao", hint: "Base FAC" }
 ];
 
@@ -563,7 +565,7 @@ function App({ currentUser, onLogout }: AppProps) {
         </div>
 
         <nav className="fac-menu" aria-label="Navegacao principal">
-          {menu.map((item) => (
+          {menu.filter(item => item.label !== "Auditoria" || currentUser.permissoes.includes("AUDITORIA_CONSULTAR")).map((item) => (
             <button
               className={activeView === item.label ? "active" : ""}
               key={item.label}
@@ -584,7 +586,7 @@ function App({ currentUser, onLogout }: AppProps) {
             <h1>{viewTitle(activeView)}</h1>
           </div>
           <div className="fac-topbar-actions">
-            <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.codigo}</small></div>
+            <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.papel} · {currentUser.codigo}</small></div>
             <input
               onChange={(event) => setClienteSearch(event.target.value)}
               disabled={activeView === "Configuracao" || activeView === "Listagens"}
@@ -627,6 +629,8 @@ function App({ currentUser, onLogout }: AppProps) {
           <PendentesView />
         ) : activeView === "Listagens" ? (
           <ListagensView />
+        ) : activeView === "Auditoria" ? (
+          <AuditoriaView />
         ) : activeView === "Configuracao" ? (
           <ConfiguracaoView
             catalogos={clienteCatalogos}
@@ -1292,6 +1296,7 @@ function parametrosClientePayload(form: ParametrosClienteForm) {
 function viewTitle(view: ViewKey) {
   if (view === "Clientes") return "Clientes e conta corrente";
   if (view === "Listagens") return "Listagens e analise operacional";
+  if (view === "Auditoria") return "Auditoria fiscal";
   if (view === "Configuracao") return "Configuracao simples e explicita";
   return "Faturacao simples, clara e operacional";
 }

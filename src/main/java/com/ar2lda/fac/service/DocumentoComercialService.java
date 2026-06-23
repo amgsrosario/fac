@@ -33,6 +33,8 @@ import com.ar2lda.fac.model.Serie;
 import com.ar2lda.fac.model.SerieId;
 import com.ar2lda.fac.model.TipoDocumento;
 import com.ar2lda.fac.model.TipoAuditoriaEvento;
+import com.ar2lda.fac.model.PermissaoFuncional;
+import com.ar2lda.fac.model.ResultadoAuditoria;
 import com.ar2lda.fac.model.Transporte;
 import com.ar2lda.fac.model.Utilizador;
 import com.ar2lda.fac.repository.ArmazemRepository;
@@ -55,11 +57,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.ar2lda.fac.security.FunctionalAuthorization;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -95,6 +99,9 @@ public class DocumentoComercialService {
     private final LinhaDocumentoComercialMapper linhaMapper;
     private final EmpresaMapper empresaMapper;
     private final AuditoriaService auditoriaService;
+    private final AuditoriaIsoladaService auditoriaIsoladaService;
+    private final FunctionalAuthorization authorization;
+    private final Clock clock;
 
     @Transactional
     public DocumentoComercialDto create(DocumentoComercialCreateDto dto) {
@@ -346,41 +353,49 @@ public class DocumentoComercialService {
 
         DocumentoComercial saved = documentoRepository.save(documento);
         pendenteService.criarDeDocumento(saved);
-        auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_EMITIDO, "DOCUMENTO_COMERCIAL", saved.getId(),
-                "Documento emitido", "{\"versao\":1,\"numero\":" + saved.getNumeroDocumento() + "}");
+        auditoriaService.registarComo(TipoAuditoriaEvento.DOCUMENTO_EMITIDO, "DOCUMENTO_COMERCIAL", saved.getId(),
+                emissor, ResultadoAuditoria.SUCESSO, saved.getNumeroDocumentoCompleto(), "Documento emitido",
+                "{\"versao\":1,\"estadoAnterior\":\"RASCUNHO\",\"estadoNovo\":\"EMITIDO\",\"numero\":"
+                        + saved.getNumeroDocumento() + "}");
         return mapper.toDTO(saved);
     }
 
     @Transactional
     public DocumentoComercialDto anular(Long id, AnularDocumentoRequest request) {
         DocumentoComercial documento = findDocumentoForUpdate(id);
-        validatePodeAnular(documento);
-        String motivo = request.motivo() == null ? "" : request.motivo().trim();
-        if (motivo.length() < 5 || motivo.length() > 500) {
-            throw new BadRequestException("Motivo da anulacao deve ter entre 5 e 500 caracteres");
-        }
-
-        if (linhaDocumentoFinanceiroRepository.existsActiveLinesForDocumentoComercial(documento.getId())) {
-            throw new BadRequestException(
-                    "Documento comercial tem recebimentos ativos. Anule primeiro os respetivos documentos financeiros"
-            );
-        }
-
-        pendenteRepository.findByDocumentoComercialId(documento.getId()).ifPresent(pendente -> {
-            if (pendente.getValorPendente().compareTo(pendente.getValorDocumento()) != 0) {
-                throw new BadRequestException("Documento com pendente movimentado nao pode ser anulado");
-            }
-            pendente.setValorPendente(BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP));
-            pendenteRepository.save(pendente);
-        });
-
         Utilizador utilizador = currentUserService.resolve(
                 documento.getEmissor() == null ? null : documento.getEmissor().getCodigo(),
                 "anular documento comercial");
-        documento.anular(motivo, utilizador, OffsetDateTime.now());
+        String motivo = request.motivo() == null ? "" : request.motivo().trim();
+        try {
+            authorization.require(PermissaoFuncional.DOCUMENTO_ANULAR);
+            validatePodeAnular(documento);
+            if (motivo.length() < 5 || motivo.length() > 500) {
+                throw new BadRequestException("Motivo da anulacao deve ter entre 5 e 500 caracteres");
+            }
+            if (linhaDocumentoFinanceiroRepository.existsActiveLinesForDocumentoComercial(documento.getId())) {
+                throw new ConflictException("O documento nao pode ser anulado porque possui movimentos financeiros associados");
+            }
+            pendenteRepository.findByDocumentoComercialId(documento.getId()).ifPresent(pendente -> {
+                if (pendente.getValorPendente().compareTo(pendente.getValorDocumento()) != 0) {
+                    throw new ConflictException("O documento nao pode ser anulado porque possui movimentos financeiros associados");
+                }
+                pendente.setValorPendente(BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP));
+                pendenteRepository.save(pendente);
+            });
+        } catch (org.springframework.security.access.AccessDeniedException | ConflictException | BadRequestException exception) {
+            auditoriaIsoladaService.registar(TipoAuditoriaEvento.TENTATIVA_ANULACAO_NEGADA, "DOCUMENTO_COMERCIAL", id,
+                    utilizador, ResultadoAuditoria.FALHA, documento.getNumeroDocumentoCompleto(),
+                    exception.getMessage(), "{\"versao\":1,\"estado\":\"" + documento.getEstado() + "\"}");
+            throw exception;
+        }
+        documento.anular(motivo, utilizador, OffsetDateTime.now(clock));
         DocumentoComercial saved = documentoRepository.save(documento);
-        auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_ANULADO, "DOCUMENTO_COMERCIAL", saved.getId(),
-                "Documento anulado", "{\"versao\":1,\"motivo\":\"" + jsonEscape(motivo) + "\"}");
+        auditoriaService.registarComo(TipoAuditoriaEvento.DOCUMENTO_ANULADO, "DOCUMENTO_COMERCIAL", saved.getId(),
+                utilizador, ResultadoAuditoria.SUCESSO, saved.getNumeroDocumentoCompleto(), "Documento anulado",
+                "{\"versao\":1,\"tipoDocumento\":\"" + jsonEscape(saved.getTipoDocumento().getId())
+                        + "\",\"estadoAnterior\":\"EMITIDO\",\"estadoNovo\":\"ANULADO\",\"motivo\":\""
+                        + jsonEscape(motivo) + "\"}");
         return mapper.toDTO(saved);
     }
 

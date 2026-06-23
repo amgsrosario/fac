@@ -3,6 +3,8 @@ package com.ar2lda.fac;
 import com.ar2lda.fac.model.Utilizador;
 import com.ar2lda.fac.model.PapelUtilizador;
 import com.ar2lda.fac.repository.UtilizadorRepository;
+import com.ar2lda.fac.repository.AuditoriaEventoRepository;
+import com.ar2lda.fac.model.TipoAuditoriaEvento;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,9 @@ class SecurityIntegrationTests {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuditoriaEventoRepository auditoriaEventoRepository;
 
     @BeforeEach
     void createUser() {
@@ -63,6 +68,7 @@ class SecurityIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type").value("Bearer"))
                 .andExpect(jsonPath("$.codigo").value("SECTEST"))
+                .andExpect(jsonPath("$.papel").value("ADMINISTRADOR"))
                 .andReturn().getResponse().getContentAsString();
 
         String token = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
@@ -71,6 +77,9 @@ class SecurityIntegrationTests {
         mockMvc.perform(get("/utilizadores")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
+        org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
+                .anyMatch(evento -> evento.getTipoEvento() == TipoAuditoriaEvento.LOGIN_SUCESSO
+                        && "SECTEST".equals(evento.getUtilizadorId()));
     }
 
     @Test
@@ -93,6 +102,8 @@ class SecurityIntegrationTests {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+        org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
+                .anyMatch(evento -> evento.getTipoEvento() == TipoAuditoriaEvento.LOGIN_FALHADO);
     }
 
     @Test
@@ -115,6 +126,9 @@ class SecurityIntegrationTests {
                         .contentType("application/json").content("""
                                 {"tipoDocumentoId":"FT1","serie":"2026","nome":"Serie 2026"}
                                 """))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/auditoria").header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
     }
 }

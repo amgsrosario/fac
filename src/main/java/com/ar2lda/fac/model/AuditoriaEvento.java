@@ -32,9 +32,15 @@ public class AuditoriaEvento {
     @Column(name = "utilizador_nome", length = 100, updatable = false)
     private String utilizadorNome;
 
+    @Column(name = "utilizador_perfil", length = 20, updatable = false)
+    private String utilizadorPerfil;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false, updatable = false)
     private ResultadoAuditoria resultado;
+
+    @Column(length = 100, updatable = false)
+    private String referencia;
 
     @Column(length = 500, nullable = false, updatable = false)
     private String descricao;
@@ -44,15 +50,18 @@ public class AuditoriaEvento {
 
     protected AuditoriaEvento() {}
 
-    public AuditoriaEvento(TipoAuditoriaEvento tipoEvento, String entidadeTipo, String entidadeId,
-                           String utilizadorId, String utilizadorNome, String descricao, String dadosEssenciais) {
-        this.dataHora = OffsetDateTime.now();
+    public AuditoriaEvento(OffsetDateTime dataHora, TipoAuditoriaEvento tipoEvento, String entidadeTipo, String entidadeId,
+                           String utilizadorId, String utilizadorNome, String utilizadorPerfil,
+                           ResultadoAuditoria resultado, String referencia, String descricao, String dadosEssenciais) {
+        this.dataHora = dataHora;
         this.tipoEvento = tipoEvento;
         this.entidadeTipo = entidadeTipo;
         this.entidadeId = entidadeId;
         this.utilizadorId = utilizadorId;
         this.utilizadorNome = utilizadorNome;
-        this.resultado = ResultadoAuditoria.SUCESSO;
+        this.utilizadorPerfil = utilizadorPerfil;
+        this.resultado = resultado;
+        this.referencia = referencia;
         this.descricao = descricao;
         this.dadosEssenciais = dadosEssenciais;
     }

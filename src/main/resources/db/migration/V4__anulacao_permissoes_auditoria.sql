@@ -1,11 +1,11 @@
 -- Bloco 3: anulacao documental, papeis funcionais e auditoria append-only.
--- Compatibilidade controlada: utilizadores existentes recebem ADMIN. Rever antes de producao.
+-- Compatibilidade controlada: utilizadores existentes recebem ADMINISTRADOR. Rever antes de producao.
 
 ALTER TABLE public.utilizador
-    ADD COLUMN papel character varying(20) NOT NULL DEFAULT 'ADMIN';
+    ADD COLUMN papel character varying(20) NOT NULL DEFAULT 'ADMINISTRADOR';
 
 ALTER TABLE public.utilizador
-    ADD CONSTRAINT ck_utilizador_papel CHECK (papel IN ('ADMIN', 'OPERADOR', 'CONSULTA'));
+    ADD CONSTRAINT ck_utilizador_papel CHECK (papel IN ('ADMINISTRADOR', 'OPERADOR', 'CONSULTA'));
 
 ALTER TABLE public.documento_comercial
     ADD COLUMN motivo_anulacao character varying(500),
@@ -48,7 +48,9 @@ CREATE TABLE public.auditoria_evento (
     entidade_id character varying(100) NOT NULL,
     utilizador_id character varying(20),
     utilizador_nome character varying(100),
+    utilizador_perfil character varying(20),
     resultado character varying(20) NOT NULL,
+    referencia character varying(100),
     descricao character varying(500) NOT NULL,
     dados_essenciais text NOT NULL DEFAULT '{}',
     CONSTRAINT ck_auditoria_resultado CHECK (resultado IN ('SUCESSO', 'FALHA'))
@@ -59,3 +61,6 @@ CREATE INDEX ix_auditoria_tipo_data ON public.auditoria_evento (tipo_evento, dat
 CREATE INDEX ix_auditoria_entidade ON public.auditoria_evento (entidade_tipo, entidade_id, data_hora DESC);
 CREATE INDEX ix_auditoria_utilizador ON public.auditoria_evento (utilizador_id, data_hora DESC);
 CREATE INDEX ix_documento_comercial_estado ON public.documento_comercial (estado);
+CREATE INDEX ix_documento_comercial_anulado_em ON public.documento_comercial (data_hora_anulacao);
+CREATE INDEX ix_documento_comercial_anulado_por ON public.documento_comercial (anulado_por_utilizador_id);
+CREATE INDEX ix_auditoria_referencia ON public.auditoria_evento (referencia);

@@ -43,7 +43,7 @@ public class Utilizador {
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     @Setter
-    private PapelUtilizador papel = PapelUtilizador.ADMIN;
+    private PapelUtilizador papel = PapelUtilizador.ADMINISTRADOR;
 
     public Utilizador() {
     }
@@ -54,6 +54,6 @@ public class Utilizador {
         this.email = email;
         this.passwordHash = passwordHash;
         this.inativo = inativo;
-        this.papel = PapelUtilizador.ADMIN;
+        this.papel = PapelUtilizador.ADMINISTRADOR;
     }
 }

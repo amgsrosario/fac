@@ -4,14 +4,13 @@ import java.util.EnumSet;
 import java.util.Set;
 
 public enum PapelUtilizador {
-    ADMIN(EnumSet.allOf(PermissaoFuncional.class)),
+    ADMINISTRADOR(EnumSet.allOf(PermissaoFuncional.class)),
     OPERADOR(EnumSet.of(
             PermissaoFuncional.DOCUMENTO_CONSULTAR,
             PermissaoFuncional.DOCUMENTO_CRIAR,
             PermissaoFuncional.DOCUMENTO_EDITAR_RASCUNHO,
             PermissaoFuncional.DOCUMENTO_ELIMINAR_RASCUNHO,
             PermissaoFuncional.DOCUMENTO_EMITIR,
-            PermissaoFuncional.DOCUMENTO_ANULAR,
             PermissaoFuncional.DOCUMENTO_OBTER_PDF,
             PermissaoFuncional.SERIE_CONSULTAR
     )),

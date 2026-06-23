@@ -28,7 +28,8 @@ public class AuditoriaController {
             @RequestParam(required = false) String entidadeId,
             @RequestParam(required = false) String utilizadorId,
             @RequestParam(required = false) ResultadoAuditoria resultado,
+            @RequestParam(required = false) String referencia,
             Pageable pageable) {
-        return service.consultar(desde, ate, tipoEvento, entidadeTipo, entidadeId, utilizadorId, resultado, pageable);
+        return service.consultar(desde, ate, tipoEvento, entidadeTipo, entidadeId, utilizadorId, resultado, referencia, pageable);
     }
 }

@@ -1,739 +1,921 @@
-# 11 - Cenário-base e reposição do ambiente de demonstração
+# Documento 16 — Cenário-base e Reposição do Ambiente de Demonstração
 
 **Projeto:** FAC
-**Documento:** Cenário-base e reposição do ambiente de demonstração
+**Designação funcional:** MD 16 — Cenário-base e reposição do ambiente de demonstração
 **Versão:** 1.0
-**Estado:** Planeado para implementação
-**Data:** 15 de junho de 2026
-**Autor:** António Rosário
+**Estado:** A implementar
+**Prioridade:** Crítica
+**Objetivo estratégico:** Consolidar a FAC Demo Partner Edition
+**Dependências:** Documentos correspondentes aos MD 11, 12, 13 e 14 concluídos
+**Documento seguinte:** Polimento orientado do PDF fiscal e robustez multipágina
 
 ---
 
-## 1. Objetivo
+# 1. Enquadramento
 
-O presente documento define a criação de um cenário-base de demonstração para o FAC, destinado a:
+O FAC já possui um núcleo funcional avançado, incluindo:
 
-* apresentações a potenciais parceiros;
-* demonstrações comerciais;
-* validação funcional;
-* testes manuais;
-* formação;
-* gravação de vídeos;
-* demonstrações remotas;
-* avaliação da interface;
-* validação de regressões.
-
-O cenário deve permitir repor o FAC, de forma rápida e previsível, num estado conhecido, coerente e visualmente credível.
-
-O objetivo não é criar uma grande massa de dados.
-
-O objetivo é criar uma pequena empresa fictícia, com informação suficiente para demonstrar os principais fluxos funcionais da aplicação.
-
----
-
-## 2. Princípio basilar
-
-O ambiente de demonstração deve ser:
-
-* separado do ambiente de desenvolvimento;
-* separado dos testes automáticos;
-* separado de qualquer futura produção;
-* facilmente recriável;
-* composto exclusivamente por dados fictícios;
-* funcionalmente coerente;
-* seguro;
-* previsível;
-* reutilizável.
-
-A preparação de uma demonstração não deve depender da introdução manual repetida de clientes, artigos e documentos.
-
-Deve existir um mecanismo automático de reposição do cenário-base.
-
----
-
-## 3. Âmbito
-
-A primeira versão do cenário deverá incluir, pelo menos:
-
-* uma empresa emitente;
-* duas ou três séries documentais;
-* três clientes;
-* três ou quatro artigos ou serviços;
-* três ou quatro documentos de cada tipo suportado;
+* backend Spring Boot;
+* frontend React;
+* gestão de clientes;
+* gestão de artigos;
 * documentos comerciais;
-* documentos financeiros;
-* movimentos suficientes para demonstrar extratos;
-* diferentes estados documentais;
-* diferentes taxas ou enquadramentos de IVA;
-* dados suficientes para demonstrar filtros e totalizadores.
+* linhas documentais;
+* séries;
+* emissão documental;
+* cálculo de impostos e totais;
+* numeração concorrencialmente segura;
+* ATCUD persistido;
+* payload QR persistido;
+* snapshots históricos;
+* geração de PDF baseada em dados persistidos;
+* Flyway;
+* ambiente de testes dedicado;
+* backup e restauro;
+* anulação documental;
+* perfis e permissões;
+* auditoria das operações críticas.
 
-O cenário deve permanecer pequeno.
+O objetivo atual não é concluir imediatamente todas as funcionalidades necessárias para uma distribuição comercial plena.
 
-Não deve transformar-se numa base de dados pesada ou difícil de compreender.
+A prioridade é criar uma versão demonstrativa sólida, coerente e repetível, designada:
 
----
+> **FAC Demo Partner Edition**
 
-## 4. Nome do ambiente
+Esta versão será utilizada para apresentar o produto a um parceiro comercial relevante.
 
-O ambiente deve ser identificado como:
+A demonstração deverá transmitir:
 
-```text
-FAC - Ambiente de Demonstração
-```
+* maturidade funcional;
+* coerência documental;
+* estabilidade;
+* clareza visual;
+* segurança operacional;
+* potencial de evolução;
+* domínio do circuito comercial e financeiro.
 
-A base de dados poderá ser designada:
-
-```text
-fac_demo
-```
-
-O perfil Spring deverá ser:
-
-```text
-demo
-```
-
-O ficheiro de configuração deverá ser:
-
-```text
-application-demo.yml
-```
-
-ou equivalente, de acordo com a estrutura atual do projeto.
+Para isso, é necessário abandonar demonstrações improvisadas sobre bases de desenvolvimento e criar um ambiente próprio, com dados realistas, relações coerentes e reposição automática.
 
 ---
 
-## 5. Separação de ambientes
+# 2. Objetivo
 
-Devem existir bases de dados distintas para cada finalidade.
+Implementar um cenário-base demonstrativo que possa ser reposto de forma segura e previsível antes de cada apresentação.
 
-Estrutura recomendada:
+No final deste documento deverá ser possível:
 
-```text
-fac_dev
-fac_test
-fac_demo
-fac_prod
-```
-
-Significado:
-
-| Base       | Finalidade                    |
-| ---------- | ----------------------------- |
-| `fac_dev`  | Desenvolvimento corrente      |
-| `fac_test` | Testes automáticos            |
-| `fac_demo` | Demonstrações e apresentações |
-| `fac_prod` | Futura produção               |
-
-O ambiente de demonstração nunca deve utilizar a base de desenvolvimento.
-
-A reposição da demonstração nunca deve apagar ou alterar dados de outros ambientes.
+1. preparar uma base de dados limpa para demonstração;
+2. carregar automaticamente uma empresa fictícia;
+3. criar utilizadores de demonstração;
+4. criar clientes, artigos, serviços, séries e configurações necessárias;
+5. criar documentos comerciais coerentes;
+6. criar movimentos financeiros;
+7. apresentar extratos com saldo anterior e movimentos do período;
+8. apresentar listagens com totalizadores;
+9. demonstrar documentos emitidos, pagos, parcialmente pagos e anulados;
+10. demonstrar auditoria;
+11. repetir o cenário sem duplicações;
+12. restaurar o ambiente antes de cada demonstração;
+13. validar automaticamente a coerência dos dados;
+14. identificar a versão demonstrativa em execução.
 
 ---
 
-## 6. Empresa fictícia
+# 3. Princípios orientadores
 
-Deve ser criada uma empresa fictícia, com dados suficientemente credíveis para apresentação.
+## 3.1. Repetibilidade
 
-Exemplo:
+O mesmo processo de reposição deverá produzir sempre o mesmo cenário funcional.
 
-```text
-Demo Norte Consulting, Lda.
-```
+A reposição não deverá depender de:
 
-Dados exemplificativos:
+* introdução manual extensa;
+* correções posteriores;
+* alteração direta da base de dados;
+* sequências ocultas conhecidas apenas pelo programador;
+* dados acumulados de demonstrações anteriores.
 
-```text
-NIF: utilizar um valor fictício ou reservado para testes
-Morada: Avenida Empresarial, n.º 25
-Código postal: 1000-100 Lisboa
-País: Portugal
-Telefone: 210 000 000
-Email: geral@demonorte.example
-```
+## 3.2. Isolamento
 
-Os dados devem ser claramente fictícios.
+O cenário de demonstração deverá funcionar num ambiente isolado.
+
+Não deverá ser executado automaticamente em:
+
+* produção;
+* ambiente de clientes;
+* base principal de desenvolvimento;
+* qualquer base que contenha informação real.
+
+## 3.3. Realismo controlado
+
+Os dados devem parecer credíveis, mas ser totalmente fictícios.
 
 Não devem ser utilizados:
 
-* NIF reais;
-* moradas pessoais;
-* emails reais;
-* dados de clientes da Finpart;
-* informação retirada de empresas verdadeiras sem autorização.
-
----
-
-## 7. Identificação visual do ambiente
-
-A aplicação deve apresentar uma indicação visível de que está num ambiente de demonstração.
-
-Exemplo:
-
-```text
-AMBIENTE DE DEMONSTRAÇÃO
-```
-
-Pode ser utilizada uma faixa discreta no cabeçalho:
-
-```text
-Dados fictícios. Não utilizar para emissão fiscal real.
-```
-
-Esta indicação deve estar presente em todos os ecrãs principais.
-
-O objetivo é evitar qualquer confusão entre:
-
-* demonstração;
-* desenvolvimento;
-* produção real.
-
----
-
-## 8. Clientes do cenário
-
-Devem ser criados três clientes com perfis distintos.
-
-### 8.1. Cliente empresarial nacional
-
-Exemplo:
-
-```text
-Alfa Gestão Empresarial, Lda.
-```
-
-Características:
-
-* pessoa coletiva;
-* NIF português fictício;
-* morada nacional;
-* email empresarial;
-* movimentos comerciais;
-* faturas por liquidar;
-* recebimentos parciais.
-
-Este cliente deve ser utilizado para demonstrar:
-
-* emissão de fatura;
-* conta corrente;
-* recebimento parcial;
-* saldo pendente;
-* extrato com saldo anterior.
-
-### 8.2. Cliente particular ou consumidor final
-
-Exemplo:
-
-```text
-Consumidor Final
-```
-
-Características:
-
-* sem identificação fiscal obrigatória, quando permitido;
-* documentos de pequeno valor;
-* fatura simplificada;
-* pagamento imediato.
-
-Este cliente deve ser utilizado para demonstrar:
-
-* emissão rápida;
-* documento simplificado;
-* pagamento imediato;
-* movimentos sem saldo pendente.
-
-### 8.3. Cliente estrangeiro
-
-Exemplo:
-
-```text
-Iberia Digital Services, S.L.
-```
-
-Características:
-
-* país Espanha;
-* identificação fiscal estrangeira fictícia;
-* morada fora de Portugal;
-* moeda euro;
-* situação fiscal diferenciada, quando aplicável.
-
-Este cliente deve ser utilizado para demonstrar:
-
-* cliente estrangeiro;
-* país diferente;
-* validações de morada;
-* eventual enquadramento fiscal distinto.
-
----
-
-## 9. Artigos e serviços
-
-Devem ser criados três ou quatro artigos ou serviços.
-
-### 9.1. Serviço com taxa normal de IVA
-
-Exemplo:
-
-```text
-Consultoria de gestão
-```
-
-Características:
-
-* tipo: serviço;
-* unidade: hora;
-* preço unitário: 75,00 €;
-* IVA normal.
-
-### 9.2. Serviço de avença
-
-Exemplo:
-
-```text
-Acompanhamento mensal
-```
-
-Características:
-
-* tipo: serviço;
-* unidade: mês;
-* preço unitário: 250,00 €;
-* IVA normal.
-
-### 9.3. Artigo com taxa reduzida ou diferenciada
-
-Exemplo:
-
-```text
-Manual técnico impresso
-```
-
-Características:
-
-* tipo: artigo;
-* unidade: unidade;
-* preço unitário: 25,00 €;
-* taxa de IVA configurada de acordo com o cenário de teste.
-
-### 9.4. Serviço isento
-
-Exemplo:
-
-```text
-Formação profissional isenta
-```
-
-Características:
-
-* tipo: serviço;
-* preço unitário: 300,00 €;
-* motivo de isenção configurado.
-
-Este artigo deve ser criado apenas se o FAC já suportar corretamente:
-
-* isenções;
-* motivos de isenção;
-* validação fiscal associada.
-
-Se esta funcionalidade ainda não estiver estabilizada, o artigo deve ficar fora da primeira versão do cenário.
-
----
-
-## 10. Séries documentais
-
-Devem ser criadas séries coerentes com os tipos documentais disponíveis.
-
-Exemplo:
-
-| Tipo de documento   | Série  | Nome                               |
-| ------------------- | ------ | ---------------------------------- |
-| Fatura              | DEMO26 | Faturas demonstração               |
-| Nota de crédito     | DEMO26 | Notas de crédito demonstração      |
-| Recibo              | DEMO26 | Recibos demonstração               |
-| Fatura simplificada | DEMO26 | Faturas simplificadas demonstração |
-
-Cada série deve utilizar:
-
-* um numerador coerente;
-* código AT fictício ou reservado para demonstração;
-* data do código AT;
-* associação correta ao tipo documental.
-
-Os códigos utilizados não devem ser apresentados como códigos reais ou validados pela AT.
-
----
-
-## 11. Documentos comerciais
-
-O cenário deve incluir três ou quatro documentos de cada tipo já suportado de forma estável.
-
-Não devem ser criados documentos de tipos ainda incompletos.
-
-### 11.1. Faturas
-
-Devem existir pelo menos quatro faturas:
-
-#### Fatura 1
-
-Cliente:
-
-```text
-Alfa Gestão Empresarial, Lda.
-```
-
-Conteúdo:
-
-* consultoria de gestão;
-* acompanhamento mensal;
-* total significativo;
-* parcialmente recebida.
-
-Objetivo:
-
-* demonstrar múltiplas linhas;
-* demonstrar IVA;
-* demonstrar saldo pendente;
-* demonstrar recibo parcial.
-
-#### Fatura 2
-
-Cliente:
-
-```text
-Alfa Gestão Empresarial, Lda.
-```
-
-Conteúdo:
-
-* um único serviço;
-* totalmente por liquidar.
-
-Objetivo:
-
-* demonstrar dívida em aberto;
-* alimentar extrato de cliente;
-* demonstrar saldo acumulado.
-
-#### Fatura 3
-
-Cliente:
-
-```text
-Iberia Digital Services, S.L.
-```
-
-Conteúdo:
-
-* serviço empresarial;
-* cliente estrangeiro;
-* enquadramento fiscal adequado ao estado atual da aplicação.
-
-Objetivo:
-
-* demonstrar internacionalização;
-* demonstrar país e dados fiscais estrangeiros.
-
-#### Fatura 4
-
-Cliente:
-
-```text
-Consumidor Final
-```
-
-Conteúdo:
-
-* valor reduzido;
-* pagamento imediato, se o tipo documental o permitir.
-
-Objetivo:
-
-* demonstrar operação simples.
-
----
-
-## 12. Faturas simplificadas
-
-Se o FAC já suportar faturas simplificadas, criar três ou quatro exemplos.
-
-Características:
-
-* valores reduzidos;
-* consumidor final;
-* um ou dois artigos;
-* pagamentos imediatos;
-* datas recentes.
-
-Estas faturas devem permitir mostrar:
-
-* emissão rápida;
-* listagem;
-* filtragem por tipo documental;
-* totalizadores.
-
----
-
-## 13. Notas de crédito
-
-Devem existir duas ou três notas de crédito relacionadas com faturas já existentes.
-
-### Exemplo 1
-
-Nota de crédito parcial sobre uma fatura da Alfa Gestão Empresarial.
-
-Motivo:
-
-```text
-Correção parcial do serviço faturado.
-```
-
-Objetivo:
-
-* demonstrar ligação ao documento original;
-* demonstrar correção parcial;
-* demonstrar impacto no saldo do cliente.
-
-### Exemplo 2
-
-Nota de crédito total sobre um documento de pequeno valor.
-
-Motivo:
-
-```text
-Anulação integral do serviço.
-```
-
-Objetivo:
-
-* demonstrar reversão integral;
-* demonstrar impacto em listagens;
-* demonstrar estado e rastreabilidade.
-
-Não devem ser criadas notas de crédito sem documento de origem, caso o FAC exija essa relação.
-
----
-
-## 14. Recibos
-
-Devem existir três ou quatro recibos.
-
-### Recibo 1
-
-Recebimento parcial da Fatura 1.
-
-Objetivo:
-
-* manter saldo remanescente;
-* demonstrar conta corrente;
-* demonstrar extrato.
-
-### Recibo 2
-
-Liquidação total de uma fatura.
-
-Objetivo:
-
-* demonstrar encerramento do saldo;
-* demonstrar correspondência entre documento comercial e financeiro.
-
-### Recibo 3
-
-Recebimento relativo a mais do que um documento, caso o FAC já suporte essa possibilidade.
-
-Se essa funcionalidade ainda não estiver implementada, limitar o recibo a um único documento.
-
-### Recibo 4
-
-Recibo com data posterior e movimento recente.
-
-Objetivo:
-
-* tornar a listagem mais rica;
-* demonstrar filtros por período.
-
----
-
-## 15. Relações entre documentos
-
-Os documentos devem contar uma pequena história empresarial.
-
-Exemplo:
-
-```text
-Fatura A
-→ recebimento parcial
-→ saldo remanescente
-```
-
-```text
-Fatura B
-→ nota de crédito parcial
-→ saldo corrigido
-```
-
-```text
-Fatura C
-→ recibo integral
-→ saldo zero
-```
-
-```text
-Fatura D
-→ sem pagamento
-→ documento em aberto
-```
-
-O cenário não deve limitar-se a documentos independentes.
-
-As relações são essenciais para demonstrar:
-
-* extratos;
-* saldos;
+* NIF reais de clientes;
+* moradas pessoais reais;
+* contas bancárias reais;
+* emails pessoais;
+* nomes de pessoas sem autorização;
+* dados provenientes de empresas reais.
+
+## 3.4. Coerência integral
+
+Os documentos devem respeitar:
+
+* séries existentes;
+* datas coerentes;
+* estados documentais válidos;
 * totais;
-* pagamentos;
-* correções;
-* rastreabilidade.
+* impostos;
+* movimentos financeiros;
+* saldos;
+* auditoria;
+* permissões;
+* relações entre documentos.
+
+## 3.5. Simplicidade operacional
+
+A reposição deverá poder ser realizada através de um comando, script ou mecanismo administrativo controlado.
+
+O processo deve ser suficientemente simples para ser executado antes de uma apresentação sem intervenção técnica complexa.
 
 ---
 
-## 16. Datas dos documentos
+# 4. Âmbito
 
-As datas devem ser relativas à data de execução do cenário.
+## 4.1. Incluído
+
+Este documento deverá incluir:
+
+* perfil de execução específico de demonstração;
+* empresa fictícia;
+* utilizadores demo;
+* clientes demo;
+* artigos e serviços demo;
+* séries demo;
+* documentos comerciais;
+* documentos financeiros;
+* pagamentos e recebimentos;
+* documento parcialmente pago;
+* documento anulado;
+* auditoria coerente;
+* extratos com movimentos;
+* listagens com totalizadores;
+* documento multipágina;
+* mecanismo de reposição;
+* proteção contra execução indevida;
+* validação pós-carga;
+* documentação de credenciais;
+* identificação da versão demo;
+* testes;
+* instruções operacionais.
+
+## 4.2. Não incluído
+
+Ficam fora deste documento:
+
+* certificação oficial;
+* número real de certificado;
+* comunicação com a Autoridade Tributária;
+* comunicação automática de séries;
+* SAF-T;
+* hash fiscal certificado;
+* faturação eletrónica;
+* integração bancária;
+* pagamentos online;
+* multiempresa completa;
+* importação de dados externos;
+* migração de dados reais;
+* operações cambiais avançadas;
+* reposição remota através de interface pública;
+* criação de uma infraestrutura cloud definitiva;
+* automatização de deploy de produção.
+
+---
+
+# 5. Designação da versão
+
+A aplicação deverá identificar a versão demonstrativa de forma discreta.
+
+Sugestão:
+
+```text
+FAC Demo Partner Edition
+```
+
+A identificação poderá aparecer:
+
+* no ecrã de autenticação;
+* no rodapé da aplicação;
+* na área de sessão;
+* no título da aplicação;
+* numa página “Sobre”.
+
+A identificação não deverá surgir nos documentos fiscais impressos, salvo indicação explícita de que se trata de ambiente demonstrativo.
+
+Nos PDFs de demonstração deverá ser considerada uma indicação discreta:
+
+```text
+Documento emitido em ambiente de demonstração
+```
+
+Esta indicação não deverá interferir com:
+
+* ATCUD;
+* QR Code;
+* número documental;
+* cabeçalhos;
+* totais;
+* legibilidade.
+
+---
+
+# 6. Empresa fictícia
+
+## 6.1. Identidade
+
+Criar a seguinte empresa fictícia:
+
+> **Alentejo Sabores, Lda.**
+
+## 6.2. Atividade
+
+A empresa dedica-se a:
+
+* comercialização de azeite;
+* comercialização de vinho;
+* cabazes de oferta;
+* produtos alimentares regionais;
+* transporte e entrega;
+* pequenos serviços de preparação de encomendas empresariais.
+
+## 6.3. Dados sugeridos
+
+```text
+Denominação: Alentejo Sabores, Lda.
+Nome comercial: Alentejo Sabores
+NIF: utilizar número fictício reservado ao ambiente demo
+Morada: Rua da Oliveira, 24
+Código postal: 7800-000 Beja
+Localidade: Beja
+País: Portugal
+Telefone: 284 000 000
+Email: geral@alentejosabores.demo
+Website: www.alentejosabores.demo
+Moeda base: EUR
+```
+
+O NIF deverá:
+
+* ser claramente fictício;
+* cumprir apenas as validações técnicas necessárias ao sistema;
+* não corresponder, tanto quanto possível, a uma entidade real;
+* ser documentado como dado de demonstração.
+
+## 6.4. Dados bancários
+
+Caso o PDF exiba dados bancários, utilizar:
+
+```text
+Banco: Banco Demonstração
+IBAN: PT50 0000 0000 0000 0000 0000 0
+SWIFT: DEMOPTPL
+```
+
+Estes dados devem ser identificados internamente como fictícios.
+
+---
+
+# 7. Utilizadores de demonstração
+
+Criar três utilizadores:
+
+## 7.1. Administrador
+
+```text
+Nome: Administrador Demo
+Username: admin.demo
+Perfil: ADMINISTRADOR
+Estado: Ativo
+```
+
+## 7.2. Operador
+
+```text
+Nome: Operador Demo
+Username: operador.demo
+Perfil: OPERADOR
+Estado: Ativo
+```
+
+## 7.3. Consulta
+
+```text
+Nome: Consulta Demo
+Username: consulta.demo
+Perfil: CONSULTA
+Estado: Ativo
+```
+
+## 7.4. Credenciais
+
+As palavras-passe:
+
+* não devem ficar escritas em texto simples no código;
+* devem ser configuráveis;
+* devem ser armazenadas com hash;
+* podem ser definidas através de variáveis de ambiente;
+* devem constar de documentação operacional não pública.
+
+Sugestão de variáveis:
+
+```text
+FAC_DEMO_ADMIN_PASSWORD
+FAC_DEMO_OPERADOR_PASSWORD
+FAC_DEMO_CONSULTA_PASSWORD
+```
+
+Caso não estejam definidas, o sistema deverá:
+
+* falhar de forma controlada;
+* ou utilizar credenciais exclusivamente locais, claramente assinaladas;
+* nunca expor palavras-passe em logs.
+
+---
+
+# 8. Clientes de demonstração
+
+Criar pelo menos quatro clientes.
+
+## 8.1. Cliente nacional empresarial
+
+```text
+Nome: Mercearia do Castelo, Lda.
+Tipo: Empresa
+País: Portugal
+Localidade: Évora
+NIF: fictício
+Email: compras@merceariadocastelo.demo
+Condição de pagamento: 30 dias
+```
+
+Objetivo:
+
+* demonstrar faturação normal;
+* mostrar saldo em conta corrente;
+* mostrar documento parcialmente pago;
+* mostrar extrato com vários movimentos.
+
+## 8.2. Cliente empresarial espanhol
+
+```text
+Nome: Sabores Ibéricos, S.L.
+Tipo: Empresa
+País: Espanha
+Localidade: Badajoz
+NIF/VAT: fictício
+Email: pedidos@saboresibericos.demo
+Condição de pagamento: transferência bancária
+```
+
+Objetivo:
+
+* demonstrar cliente estrangeiro;
+* mostrar morada e identificação fiscal internacional;
+* não utilizar tratamentos fiscais que o sistema ainda não suporte de forma consolidada.
+
+A operação deverá ser configurada apenas com regras já corretamente suportadas.
+
+## 8.3. Consumidor final
+
+```text
+Nome: Consumidor Final
+Tipo: Particular
+País: Portugal
+NIF: consumidor final ou valor aceite pelo sistema
+Condição de pagamento: pronto pagamento
+```
+
+Objetivo:
+
+* demonstrar venda simples;
+* demonstrar pagamento integral;
+* demonstrar documento de menor valor.
+
+## 8.4. Cliente para anulação
+
+```text
+Nome: Hotel Planície Dourada, Lda.
+Tipo: Empresa
+País: Portugal
+Localidade: Beja
+NIF: fictício
+Condição de pagamento: 15 dias
+```
+
+Objetivo:
+
+* possuir um documento emitido sem movimentos financeiros;
+* permitir anulação durante a apresentação;
+* demonstrar auditoria e PDF anulado.
+
+---
+
+# 9. Artigos e serviços
+
+Criar entre oito e dez registos.
+
+## 9.1. Artigos sugeridos
+
+| Código         | Descrição                    | Tipo   | Unidade |
+| -------------- | ---------------------------- | ------ | ------- |
+| AZEITE-500     | Azeite Virgem Extra 500 ml   | Artigo | UN      |
+| AZEITE-750     | Azeite Virgem Extra 750 ml   | Artigo | UN      |
+| AZEITE-5L      | Azeite Virgem Extra 5 L      | Artigo | UN      |
+| VINHO-TINTO    | Vinho Tinto Regional 750 ml  | Artigo | UN      |
+| VINHO-BRANCO   | Vinho Branco Regional 750 ml | Artigo | UN      |
+| CABAZ-CLASSICO | Cabaz Alentejano Clássico    | Artigo | UN      |
+| CABAZ-PREMIUM  | Cabaz Alentejano Premium     | Artigo | UN      |
+| COMPOTA-FIGO   | Compota Artesanal de Figo    | Artigo | UN      |
+
+## 9.2. Serviços sugeridos
+
+| Código     | Descrição                         | Tipo    | Unidade |
+| ---------- | --------------------------------- | ------- | ------- |
+| TRANSPORTE | Serviço de transporte e entrega   | Serviço | UN      |
+| PREPARACAO | Preparação personalizada de cabaz | Serviço | UN      |
+
+## 9.3. Preços sugeridos
+
+Os preços deverão produzir documentos visualmente interessantes e totais fáceis de interpretar.
 
 Exemplo:
 
-| Documento          | Data               |
-| ------------------ | ------------------ |
-| Documento antigo   | Hoje menos 60 dias |
-| Movimento anterior | Hoje menos 45 dias |
-| Fatura intermédia  | Hoje menos 30 dias |
-| Recibo parcial     | Hoje menos 20 dias |
-| Fatura recente     | Hoje menos 10 dias |
-| Movimento atual    | Hoje menos 2 dias  |
-
-O objetivo é garantir que o cenário permanece atual, independentemente da data em que é executado.
-
-Evitar datas fixas como:
-
 ```text
-2025-01-01
+AZEITE-500: 6,50 €
+AZEITE-750: 9,80 €
+AZEITE-5L: 49,00 €
+VINHO-TINTO: 8,20 €
+VINHO-BRANCO: 7,60 €
+CABAZ-CLASSICO: 32,50 €
+CABAZ-PREMIUM: 58,00 €
+COMPOTA-FIGO: 4,80 €
+TRANSPORTE: 12,50 €
+PREPARACAO: 7,50 €
 ```
 
-que rapidamente fazem a demonstração parecer abandonada numa arrecadação digital.
+## 9.4. IVA
+
+Utilizar apenas taxas de IVA que estejam corretamente configuradas e testadas no sistema.
+
+O cenário deverá incluir mais do que uma taxa apenas se:
+
+* o cálculo estiver consolidado;
+* o PDF estiver correto;
+* os totalizadores forem coerentes;
+* não criar risco para a demonstração.
+
+A estabilidade tem prioridade sobre a variedade fiscal.
 
 ---
 
-## 17. Cenários para o extrato de cliente
+# 10. Séries documentais
 
-O cliente empresarial nacional deve permitir demonstrar:
+Criar séries próprias do ambiente demo.
 
-* saldo anterior ao período;
-* movimentos a débito;
-* movimentos a crédito;
+Sugestão:
+
+```text
+FT D/2026
+FR D/2026
+RC D/2026
+NC D/2026
+```
+
+A nomenclatura concreta deverá respeitar o modelo atual do FAC.
+
+Cada série deverá:
+
+* estar ativa;
+* ter numeração coerente;
+* possuir código de validação adequado ao ambiente demo;
+* permitir geração de ATCUD;
+* estar claramente separada das séries de desenvolvimento;
+* não colidir com dados anteriores.
+
+## 10.1. Numeração
+
+A carga do cenário deverá produzir numeração previsível.
+
+Exemplo:
+
+```text
+FT D/2026/1
+FT D/2026/2
+FT D/2026/3
+FT D/2026/4
+```
+
+A reposição deve reiniciar o cenário conforme a estratégia definida, sem manipular incorretamente documentos já existentes fora do ambiente demo.
+
+---
+
+# 11. Documentos comerciais
+
+Criar um conjunto equilibrado de documentos.
+
+## 11.1. Fatura integralmente paga
+
+Cliente:
+
+```text
+Consumidor Final
+```
+
+Conteúdo:
+
+* azeite;
+* vinho;
+* preparação de cabaz.
+
+Estado:
+
+```text
+EMITIDO
+```
+
+Situação financeira:
+
+```text
+PAGO
+```
+
+Objetivo:
+
+* demonstrar venda simples;
+* demonstrar total;
+* demonstrar recebimento;
+* demonstrar PDF.
+
+## 11.2. Fatura parcialmente paga
+
+Cliente:
+
+```text
+Mercearia do Castelo, Lda.
+```
+
+Conteúdo:
+
+* várias caixas de azeite;
+* vinho;
+* transporte.
+
+Estado:
+
+```text
+EMITIDO
+```
+
+Situação financeira:
+
+```text
+PARCIALMENTE PAGO
+```
+
+Objetivo:
+
+* demonstrar saldo pendente;
+* demonstrar extrato;
+* demonstrar bloqueio de anulação;
+* demonstrar mensagem 409 Conflict.
+
+## 11.3. Fatura por pagar
+
+Cliente:
+
+```text
+Mercearia do Castelo, Lda.
+```
+
+Conteúdo:
+
+* cabazes;
+* compotas;
+* serviço de preparação.
+
+Estado:
+
+```text
+EMITIDO
+```
+
+Situação financeira:
+
+```text
+EM ABERTO
+```
+
+Objetivo:
+
+* contribuir para saldo do cliente;
+* enriquecer extrato;
+* mostrar totalizadores.
+
+## 11.4. Documento para cliente espanhol
+
+Cliente:
+
+```text
+Sabores Ibéricos, S.L.
+```
+
+Conteúdo:
+
+* azeite;
+* vinho;
+* transporte.
+
+Estado:
+
+```text
+EMITIDO
+```
+
+Objetivo:
+
+* mostrar cliente internacional;
+* demonstrar documento comercial com dados estrangeiros;
+* não acionar regras fiscais incompletas.
+
+## 11.5. Documento destinado a anulação
+
+Cliente:
+
+```text
+Hotel Planície Dourada, Lda.
+```
+
+Conteúdo:
+
+* cabazes premium;
+* preparação;
+* transporte.
+
+Estado inicial:
+
+```text
+EMITIDO
+```
+
+Situação financeira:
+
+```text
+SEM MOVIMENTOS
+```
+
+Objetivo:
+
+* ser anulado durante a demonstração;
+* gerar evento de auditoria;
+* mostrar PDF anulado;
+* desaparecer dos totalizadores ativos;
+* permanecer historicamente consultável.
+
+## 11.6. Documento previamente anulado
+
+Criar também um documento já anulado no cenário-base.
+
+Objetivo:
+
+* permitir demonstrar listagem de anulados sem consumir o documento reservado à anulação em direto;
+* mostrar PDF com marca de anulação;
+* mostrar auditoria histórica;
+* validar exclusão de saldos.
+
+---
+
+# 12. Documento multipágina
+
+Criar pelo menos um documento com linhas suficientes para gerar duas ou mais páginas.
+
+O documento deverá conter:
+
+* vários artigos;
+* descrições suficientemente extensas;
+* quantidades variadas;
+* preços;
+* impostos;
+* totalizadores;
+* cabeçalho repetido;
+* rodapé;
+* ATCUD;
+* QR Code.
+
+Objetivos:
+
+* revelar problemas de paginação;
+* testar cabeçalhos e rodapés;
+* testar quebra de tabela;
+* testar totais na última página;
+* testar marca de anulação, caso seja utilizada uma cópia anulada;
+* orientar o trabalho posterior de polimento visual.
+
+Este documento deverá ser utilizado como referência no documento seguinte, dedicado ao PDF final.
+
+---
+
+# 13. Documentos financeiros
+
+Criar movimentos coerentes com os documentos comerciais.
+
+## 13.1. Recebimento integral
+
+Associar à fatura do consumidor final.
+
+O movimento deverá:
+
+* liquidar integralmente o documento;
+* aparecer no extrato;
+* ficar auditado, caso o sistema já audite esta operação;
+* produzir o estado financeiro correto.
+
+## 13.2. Recebimento parcial
+
+Associar à fatura da Mercearia do Castelo.
+
+Exemplo:
+
+```text
+Total da fatura: 1.250,00 €
+Recebimento: 500,00 €
+Saldo pendente: 750,00 €
+```
+
+Os valores concretos deverão ser calculados pelo sistema, não forçados manualmente.
+
+## 13.3. Documento em aberto
+
+A segunda fatura da Mercearia do Castelo deverá permanecer sem recebimento.
+
+Objetivo:
+
+* produzir saldo acumulado;
+* permitir leitura clara do extrato;
+* demonstrar total do período.
+
+---
+
+# 14. Extrato de cliente
+
+O cliente principal para demonstração do extrato será:
+
+> **Mercearia do Castelo, Lda.**
+
+O extrato deverá apresentar:
+
+* saldo anterior;
+* pelo menos duas faturas;
+* um recebimento parcial;
+* débito;
+* crédito;
 * saldo acumulado;
 * total do período;
 * saldo final.
 
-Exemplo de período de demonstração:
+## 14.1. Saldo anterior
+
+O cenário deverá incluir um movimento anterior ao período normalmente utilizado na demonstração.
+
+Exemplo:
 
 ```text
-últimos 30 dias
+Período demonstrado: 01/06/2026 a 30/06/2026
+Movimento anterior: maio de 2026
 ```
 
-Deve existir pelo menos um movimento anterior ao início do filtro, para que a linha:
+O extrato deverá mostrar:
 
 ```text
 Anterior
 ```
 
-tenha conteúdo.
+com os valores acumulados antes do início do período.
 
-O cenário deve permitir demonstrar:
+## 14.2. Coerência
 
-* extrato com movimentos;
-* extrato sem movimentos num período;
-* cliente com saldo zero;
-* cliente com saldo pendente.
+Os valores do extrato deverão resultar exclusivamente dos movimentos persistidos.
 
----
-
-## 18. Cenários para listagens
-
-Os dados devem permitir demonstrar filtros por:
-
-* cliente;
-* período;
-* tipo documental;
-* estado;
-* série;
-* moeda, se aplicável.
-
-As listagens devem produzir resultados suficientemente variados para mostrar:
-
-* cabeçalhos;
-* linhas;
-* ordenação;
-* totalizadores;
-* estados vazios;
-* paginação, se existente;
-* seleção de colunas.
+Não deverá ser criado um saldo anterior artificial sem suporte documental, salvo se o modelo atual já contemplar saldos de abertura de forma explícita.
 
 ---
 
-## 19. Utilizador de demonstração
+# 15. Listagens e totalizadores
 
-Deve existir um utilizador específico para demonstrações.
+O cenário deverá permitir demonstrar:
 
-Exemplo:
+* documentos por período;
+* documentos por cliente;
+* documentos por estado;
+* documentos ativos;
+* documentos anulados;
+* total líquido;
+* total de imposto;
+* total bruto;
+* total recebido;
+* total pendente.
+
+## 15.1. Documento anulado
+
+O documento anulado:
+
+* deverá aparecer quando o filtro incluir anulados;
+* não deverá entrar nos totais ativos;
+* deverá estar claramente identificado;
+* deverá manter o valor histórico visível na consulta própria.
+
+## 15.2. Quantidade de dados
+
+Devem existir dados suficientes para que as listagens não pareçam vazias, mas não tantos que prejudiquem a clareza.
+
+Referência recomendada:
 
 ```text
-demo@fac.local
+5 a 8 documentos comerciais
+2 a 4 movimentos financeiros
+4 clientes
+8 a 10 artigos e serviços
+3 utilizadores
+2 documentos anulados, incluindo um para demonstração em direto
 ```
-
-ou:
-
-```text
-parceiro.demo
-```
-
-A palavra-passe deve ser configurada por variável de ambiente ou mecanismo seguro.
-
-O utilizador deve ter permissões suficientes para:
-
-* consultar;
-* criar clientes;
-* criar documentos;
-* emitir documentos de demonstração;
-* consultar listagens;
-* consultar extratos;
-* gerar PDF.
-
-Não deve ter permissões para:
-
-* alterar configurações críticas;
-* apagar estruturas base;
-* aceder a dados de outros ambientes;
-* executar reposições destrutivas;
-* alterar credenciais técnicas.
 
 ---
 
-## 20. Estratégia de criação dos dados
+# 16. Auditoria do cenário
 
-A solução principal recomendada é um seeder Java específico para o perfil `demo`.
+A carga inicial deverá produzir uma auditoria coerente.
 
-Nome sugerido:
+Deverão existir eventos demonstráveis de:
 
-```text
-DemoDataSeeder
-```
+* login;
+* emissão;
+* anulação;
+* tentativa de anulação negada;
+* operação executada por administrador;
+* operação executada por operador.
 
-O seeder deve ser executado apenas quando o perfil ativo for:
+## 16.1. Documento reservado à demonstração
 
-```text
-demo
-```
+O documento destinado à anulação em direto não deverá estar previamente anulado.
+
+Após a anulação, a auditoria deverá permitir pesquisar:
+
+* referência documental;
+* utilizador;
+* tipo de evento;
+* data;
+* motivo.
+
+## 16.2. Tentativa negada
+
+A demonstração poderá incluir:
+
+1. entrada como operador;
+2. confirmação de que a ação está oculta;
+3. opcionalmente, tentativa técnica controlada;
+4. registo de tentativa negada.
+
+Não deverá ser criada uma demonstração artificial que exija ferramentas técnicas externas perante o parceiro.
+
+---
+
+# 17. Estratégia de implementação
+
+Deverá ser escolhida uma estratégia compatível com a arquitetura atual.
+
+São admitidas as seguintes abordagens.
+
+## 17.1. Migração Flyway específica
+
+Criar uma migração de dados destinada exclusivamente ao ambiente demo.
+
+Vantagens:
+
+* repetibilidade;
+* controlo de versão;
+* integração com o esquema.
+
+Riscos:
+
+* mistura entre estrutura e dados demo;
+* execução indevida noutros ambientes.
+
+Só deverá ser utilizada se existir proteção rigorosa por ambiente.
+
+## 17.2. Seeder Spring Boot
+
+Criar um componente específico de carga.
 
 Exemplo conceptual:
 
@@ -744,808 +926,838 @@ public class DemoDataSeeder {
 }
 ```
 
-O seeder deve:
+Vantagens:
 
-1. verificar se o cenário já existe;
-2. evitar duplicação acidental;
-3. criar dados de referência;
-4. criar empresa;
-5. criar clientes;
-6. criar artigos;
-7. criar séries;
-8. criar documentos;
-9. criar recebimentos;
-10. validar o resultado final.
+* controlo por perfil;
+* utilização dos serviços da aplicação;
+* cálculo coerente;
+* criação de snapshots;
+* emissão através do fluxo real.
+
+Esta é a abordagem preferencial, desde que:
+
+* seja idempotente;
+* esteja protegida;
+* não execute em produção;
+* utilize os serviços reais sempre que apropriado.
+
+## 17.3. Script SQL controlado
+
+Pode ser utilizado para:
+
+* limpeza;
+* reposição da base;
+* preparação técnica;
+* tarefas impossíveis de executar através da aplicação.
+
+Não deverá ser utilizado para contornar regras do domínio.
+
+## 17.4. Estratégia recomendada
+
+Utilizar combinação de:
+
+1. base de dados dedicada;
+2. perfil Spring `demo`;
+3. script de limpeza ou recriação;
+4. Flyway para esquema;
+5. seeder para dados;
+6. validação automática no final.
 
 ---
 
-## 21. Utilização de serviços de domínio
+# 18. Perfil de demonstração
 
-Sempre que possível, o seeder deve utilizar os serviços reais da aplicação.
+Criar ou consolidar:
+
+```text
+spring.profiles.active=demo
+```
+
+O perfil `demo` deverá:
+
+* utilizar base de dados dedicada;
+* ativar o seeder;
+* identificar a aplicação como Demo Partner Edition;
+* não comunicar com serviços externos;
+* não enviar emails reais;
+* não realizar comunicações fiscais;
+* não utilizar credenciais de produção.
+
+## 18.1. Proteções
+
+A carga demo só deverá ocorrer quando forem satisfeitas condições explícitas.
 
 Exemplo:
 
 ```text
-ClienteService
-ArtigoService
-DocumentoComercialService
-DocumentoFinanceiroService
-SerieService
+perfil ativo = demo
+FAC_DEMO_SEED_ENABLED=true
+nome da base contém fac_demo
 ```
 
-Vantagens:
-
-* respeita regras de negócio;
-* deteta regressões;
-* acompanha a evolução do domínio;
-* evita SQL desligado da aplicação;
-* aproxima a criação de dados da utilização real.
-
-Contudo, deve evitar:
-
-* chamadas HTTP internas desnecessárias;
-* utilização do frontend;
-* duplicação de regras;
-* dependências circulares.
-
-Se algum serviço for inadequado para seeders, pode ser criada uma camada de apoio específica, desde que a lógica fiscal não seja duplicada.
+Se uma destas condições falhar, a reposição deve ser recusada.
 
 ---
 
-## 22. Idempotência
+# 19. Base de dados dedicada
 
-O seeder deve ser idempotente.
-
-Isto significa que executá-lo mais do que uma vez não deve criar duplicados.
-
-Opções:
-
-### Opção A
-
-Verificar se existe uma marca do cenário:
-
-```text
-DEMO_BASE_V1
-```
-
-### Opção B
-
-Verificar se existe a empresa fictícia.
-
-### Opção C
-
-Usar uma tabela técnica de controlo de seeders.
-
-A abordagem deve ser consistente com o projeto.
-
-Exemplo conceptual:
-
-```text
-Se cenário DEMO_BASE_V1 já existe
-→ não voltar a criar
-```
-
----
-
-## 23. Reposição do cenário
-
-Deve existir um mecanismo simples para repor o ambiente.
-
-Comando recomendado:
-
-```bash
-./reset-demo.sh
-```
-
-No Windows:
-
-```powershell
-.\reset-demo.ps1
-```
-
-O script deve executar, de forma controlada:
-
-1. confirmar que o destino é `fac_demo`;
-2. parar os serviços necessários;
-3. eliminar apenas a base de demonstração;
-4. recriar a base;
-5. aplicar o esquema;
-6. executar o seeder;
-7. arrancar backend e frontend;
-8. verificar a disponibilidade;
-9. apresentar resultado final.
-
----
-
-## 24. Proteção contra execução no ambiente errado
-
-O script de reposição deve abortar se a base de dados não for:
+Criar uma base própria, por exemplo:
 
 ```text
 fac_demo
 ```
 
-Deve existir uma confirmação técnica explícita.
-
-Exemplo:
+A base não deverá ser confundida com:
 
 ```text
-Operação recusada: a base configurada não corresponde ao ambiente de demonstração.
-```
-
-Nunca deve executar comandos destrutivos com:
-
-```text
-fac_dev
+fac
 fac_test
-fac_prod
 ```
 
-A proteção deve existir no script e, quando possível, também na aplicação.
+## 19.1. Regras
+
+* `fac_test` continua reservada a testes automatizados;
+* `fac_demo` fica reservada a apresentações;
+* a base principal de desenvolvimento não deve ser limpa pelo mecanismo demo;
+* os scripts devem validar o nome da base antes de apagar dados.
+
+## 19.2. Confirmação de segurança
+
+Qualquer script destrutivo deverá:
+
+* verificar o ambiente;
+* verificar a base;
+* falhar em caso de dúvida;
+* escrever mensagem clara;
+* nunca assumir que a ligação está correta.
 
 ---
 
-## 25. Dump PostgreSQL
+# 20. Mecanismo de reposição
 
-Depois de o cenário-base estar estabilizado, pode ser criado um dump:
+Deverá existir um comando principal.
+
+Exemplo Windows:
 
 ```text
-fac_demo_base.dump
+scripts\reset-demo.ps1
 ```
 
-O dump permite:
+Exemplo Linux:
 
-* reposição rápida;
-* demonstrações sem executar todo o seeder;
-* recuperação após falhas;
-* utilização offline;
-* criação de ambientes temporários.
+```text
+scripts/reset-demo.sh
+```
 
-O dump não substitui o seeder.
+O processo deverá:
 
-O seeder deve permanecer a fonte lógica e documentada do cenário.
+1. validar o perfil;
+2. validar o nome da base;
+3. parar a aplicação, se necessário;
+4. criar backup opcional do estado anterior;
+5. limpar ou recriar a base;
+6. executar Flyway V1 até à versão atual;
+7. iniciar a aplicação em perfil demo;
+8. executar o seeder;
+9. validar os dados;
+10. produzir relatório;
+11. terminar com sucesso ou falha inequívoca.
 
-O dump funciona como fotografia técnica do ambiente.
+## 20.1. Resultado esperado
+
+Mensagem final:
+
+```text
+FAC Demo Partner Edition preparada com sucesso.
+```
+
+Em caso de falha:
+
+```text
+A reposição do ambiente demo falhou. O ambiente não deve ser utilizado para apresentação.
+```
 
 ---
 
-## 26. Estratégia combinada
+# 21. Idempotência
 
-A estratégia recomendada é:
+O seeder deverá ser idempotente ou executar apenas sobre uma base confirmadamente limpa.
 
-```text
-DemoDataSeeder
-→ fonte lógica do cenário
-```
+Não deverá ser possível criar acidentalmente:
 
-```text
-fac_demo_base.dump
-→ reposição rápida
-```
+* clientes duplicados;
+* artigos duplicados;
+* séries duplicadas;
+* utilizadores duplicados;
+* documentos repetidos;
+* eventos de auditoria inconsistentes.
 
-```text
-reset-demo.sh / reset-demo.ps1
-→ automatização da operação
-```
+São admitidas duas estratégias:
 
-Esta combinação oferece:
+## Estratégia A
 
-* robustez;
-* rapidez;
-* repetibilidade;
-* recuperação;
-* independência de preparação manual.
+Recusar execução quando já existem dados demo.
+
+## Estratégia B
+
+Limpar integralmente o ambiente demo e recriar.
+
+Para apresentações, recomenda-se a Estratégia B, desde que protegida pelo nome da base e perfil.
 
 ---
 
-## 27. Docker
+# 22. Utilização dos serviços reais
 
-Se o FAC estiver a utilizar Docker Compose, deve ser considerado um perfil ou ficheiro específico para demonstração.
+Sempre que possível, os documentos deverão ser criados através dos serviços reais da aplicação.
+
+Não inserir diretamente na base:
+
+* totais calculados;
+* ATCUD;
+* payload QR;
+* snapshots;
+* estados financeiros;
+* movimentos;
+* auditoria de sucesso.
+
+O objetivo é garantir que o cenário valida o produto real.
+
+É aceitável inserir diretamente:
+
+* tabelas de referência;
+* configurações;
+* dados mestres simples;
+* elementos necessários antes da utilização dos serviços.
+
+---
+
+# 23. Datas do cenário
+
+As datas devem ser previsíveis.
+
+Existem duas abordagens.
+
+## 23.1. Datas fixas
 
 Exemplo:
 
 ```text
-docker-compose.demo.yml
+maio e junho de 2026
 ```
 
-Serviços possíveis:
+Vantagens:
+
+* consistência;
+* facilidade de ensaio;
+* resultados sempre iguais.
+
+## 23.2. Datas relativas
+
+Exemplo:
 
 ```text
-fac-demo-db
-fac-demo-backend
-fac-demo-frontend
+mês atual e mês anterior
 ```
 
-A base de dados deve utilizar:
+Vantagens:
 
-* volume próprio;
-* credenciais próprias;
-* porta configurada;
-* nome inequívoco.
+* aparência atualizada.
 
-Exemplo de volume:
+Riscos:
 
-```text
-fac_demo_postgres_data
-```
+* alteração de resultados;
+* problemas no final do mês;
+* diferenças entre ensaios.
 
-Não reutilizar o volume da base de desenvolvimento.
+## 23.3. Decisão recomendada
+
+Utilizar datas fixas no cenário-base.
+
+A demonstração deverá utilizar filtros preparados para essas datas.
+
+Isto favorece a repetibilidade e reduz surpresas.
 
 ---
 
-## 28. Configuração do perfil demo
+# 24. Validação automática
 
-O perfil `demo` deve conter apenas as diferenças necessárias.
+Após a carga, executar validações.
 
-Exemplo conceptual:
+## 24.1. Utilizadores
 
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/fac_demo
-  jpa:
-    hibernate:
-      ddl-auto: validate
-```
+Confirmar:
 
-A configuração exata deve respeitar a estratégia atual do projeto.
+* três utilizadores;
+* perfis corretos;
+* utilizadores ativos;
+* palavras-passe armazenadas com hash.
 
-Não introduzir `create-drop` sem decisão consciente.
+## 24.2. Dados mestres
 
-O ambiente deve preservar os dados durante uma demonstração e ser reposto apenas por ação explícita.
+Confirmar:
 
----
+* uma empresa demo;
+* quatro clientes;
+* oito a dez artigos e serviços;
+* séries ativas.
 
-## 29. Geração do esquema
+## 24.3. Documentos
 
-A criação do esquema deve seguir a estratégia oficial do projeto.
+Confirmar:
 
-Possibilidades:
+* documentos emitidos;
+* documento pago;
+* documento parcialmente pago;
+* documento em aberto;
+* documento anulado;
+* documento disponível para anulação;
+* documento multipágina.
 
-* Flyway;
-* scripts SQL;
-* Hibernate;
-* restauração de dump.
+## 24.4. Fiscalidade
 
-Não deve ser criada uma estratégia paralela apenas para demonstração.
+Confirmar:
 
-Se o projeto ainda não utilizar migrações formais, documentar essa limitação e evitar alterações destrutivas automáticas.
-
----
-
-## 30. Roteiro de demonstração
-
-O cenário deve suportar um roteiro de 15 a 20 minutos.
-
-### Passo 1 - Entrada
-
-Mostrar:
-
-* login;
-* identificação do ambiente;
-* dashboard ou ecrã inicial.
-
-### Passo 2 - Clientes
-
-Mostrar:
-
-* listagem;
-* pesquisa;
-* ficha de cliente;
-* criação rápida de um novo cliente.
-
-### Passo 3 - Artigos
-
-Mostrar:
-
-* artigos e serviços;
-* preços;
-* taxas de IVA;
-* pesquisa.
-
-### Passo 4 - Documento comercial
-
-Criar uma fatura para um cliente existente.
-
-Demonstrar:
-
-* seleção de cliente;
-* seleção de artigo;
-* quantidades;
-* preço;
-* IVA;
+* número documental;
+* ATCUD;
+* payload QR;
+* snapshots;
 * totais;
-* gravação.
+* impostos.
 
-### Passo 5 - Emissão
+## 24.5. Financeiro
 
-Demonstrar:
+Confirmar:
 
-* atribuição da série;
-* numeração;
-* emissão;
-* estado definitivo.
+* recebimentos;
+* saldos;
+* documento parcialmente pago;
+* bloqueio de anulação.
 
-Não apresentar o sistema como fiscalmente certificado enquanto tal não for verdade.
+## 24.6. Auditoria
 
-### Passo 6 - PDF
+Confirmar:
 
-Mostrar:
+* eventos de emissão;
+* evento de anulação;
+* utilizadores associados;
+* referência documental pesquisável.
 
-* visualização;
-* paginação;
-* totais;
-* aspeto profissional;
-* impressão em A4.
+## 24.7. Extratos
 
-### Passo 7 - Conta corrente
-
-Abrir o extrato do cliente.
-
-Mostrar:
+Confirmar:
 
 * saldo anterior;
+* movimentos;
 * débitos;
 * créditos;
-* saldo acumulado;
-* total do período;
-* saldo final.
-
-### Passo 8 - Listagens
-
-Mostrar:
-
-* filtros;
-* ordenação;
-* seleção de colunas;
-* totalizadores;
-* estados sem movimentos.
-
-### Passo 9 - Roadmap
-
-Explicar, quando relevante:
-
-* SAF-T;
-* ATCUD;
-* Código QR;
-* segurança;
-* evolução da interface;
-* reporting;
-* exportações.
+* saldo final;
+* exclusão de anulados.
 
 ---
 
-## 31. Reinício após cada demonstração
+# 25. Relatório de preparação
 
-Depois de cada demonstração, o ambiente pode ficar alterado devido a:
-
-* novos clientes;
-* novas faturas;
-* recibos;
-* alterações de filtros;
-* testes feitos pelo parceiro.
-
-Antes da demonstração seguinte, deve ser possível executar:
-
-```text
-repor cenário-base
-```
-
-O resultado deve ser sempre o mesmo.
-
-O tempo objetivo para a reposição deve ser inferior a cinco minutos.
-
-Idealmente:
-
-```text
-1 a 2 minutos
-```
-
----
-
-## 32. Variações do cenário
-
-A primeira versão deve conter apenas um cenário-base.
-
-No futuro poderão existir:
-
-```text
-DEMO_BASE
-DEMO_COMERCIAL
-DEMO_CONTABILIDADE
-DEMO_PARCEIRO
-DEMO_FORMACAO
-```
-
-Não implementar já múltiplos cenários sem necessidade.
-
-Começar por:
-
-```text
-DEMO_BASE_V1
-```
-
-Depois de estabilizado, poderão ser acrescentadas variantes.
-
----
-
-## 33. Versionamento do cenário
-
-O cenário deve possuir uma versão.
+A reposição deverá produzir um resumo.
 
 Exemplo:
 
 ```text
-DEMO_BASE_V1
+FAC Demo Partner Edition
+
+Empresa: Alentejo Sabores, Lda.
+Utilizadores: 3
+Clientes: 4
+Artigos e serviços: 10
+Séries: 3
+Documentos comerciais: 7
+Documentos financeiros: 2
+Documentos anulados: 1
+Documento reservado à anulação: FT D/2026/6
+Documento multipágina: FT D/2026/5
+Validações: aprovadas
 ```
 
-Quando houver alterações incompatíveis:
+O relatório poderá ser:
 
-```text
-DEMO_BASE_V2
-```
-
-A versão deve permitir identificar:
-
-* estrutura esperada;
-* dados criados;
-* funcionalidades demonstradas;
-* compatibilidade com a versão da aplicação.
+* apresentado no terminal;
+* guardado em ficheiro;
+* disponibilizado numa área administrativa.
 
 ---
 
-## 34. Dados realistas, mas fictícios
+# 26. Interface de demonstração
 
-Os dados devem parecer plausíveis.
+## 26.1. Ecrã inicial
+
+Após login, a aplicação deverá apresentar um estado visualmente limpo.
 
 Evitar:
 
-```text
-Cliente 1
-Cliente 2
-Teste
-Artigo A
-Documento Teste
-```
+* avisos técnicos;
+* dados vazios;
+* mensagens de desenvolvimento;
+* componentes incompletos;
+* links sem função;
+* áreas experimentais.
 
-Preferir:
+## 26.2. Credenciais
 
-```text
-Alfa Gestão Empresarial, Lda.
-Iberia Digital Services, S.L.
-Consultoria de gestão
-Acompanhamento mensal
-```
+As credenciais não deverão ficar visíveis no ecrã público, salvo se o ambiente estiver totalmente isolado.
 
-A credibilidade visual é importante numa demonstração.
+Pode existir uma folha operacional separada para o apresentador.
 
-Contudo, todos os dados devem continuar claramente fictícios.
+## 26.3. Utilizador ativo
 
----
+Manter visível:
 
-## 35. Volumes recomendados
+* nome;
+* perfil;
+* opção de terminar sessão.
 
-A primeira versão deve manter aproximadamente:
+## 26.4. Navegação
 
-| Entidade              |         Quantidade |
-| --------------------- | -----------------: |
-| Empresa               |                  1 |
-| Utilizadores          |             1 ou 2 |
-| Clientes              |                  3 |
-| Artigos/serviços      |                  4 |
-| Séries                |             3 ou 4 |
-| Faturas               |                  4 |
-| Faturas simplificadas |                  3 |
-| Notas de crédito      |                  2 |
-| Recibos               |             3 ou 4 |
-| Outros documentos     | Apenas se estáveis |
+As áreas principais da demonstração devem ser fáceis de localizar:
 
-O volume pode ser ajustado ao que estiver efetivamente implementado.
-
-Não criar documentos artificiais apenas para atingir números.
-
----
-
-## 36. Critérios de qualidade dos dados
-
-Os dados devem respeitar:
-
-* integridade referencial;
-* datas coerentes;
-* numeração coerente;
-* relações entre documentos;
-* totais corretos;
-* IVA correto;
-* saldos corretos;
-* estados documentais válidos;
-* ausência de duplicados;
-* ausência de entidades órfãs.
-
-O cenário deve falhar durante a criação se alguma destas regras não for cumprida.
-
----
-
-## 37. Validação automática do cenário
-
-Após a criação, o sistema deve validar, pelo menos:
-
-```text
-Existe uma empresa
-Existem três clientes
-Existem artigos
-Existem séries
-Existem documentos comerciais
-Existem documentos financeiros
-Existe cliente com saldo
-Existe cliente sem saldo
-Existe movimento anterior ao período de demonstração
-```
-
-Pode ser criado um componente:
-
-```text
-DemoScenarioValidator
-```
-
-Este componente deve produzir um relatório simples.
-
-Exemplo:
-
-```text
-Cenário DEMO_BASE_V1 criado com sucesso.
-
-Clientes: 3
-Artigos: 4
-Faturas: 4
-Notas de crédito: 2
-Recibos: 3
-```
-
----
-
-## 38. Testes
-
-Devem existir testes para:
-
-### Seeder
-
-* execução em base vazia;
-* segunda execução sem duplicação;
-* execução apenas no perfil `demo`;
-* falha controlada quando faltam dados de referência;
-* criação das relações esperadas.
-
-### Reposição
-
-* proteção contra base incorreta;
-* recriação de `fac_demo`;
-* execução do seeder;
-* validação final;
-* resultado repetível.
-
-### Cenário funcional
-
-* extrato do cliente principal;
-* saldo anterior;
-* saldo final;
-* listagem de documentos;
-* totalizadores;
-* emissão de novo documento;
-* criação de novo cliente.
-
----
-
-## 39. Segurança
-
-A reposição do cenário é uma operação destrutiva.
-
-Deve exigir:
-
-* ambiente `demo`;
-* nome de base confirmado;
-* utilizador técnico autorizado;
-* comando explícito;
-* registo da operação.
-
-Nunca deve estar disponível a utilizadores comuns através da interface principal.
-
-Uma futura ação administrativa deverá exigir dupla confirmação.
-
----
-
-## 40. Credenciais
-
-As credenciais do ambiente não devem ficar escritas diretamente no código.
-
-Devem ser fornecidas através de:
-
-* variáveis de ambiente;
-* ficheiro `.env` não versionado;
-* mecanismo de segredos;
-* configuração externa.
-
-Pode existir um ficheiro de exemplo:
-
-```text
-.env.demo.example
-```
-
-Sem palavras-passe reais.
-
----
-
-## 41. Documentação de utilização
-
-Deve existir uma secção no README ou um documento específico com os comandos:
-
-```text
-Criar ambiente demo
-Iniciar ambiente demo
-Repor cenário
-Parar ambiente
-Criar dump
-Restaurar dump
-```
-
-Exemplo:
-
-```bash
-docker compose -f docker-compose.demo.yml up -d
-./reset-demo.sh
-```
-
-Os comandos reais devem ser adaptados à infraestrutura existente.
-
----
-
-## 42. Limites da primeira implementação
-
-A primeira implementação não deve incluir:
-
-* dezenas de clientes;
-* grandes volumes de documentos;
-* anonimização de dados reais;
-* importação de bases de clientes;
-* demonstrações multiempresa complexas;
-* comunicação real com a AT;
-* códigos AT reais;
-* automações excessivas;
-* painel público de reposição;
-* múltiplos cenários especializados.
-
-O foco deve permanecer num cenário pequeno, estável e reutilizável.
-
----
-
-## 43. Fases de implementação
-
-### Fase 1 - Definição do cenário
-
-Definir:
-
-* empresa;
 * clientes;
 * artigos;
-* séries;
 * documentos;
-* relações;
-* datas;
-* saldos esperados.
+* recebimentos;
+* extratos;
+* listagens;
+* auditoria.
 
-### Fase 2 - Perfil demo
+---
 
-Criar:
+# 27. Plano offline
 
-* `application-demo.yml`;
-* ligação à base `fac_demo`;
-* identificação visual;
-* utilizador de demonstração.
+A versão demo deverá poder funcionar sem internet, salvo dependências estritamente necessárias.
 
-### Fase 3 - Seeder
+Verificar:
 
-Criar:
+* frontend servido localmente;
+* backend local;
+* PostgreSQL local;
+* fontes disponíveis;
+* QR gerado localmente;
+* ausência de recursos CDN;
+* ausência de APIs externas;
+* ausência de autenticação externa.
 
-* `DemoDataSeeder`;
-* controlo de versão;
-* idempotência;
-* validação final.
-
-### Fase 4 - Reposição
-
-Criar:
-
-* `reset-demo.sh`;
-* `reset-demo.ps1`, se necessário;
-* proteções;
-* mensagens;
-* validação.
-
-### Fase 5 - Dump
-
-Criar:
-
-* dump inicial;
-* comandos de restauração;
-* documentação.
-
-### Fase 6 - Roteiro
+## 27.1. Equipamento
 
 Preparar:
 
-* sequência da apresentação;
-* dados a utilizar;
-* documentos a abrir;
-* filtros a aplicar;
-* pontos do roadmap.
+* computador principal;
+* carregador;
+* browser atualizado;
+* base demo;
+* scripts;
+* backup;
+* cópia local do projeto;
+* versão compilada.
+
+## 27.2. Alternativa
+
+Manter disponível:
+
+* backup restaurável;
+* PDF de exemplos;
+* capturas de ecrã;
+* apresentação curta;
+* versão local previamente iniciada.
+
+O plano alternativo não substitui o sistema, mas reduz o risco de uma apresentação completamente interrompida.
 
 ---
 
-## 44. Critérios de aceitação
+# 28. Marcação da versão no Git
 
-A implementação considera-se concluída quando:
+Criar uma versão identificável.
 
-* existe uma base `fac_demo`;
-* existe um perfil `demo`;
-* os dados são fictícios;
-* existe uma empresa de demonstração;
-* existem três clientes;
-* existem três ou quatro artigos;
-* existem séries coerentes;
-* existem documentos comerciais;
-* existem documentos financeiros;
-* existem relações entre faturas, créditos e recibos;
-* existe cliente com saldo anterior;
-* existe cliente com saldo pendente;
-* existe cliente com saldo zero;
-* as datas são relativas;
-* o cenário pode ser recriado automaticamente;
-* a reposição não afeta outras bases;
-* o seeder não cria duplicados;
-* existe indicação visual de demonstração;
-* existe utilizador de demonstração;
-* existe roteiro de apresentação;
-* os testes relevantes passam;
-* a reposição demora menos de cinco minutos.
-
----
-
-## 45. Resultado esperado
-
-Após a implementação, deverá ser possível executar um único comando e obter:
+Sugestão:
 
 ```text
-FAC iniciado em ambiente de demonstração
-Base fac_demo recriada
-Dados DEMO_BASE_V1 carregados
-Aplicação disponível
+fac-demo-partner-v1
 ```
 
-O utilizador deverá poder iniciar imediatamente uma apresentação, sem preparação manual adicional.
+ou:
+
+```text
+v0.8-demo-partner
+```
+
+A marca deverá ser criada apenas após:
+
+* testes completos;
+* reposição validada;
+* ensaio do guião;
+* correção dos bloqueadores.
+
+Registar:
+
+* commit;
+* tag;
+* data;
+* base de dados compatível;
+* instruções de arranque;
+* credenciais operacionais.
 
 ---
 
-## 46. Decisão final
+# 29. Testes obrigatórios
 
-O cenário-base será tratado como um ativo permanente do projeto FAC.
+## 29.1. Seeder
 
-Não será apenas uma massa de dados descartável.
+Testar:
 
-Será utilizado como:
+* execução apenas no perfil demo;
+* recusa noutros perfis;
+* recusa sobre base não autorizada;
+* criação dos utilizadores;
+* criação dos dados mestres;
+* criação dos documentos;
+* criação dos movimentos;
+* validação final.
 
-* instrumento comercial;
-* ambiente de validação;
-* base de formação;
-* suporte a testes manuais;
-* referência para o desenvolvimento da interface;
-* base para apresentações frequentes.
+## 29.2. Reposição
 
-A implementação deve privilegiar simplicidade, repetibilidade e segurança.
+Testar:
 
-O princípio orientador é:
+* reposição sobre base vazia;
+* reposição após demonstração;
+* segunda reposição sem duplicações;
+* falha controlada;
+* recuperação após falha;
+* execução em Windows;
+* execução em Linux, se suportado.
+
+## 29.3. Dados
+
+Testar:
+
+* totais;
+* estados;
+* saldos;
+* pagamentos;
+* documentos anulados;
+* bloqueios;
+* auditoria;
+* extratos;
+* listagens.
+
+## 29.4. Segurança
+
+Testar:
+
+* utilizador consulta não altera;
+* operador não anula;
+* administrador anula;
+* credenciais não aparecem em logs;
+* reset não executa fora do ambiente demo.
+
+## 29.5. PDF
+
+Testar:
+
+* documentos simples;
+* documento multipágina;
+* documento anulado;
+* ATCUD;
+* QR;
+* totais;
+* cabeçalhos;
+* rodapés.
+
+## 29.6. Suite completa
+
+Condição:
 
 ```text
-uma demonstração
-→ um cenário conhecido
-→ uma reposição simples
-→ um resultado previsível
+0 falhas
+0 erros
 ```
+
+---
+
+# 30. Ensaio manual obrigatório
+
+Depois da implementação, executar pelo menos três ciclos completos:
+
+```text
+reset
+→ arranque
+→ login
+→ percurso demonstrativo
+→ anulação
+→ consulta de auditoria
+→ consulta de extrato
+→ PDF
+→ novo reset
+```
+
+O objetivo é confirmar que:
+
+* o cenário regressa ao estado inicial;
+* o documento reservado à anulação reaparece emitido;
+* a auditoria regressa ao baseline;
+* não existem duplicações;
+* os números documentais são previsíveis;
+* os totais permanecem iguais.
+
+---
+
+# 31. Percurso demonstrativo base
+
+O cenário deverá suportar este guião:
+
+1. login como operador;
+2. visão geral do sistema;
+3. consulta da Mercearia do Castelo;
+4. consulta de artigos;
+5. criação ou consulta de documento;
+6. emissão;
+7. visualização de ATCUD e QR;
+8. geração de PDF;
+9. consulta do documento parcialmente pago;
+10. consulta do extrato;
+11. consulta de listagem e totalizadores;
+12. tentativa de anulação bloqueada;
+13. login como administrador;
+14. anulação do documento reservado;
+15. geração do PDF anulado;
+16. consulta da auditoria;
+17. explicação da evolução futura.
+
+---
+
+# 32. Critérios de aceitação
+
+O documento será considerado concluído quando:
+
+* existir base `fac_demo`;
+* existir perfil `demo`;
+* o reset estiver protegido;
+* os três utilizadores forem criados;
+* a empresa fictícia estiver criada;
+* os clientes estiverem criados;
+* os artigos e serviços estiverem criados;
+* as séries estiverem configuradas;
+* os documentos estiverem emitidos pelo fluxo correto;
+* existirem movimentos financeiros coerentes;
+* existir documento parcialmente pago;
+* existir documento anulado;
+* existir documento disponível para anulação;
+* existir documento multipágina;
+* o extrato apresentar saldo anterior;
+* as listagens apresentarem totalizadores;
+* os anulados não entrarem nos totais ativos;
+* a auditoria estiver coerente;
+* o ambiente puder ser reposto através de um comando;
+* a reposição for repetível;
+* as validações automáticas passarem;
+* a suite completa passar;
+* três ensaios manuais completos forem realizados;
+* não existirem bloqueadores no percurso demonstrativo.
+
+---
+
+# 33. Restrições de implementação
+
+Não introduzir:
+
+* lógica fiscal fictícia;
+* documentos inseridos diretamente com totais forçados;
+* bypass das regras de emissão;
+* bypass das permissões;
+* credenciais em texto simples;
+* reset disponível publicamente;
+* execução automática em produção;
+* dependência de internet;
+* dados pessoais reais;
+* ferramentas de orquestração desnecessárias;
+* arquitetura adicional sem benefício direto para a demo.
+
+Sempre que houver dúvida, deverá prevalecer:
+
+1. estabilidade;
+2. previsibilidade;
+3. facilidade de reposição;
+4. coerência funcional;
+5. baixo risco visual;
+6. possibilidade de evolução futura.
+
+---
+
+# 34. Ordem recomendada de implementação
+
+## Etapa 1 — Infraestrutura
+
+* criar perfil demo;
+* criar configuração da base;
+* criar proteções;
+* criar scripts.
+
+## Etapa 2 — Seeder
+
+* empresa;
+* utilizadores;
+* clientes;
+* artigos;
+* séries.
+
+## Etapa 3 — Documentos
+
+* emitir documentos comerciais;
+* gerar ATCUD;
+* gerar QR;
+* criar snapshots;
+* criar documento multipágina.
+
+## Etapa 4 — Financeiro
+
+* criar recebimento integral;
+* criar recebimento parcial;
+* validar saldos.
+
+## Etapa 5 — Anulação e auditoria
+
+* criar documento previamente anulado;
+* reservar documento para anulação em direto;
+* validar pesquisa por referência.
+
+## Etapa 6 — Extratos e listagens
+
+* validar saldo anterior;
+* validar movimentos;
+* validar totalizadores;
+* validar exclusão de anulados.
+
+## Etapa 7 — Reposição
+
+* automatizar limpeza;
+* recriar base;
+* executar Flyway;
+* executar seeder;
+* validar.
+
+## Etapa 8 — Ensaios
+
+* executar três ciclos;
+* registar falhas;
+* corrigir;
+* marcar versão.
+
+---
+
+# 35. Entregáveis
+
+A implementação deverá produzir:
+
+* configuração `demo`;
+* base de dados dedicada;
+* seeder;
+* scripts de reset;
+* scripts de arranque;
+* validações automáticas;
+* utilizadores demo;
+* empresa demo;
+* clientes demo;
+* artigos e serviços demo;
+* séries demo;
+* documentos demo;
+* movimentos financeiros;
+* auditoria;
+* testes;
+* documentação de credenciais;
+* manual de reposição;
+* relatório final.
+
+---
+
+# 36. Relatório final esperado
+
+No final, apresentar:
+
+## Implementado
+
+Resumo das funcionalidades concluídas.
+
+## Dados criados
+
+Quantidades e referências principais.
+
+## Ficheiros criados
+
+Lista completa.
+
+## Ficheiros alterados
+
+Lista completa.
+
+## Scripts
+
+Descrição dos comandos de reset e arranque.
+
+## Segurança
+
+Proteções implementadas contra execução indevida.
+
+## Testes
+
+* total;
+* falhas;
+* erros;
+* testes novos.
+
+## Ensaios
+
+Resultado dos três ciclos manuais.
+
+## Pendências
+
+Lista transparente.
+
+## Referências da demonstração
+
+* documento multipágina;
+* documento parcialmente pago;
+* documento anulado;
+* documento reservado à anulação;
+* cliente principal do extrato.
+
+---
+
+# 37. Instrução final para o Codex
+
+Implementar o presente documento em:
+
+```text
+C:\Projeto_faturação\fac
+```
+
+Preservar integralmente a arquitetura e os comportamentos consolidados.
+
+Não alterar funcionalidades estáveis sem necessidade.
+
+Não introduzir dados diretamente em tabelas fiscais quando estes devam ser produzidos pelos serviços reais.
+
+Não comprometer:
+
+* numeração;
+* ATCUD;
+* QR;
+* snapshots;
+* auditoria;
+* permissões;
+* saldos;
+* extratos;
+* listagens;
+* rollback;
+* Flyway;
+* `ddl-auto=validate`.
+
+A implementação deverá ser orientada exclusivamente para a criação de uma:
+
+> **FAC Demo Partner Edition estável, credível, previsível e repetível.**
+
+Não considerar o trabalho concluído enquanto o ambiente não puder ser reposto e demonstrado várias vezes com os mesmos resultados.

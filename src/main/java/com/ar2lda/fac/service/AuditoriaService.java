@@ -14,26 +14,38 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.time.Clock;
 
 @Service
 @RequiredArgsConstructor
 public class AuditoriaService {
     private final AuditoriaEventoRepository repository;
     private final UtilizadorRepository utilizadorRepository;
+    private final Clock clock;
 
     @Transactional
     public void registar(TipoAuditoriaEvento tipo, String entidadeTipo, Object entidadeId,
                          String descricao, String dadosEssenciais) {
         String codigo = currentUserCode();
-        String nome = codigo == null ? "SISTEMA" : utilizadorRepository.findById(codigo)
-                .map(Utilizador::getNome).orElse(codigo);
-        repository.save(new AuditoriaEvento(tipo, entidadeTipo, String.valueOf(entidadeId), codigo, nome,
+        Utilizador utilizador = codigo == null ? null : utilizadorRepository.findById(codigo).orElse(null);
+        registarComo(tipo, entidadeTipo, entidadeId, utilizador, ResultadoAuditoria.SUCESSO, null,
+                descricao, dadosEssenciais);
+    }
+
+    @Transactional
+    public void registarComo(TipoAuditoriaEvento tipo, String entidadeTipo, Object entidadeId, Utilizador utilizador,
+                             ResultadoAuditoria resultado, String referencia, String descricao, String dadosEssenciais) {
+        repository.save(new AuditoriaEvento(OffsetDateTime.now(clock), tipo, entidadeTipo, String.valueOf(entidadeId),
+                utilizador == null ? null : utilizador.getCodigo(),
+                utilizador == null ? "SISTEMA" : utilizador.getNome(),
+                utilizador == null ? null : utilizador.getPapel().name(), resultado, referencia,
                 descricao, dadosEssenciais == null ? "{}" : dadosEssenciais));
     }
 
     @Transactional(readOnly = true)
     public Page<AuditoriaEventoDto> consultar(OffsetDateTime desde, OffsetDateTime ate, TipoAuditoriaEvento tipo,
-            String entidadeTipo, String entidadeId, String utilizadorId, ResultadoAuditoria resultado, Pageable pageable) {
+            String entidadeTipo, String entidadeId, String utilizadorId, ResultadoAuditoria resultado,
+            String referencia, Pageable pageable) {
         Specification<AuditoriaEvento> spec = Specification.where(null);
         if (desde != null) spec = spec.and((r, q, cb) -> cb.greaterThanOrEqualTo(r.get("dataHora"), desde));
         if (ate != null) spec = spec.and((r, q, cb) -> cb.lessThanOrEqualTo(r.get("dataHora"), ate));
@@ -42,6 +54,7 @@ public class AuditoriaService {
         if (entidadeId != null && !entidadeId.isBlank()) spec = spec.and((r, q, cb) -> cb.equal(r.get("entidadeId"), entidadeId));
         if (utilizadorId != null && !utilizadorId.isBlank()) spec = spec.and((r, q, cb) -> cb.equal(r.get("utilizadorId"), utilizadorId));
         if (resultado != null) spec = spec.and((r, q, cb) -> cb.equal(r.get("resultado"), resultado));
+        if (referencia != null && !referencia.isBlank()) spec = spec.and((r, q, cb) -> cb.like(cb.lower(r.get("referencia")), "%" + referencia.toLowerCase() + "%"));
         return repository.findAll(spec, pageable).map(this::toDto);
     }
 
@@ -52,6 +65,7 @@ public class AuditoriaService {
 
     private AuditoriaEventoDto toDto(AuditoriaEvento e) {
         return new AuditoriaEventoDto(e.getId(), e.getDataHora(), e.getTipoEvento(), e.getEntidadeTipo(), e.getEntidadeId(),
-                e.getUtilizadorId(), e.getUtilizadorNome(), e.getResultado(), e.getDescricao(), e.getDadosEssenciais());
+                e.getUtilizadorId(), e.getUtilizadorNome(), e.getUtilizadorPerfil(), e.getResultado(), e.getReferencia(),
+                e.getDescricao(), e.getDadosEssenciais());
     }
 }
