@@ -703,7 +703,7 @@ function buildRecebimentoPayload(pendente) {
         mPagamentoId: numberOrNull(valueOf("#recebimento-mpagamento")),
         dataHoraOperacao: null,
         emissorId: valueOf("#recebimento-emissor"),
-        observacoes: `Recebimento preparado no pseudo frontend para ${referencia(pendente.tipoDocumentoId, pendente.serieDocumento, pendente.numeroDocumento)}`,
+        observacoes: `Recebimento preparado na interface para ${referencia(pendente.tipoDocumentoId, pendente.serieDocumento, pendente.numeroDocumento)}`,
         linhas: [
             {
                 pendenteId: pendente.id,

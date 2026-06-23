@@ -1,8 +1,8 @@
 # FAC Workspace UI
 
-Prova de conceito visual para o frontend React do FAC.
+Frontend React do FAC.
 
-O objetivo desta pasta e validar uma interface calma, profissional e focada para uma aplicacao de faturacao simples. Nao e um ERP, nao e um SaaS generico e nao substitui ainda o pseudo frontend em `src/main/resources/static`.
+Esta pasta contem a interface principal, profissional e focada do FAC.
 
 ## Principios visuais
 
@@ -36,6 +36,6 @@ http://localhost:8080
 
 Chamadas para `/api/...` sao encaminhadas para o backend via proxy do Vite.
 
-## Estado da POC
+## Estado da interface
 
-Esta versao ainda usa dados visuais estaticos. Serve para fechar linguagem visual, ritmo de ecras e hierarquia de informacao antes de ligar formularios e fluxos reais.
+A interface comunica com o backend e disponibiliza os fluxos funcionais implementados no FAC.

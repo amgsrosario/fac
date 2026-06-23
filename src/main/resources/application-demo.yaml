@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:25432/fac_demo}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    clean-disabled: true
+
+fac:
+  demo:
+    enabled: true
+    seed-on-startup: ${FAC_DEMO_SEED_ON_STARTUP:false}
+    exit-after-seed: ${FAC_DEMO_EXIT_AFTER_SEED:false}
+    expected-database: fac_demo
+    reset-authorized: ${FAC_DEMO_RESET_AUTHORIZED:false}
+    password-admin: ${FAC_DEMO_PASSWORD_ADMIN:}
+    password-operador: ${FAC_DEMO_PASSWORD_OPERADOR:}
+    password-consulta: ${FAC_DEMO_PASSWORD_CONSULTA:}

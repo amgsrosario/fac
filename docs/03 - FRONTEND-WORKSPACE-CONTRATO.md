@@ -5,7 +5,7 @@
 Versao: 1.0
 Data: 08-06-2026
 Estado: Ativo
-Objetivo: orientar a execucao do frontend real do FAC, usando o pseudo frontend como validacao pratica inicial da visao definida no documento 02.
+Objetivo: orientar a execucao do frontend do FAC, usando a interface inicial como validacao pratica da visao definida no documento 02.
 
 ---
 
@@ -50,7 +50,7 @@ Uma entidade so deve ter ecra proprio quando uma PME real a usa frequentemente e
 
 ---
 
-## 2. O que o pseudo frontend provou
+## 2. O que a interface inicial confirmou
 
 O prototipo estatico servido pelo Spring Boot nao e o frontend definitivo.
 
@@ -69,7 +69,7 @@ Mostrou que a direcao visual e funcional e adequada:
 
 Esta abordagem aproxima o FAC de uma aplicacao moderna de faturacao sem o transformar num ERP.
 
-O aspeto visual do pseudo frontend deve ser tratado como referencia inicial para o futuro frontend React.
+O aspeto visual da interface inicial deve ser tratado como referencia para o frontend React.
 
 ---
 
@@ -244,14 +244,14 @@ Contudo, a entrada em React deve acontecer apenas quando o contrato operacional 
 
 Quando for criado, o frontend React deve preservar:
 
-- a estetica limpa do pseudo frontend;
+- a estetica limpa da interface inicial;
 - a sidebar curta;
 - o workspace por objeto;
 - os paineis contextuais;
 - a separacao entre consulta e acao;
 - o foco no ciclo documento -> pendente -> recebimento.
 
-O pseudo frontend nao e descartavel: serve como referencia visual e funcional.
+A interface inicial serve como referencia visual e funcional.
 
 Stack pretendida para a fase React:
 

@@ -560,7 +560,7 @@ function App({ currentUser, onLogout }: AppProps) {
           <div className="fac-brand-mark">FAC</div>
           <div>
             <strong>Workspace UI</strong>
-            <span>React POC</span>
+            <span>Aplicacao de faturacao</span>
           </div>
         </div>
 
@@ -582,7 +582,7 @@ function App({ currentUser, onLogout }: AppProps) {
       <section className="fac-workspace">
         <header className="fac-topbar">
           <div>
-            <p className="fac-eyebrow">FAC Workspace UI</p>
+            <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "FAC Demo Partner Edition · Ambiente de demonstracao" : "FAC Workspace UI"}</p>
             <h1>{viewTitle(activeView)}</h1>
           </div>
           <div className="fac-topbar-actions">
@@ -676,8 +676,7 @@ function DashboardView({
           <p className="fac-eyebrow">Ambiente de trabalho</p>
           <h2>Uma interface calma para faturar, receber e conferir</h2>
           <p>
-            Esta prova de conceito ja le dados reais do backend para validar o ritmo visual antes
-            de avancarmos para formularios e fluxos de emissao.
+            A interface utiliza dados reais do backend e apresenta o circuito operacional do FAC.
           </p>
         </div>
         <div className="fac-hero-card">
