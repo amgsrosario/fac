@@ -5,6 +5,8 @@ public record LoginResponseDto(
         String type,
         long expiresIn,
         String codigo,
-        String nome
+        String nome,
+        String papel,
+        java.util.Set<String> permissoes
 ) {
 }

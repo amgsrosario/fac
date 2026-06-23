@@ -94,4 +94,38 @@ public class LinhaDocumentoComercial {
     @Setter
     private BigDecimal peso;
 
+    @Column(name = "artigo_codigo", length = 50)
+    private String artigoCodigo;
+
+    @Column(name = "unidade", length = 3)
+    private String unidade;
+
+    @Column(name = "tipo_taxa_iva_codigo", length = 20)
+    private String tipoTaxaIvaCodigo;
+
+    @Column(name = "tipo_taxa_iva_descricao", length = 50)
+    private String tipoTaxaIvaDescricao;
+
+    @Column(name = "base_tributavel", precision = 19, scale = 6)
+    private BigDecimal baseTributavel;
+
+    @Column(name = "valor_imposto", precision = 19, scale = 6)
+    private BigDecimal valorImposto;
+
+    @Column(name = "total_linha", precision = 19, scale = 6)
+    private BigDecimal totalLinha;
+
+    public void consolidarSnapshotFiscal(BigDecimal baseTributavel, BigDecimal valorImposto, BigDecimal totalLinha) {
+        if (artigo == null || tipoTaxaIva == null) {
+            throw new IllegalStateException("Artigo e tipo de taxa IVA são obrigatórios no snapshot da linha");
+        }
+        this.artigoCodigo = artigo.getCodigo();
+        this.unidade = artigo.getUnidade();
+        this.tipoTaxaIvaCodigo = tipoTaxaIva.getId();
+        this.tipoTaxaIvaDescricao = tipoTaxaIva.getDescricao();
+        this.baseTributavel = baseTributavel;
+        this.valorImposto = valorImposto;
+        this.totalLinha = totalLinha;
+    }
+
 }

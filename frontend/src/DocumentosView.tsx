@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { apiFetch, getAuthSession } from "./api";
+import { apiFetch, getAuthSession, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 
 type Page<T> = {
@@ -43,6 +43,10 @@ type DocumentoComercial = {
   observacoes?: string;
   emissorId?: string;
   anulado: boolean;
+  motivoAnulacao?: string;
+  dataHoraAnulacao?: string;
+  anuladoPorUtilizadorId?: string;
+  anuladoPorNome?: string;
   impresso: boolean;
   liquidado: boolean;
 };
@@ -171,6 +175,8 @@ export default function DocumentosView() {
   const [lineForm, setLineForm] = useState<LineForm>(emptyLineForm);
   const [emissionOpen, setEmissionOpen] = useState(false);
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
+  const [annulOpen, setAnnulOpen] = useState(false);
+  const [annulReason, setAnnulReason] = useState("");
   const [columnEditorOpen, setColumnEditorOpen] = useState(false);
   const documentoColumns = useConfiguredColumns("fac.documentos.colunas", DOCUMENTO_COLUMNS);
   const newDocumentClientRef = useRef<HTMLSelectElement>(null);
@@ -347,13 +353,20 @@ export default function DocumentosView() {
 
   async function annulDocument() {
     if (!selected || selected.estado !== "EMITIDO" || selected.anulado) return;
-    if (!window.confirm(`Anular ${reference(selected)}? Esta operacao so e permitida quando nao existem recebimentos ativos.`)) return;
+    const reason = annulReason.trim();
+    if (reason.length < 5 || reason.length > 500) {
+      setMessage("O motivo deve ter entre 5 e 500 caracteres.");
+      return;
+    }
+    if (!window.confirm(`Confirmar a anulacao definitiva de ${reference(selected)}?`)) return;
     setLoading(true);
     setMessage(null);
     setNotice(null);
     try {
-      const annulled = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/anular`, "POST", null);
+      const annulled = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/anular`, "POST", { motivo: reason });
       setDocumentos((current) => current.map((item) => item.id === annulled.id ? annulled : item));
+      setAnnulOpen(false);
+      setAnnulReason("");
       setNotice(`${reference(annulled)} anulado.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Nao foi possivel anular o documento.");
@@ -466,6 +479,11 @@ export default function DocumentosView() {
   const annulled = documentos.filter((documento) => documento.anulado).length;
   const availableSeries = series.filter((serie) => serie.tipoDocumentoId === draftForm.tipoDocumentoId);
   const selectedIsDraft = selected?.estado === "RASCUNHO";
+  const canCreate = hasPermission("DOCUMENTO_CRIAR");
+  const canEdit = hasPermission("DOCUMENTO_EDITAR_RASCUNHO");
+  const canEmit = hasPermission("DOCUMENTO_EMITIR");
+  const canAnnul = hasPermission("DOCUMENTO_ANULAR");
+  const canPdf = hasPermission("DOCUMENTO_OBTER_PDF");
 
   function changeDraft<K extends keyof DraftForm>(field: K, value: DraftForm[K]) {
     setDraftForm((current) => ({ ...current, [field]: value }));
@@ -569,7 +587,7 @@ export default function DocumentosView() {
         <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar documento, cliente, NIF ou estado" type="search" value={search} />
         <div className="fac-inline-actions">
           <button className="fac-soft-button" disabled={loading} onClick={loadDocumentos} type="button">Atualizar</button>
-          <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({documentoColumns.visibleColumns.length})</button><button className="fac-primary-button" disabled={loading} onClick={openDraftEditor} type="button">Novo documento</button></div>
+          <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({documentoColumns.visibleColumns.length})</button>{canCreate && <button className="fac-primary-button" disabled={loading} onClick={openDraftEditor} type="button">Novo documento</button>}</div>
         </div>
       </section>
 
@@ -600,14 +618,17 @@ export default function DocumentosView() {
             <div><dt>Vencimento</dt><dd>{selected?.dataVencimento ? datePt(selected.dataVencimento) : "-"}</dd></div>
             <div><dt>Total</dt><dd>{selected ? `${money(selected.valorTotal)} ${selected.moedaId}` : "-"}</dd></div>
             <div><dt>Liquidado</dt><dd>{selected?.liquidado ? "Sim" : "Nao"}</dd></div>
+            {selected?.estado === "ANULADO" && <><div><dt>Motivo da anulacao</dt><dd>{selected.motivoAnulacao ?? "-"}</dd></div><div><dt>Anulado em</dt><dd>{selected.dataHoraAnulacao ? new Date(selected.dataHoraAnulacao).toLocaleString("pt-PT") : "-"}</dd></div><div><dt>Anulado por</dt><dd>{selected.anuladoPorNome ?? selected.anuladoPorUtilizadorId ?? "-"}</dd></div></>}
           </dl>
           <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openHtml(selected.id)} type="button">Diagnostico HTML</button>
           <button className="fac-ghost-button" disabled={!selected} onClick={() => selected && openJson(selected.id)} type="button">Diagnostico JSON</button>
-          {selected?.estado === "EMITIDO" && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
-          {selected?.estado === "EMITIDO" && !selected.anulado && <button className="fac-link-danger" disabled={loading} onClick={annulDocument} type="button">Anular fatura</button>}
-          {selectedIsDraft && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
+          {(selected?.estado === "EMITIDO" || selected?.estado === "ANULADO") && canPdf && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
+          {selected?.estado === "EMITIDO" && canAnnul && <button className="fac-link-danger" disabled={loading} onClick={() => { setAnnulReason(""); setAnnulOpen(true); }} type="button">Anular fatura</button>}
+          {selectedIsDraft && canEmit && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
         </aside>
       </section>
+
+      {annulOpen && selected && <div className="fac-dialog-backdrop" role="presentation"><div aria-labelledby="annul-title" aria-modal="true" className="fac-dialog" role="dialog"><h2 id="annul-title">Anular {reference(selected)}</h2><p>O documento e os dados fiscais originais serao preservados. Esta operacao e definitiva.</p><label className="fac-field"><span>Motivo da anulacao</span><textarea autoFocus maxLength={500} onChange={(event) => setAnnulReason(event.target.value)} value={annulReason} /></label><small>{annulReason.trim().length}/500 (minimo 5)</small><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => setAnnulOpen(false)} type="button">Cancelar</button><button className="fac-link-danger" disabled={loading || annulReason.trim().length < 5} onClick={annulDocument} type="button">{loading ? "A anular..." : "Confirmar anulacao"}</button></div></div></div>}
 
       {emissionOpen && selectedIsDraft && diagnostico && (
         <section className="fac-panel fac-section-panel fac-emission-panel">
@@ -639,11 +660,11 @@ export default function DocumentosView() {
           <div><p className="fac-eyebrow">Linhas</p><h2>{selected ? reference(selected) : "Sem documento"}</h2></div>
           <div className="fac-inline-actions">
             <span className="fac-muted">{linesLoading ? "A carregar..." : `${linhas.length} linhas`}</span>
-            {selectedIsDraft && <button className="fac-primary-button" disabled={linesLoading} onClick={openLineEditor} type="button">Adicionar linha</button>}
+            {selectedIsDraft && canEdit && <button className="fac-primary-button" disabled={linesLoading} onClick={openLineEditor} type="button">Adicionar linha</button>}
           </div>
         </div>
 
-        {lineEditorOpen && selectedIsDraft && (
+        {lineEditorOpen && selectedIsDraft && canEdit && (
           <div className="fac-line-editor">
             <div className="fac-form-grid">
               <Field label="Artigo">
@@ -710,7 +731,8 @@ async function requestJson<T>(url: string, method: "POST" | "PUT", body: unknown
 async function responseError(response: Response) {
   try {
     const payload = await response.json();
-    return payload.message || payload.error || `Erro HTTP ${response.status}`;
+    const prefix = response.status === 403 ? "Sem permissao: " : response.status === 409 ? "Conflito: " : response.status === 400 ? "Validacao: " : "";
+    return prefix + (payload.message || payload.error || `Erro HTTP ${response.status}`);
   } catch {
     return `Erro HTTP ${response.status}`;
   }

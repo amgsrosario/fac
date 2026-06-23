@@ -1,6 +1,7 @@
 package com.ar2lda.fac;
 
 import com.ar2lda.fac.model.Utilizador;
+import com.ar2lda.fac.model.PapelUtilizador;
 import com.ar2lda.fac.repository.UtilizadorRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,5 +93,28 @@ class SecurityIntegrationTests {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void utilizadorConsultaNaoPodeGerirSeries() throws Exception {
+        Utilizador consulta = new Utilizador("CONSULTA", "Utilizador Consulta", "consulta@fac.test",
+                passwordEncoder.encode("FacTest1!"), false);
+        consulta.setPapel(PapelUtilizador.CONSULTA);
+        utilizadorRepository.save(consulta);
+        String response = mockMvc.perform(post("/auth/login").contentType("application/json").content("""
+                {"username":"consulta@fac.test","password":"FacTest1!"}
+                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.papel").value("CONSULTA"))
+                .andExpect(jsonPath("$.permissoes").isArray())
+                .andReturn().getResponse().getContentAsString();
+        String token = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
+                .readTree(response).get("token").asText();
+
+        mockMvc.perform(post("/series").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("""
+                                {"tipoDocumentoId":"FT1","serie":"2026","nome":"Serie 2026"}
+                                """))
+                .andExpect(status().isForbidden());
     }
 }

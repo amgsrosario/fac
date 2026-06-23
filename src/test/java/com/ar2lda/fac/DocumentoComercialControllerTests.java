@@ -180,8 +180,10 @@ class DocumentoComercialControllerTests {
         empresaRepository.save(empresa);
 
         TipoDocumento tipoDocumento = new TipoDocumento("DCT", "Documento teste", null, null, null, null, 1, 1, 1, false);
+        tipoDocumento.setCodigoFiscal("FT");
         tipoDocumentoRepository.save(tipoDocumento);
         TipoDocumento tipoDocumentoFinanceiro = new TipoDocumento("RCB", "Recibo teste", null, null, null, null, 3, 1, 2, true);
+        tipoDocumentoFinanceiro.setCodigoFiscal("RC");
         tipoDocumentoRepository.save(tipoDocumentoFinanceiro);
         serieRepository.save(new Serie(tipoDocumentoFinanceiro, "A", "Serie recibo", "RCB2026", java.time.LocalDate.of(2026, 1, 1)));
         serieRepository.save(new Serie(tipoDocumento, "A", "Série A", "DCT2026", java.time.LocalDate.of(2026, 1, 1)));
@@ -608,17 +610,22 @@ class DocumentoComercialControllerTests {
         DocumentoComercial documento = documentoRepository.findAll().get(0);
         org.assertj.core.api.Assertions.assertThat(pendenteRepository.findByDocumentoComercialId(documento.getId())).isPresent();
 
-        mockMvc.perform(post(documentoLocation + "/anular"))
+        mockMvc.perform(post(documentoLocation + "/anular")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Erro confirmado no documento\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.estado").value("EMITIDO"))
+                .andExpect(jsonPath("$.estado").value("ANULADO"))
                 .andExpect(jsonPath("$.anulado").value(true))
+                .andExpect(jsonPath("$.motivoAnulacao").value("Erro confirmado no documento"))
                 .andExpect(jsonPath("$.liquidado").value(false));
 
         Pendente pendenteAnulado = pendenteRepository.findByDocumentoComercialId(documento.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteAnulado.getValorPendente()).isEqualByComparingTo("0.000000");
 
-        mockMvc.perform(post(documentoLocation + "/anular"))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(post(documentoLocation + "/anular")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Segunda tentativa de anulacao\"}"))
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -781,7 +788,9 @@ class DocumentoComercialControllerTests {
         org.assertj.core.api.Assertions.assertThat(pendenteAtualizado.getValorPendente()).isEqualByComparingTo("14.600000");
         org.assertj.core.api.Assertions.assertThat(documentoRepository.findById(documento.getId()).orElseThrow().isLiquidado()).isTrue();
 
-        mockMvc.perform(post(documentoLocation + "/anular"))
+        mockMvc.perform(post(documentoLocation + "/anular")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Erro confirmado no documento\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(
                         "Documento comercial tem recebimentos ativos. Anule primeiro os respetivos documentos financeiros"
@@ -796,8 +805,11 @@ class DocumentoComercialControllerTests {
         org.assertj.core.api.Assertions.assertThat(pendenteReposto.getValorPendente()).isEqualByComparingTo("24.600000");
         org.assertj.core.api.Assertions.assertThat(documentoRepository.findById(documento.getId()).orElseThrow().isLiquidado()).isFalse();
 
-        mockMvc.perform(post(documentoLocation + "/anular"))
+        mockMvc.perform(post(documentoLocation + "/anular")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Documento substituido apos correcao\"}"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("ANULADO"))
                 .andExpect(jsonPath("$.anulado").value(true))
                 .andExpect(jsonPath("$.atcud").value("DCT2026-1"));
 

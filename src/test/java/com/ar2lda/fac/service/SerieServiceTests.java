@@ -9,6 +9,7 @@ import com.ar2lda.fac.repository.DocumentoComercialRepository;
 import com.ar2lda.fac.repository.DocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.SerieRepository;
 import com.ar2lda.fac.repository.TipoDocumentoRepository;
+import com.ar2lda.fac.security.FunctionalAuthorization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +39,10 @@ class SerieServiceTests {
     private DocumentoFinanceiroRepository documentoFinanceiroRepository;
     @Mock
     private SerieMapper mapper;
+    @Mock
+    private AuditoriaService auditoriaService;
+    @Mock
+    private FunctionalAuthorization functionalAuthorization;
 
     private SerieService service;
     private Serie serie;
@@ -49,7 +54,9 @@ class SerieServiceTests {
                 tipoDocumentoRepository,
                 documentoComercialRepository,
                 documentoFinanceiroRepository,
-                mapper
+                mapper,
+                auditoriaService,
+                functionalAuthorization
         );
         TipoDocumento tipoDocumento = mock(TipoDocumento.class);
         lenient().when(tipoDocumento.getId()).thenReturn("FT1");

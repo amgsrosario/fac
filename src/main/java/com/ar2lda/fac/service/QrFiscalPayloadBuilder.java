@@ -5,6 +5,7 @@ import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroImpressaoDto;
 import com.ar2lda.fac.controller.dto.EmpresaDto;
+import com.ar2lda.fac.controller.dto.EmitenteFiscalSnapshotDto;
 import com.ar2lda.fac.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class QrFiscalPayloadBuilder {
             throw new BadRequestException("Documento comercial é obrigatório para gerar o QR fiscal");
         }
 
-        EmpresaDto empresa = impressao.empresa();
+        EmitenteFiscalSnapshotDto empresa = impressao.empresa();
         DocumentoComercialDto documento = impressao.documento();
         validateDocumento(documento);
 
@@ -43,7 +44,7 @@ public class QrFiscalPayloadBuilder {
         add(fields, "D", required(codigoFiscal(documento.tipoDocumentoCodigoFiscal(), documento.tipoDocumentoId()), "Tipo de documento fiscal"));
         add(fields, "E", "N");
         add(fields, "F", documento.dataEmissao().format(QR_DATE));
-        add(fields, "G", documento.tipoDocumentoId() + " " + documento.serie() + "/" + documento.numeroDocumento());
+        add(fields, "G", required(documento.numeroDocumentoCompleto(), "Número completo do documento"));
         add(fields, "H", required(documento.atcud(), "ATCUD"));
         add(fields, "I1", "PT");
         addMoneyIfPositive(fields, "I2", documento.valorIsento());

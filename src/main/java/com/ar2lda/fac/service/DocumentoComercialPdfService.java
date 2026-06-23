@@ -2,13 +2,16 @@ package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.DocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
-import com.ar2lda.fac.controller.dto.EmpresaDto;
+import com.ar2lda.fac.controller.dto.EmitenteFiscalSnapshotDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialDto;
 import com.ar2lda.fac.exception.BadRequestException;
+import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.model.EstadoDocumentoComercial;
+import com.ar2lda.fac.model.TipoAuditoriaEvento;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
@@ -26,14 +29,17 @@ public class DocumentoComercialPdfService {
 
     private final DocumentoComercialService documentoService;
     private final QrCodeImageService qrCodeImageService;
-    private final FiscalQrService fiscalQrService;
+    private final AuditoriaService auditoriaService;
 
+    @Transactional
     public PdfDocumento gerar(Long id) {
         DocumentoComercialImpressaoDto impressao = documentoService.getImpressao(id);
         DocumentoComercialDto documento = impressao.documento();
-        if (documento.estado() != EstadoDocumentoComercial.EMITIDO || documento.numeroDocumento() == null) {
+        if ((documento.estado() != EstadoDocumentoComercial.EMITIDO && documento.estado() != EstadoDocumentoComercial.ANULADO)
+                || documento.numeroDocumento() == null) {
             throw new BadRequestException("Apenas documentos emitidos podem gerar o PDF definitivo");
         }
+        validateQrConsolidado(documento);
 
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
@@ -41,15 +47,17 @@ public class DocumentoComercialPdfService {
             builder.withHtmlContent(buildHtml(impressao), null);
             builder.toStream(output);
             builder.run();
-            documentoService.marcarComoImpresso(id);
-            return new PdfDocumento(nomeFicheiro(documento), output.toByteArray());
+            PdfDocumento pdf = new PdfDocumento(nomeFicheiro(documento), output.toByteArray());
+            auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_PDF_GERADO, "DOCUMENTO_COMERCIAL", id,
+                    "PDF fiscal gerado", "{\"versao\":1,\"estado\":\"" + documento.estado() + "\"}");
+            return pdf;
         } catch (Exception exception) {
             throw new IllegalStateException("Nao foi possivel gerar o PDF do documento", exception);
         }
     }
 
     private String buildHtml(DocumentoComercialImpressaoDto impressao) {
-        EmpresaDto empresa = impressao.empresa();
+        EmitenteFiscalSnapshotDto empresa = impressao.empresa();
         DocumentoComercialDto documento = impressao.documento();
         StringBuilder linhas = new StringBuilder();
         for (LinhaDocumentoComercialDto linha : impressao.linhas()) {
@@ -65,8 +73,10 @@ public class DocumentoComercialPdfService {
                     .append("</tr>");
         }
 
-        String anulada = documento.anulado()
-                ? "<div class=\"watermark\">ANULADO</div>"
+        String anulada = documento.estado() == EstadoDocumentoComercial.ANULADO
+                ? "<div class=\"watermark\">ANULADO</div><div class=\"annulment\"><strong>DOCUMENTO ANULADO</strong><br />Motivo: "
+                    + esc(documento.motivoAnulacao()) + "<br />Anulado em: "
+                    + esc(documento.dataHoraAnulacao()) + "<br />Por: " + esc(documento.anuladoPorNome()) + "</div>"
                 : "";
         String transporte = hasText(documento.cargaMorada()) || hasText(documento.descargaMorada())
                 ? transporte(documento)
@@ -113,6 +123,7 @@ public class DocumentoComercialPdfService {
                     .qr { width: 40mm; height: 40mm; }
                     .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #dfe2e3; font-size: 7.5pt; color: #777f87; line-height: 1.4; }
                     .watermark { position: fixed; top: 44%%; left: 18%%; width: 64%%; transform: rotate(-28deg); text-align: center; font-size: 58pt; font-weight: bold; color: #efdede; }
+                    .annulment { border: 2px solid #a51f1f; color: #7d1717; background: #fff4f4; padding: 8px; margin-bottom: 10px; line-height: 1.45; }
                   </style>
                 </head>
                 <body>
@@ -151,21 +162,21 @@ public class DocumentoComercialPdfService {
                 """.formatted(
                 anulada,
                 esc(empresa.nome()), esc(empresa.nif()), address(empresa.morada(), empresa.morada1()),
-                esc(joinPostal(empresa.codPostalId(), empresa.localidade())), esc(empresa.email()), esc(empresa.web()),
-                esc(documento.tipoDocumentoId()), esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(),
+                esc(joinPostal(empresa.codPostal(), empresa.localidade())), esc(empresa.email()), esc(empresa.web()),
+                esc(documento.tipoDocumentoDescricao()), esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(),
                 date(documento.dataEmissao()), date(documento.dataVencimento()),
                 esc(documento.clienteNome()), esc(documento.clienteNif()), address(documento.clienteMorada(), documento.clienteMorada1()),
                 esc(joinPostal(documento.clienteCodPostal(), documento.clienteLocalidade())),
-                esc(documento.moedaId()), esc(documento.rivaId()), value(documento.mPagamentoId()), esc(documento.pPagamentoId()),
+                esc(documento.moedaCodigo()), esc(documento.regimeIvaCodigo()), value(documento.mPagamentoId()), esc(documento.pPagamentoId()),
                 linhas,
                 money(documento.valorIsento()), money(documento.valorSujeitoReduzida()), money(documento.valorIvaReduzida()),
                 money(documento.valorSujeitoIntermedia()), money(documento.valorIvaIntermedia()), money(documento.valorSujeitoNormal()), money(documento.valorIvaNormal()),
-                money(documento.valorBruto()), esc(documento.moedaId()), money(documento.valorDesconto()), esc(documento.moedaId()),
-                money(documento.valorIvaTotal()), esc(documento.moedaId()), money(documento.valorRetencao()), esc(documento.moedaId()),
-                money(documento.valorTotal()), esc(documento.moedaId()),
+                money(documento.valorBruto()), esc(documento.moedaSimbolo()), money(documento.valorDesconto()), esc(documento.moedaSimbolo()),
+                money(documento.valorIvaTotal()), esc(documento.moedaSimbolo()), money(documento.valorRetencao()), esc(documento.moedaSimbolo()),
+                money(documento.valorTotal()), esc(documento.moedaSimbolo()),
                 transporte,
                 hasText(documento.observacoes()) ? "<div class=\"box\"><div class=\"section-title\">Observacoes</div>" + esc(documento.observacoes()) + "</div>" : "",
-                fiscal(documento.atcud(), qrPayload(impressao)),
+                fiscal(documento.atcud(), documento.qrPayload()),
                 esc(documento.emissorId()), documento.momentoEmissao() == null ? "-" : esc(documento.momentoEmissao().toString()),
                 money(empresa.capitalSocial()), esc(empresa.matriculaRegistoComercial()), esc(empresa.cae()), esc(empresa.descricaoCae())
         );
@@ -191,13 +202,18 @@ public class DocumentoComercialPdfService {
                 + esc(atcud) + "</div>" + qr + "</div></div>";
     }
 
-    private String qrPayload(DocumentoComercialImpressaoDto impressao) {
-        if (hasText(impressao.documento().qrPayload())) {
-            return impressao.documento().qrPayload();
+    private void validateQrConsolidado(DocumentoComercialDto documento) {
+        if (hasText(documento.qrPayload())) {
+            return;
         }
-        return fiscalQrService.buildDocumentoComercial(impressao)
-                .map(FiscalQrService.QrFiscal::payload)
-                .orElse("");
+        if (!hasText(documento.numeroDocumentoCompleto())) {
+            throw new ConflictException(
+                    "Documento legado sem payload QR fiscal consolidado; o PDF fiscal não pode ser gerado"
+            );
+        }
+        throw new ConflictException(
+                "Documento emitido inconsistente: payload QR fiscal consolidado em falta"
+        );
     }
 
     private String td(String text, String cssClass) {

@@ -8,6 +8,11 @@ import org.mapstruct.Mapper;
 public interface LinhaDocumentoComercialMapper {
 
     default LinhaDocumentoComercialDto toDTO(LinhaDocumentoComercial e) {
+        return toDTO(e, e != null && e.getDocumentoComercial() != null
+                && e.getDocumentoComercial().getFiscalSnapshotVersion() != null);
+    }
+
+    default LinhaDocumentoComercialDto toDTO(LinhaDocumentoComercial e, boolean consolidado) {
         if (e == null) {
             return null;
         }
@@ -15,7 +20,7 @@ public interface LinhaDocumentoComercialMapper {
                 e.getId(),
                 e.getDocumentoComercial() != null ? e.getDocumentoComercial().getId() : null,
                 e.getNumeroLinha(),
-                e.getArtigo() != null ? e.getArtigo().getCodigo() : null,
+                consolidado ? e.getArtigoCodigo() : e.getArtigo() != null ? e.getArtigo().getCodigo() : null,
                 e.getDescricao(),
                 e.getQuantidade(),
                 e.getPrecoUnitario(),
@@ -24,9 +29,13 @@ public interface LinhaDocumentoComercialMapper {
                 e.getDesconto(),
                 e.getValorDesconto(),
                 e.getValorLinha(),
-                e.getTipoTaxaIva() != null ? e.getTipoTaxaIva().getId() : null,
+                consolidado ? e.getTipoTaxaIvaCodigo() : e.getTipoTaxaIva() != null ? e.getTipoTaxaIva().getId() : null,
                 e.getPercentagemIva(),
-                e.getPeso()
+                e.getPeso(),
+                consolidado ? e.getUnidade() : e.getArtigo() != null ? e.getArtigo().getUnidade() : null,
+                e.getBaseTributavel(),
+                e.getValorImposto(),
+                e.getTotalLinha()
         );
     }
 }

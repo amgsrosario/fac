@@ -2,7 +2,7 @@ package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.DocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
-import com.ar2lda.fac.controller.dto.EmpresaDto;
+import com.ar2lda.fac.controller.dto.EmitenteFiscalSnapshotDto;
 import com.ar2lda.fac.exception.BadRequestException;
 import com.ar2lda.fac.model.EstadoDocumentoComercial;
 import org.junit.jupiter.api.Test;
@@ -66,9 +66,8 @@ class QrFiscalPayloadBuilderTests {
         return new DocumentoComercialImpressaoDto(empresa(), documento("509999990"), List.of());
     }
 
-    private EmpresaDto empresa() {
-        return new EmpresaDto(
-                1L,
+    private EmitenteFiscalSnapshotDto empresa() {
+        return new EmitenteFiscalSnapshotDto(
                 "FAC Lda",
                 "500000000",
                 "Rua da Empresa, 1",
@@ -76,17 +75,12 @@ class QrFiscalPayloadBuilderTests {
                 "3750-001",
                 "Agueda",
                 "PT",
-                null,
-                null,
-                null,
-                null,
-                null,
+                "fac@example.pt",
+                "https://fac.example.pt",
                 BigDecimal.ZERO,
                 "CRC Agueda",
                 "62010",
-                "Programacao",
-                "fac@example.pt",
-                "https://fac.example.pt"
+                "Programacao"
         );
     }
 
@@ -101,7 +95,9 @@ class QrFiscalPayloadBuilderTests {
                 codigoFiscal,
                 "2026",
                 1L,
+                tipoDocumentoId + " 2026/1",
                 "ABCD1234-1",
+                false,
                 false,
                 null,
                 EstadoDocumentoComercial.EMITIDO,
@@ -161,8 +157,21 @@ class QrFiscalPayloadBuilderTests {
                 null,
                 "DEMO",
                 false,
+                null,
+                null,
+                null,
+                null,
                 false,
-                false
+                false,
+                1,
+                "AT-QR-1.1",
+                "Fatura",
+                "Série 2026",
+                "EUR",
+                "EUR",
+                2,
+                null,
+                "NOR"
         );
     }
 }

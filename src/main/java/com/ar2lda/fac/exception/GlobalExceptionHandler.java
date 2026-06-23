@@ -2,6 +2,7 @@ package com.ar2lda.fac.exception;
 
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -30,6 +31,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<?> handleConflict(ConflictException ex, HttpServletRequest request) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI(), null);
+    }
+
+    @ExceptionHandler(CannotAcquireLockException.class)
+    public ResponseEntity<?> handleLockConflict(CannotAcquireLockException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.CONFLICT,
+                "Conflito concorrente ao alterar o documento",
+                request.getRequestURI(), null);
     }
 
     @ExceptionHandler(BadRequestException.class)

@@ -33,7 +33,9 @@ public class AuthService {
                 "Bearer",
                 jwtService.expirationSeconds(),
                 utilizador.getCodigo(),
-                utilizador.getNome()
+                utilizador.getNome(),
+                utilizador.getPapel().name(),
+                utilizador.getPapel().permissoes().stream().map(Enum::name).collect(java.util.stream.Collectors.toUnmodifiableSet())
         );
     }
 
