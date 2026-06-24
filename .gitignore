@@ -42,3 +42,9 @@ frontend/vite.config.d.ts
 ### PostgreSQL local backups ###
 backups/database/
 *.dump
+
+### FAC Demo local ###
+.env.demo
+.env.demo.*.local
+.demo-runtime/
+*.log

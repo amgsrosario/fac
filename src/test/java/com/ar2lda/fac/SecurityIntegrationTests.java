@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -129,6 +130,45 @@ class SecurityIntegrationTests {
                 .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/auditoria").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/clientes").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Permissao funcional insuficiente"));
+
+        mockMvc.perform(post("/documentos-financeiros").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/empresa").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void utilizadorOperadorNaoPodeAcederAuditoriaNemConfiguracao() throws Exception {
+        Utilizador operador = new Utilizador("OPERADOR", "Utilizador Operador", "operador@fac.test",
+                passwordEncoder.encode("FacTest1!"), false);
+        operador.setPapel(PapelUtilizador.OPERADOR);
+        utilizadorRepository.save(operador);
+        String response = mockMvc.perform(post("/auth/login").contentType("application/json").content("""
+                {"username":"operador@fac.test","password":"FacTest1!"}
+                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.papel").value("OPERADOR"))
+                .andReturn().getResponse().getContentAsString();
+        String token = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
+                .readTree(response).get("token").asText();
+
+        mockMvc.perform(get("/auditoria").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/empresa").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
     }
 }

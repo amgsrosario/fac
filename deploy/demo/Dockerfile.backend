@@ -1,0 +1,13 @@
+FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
+WORKDIR /build
+COPY pom.xml ./
+COPY src ./src
+RUN mvn -q -DskipTests package
+
+FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S fac && adduser -S fac -G fac
+WORKDIR /app
+COPY --from=build /build/target/fac-*.jar /app/fac.jar
+USER fac
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/fac.jar"]

@@ -33,6 +33,15 @@ public class DocumentoComercialPdfService {
 
     @Transactional
     public PdfDocumento gerar(Long id) {
+        return gerar(id, true);
+    }
+
+    @Transactional(readOnly = true)
+    public PdfDocumento gerarParaValidacao(Long id) {
+        return gerar(id, false);
+    }
+
+    private PdfDocumento gerar(Long id, boolean auditar) {
         DocumentoComercialImpressaoDto impressao = documentoService.getImpressao(id);
         DocumentoComercialDto documento = impressao.documento();
         if ((documento.estado() != EstadoDocumentoComercial.EMITIDO && documento.estado() != EstadoDocumentoComercial.ANULADO)
@@ -48,8 +57,10 @@ public class DocumentoComercialPdfService {
             builder.toStream(output);
             builder.run();
             PdfDocumento pdf = new PdfDocumento(nomeFicheiro(documento), output.toByteArray());
-            auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_PDF_GERADO, "DOCUMENTO_COMERCIAL", id,
-                    "PDF fiscal gerado", "{\"versao\":1,\"estado\":\"" + documento.estado() + "\"}");
+            if (auditar) {
+                auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_PDF_GERADO, "DOCUMENTO_COMERCIAL", id,
+                        "PDF fiscal gerado", "{\"versao\":1,\"estado\":\"" + documento.estado() + "\"}");
+            }
             return pdf;
         } catch (Exception exception) {
             throw new IllegalStateException("Nao foi possivel gerar o PDF do documento", exception);
@@ -88,10 +99,19 @@ public class DocumentoComercialPdfService {
                 <head>
                   <meta charset="UTF-8" />
                   <style>
-                    @page { size: A4; margin: 16mm 13mm 18mm; @bottom-center { content: "Pagina " counter(page) " de " counter(pages); font-size: 8pt; color: #737980; } }
+                    @page { size: A4; margin: 29mm 13mm 18mm; @top-center { content: element(continuation-header); } @bottom-center { content: "Pagina " counter(page) " de " counter(pages); font-size: 8pt; color: #737980; } }
+                    @page:first { margin-top: 16mm; @top-center { content: none; } }
                     * { box-sizing: border-box; }
                     body { font-family: Arial, sans-serif; font-size: 9pt; color: #38434d; margin: 0; }
                     h1, h2, p { margin: 0; }
+                    .continuation-header { position: running(continuation-header); width: 100%%; border-bottom: 1.5px solid #ba963c; padding: 0 0 2.2mm; color: #44515d; font-size: 7.5pt; line-height: 1.35; }
+                    .continuation-header table { width: 100%%; border-collapse: collapse; }
+                    .continuation-header td { vertical-align: top; }
+                    .continuation-company { width: 31%%; }
+                    .continuation-document { width: 38%%; text-align: center; }
+                    .continuation-client { width: 31%%; text-align: right; }
+                    .continuation-label { color: #9a771e; font-size: 8.5pt; font-weight: bold; letter-spacing: .6px; text-transform: uppercase; }
+                    .continuation-page::after { content: "Pagina " counter(page) " de " counter(pages); }
                     .top { width: 100%%; border-bottom: 2px solid #ba963c; padding-bottom: 8px; margin-bottom: 14px; }
                     .top td { vertical-align: top; }
                     .company { width: 62%%; line-height: 1.45; }
@@ -105,6 +125,7 @@ public class DocumentoComercialPdfService {
                     .info td { width: 50%%; vertical-align: top; line-height: 1.45; padding-right: 10px; }
                     table.lines { width: 100%%; border-collapse: collapse; margin-bottom: 12px; -fs-table-paginate: paginate; }
                     .lines thead { display: table-header-group; }
+                    .lines tr { page-break-inside: avoid; }
                     .lines th { background: #f2f3f1; color: #44515d; font-size: 7.5pt; padding: 6px 4px; border-bottom: 1px solid #cfd3d5; text-align: left; }
                     .lines td { padding: 6px 4px; border-bottom: 1px solid #e5e7e7; vertical-align: top; }
                     .number { text-align: right; white-space: nowrap; }
@@ -127,6 +148,11 @@ public class DocumentoComercialPdfService {
                   </style>
                 </head>
                 <body>
+                <div class="continuation-header"><table><tr>
+                  <td class="continuation-company"><strong>%s</strong><br />NIF %s</td>
+                  <td class="continuation-document"><span class="continuation-label">Continuação</span><br /><strong>%s - %s %s/%s</strong><br />Data %s</td>
+                  <td class="continuation-client"><strong>%s</strong><br />NIF %s<br /><span class="continuation-page"></span></td>
+                </tr></table></div>
                 %s
                 <table class="top"><tr>
                   <td class="company"><strong>%s</strong><br />NIF %s<br />%s<br />%s<br /><span class="muted">%s %s</span></td>
@@ -160,6 +186,9 @@ public class DocumentoComercialPdfService {
                 <div class="footer">Emitido por %s em %s. Capital social: %s EUR. Matricula comercial: %s. CAE: %s - %s.</div>
                 </body></html>
                 """.formatted(
+                esc(empresa.nome()), esc(empresa.nif()), esc(documento.tipoDocumentoDescricao()),
+                esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
+                esc(documento.clienteNome()), esc(documento.clienteNif()),
                 anulada,
                 esc(empresa.nome()), esc(empresa.nif()), address(empresa.morada(), empresa.morada1()),
                 esc(joinPostal(empresa.codPostal(), empresa.localidade())), esc(empresa.email()), esc(empresa.web()),

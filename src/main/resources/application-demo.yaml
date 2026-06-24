@@ -10,11 +10,24 @@ spring:
     enabled: true
     clean-disabled: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
 fac:
   demo:
     enabled: true
     seed-on-startup: ${FAC_DEMO_SEED_ON_STARTUP:false}
     exit-after-seed: ${FAC_DEMO_EXIT_AFTER_SEED:false}
+    check-on-startup: ${FAC_DEMO_CHECK_ON_STARTUP:false}
+    exit-after-check: ${FAC_DEMO_EXIT_AFTER_CHECK:false}
     expected-database: fac_demo
     reset-authorized: ${FAC_DEMO_RESET_AUTHORIZED:false}
     password-admin: ${FAC_DEMO_PASSWORD_ADMIN:}

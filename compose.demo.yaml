@@ -1,0 +1,79 @@
+name: fac-demo
+
+x-logging: &demo-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  db:
+    image: postgres:16.3-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fac_demo
+      POSTGRES_USER: ${FAC_DEMO_DB_USER:?FAC_DEMO_DB_USER obrigatorio}
+      POSTGRES_PASSWORD: ${FAC_DEMO_DB_PASSWORD:?FAC_DEMO_DB_PASSWORD obrigatoria}
+    expose:
+      - "5432"
+    volumes:
+      - fac-demo-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d fac_demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    logging: *demo-logging
+
+  backend:
+    build:
+      context: .
+      dockerfile: deploy/demo/Dockerfile.backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: demo
+      DATASOURCE_URL: jdbc:postgresql://db:5432/fac_demo
+      DATASOURCE_USERNAME: ${FAC_DEMO_DB_USER:?FAC_DEMO_DB_USER obrigatorio}
+      DATASOURCE_PASSWORD: ${FAC_DEMO_DB_PASSWORD:?FAC_DEMO_DB_PASSWORD obrigatoria}
+      FAC_JWT_SECRET: ${FAC_JWT_SECRET:?FAC_JWT_SECRET obrigatorio}
+      FAC_DEMO_RESET_AUTHORIZED: "false"
+      FAC_DEMO_SEED_ON_STARTUP: "false"
+      FAC_DEMO_CHECK_ON_STARTUP: "false"
+      SPRING_JPA_SHOW_SQL: "false"
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: WARN
+    expose:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 45s
+    logging: *demo-logging
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/demo/Dockerfile.frontend
+      args:
+        VITE_FAC_DEMO_MODE: "true"
+    restart: unless-stopped
+    ports:
+      - "${FAC_DEMO_BIND_ADDRESS:-0.0.0.0}:${FAC_DEMO_HTTP_PORT:-8088}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *demo-logging
+
+volumes:
+  fac-demo-postgres-data:
+    name: fac-demo-postgres-data

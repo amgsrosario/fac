@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { apiFetch, getAuthSession } from "./api";
+import { apiFetch, getAuthSession, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 
 type Page<T> = { content: T[]; totalElements: number };
@@ -61,6 +61,8 @@ const FINANCEIRO_COLUMNS: ConfigurableColumn[] = [
 ];
 
 export default function PendentesView() {
+  const canManageTreasury = hasPermission("TESOURARIA_GERIR");
+  const canAnnul = hasPermission("DOCUMENTO_ANULAR");
   const receiptEditorRef = useRef<HTMLElement | null>(null);
   const clientSelectRef = useRef<HTMLSelectElement | null>(null);
   const newReceiptButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -368,7 +370,7 @@ export default function PendentesView() {
 
     <section className="fac-list-toolbar">
       <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar pendente, cliente ou estado" type="search" value={search}/>
-      <div className="fac-inline-actions"><button className="fac-soft-button" disabled={loading} onClick={loadTesouraria} type="button">Atualizar</button><button className="fac-primary-button" disabled={loading || clientesComPendentes.length === 0} onClick={openReceipt} ref={newReceiptButtonRef} type="button">Novo recebimento</button></div>
+      <div className="fac-inline-actions"><button className="fac-soft-button" disabled={loading} onClick={loadTesouraria} type="button">Atualizar</button>{canManageTreasury && <button className="fac-primary-button" disabled={loading || clientesComPendentes.length === 0} onClick={openReceipt} ref={newReceiptButtonRef} type="button">Novo recebimento</button>}</div>
     </section>
 
     {receiptOpen && <section aria-label="Novo recebimento" className="fac-panel fac-section-panel fac-emission-panel" onKeyDown={handleReceiptKeyDown} ref={receiptEditorRef}>
@@ -399,7 +401,7 @@ export default function PendentesView() {
     {!receiptOpen && <>
     <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Pendentes</p><h2>Conta corrente em aberto e liquidada</h2></div><div className="fac-inline-actions"><span className="fac-muted">{filteredPendentes.length} registos</span><button className="fac-ghost-button" onClick={() => setPendenteColumnsOpen((current) => !current)} type="button">Colunas ({pendenteColumns.visibleColumns.length})</button></div></div><ColumnSelector columns={pendenteColumns.columns} open={pendenteColumnsOpen} onMove={pendenteColumns.moveColumn} onReset={pendenteColumns.resetColumns} onToggle={pendenteColumns.toggleColumn}/><table className="fac-table"><thead><tr>{pendenteColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{filteredPendentes.map((item) => <tr key={item.id}>{pendenteColumns.visibleColumns.map((column) => <td key={column.key}>{pendenteColumnValue(item, column.key)}</td>)}</tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={pendenteColumns.visibleColumns.length}>Sem pendentes para mostrar.</td></tr>}</tbody></table></section>
 
-    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><div className="fac-inline-actions"><span className="fac-muted">{financeiros.length} documentos</span><button className="fac-ghost-button" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div></div><ColumnSelector columns={financeiroColumns.columns} open={financeiroColumnsOpen} onMove={financeiroColumns.moveColumn} onReset={financeiroColumns.resetColumns} onToggle={financeiroColumns.toggleColumn}/><table className="fac-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}<th>Acoes</th></tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td key={column.key}>{financeiroColumnValue(documento, column.key)}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => openFinancialPdf(documento)} type="button">Abrir PDF</button><button className="fac-ghost-button" onClick={() => window.open(`/api/documentos-financeiros/${documento.id}/diagnostico/html`, "_blank", "noopener,noreferrer")} type="button">Diagnostico</button>{!documento.anulado && <button className="fac-link-danger" disabled={loading} onClick={() => annulFinancial(documento)} type="button">Anular</button>}</div></td></tr>)}{!loading && financeiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length + 1}>Sem documentos financeiros para mostrar.</td></tr>}</tbody></table></section>
+    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><div className="fac-inline-actions"><span className="fac-muted">{financeiros.length} documentos</span><button className="fac-ghost-button" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div></div><ColumnSelector columns={financeiroColumns.columns} open={financeiroColumnsOpen} onMove={financeiroColumns.moveColumn} onReset={financeiroColumns.resetColumns} onToggle={financeiroColumns.toggleColumn}/><table className="fac-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}<th>Acoes</th></tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td key={column.key}>{financeiroColumnValue(documento, column.key)}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => openFinancialPdf(documento)} type="button">Abrir PDF</button><button className="fac-ghost-button" onClick={() => window.open(`/api/documentos-financeiros/${documento.id}/diagnostico/html`, "_blank", "noopener,noreferrer")} type="button">Diagnostico</button>{canAnnul && !documento.anulado && <button className="fac-link-danger" disabled={loading} onClick={() => annulFinancial(documento)} type="button">Anular</button>}</div></td></tr>)}{!loading && financeiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length + 1}>Sem documentos financeiros para mostrar.</td></tr>}</tbody></table></section>
     </>}
   </>;
 }

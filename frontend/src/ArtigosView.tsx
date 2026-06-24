@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { apiFetch } from "./api";
+import { apiFetch, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 
 type Page<T> = {
@@ -82,6 +82,7 @@ const ARTIGO_COLUMNS: ConfigurableColumn[] = [
 ];
 
 export default function ArtigosView() {
+  const canManage = hasPermission("MESTRES_GERIR");
   const [artigos, setArtigos] = useState<Artigo[]>([]);
   const [familias, setFamilias] = useState<Familia[]>([]);
   const [tiposIva, setTiposIva] = useState<TipoTaxaIva[]>([]);
@@ -256,7 +257,7 @@ export default function ArtigosView() {
 
       <section className="fac-list-toolbar">
         <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar codigo, descricao ou identificacao" type="search" value={search} />
-        <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button><button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button></div>
+        <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button>{canManage && <button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button>}</div>
       </section>
 
       <section className="fac-content-grid">
@@ -286,7 +287,7 @@ export default function ArtigosView() {
             <div><dt>PVP</dt><dd>{selected ? money(selected.pvp) : "-"}</dd></div>
             <div><dt>Retencao</dt><dd>{selected?.retencao ? "Sim" : "Nao"}</dd></div>
           </dl>
-          <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openEdit(selected)} type="button">Editar artigo</button>
+          {canManage && <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openEdit(selected)} type="button">Editar artigo</button>}
         </aside>
       </section>
     </>

@@ -12,7 +12,9 @@ public enum PapelUtilizador {
             PermissaoFuncional.DOCUMENTO_ELIMINAR_RASCUNHO,
             PermissaoFuncional.DOCUMENTO_EMITIR,
             PermissaoFuncional.DOCUMENTO_OBTER_PDF,
-            PermissaoFuncional.SERIE_CONSULTAR
+            PermissaoFuncional.SERIE_CONSULTAR,
+            PermissaoFuncional.MESTRES_GERIR,
+            PermissaoFuncional.TESOURARIA_GERIR
     )),
     CONSULTA(EnumSet.of(
             PermissaoFuncional.DOCUMENTO_CONSULTAR,

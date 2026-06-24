@@ -346,6 +346,10 @@ insert into cliente (id,nome,morada,morada1,localidade,id_codpostal,id_pais,nif,
 (1105,'Cliente Documento Anulado, Lda.','Travessa do Montado Demo, 5',null,'Evora Demo','7000-001','PT','599100037','EUR',null,null,'arquivo@cliente-anulado.demo',null,1001,'P30','CON',null,null,false,1001,false,'Cliente reservado ao documento anulado')
 on conflict (id) do update set nome=excluded.nome,morada=excluded.morada,id_codpostal=excluded.id_codpostal,id_pais=excluded.id_pais,nif=excluded.nif,email=excluded.email,inativo=false;
 
+-- O cenário comercial consolidado usa exatamente os cinco clientes e oito artigos acima.
+delete from cliente where id = 1001;
+delete from artigo where codigo = 'SERVHORA';
+
 -- IDs uteis para a simulacao por API:
 --
 -- Empresa: 1

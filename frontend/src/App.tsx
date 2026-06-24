@@ -559,13 +559,17 @@ function App({ currentUser, onLogout }: AppProps) {
         <div className="fac-brand">
           <div className="fac-brand-mark">FAC</div>
           <div>
-            <strong>Workspace UI</strong>
-            <span>Aplicacao de faturacao</span>
+            <strong>FAC</strong>
+            <span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Demo Partner Edition" : "Aplicacao de faturacao"}</span>
           </div>
         </div>
 
         <nav className="fac-menu" aria-label="Navegacao principal">
-          {menu.filter(item => item.label !== "Auditoria" || currentUser.permissoes?.includes("AUDITORIA_CONSULTAR")).map((item) => (
+          {menu.filter((item) => {
+            if (item.label === "Auditoria") return currentUser.permissoes?.includes("AUDITORIA_CONSULTAR");
+            if (item.label === "Configuracao") return currentUser.permissoes?.includes("CONFIGURACAO_GERIR");
+            return true;
+          }).map((item) => (
             <button
               className={activeView === item.label ? "active" : ""}
               key={item.label}
@@ -582,7 +586,7 @@ function App({ currentUser, onLogout }: AppProps) {
       <section className="fac-workspace">
         <header className="fac-topbar">
           <div>
-            <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "FAC Demo Partner Edition · Ambiente de demonstracao" : "FAC Workspace UI"}</p>
+            <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "FAC Demo Partner Edition · Ambiente de demonstração" : "FAC · Aplicação de faturação"}</p>
             <h1>{viewTitle(activeView)}</h1>
           </div>
           <div className="fac-topbar-actions">
@@ -611,6 +615,7 @@ function App({ currentUser, onLogout }: AppProps) {
             contaCorrente={contaCorrente}
             contaResumo={contaResumo}
             loading={clientesLoading}
+            canManage={currentUser.permissoes?.includes("MESTRES_GERIR") ?? false}
             selectedCliente={selectedCliente}
             selectedClienteId={selectedClienteId}
             onApplyMatrizZero={applyMatrizZero}
@@ -673,8 +678,8 @@ function DashboardView({
     <>
       <section className="fac-hero">
         <div>
-          <p className="fac-eyebrow">Ambiente de trabalho</p>
-          <h2>Uma interface calma para faturar, receber e conferir</h2>
+          <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Alentejo Sabores, Lda. · Demonstração" : "Ambiente de trabalho"}</p>
+          <h2>Faturar, receber e conferir num único percurso</h2>
           <p>
             A interface utiliza dados reais do backend e apresenta o circuito operacional do FAC.
           </p>
@@ -682,7 +687,7 @@ function DashboardView({
         <div className="fac-hero-card">
           <span>Estado do backend</span>
           <strong>{loading ? "A carregar..." : error ? "Com erro" : "Ligado"}</strong>
-          <small>{error ?? "Spring Boot em localhost:8080 via proxy /api"}</small>
+          <small>{error ?? "Serviços operacionais disponíveis"}</small>
         </div>
       </section>
 
@@ -734,6 +739,7 @@ type ClientesViewProps = {
   contaCorrente: ContaCorrenteDiagnostico | null;
   contaResumo: ContaCorrenteResumo | null;
   loading: boolean;
+  canManage: boolean;
   selectedCliente: Cliente | null;
   selectedClienteId: number | null;
   onApplyMatrizZero: () => void;
@@ -756,6 +762,7 @@ function ClientesView({
   contaCorrente,
   contaResumo,
   loading,
+  canManage,
   selectedCliente,
   selectedClienteId,
   onApplyMatrizZero,
@@ -844,7 +851,7 @@ function ClientesView({
             </div>
             <div className="fac-inline-actions">
               <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({visibleColumns.length})</button>
-              <button className="fac-soft-button" onClick={onOpenEditor} type="button">Novo cliente</button>
+              {canManage && <button className="fac-soft-button" onClick={onOpenEditor} type="button">Novo cliente</button>}
             </div>
           </div>
 
@@ -902,14 +909,14 @@ function ClientesView({
             <div><dt>Moeda</dt><dd>{selectedCliente?.moedaId ?? "-"}</dd></div>
             <div><dt>Regime IVA</dt><dd>{selectedCliente?.rivaId ?? "-"}</dd></div>
           </dl>
-          <button
+          {canManage && <button
             className="fac-primary-button"
             disabled={!selectedCliente || loading}
             onClick={() => selectedCliente && onEditCliente(selectedCliente.id)}
             type="button"
           >
             Editar cliente
-          </button>
+          </button>}
         </aside>
       </section>
 

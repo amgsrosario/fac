@@ -10,6 +10,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
+import lombok.extern.slf4j.Slf4j;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -21,7 +23,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.FORBIDDEN, "Permissao funcional insuficiente", request.getRequestURI(), null);
+    }
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<?> handleNotFound(NotFoundException ex, HttpServletRequest request) {
@@ -68,7 +76,7 @@ public class GlobalExceptionHandler {
         List<Map<String, String>> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
                 .map(this::fieldErrorToMap)
                 .collect(Collectors.toList());
-        return buildError(HttpStatus.BAD_REQUEST, "Validation failed", request.getRequestURI(), fieldErrors);
+        return buildError(HttpStatus.BAD_REQUEST, "Existem campos invalidos", request.getRequestURI(), fieldErrors);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

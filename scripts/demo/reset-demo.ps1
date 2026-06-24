@@ -25,7 +25,13 @@ $env:DATASOURCE_USERNAME = $DbUser
 $env:DATASOURCE_PASSWORD = $(if ($env:PGPASSWORD) { $env:PGPASSWORD } else { "postgres" })
 $env:FAC_DEMO_SEED_ON_STARTUP = "true"
 $env:FAC_DEMO_EXIT_AFTER_SEED = "true"
+$env:SPRING_JPA_SHOW_SQL = "false"
+$env:LOGGING_LEVEL_ORG_HIBERNATE_SQL = "WARN"
 
-& mvn -q spring-boot:run "-Dspring-boot.run.profiles=demo" "-Dspring-boot.run.arguments=--server.port=0"
+& mvn -q -DskipTests package
+if ($LASTEXITCODE -ne 0) { throw "Build do backend falhou com codigo $LASTEXITCODE." }
+$jar = Get-ChildItem -Path "target" -Filter "fac-*.jar" | Where-Object { $_.Name -notlike "*.original" } | Select-Object -First 1
+if (-not $jar) { throw "JAR executavel do FAC nao encontrado." }
+& java -jar $jar.FullName --spring.profiles.active=demo --server.port=0
 if ($LASTEXITCODE -ne 0) { throw "Seed demo falhou com codigo $LASTEXITCODE." }
 Write-Output "FAC Demo Partner Edition reposta e validada na base '$Database'."

@@ -69,6 +69,15 @@ public class SecurityConfig {
             http.authorizeHttpRequests(auth -> auth
                             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .requestMatchers("/actuator/health").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/documentos-financeiros/*/anular").hasAuthority("DOCUMENTO_ANULAR")
+                            .requestMatchers(HttpMethod.POST, "/documentos-financeiros").hasAuthority("TESOURARIA_GERIR")
+                            .requestMatchers(HttpMethod.POST, "/clientes", "/artigos").hasAuthority("MESTRES_GERIR")
+                            .requestMatchers(HttpMethod.PUT, "/clientes/**", "/artigos/**").hasAuthority("MESTRES_GERIR")
+                            .requestMatchers(HttpMethod.DELETE, "/clientes/**", "/artigos/**").hasAuthority("MESTRES_GERIR")
+                            .requestMatchers("/utilizadores/**").hasAuthority("CONFIGURACAO_GERIR")
+                            .requestMatchers(HttpMethod.POST, configurationPaths()).hasAuthority("CONFIGURACAO_GERIR")
+                            .requestMatchers(HttpMethod.PUT, configurationPaths()).hasAuthority("CONFIGURACAO_GERIR")
+                            .requestMatchers(HttpMethod.DELETE, configurationPaths()).hasAuthority("CONFIGURACAO_GERIR")
                             .anyRequest().authenticated())
                     .oauth2ResourceServer(oauth -> oauth
                             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
@@ -86,6 +95,17 @@ public class SecurityConfig {
             http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         }
         return http.build();
+    }
+
+    private String[] configurationPaths() {
+        return new String[]{
+                "/empresa/**", "/parametros-aplicacao/**", "/parametros-cliente/**",
+                "/parametros-documento-comercial/**", "/utilizadores/**", "/armazens/**",
+                "/codpostal/**", "/familias/**", "/freguesias/**", "/iva-saft/**",
+                "/motivos-isencao/**", "/moedas/**", "/mpagamentos/**", "/paises/**",
+                "/p-pagamentos/**", "/riva/**", "/tipos-documento/**",
+                "/tipos-taxa-iva/**", "/transportes/**"
+        };
     }
 
     private JwtAuthenticationConverter jwtAuthenticationConverter() {

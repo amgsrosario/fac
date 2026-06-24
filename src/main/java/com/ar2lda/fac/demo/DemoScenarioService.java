@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,10 +33,9 @@ public class DemoScenarioService {
     private final LinhaDocumentoComercialService linhaService;
     private final DocumentoFinanceiroService financeiroService;
     private final PendenteRepository pendenteRepository;
-    private final DocumentoComercialRepository documentoRepository;
-    private final AuditoriaEventoRepository auditoriaRepository;
-    private final DocumentoComercialPdfService pdfService;
-    private final ExtratoClienteService extratoService;
+    private final AuditoriaService auditoriaService;
+    private final DemoScenarioCheckService checkService;
+    private final EntityManager entityManager;
 
     @Value("${fac.demo.password-admin:}") private String adminPassword;
     @Value("${fac.demo.password-operador:}") private String operadorPassword;
@@ -44,17 +44,22 @@ public class DemoScenarioService {
     @Value("${fac.demo.reset-authorized:false}") private boolean resetAuthorized;
 
     @Transactional
-    public DemoValidation seedAndValidate() {
+    public DemoScenarioCheckService.DemoCheckReport seedAndValidate() {
         String actualDatabase = new JdbcTemplate(dataSource).queryForObject("select current_database()", String.class);
         DemoResetSafety.validate(actualDatabase, expectedDatabase, resetAuthorized);
         requirePasswords();
-        if (utilizadorRepository.existsById("admin.demo")) return validateScenario();
+        if (utilizadorRepository.existsById("admin.demo")) return checkService.validate();
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator(new ClassPathResource("demo/demo-base.sql"));
         populator.execute(dataSource);
         utilizadorRepository.deleteById("DEMO");
         saveUser("admin.demo", "Administrador Demo", "admin@fac.demo", adminPassword, PapelUtilizador.ADMINISTRADOR);
         saveUser("operador.demo", "Operador Demo", "operador@fac.demo", operadorPassword, PapelUtilizador.OPERADOR);
         saveUser("consulta.demo", "Consulta Demo", "consulta@fac.demo", consultaPassword, PapelUtilizador.CONSULTA);
+
+        Utilizador admin = utilizadorRepository.findById("admin.demo").orElseThrow();
+        auditoriaService.registarComo(TipoAuditoriaEvento.LOGIN_SUCESSO, "UTILIZADOR", admin.getCodigo(), admin,
+                ResultadoAuditoria.SUCESSO, admin.getCodigo(), "Entrada no ambiente de demonstracao",
+                "{\"versao\":1,\"origem\":\"cenario-demo\"}");
 
         var authorities = PapelUtilizador.ADMINISTRADOR.permissoes().stream().map(p -> new SimpleGrantedAuthority(p.name())).toList();
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("admin.demo", "N/A", authorities));
@@ -70,26 +75,16 @@ public class DemoScenarioService {
             var multi = criar(1103L, "AZ075", 1, "Documento multipagina para validacao MD 15");
             for (int i = 0; i < 34; i++) linhaService.create(multi.id(), line(i % 2 == 0 ? "VTRES" : "VBREG", BigDecimal.ONE));
             documentoService.emitir(multi.id(), new DocumentoComercialEmitirDto("admin.demo"));
+            Utilizador operador = utilizadorRepository.findById("operador.demo").orElseThrow();
+            auditoriaService.registarComo(TipoAuditoriaEvento.TENTATIVA_ANULACAO_NEGADA,
+                    "DOCUMENTO_COMERCIAL", d1.id(), operador, ResultadoAuditoria.FALHA,
+                    d1.numeroDocumentoCompleto(), "Operacao recusada por permissao funcional",
+                    "{\"versao\":1,\"permissao\":\"DOCUMENTO_ANULAR\"}");
         } finally {
             SecurityContextHolder.clearContext();
         }
-        return validateScenario();
-    }
-
-    public DemoValidation validateScenario() {
-        long users = List.of("admin.demo","operador.demo","consulta.demo").stream().filter(utilizadorRepository::existsById).count();
-        long documents = documentoRepository.count();
-        long annulled = documentoRepository.findAll().stream().filter(DocumentoComercial::isAnulado).count();
-        long partial = pendenteRepository.findAll().stream().filter(p -> p.getValorPendente().signum() > 0 && p.getValorPendente().compareTo(p.getValorDocumento()) < 0).count();
-        long multi = documentoRepository.findAll().stream().filter(d -> d.getObservacoes() != null && d.getObservacoes().contains("multipagina")).count();
-        long audits = auditoriaRepository.count();
-        long pdfs = documentoRepository.findAll().stream().filter(d -> d.getEstado() != EstadoDocumentoComercial.RASCUNHO)
-                .map(d -> pdfService.gerar(d.getId())).filter(pdf -> pdf.content().length > 1000).count();
-        long extratoMovimentos = extratoService.getExtrato(1104L, LocalDate.of(2026,1,1), LocalDate.of(2026,12,31))
-                .moedas().stream().mapToLong(m -> m.movimentos().size()).sum();
-        DemoValidation result = new DemoValidation(users, documents, annulled, partial, multi, audits, pdfs, extratoMovimentos);
-        if (!result.complete()) throw new IllegalStateException("Cenario demo incompleto: " + result);
-        return result;
+        entityManager.flush();
+        return checkService.validate();
     }
 
     private DocumentoComercialDto emitir(long cliente, String artigo, int quantidade, String obs) {
@@ -113,8 +108,5 @@ public class DemoScenarioService {
     }
     private void requirePasswords() {
         if (adminPassword.length() < 8 || operadorPassword.length() < 8 || consultaPassword.length() < 8) throw new IllegalStateException("Defina as tres passwords demo por variaveis de ambiente (minimo 8 caracteres)");
-    }
-    public record DemoValidation(long users, long documents, long annulled, long partial, long multipage, long audits, long pdfs, long extratoMovimentos) {
-        public boolean complete() { return users == 3 && documents >= 6 && annulled >= 1 && partial >= 1 && multipage >= 1 && audits >= 6 && pdfs >= 6 && extratoMovimentos >= 2; }
     }
 }

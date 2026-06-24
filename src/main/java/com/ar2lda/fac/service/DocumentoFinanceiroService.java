@@ -22,6 +22,7 @@ import com.ar2lda.fac.model.Pendente;
 import com.ar2lda.fac.model.SerieId;
 import com.ar2lda.fac.model.TipoDocumento;
 import com.ar2lda.fac.model.Utilizador;
+import com.ar2lda.fac.model.TipoAuditoriaEvento;
 import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.DocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.EmpresaRepository;
@@ -65,6 +66,7 @@ public class DocumentoFinanceiroService {
     private final DocumentoFinanceiroMapper mapper;
     private final EmpresaMapper empresaMapper;
     private final ClienteMapper clienteMapper;
+    private final AuditoriaService auditoriaService;
 
     @Transactional
     public DocumentoFinanceiroDto create(DocumentoFinanceiroCreateDto dto) {
@@ -112,6 +114,11 @@ public class DocumentoFinanceiroService {
         documento.setValorPagamentoLiquido(valorPagamentoLiquido.setScale(6, RoundingMode.HALF_UP));
         atribuirQrFiscal(documento);
         documento = documentoRepository.save(documento);
+
+        auditoriaService.registarComo(TipoAuditoriaEvento.RECEBIMENTO_REGISTADO, "DOCUMENTO_FINANCEIRO",
+                documento.getId(), emissor, com.ar2lda.fac.model.ResultadoAuditoria.SUCESSO,
+                referencia(documento), "Recebimento registado",
+                "{\"versao\":1,\"valor\":" + documento.getValorPagamentoLiquido().toPlainString() + "}");
 
         return toDTO(documento);
     }
