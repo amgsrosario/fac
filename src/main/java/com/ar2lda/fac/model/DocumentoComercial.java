@@ -26,7 +26,7 @@ import java.time.OffsetDateTime;
 @ToString(onlyExplicitlyIncluded = true)
 public class DocumentoComercial {
 
-    public static final int CURRENT_FISCAL_SNAPSHOT_VERSION = 1;
+    public static final int CURRENT_FISCAL_SNAPSHOT_VERSION = 2;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -104,6 +104,30 @@ public class DocumentoComercial {
 
     @Column(name = "emitente_descricao_cae", length = 100)
     private String emitenteDescricaoCae;
+
+    @Column(name = "emitente_nome_comercial", length = 100)
+    private String emitenteNomeComercial;
+
+    @Column(name = "emitente_telefone", length = 30)
+    private String emitenteTelefone;
+
+    @Column(name = "emitente_iban", length = 34)
+    private String emitenteIban;
+
+    @Column(name = "emitente_bic_swift", length = 11)
+    private String emitenteBicSwift;
+
+    @Column(name = "emitente_observacoes_legais", length = 1000)
+    private String emitenteObservacoesLegais;
+
+    @Column(name = "emitente_texto_rodape", length = 500)
+    private String emitenteTextoRodape;
+
+    @Column(name = "emitente_logo", columnDefinition = "bytea")
+    private byte[] emitenteLogo;
+
+    @Column(name = "emitente_logo_media_type", length = 20)
+    private String emitenteLogoMediaType;
 
     @Column(name = "tipo_documento_codigo", length = 3)
     private String tipoDocumentoCodigo;
@@ -471,6 +495,14 @@ public class DocumentoComercial {
         emitenteMatriculaRegisto = empresa.getMatriculaRegistoComercial();
         emitenteCae = empresa.getCae();
         emitenteDescricaoCae = empresa.getDescricaoCae();
+        emitenteNomeComercial = empresa.getNomeComercial();
+        emitenteTelefone = empresa.getTelefone();
+        emitenteIban = empresa.getIban();
+        emitenteBicSwift = empresa.getBicSwift();
+        emitenteObservacoesLegais = empresa.getObservacoesLegais();
+        emitenteTextoRodape = empresa.getTextoRodape();
+        emitenteLogo = empresa.getLogo();
+        emitenteLogoMediaType = empresa.getLogoMediaType();
         tipoDocumentoCodigo = tipoDocumento.getId();
         tipoDocumentoCodigoFiscal = tipoDocumento.getCodigoFiscal();
         tipoDocumentoDescricao = tipoDocumento.getDescricao();
@@ -487,7 +519,8 @@ public class DocumentoComercial {
 
     public boolean isFiscalmenteConsolidado() {
         return (estado == EstadoDocumentoComercial.EMITIDO || estado == EstadoDocumentoComercial.ANULADO)
-                && Integer.valueOf(CURRENT_FISCAL_SNAPSHOT_VERSION).equals(fiscalSnapshotVersion)
+                && (Integer.valueOf(1).equals(fiscalSnapshotVersion)
+                    || Integer.valueOf(CURRENT_FISCAL_SNAPSHOT_VERSION).equals(fiscalSnapshotVersion))
                 && numeroDocumento != null
                 && numeroDocumentoCompleto != null
                 && !numeroDocumentoCompleto.isBlank()

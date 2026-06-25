@@ -11,10 +11,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -39,6 +39,7 @@ class UtilizadorControllerTests {
                                   "nome": "Administrador",
                                   "email": "ADMIN@EXAMPLE.COM",
                                   "password": "Fac#2026Admin",
+                                  "papel": "ADMINISTRADOR",
                                   "inativo": false
                                 }
                                 """))
@@ -61,19 +62,22 @@ class UtilizadorControllerTests {
                         .content("""
                                 {
                                   "nome": "Administrador FAC",
-                                  "email": "admin.fac@example.com",
-                                  "inativo": true
+                                  "email": "admin.fac@example.com"
                                 }
                                 """))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(get("/utilizadores/ADMIN1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nome").value("Administrador FAC"))
-                .andExpect(jsonPath("$.inativo").value(true));
+                .andExpect(jsonPath("$.inativo").value(false));
 
-        mockMvc.perform(delete("/utilizadores/ADMIN1"))
-                .andExpect(status().isNoContent());
+        createUtilizador("ADMIN2", "admin2@example.com");
+        mockMvc.perform(patch("/utilizadores/ADMIN1/estado")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ativo\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.inativo").value(true));
     }
 
     @Test
@@ -86,6 +90,7 @@ class UtilizadorControllerTests {
                                   "nome": "Teste",
                                   "email": "teste1@example.com",
                                   "password": "password",
+                                  "papel": "ADMINISTRADOR",
                                   "inativo": false
                                 }
                                 """))
@@ -105,10 +110,65 @@ class UtilizadorControllerTests {
                                   "nome": "Outro teste",
                                   "email": "TESTE@EXAMPLE.COM",
                                   "password": "Fac#2026Teste",
+                                  "papel": "ADMINISTRADOR",
                                   "inativo": false
                                 }
                                 """))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void protegeUltimoAdministradorAtivo() throws Exception {
+        createUtilizador("ADMINUNICO", "admin.unico@example.com");
+
+        mockMvc.perform(patch("/utilizadores/ADMINUNICO/estado")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ativo\":false}"))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(patch("/utilizadores/ADMINUNICO/perfil")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"papel\":\"OPERADOR\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void permiteRedefinirPasswordSemExporSegredo() throws Exception {
+        createUtilizador("RESET1", "reset1@example.com");
+        String before = repository.findById("RESET1").orElseThrow().getPasswordHash();
+
+        mockMvc.perform(post("/utilizadores/RESET1/redefinir-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"novaPassword\":\"Nova#2026Reset\"}"))
+                .andExpect(status().isNoContent());
+
+        String after = repository.findById("RESET1").orElseThrow().getPasswordHash();
+        assertThat(after).startsWith("$2").isNotEqualTo(before).doesNotContain("Nova#2026Reset");
+    }
+
+    @Test
+    void listaComFiltrosDePerfilEEstado() throws Exception {
+        createUtilizador("ADMINLIST", "admin.list@example.com");
+
+        mockMvc.perform(post("/utilizadores")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "codigo": "CONSULTALIST",
+                                  "nome": "Consulta Lista",
+                                  "email": "consulta.list@example.com",
+                                  "password": "Fac#2026Teste",
+                                  "papel": "CONSULTA",
+                                  "inativo": false
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/utilizadores?papel=CONSULTA&ativo=true&q=consulta"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].codigo").value("CONSULTALIST"))
+                .andExpect(jsonPath("$.content[0].papel").value("CONSULTA"))
+                .andExpect(jsonPath("$.content[0].ativo").value(true));
     }
 
     private void createUtilizador(String codigo, String email) throws Exception {
@@ -118,9 +178,10 @@ class UtilizadorControllerTests {
                                 {
                                   "codigo": "%s",
                                   "nome": "Utilizador de teste",
-                                  "email": "%s",
-                                  "password": "Fac#2026Teste",
-                                  "inativo": false
+                  "email": "%s",
+                  "password": "Fac#2026Teste",
+                  "papel": "ADMINISTRADOR",
+                  "inativo": false
                                 }
                                 """.formatted(codigo, email)))
                 .andExpect(status().isCreated());

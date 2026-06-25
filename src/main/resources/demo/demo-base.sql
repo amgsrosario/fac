@@ -79,12 +79,19 @@ insert into empresa (
     cae,
     descricao_cae,
     email,
-    web
+    web,
+    nome_comercial,
+    telefone,
+    iban,
+    bic_swift,
+    texto_rodape,
+    observacoes_legais,
+    observacoes_comerciais_default
 )
 values (
     1,
     'Alentejo Sabores, Lda.',
-    '599000001',
+    '599000007',
     'Avenida das Oliveiras, 14',
     null,
     '3750-001',
@@ -96,7 +103,14 @@ values (
     '62010',
     'Comercio de produtos alimentares e bebidas',
     'geral@alentejo-sabores.demo',
-    'https://alentejo-sabores.demo'
+    'https://alentejo-sabores.demo',
+    'Alentejo Sabores',
+    '+351 266 000 001',
+    'PT50000201231234567890154',
+    'CGDIPTPL',
+    'Documento emitido por sistema de faturacao FAC Demo Partner Edition.',
+    'Empresa ficticia para demonstracao comercial.',
+    'Obrigado pela preferencia.'
 )
 on conflict (id) do update set
     nome = excluded.nome,
@@ -112,7 +126,14 @@ on conflict (id) do update set
     cae = excluded.cae,
     descricao_cae = excluded.descricao_cae,
     email = excluded.email,
-    web = excluded.web;
+    web = excluded.web,
+    nome_comercial = excluded.nome_comercial,
+    telefone = excluded.telefone,
+    iban = excluded.iban,
+    bic_swift = excluded.bic_swift,
+    texto_rodape = excluded.texto_rodape,
+    observacoes_legais = excluded.observacoes_legais,
+    observacoes_comerciais_default = excluded.observacoes_comerciais_default;
 
 insert into parametros_aplicacao (id, atraso_carga_minutos, decimais_quantidade, decimais_valor)
 values (1, 10, 3, 2)

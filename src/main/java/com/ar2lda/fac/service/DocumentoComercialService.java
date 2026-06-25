@@ -162,7 +162,10 @@ public class DocumentoComercialService {
                     documento.getEmitenteMorada1(), documento.getEmitenteCodPostal(), documento.getEmitenteLocalidade(),
                     documento.getEmitentePais(), documento.getEmitenteEmail(), documento.getEmitenteWeb(),
                     documento.getEmitenteCapitalSocial(), documento.getEmitenteMatriculaRegisto(),
-                    documento.getEmitenteCae(), documento.getEmitenteDescricaoCae()
+                    documento.getEmitenteCae(), documento.getEmitenteDescricaoCae(),
+                    documento.getEmitenteNomeComercial(), documento.getEmitenteTelefone(), documento.getEmitenteIban(),
+                    documento.getEmitenteBicSwift(), documento.getEmitenteObservacoesLegais(), documento.getEmitenteTextoRodape(),
+                    documento.getEmitenteLogo(), documento.getEmitenteLogoMediaType()
             );
         }
         if (documento.getEstado() != EstadoDocumentoComercial.RASCUNHO) {
@@ -175,7 +178,9 @@ public class DocumentoComercialService {
                 empresa.getNome(), empresa.getNif(), empresa.getMorada(), empresa.getMorada1(),
                 empresa.getCodPostal().getId(), empresa.getLocalidade(), empresa.getPais().getId(),
                 empresa.getEmail(), empresa.getWeb(), empresa.getCapitalSocial(),
-                empresa.getMatriculaRegistoComercial(), empresa.getCae(), empresa.getDescricaoCae()
+                empresa.getMatriculaRegistoComercial(), empresa.getCae(), empresa.getDescricaoCae(),
+                empresa.getNomeComercial(), empresa.getTelefone(), empresa.getIban(), empresa.getBicSwift(),
+                empresa.getObservacoesLegais(), empresa.getTextoRodape(), empresa.getLogo(), empresa.getLogoMediaType()
         );
     }
 

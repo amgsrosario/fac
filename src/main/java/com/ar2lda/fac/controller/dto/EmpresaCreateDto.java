@@ -48,6 +48,13 @@ public record EmpresaCreateDto(
         @Size(max = 120, message = "Email deve ter no máximo 120 caracteres")
         String email,
         @Size(max = 120, message = "Web deve ter no máximo 120 caracteres")
-        String web
+        String web,
+        @Size(max = 100, message = "Nome comercial deve ter no máximo 100 caracteres") String nomeComercial,
+        @Size(max = 30, message = "Telefone deve ter no máximo 30 caracteres") String telefone,
+        @Size(max = 34, message = "IBAN deve ter no máximo 34 caracteres") String iban,
+        @Size(max = 11, message = "BIC/SWIFT deve ter no máximo 11 caracteres") String bicSwift,
+        @Size(max = 1000, message = "Observações legais devem ter no máximo 1000 caracteres") String observacoesLegais,
+        @Size(max = 500, message = "Texto de rodapé deve ter no máximo 500 caracteres") String textoRodape,
+        @Size(max = 1000, message = "Observações comerciais devem ter no máximo 1000 caracteres") String observacoesComerciaisDefault
 ) {
 }

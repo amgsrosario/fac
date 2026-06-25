@@ -14,14 +14,18 @@ public interface UtilizadorMapper {
         if (entity == null) {
             return null;
         }
-        return new UtilizadorDto(entity.getCodigo(), entity.getNome(), entity.getEmail(), entity.isInativo());
+        return new UtilizadorDto(entity.getCodigo(), entity.getNome(), entity.getEmail(), entity.getPapel(),
+                !entity.isInativo(), entity.isInativo(), entity.getCriadoEm(), entity.getAtualizadoEm(),
+                entity.getUltimoLoginEm(), entity.getCriadoPor(), entity.getAtualizadoPor());
     }
 
     default Utilizador fromCreateDTO(UtilizadorCreateDto dto) {
         if (dto == null) {
             return null;
         }
-        return new Utilizador(dto.codigo(), dto.nome(), dto.email(), null, dto.inativo());
+        Utilizador utilizador = new Utilizador(dto.codigo(), dto.nome(), dto.email(), null, dto.inativo());
+        utilizador.setPapel(dto.papel());
+        return utilizador;
     }
 
     default void applyUpdate(UtilizadorUpdateDto dto, @MappingTarget Utilizador entity) {
@@ -30,6 +34,5 @@ public interface UtilizadorMapper {
         }
         entity.setNome(dto.nome());
         entity.setEmail(dto.email());
-        entity.setInativo(dto.inativo());
     }
 }

@@ -60,7 +60,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            @Value("${fac.security.enabled:true}") boolean securityEnabled
+            @Value("${fac.security.enabled:true}") boolean securityEnabled,
+            AdministrativeAccessDeniedHandler accessDeniedHandler
     ) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -69,12 +70,12 @@ public class SecurityConfig {
             http.authorizeHttpRequests(auth -> auth
                             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .requestMatchers("/actuator/health").permitAll()
+                            .requestMatchers("/utilizadores/**", "/empresa/**").hasAuthority("CONFIGURACAO_GERIR")
                             .requestMatchers(HttpMethod.POST, "/documentos-financeiros/*/anular").hasAuthority("DOCUMENTO_ANULAR")
                             .requestMatchers(HttpMethod.POST, "/documentos-financeiros").hasAuthority("TESOURARIA_GERIR")
                             .requestMatchers(HttpMethod.POST, "/clientes", "/artigos").hasAuthority("MESTRES_GERIR")
                             .requestMatchers(HttpMethod.PUT, "/clientes/**", "/artigos/**").hasAuthority("MESTRES_GERIR")
                             .requestMatchers(HttpMethod.DELETE, "/clientes/**", "/artigos/**").hasAuthority("MESTRES_GERIR")
-                            .requestMatchers("/utilizadores/**").hasAuthority("CONFIGURACAO_GERIR")
                             .requestMatchers(HttpMethod.POST, configurationPaths()).hasAuthority("CONFIGURACAO_GERIR")
                             .requestMatchers(HttpMethod.PUT, configurationPaths()).hasAuthority("CONFIGURACAO_GERIR")
                             .requestMatchers(HttpMethod.DELETE, configurationPaths()).hasAuthority("CONFIGURACAO_GERIR")
@@ -86,11 +87,7 @@ public class SecurityConfig {
                                 response.setContentType("application/json");
                                 response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Autenticacao necessaria ou expirada\"}");
                             })
-                            .accessDeniedHandler((request, response, exception) -> {
-                                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                                response.setContentType("application/json");
-                                response.getWriter().write("{\"status\":403,\"error\":\"Forbidden\",\"message\":\"Permissao funcional insuficiente\"}");
-                            }));
+                            .accessDeniedHandler(accessDeniedHandler));
         } else {
             http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         }

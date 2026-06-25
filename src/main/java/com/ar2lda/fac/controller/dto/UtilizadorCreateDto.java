@@ -1,7 +1,9 @@
 package com.ar2lda.fac.controller.dto;
 
+import com.ar2lda.fac.model.PapelUtilizador;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -23,6 +25,8 @@ public record UtilizadorCreateDto(
                 message = "Password deve incluir maiúscula, minúscula, número e símbolo, sem espaços"
         )
         String password,
+        @NotNull(message = "Perfil é obrigatório")
+        PapelUtilizador papel,
         boolean inativo
 ) {
 }

@@ -11,6 +11,8 @@ import com.ar2lda.fac.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.time.Clock;
+import java.time.OffsetDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuditoriaIsoladaService auditoriaIsoladaService;
+    private final Clock clock;
 
     public LoginResponseDto login(LoginRequestDto request) {
         String username = request.username().trim();
@@ -34,6 +37,8 @@ public class AuthService {
 
         auditoriaIsoladaService.registar(TipoAuditoriaEvento.LOGIN_SUCESSO, "UTILIZADOR", utilizador.getCodigo(), utilizador,
                 ResultadoAuditoria.SUCESSO, utilizador.getCodigo(), "Login efetuado", "{\"versao\":1}");
+        utilizador.registarLogin(OffsetDateTime.now(clock));
+        utilizadorRepository.save(utilizador);
 
         return new LoginResponseDto(
                 jwtService.generate(utilizador),

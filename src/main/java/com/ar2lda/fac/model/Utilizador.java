@@ -5,10 +5,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "utilizador")
@@ -45,6 +49,21 @@ public class Utilizador {
     @Setter
     private PapelUtilizador papel = PapelUtilizador.ADMINISTRADOR;
 
+    @Column(name = "criado_em", nullable = false, updatable = false)
+    private OffsetDateTime criadoEm;
+
+    @Column(name = "atualizado_em", nullable = false)
+    private OffsetDateTime atualizadoEm;
+
+    @Column(name = "ultimo_login_em")
+    private OffsetDateTime ultimoLoginEm;
+
+    @Column(name = "criado_por", length = 20, updatable = false)
+    private String criadoPor;
+
+    @Column(name = "atualizado_por", length = 20)
+    private String atualizadoPor;
+
     public Utilizador() {
     }
 
@@ -55,5 +74,35 @@ public class Utilizador {
         this.passwordHash = passwordHash;
         this.inativo = inativo;
         this.papel = PapelUtilizador.ADMINISTRADOR;
+    }
+
+    public void marcarCriacao(OffsetDateTime instante, String responsavel) {
+        if (criadoEm == null) {
+            criadoEm = instante;
+            criadoPor = responsavel;
+        }
+        atualizadoEm = instante;
+        atualizadoPor = responsavel;
+    }
+
+    public void marcarAtualizacao(OffsetDateTime instante, String responsavel) {
+        atualizadoEm = instante;
+        atualizadoPor = responsavel;
+    }
+
+    public void registarLogin(OffsetDateTime instante) {
+        ultimoLoginEm = instante;
+    }
+
+    @PrePersist
+    void prePersist() {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (criadoEm == null) criadoEm = now;
+        if (atualizadoEm == null) atualizadoEm = now;
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        if (atualizadoEm == null) atualizadoEm = OffsetDateTime.now();
     }
 }

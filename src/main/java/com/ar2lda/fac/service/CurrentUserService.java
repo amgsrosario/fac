@@ -36,4 +36,17 @@ public class CurrentUserService {
         }
         return utilizador;
     }
+
+    public String currentCodeOrSystem() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getName())
+                ? authentication.getName()
+                : "SISTEMA";
+    }
+
+    public Utilizador currentUserOrNull() {
+        String codigo = currentCodeOrSystem();
+        return "SISTEMA".equals(codigo) ? null : utilizadorRepository.findById(codigo).orElse(null);
+    }
 }

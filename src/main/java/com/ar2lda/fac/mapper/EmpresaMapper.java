@@ -35,7 +35,10 @@ public interface EmpresaMapper {
                 entity.getCae(),
                 entity.getDescricaoCae(),
                 entity.getEmail(),
-                entity.getWeb()
+                entity.getWeb(),
+                entity.getNomeComercial(), entity.getTelefone(), entity.getIban(), entity.getBicSwift(),
+                entity.getObservacoesLegais(), entity.getTextoRodape(), entity.getObservacoesComerciaisDefault(),
+                entity.getLogo() != null, entity.getLogoMediaType(), entity.getAtualizadoEm(), entity.getAtualizadoPor()
         );
     }
 
@@ -43,7 +46,7 @@ public interface EmpresaMapper {
         if (dto == null) {
             return null;
         }
-        return new Empresa(
+        Empresa empresa = new Empresa(
                 dto.nome(),
                 dto.nif(),
                 dto.morada(),
@@ -56,6 +59,14 @@ public interface EmpresaMapper {
                 dto.email(),
                 dto.web()
         );
+        empresa.setNomeComercial(dto.nomeComercial());
+        empresa.setTelefone(dto.telefone());
+        empresa.setIban(dto.iban());
+        empresa.setBicSwift(dto.bicSwift());
+        empresa.setObservacoesLegais(dto.observacoesLegais());
+        empresa.setTextoRodape(dto.textoRodape());
+        empresa.setObservacoesComerciaisDefault(dto.observacoesComerciaisDefault());
+        return empresa;
     }
 
     default void applyUpdate(EmpresaUpdateDto dto, @MappingTarget Empresa entity) {
@@ -73,5 +84,12 @@ public interface EmpresaMapper {
         entity.setDescricaoCae(dto.descricaoCae());
         entity.setEmail(dto.email());
         entity.setWeb(dto.web());
+        entity.setNomeComercial(dto.nomeComercial());
+        entity.setTelefone(dto.telefone());
+        entity.setIban(dto.iban());
+        entity.setBicSwift(dto.bicSwift());
+        entity.setObservacoesLegais(dto.observacoesLegais());
+        entity.setTextoRodape(dto.textoRodape());
+        entity.setObservacoesComerciaisDefault(dto.observacoesComerciaisDefault());
     }
 }

@@ -6,7 +6,7 @@ type Row = Record<string, unknown>;
 type Values = Record<string, string | boolean>;
 type Option = { value: string; label: string };
 type Feedback = { kind: "success" | "error"; text: string };
-type TableKey = "tipos-documento" | "series" | "riva" | "codpostal" | "freguesias" | "armazens" | "utilizadores";
+type TableKey = "tipos-documento" | "series" | "riva" | "codpostal" | "freguesias" | "armazens";
 type Field = {
   key: string;
   label: string;
@@ -65,20 +65,13 @@ const configs: Record<TableKey, Config> = {
     fields: [field("nome", "Nome", { required: true, maxLength: 100 }), field("morada", "Morada", { required: true, maxLength: 60 }), field("morada1", "Morada complementar", { maxLength: 60 }), field("codPostalId", "Codigo postal", { type: "select", required: true, options: "codigosPostais" }), field("localidade", "Localidade", { required: true, maxLength: 50 }), field("paisId", "Pais", { type: "select", required: true, options: "paises" }), field("freguesiaId", "Freguesia", { type: "select", options: "freguesias" })],
     columns: [{ key: "id", label: "ID" }, { key: "nome", label: "Nome" }, { key: "localidade", label: "Localidade" }, { key: "paisId", label: "Pais" }],
     rowId: (row) => String(row.id), itemUrl: (row) => `/api/armazens/${encodeURIComponent(String(row.id))}`
-  },
-  utilizadores: {
-    key: "utilizadores", label: "Utilizadores", endpoint: "/api/utilizadores",
-    fields: [field("codigo", "Codigo", { required: true, maxLength: 20, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 100 }), field("email", "Email", { required: true, maxLength: 100 }), field("password", "Password", { type: "password", required: true, optionalOnUpdate: true, maxLength: 72 }), field("inativo", "Inativo", { type: "checkbox" })],
-    columns: [{ key: "codigo", label: "Codigo" }, { key: "nome", label: "Nome" }, { key: "email", label: "Email" }, { key: "inativo", label: "Estado" }],
-    rowId: (row) => String(row.codigo), itemUrl: (row) => `/api/utilizadores/${encodeURIComponent(String(row.codigo))}`
   }
 };
 
 export const specificTables: { key: TableKey; label: string; group: string }[] = [
   { key: "tipos-documento", label: "Tipos de documento", group: "Documentos" }, { key: "series", label: "Series", group: "Documentos" },
   { key: "riva", label: "Regimes de IVA", group: "Fiscalidade" }, { key: "codpostal", label: "Codigos postais", group: "Localizacao" },
-  { key: "freguesias", label: "Freguesias", group: "Localizacao" }, { key: "armazens", label: "Armazens", group: "Sistema" },
-  { key: "utilizadores", label: "Utilizadores", group: "Sistema" }
+  { key: "freguesias", label: "Freguesias", group: "Localizacao" }, { key: "armazens", label: "Armazens", group: "Sistema" }
 ];
 
 export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey: TableKey; onBack: () => void }) {
@@ -132,7 +125,7 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
   async function load() {
     setLoading(true); setFeedback(null);
     try {
-      const sortField = tableKey === "freguesias" || tableKey === "utilizadores" ? "codigo" : tableKey === "series" ? "serie" : "id";
+      const sortField = tableKey === "freguesias" ? "codigo" : tableKey === "series" ? "serie" : "id";
       const [page, support] = await Promise.all([get<Page<Row>>(`${config.endpoint}?size=1000&sort=${sortField},asc`), loadOptions()]);
       setRows(page.content); setOptions((current) => ({ ...current, ...support })); reset();
     } catch (error) { setFeedback({ kind: "error", text: errorMessage(error) }); }

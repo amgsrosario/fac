@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -115,6 +116,7 @@ public class DocumentoComercialPdfService {
                     .top { width: 100%%; border-bottom: 2px solid #ba963c; padding-bottom: 8px; margin-bottom: 14px; }
                     .top td { vertical-align: top; }
                     .company { width: 62%%; line-height: 1.45; }
+                    .logo { max-width: 28mm; max-height: 16mm; display: block; margin-bottom: 4px; }
                     .doc-title { width: 38%%; text-align: right; }
                     .doc-title h1 { font-size: 18pt; color: #44515d; }
                     .doc-title strong { font-size: 12pt; }
@@ -155,7 +157,7 @@ public class DocumentoComercialPdfService {
                 </tr></table></div>
                 %s
                 <table class="top"><tr>
-                  <td class="company"><strong>%s</strong><br />NIF %s<br />%s<br />%s<br /><span class="muted">%s %s</span></td>
+                  <td class="company">%s<strong>%s</strong><br />NIF %s<br />%s<br />%s<br /><span class="muted">%s %s %s</span></td>
                   <td class="doc-title"><h1>%s</h1><strong>%s %s/%s</strong><br /><span class="muted">Emitido em %s</span><br /><span class="muted">Vencimento %s</span></td>
                 </tr></table>
 
@@ -183,15 +185,16 @@ public class DocumentoComercialPdfService {
                 %s
                 %s
                 %s
-                <div class="footer">Emitido por %s em %s. Capital social: %s EUR. Matricula comercial: %s. CAE: %s - %s.</div>
+                <div class="footer">%s</div>
                 </body></html>
                 """.formatted(
                 esc(empresa.nome()), esc(empresa.nif()), esc(documento.tipoDocumentoDescricao()),
                 esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
                 esc(documento.clienteNome()), esc(documento.clienteNif()),
                 anulada,
-                esc(empresa.nome()), esc(empresa.nif()), address(empresa.morada(), empresa.morada1()),
+                logo(empresa), esc(empresa.nome()), esc(empresa.nif()), address(empresa.morada(), empresa.morada1()),
                 esc(joinPostal(empresa.codPostal(), empresa.localidade())), esc(empresa.email()), esc(empresa.web()),
+                hasText(empresa.telefone()) ? " · Tel. " + esc(empresa.telefone()) : "",
                 esc(documento.tipoDocumentoDescricao()), esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(),
                 date(documento.dataEmissao()), date(documento.dataVencimento()),
                 esc(documento.clienteNome()), esc(documento.clienteNif()), address(documento.clienteMorada(), documento.clienteMorada1()),
@@ -206,9 +209,29 @@ public class DocumentoComercialPdfService {
                 transporte,
                 hasText(documento.observacoes()) ? "<div class=\"box\"><div class=\"section-title\">Observacoes</div>" + esc(documento.observacoes()) + "</div>" : "",
                 fiscal(documento.atcud(), documento.qrPayload()),
-                esc(documento.emissorId()), documento.momentoEmissao() == null ? "-" : esc(documento.momentoEmissao().toString()),
-                money(empresa.capitalSocial()), esc(empresa.matriculaRegistoComercial()), esc(empresa.cae()), esc(empresa.descricaoCae())
+                footer(empresa, documento)
         );
+    }
+
+    private String logo(EmitenteFiscalSnapshotDto empresa) {
+        if (empresa == null || empresa.logo() == null || empresa.logo().length == 0 || !hasText(empresa.logoMediaType())) {
+            return "";
+        }
+        return "<img class=\"logo\" src=\"data:" + esc(empresa.logoMediaType()) + ";base64,"
+                + Base64.getEncoder().encodeToString(empresa.logo()) + "\" alt=\"Logotipo\" />";
+    }
+
+    private String footer(EmitenteFiscalSnapshotDto empresa, DocumentoComercialDto documento) {
+        String base = "Emitido por " + esc(documento.emissorId()) + " em "
+                + (documento.momentoEmissao() == null ? "-" : esc(documento.momentoEmissao().toString()))
+                + ". Capital social: " + money(empresa.capitalSocial()) + " EUR. Matricula comercial: "
+                + esc(empresa.matriculaRegistoComercial()) + ". CAE: " + esc(empresa.cae()) + " - "
+                + esc(empresa.descricaoCae()) + ".";
+        String iban = hasText(empresa.iban()) ? " IBAN: " + esc(empresa.iban()) + "." : "";
+        String bic = hasText(empresa.bicSwift()) ? " BIC/SWIFT: " + esc(empresa.bicSwift()) + "." : "";
+        String legal = hasText(empresa.observacoesLegais()) ? " " + esc(empresa.observacoesLegais()) : "";
+        String custom = hasText(empresa.textoRodape()) ? " " + esc(empresa.textoRodape()) : "";
+        return base + iban + bic + legal + custom;
     }
 
     private String transporte(DocumentoComercialDto d) {

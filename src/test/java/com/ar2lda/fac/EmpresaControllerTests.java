@@ -7,10 +7,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Base64;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -61,11 +66,20 @@ class EmpresaControllerTests {
                                   "cae": "62010",
                                   "descricaoCae": "Atividades de programação informática",
                                   "email": "geral@fac.test",
-                                  "web": "https://fac.test"
+                                  "web": "https://fac.test",
+                                  "nomeComercial": "FAC Demo",
+                                  "telefone": "+351 234 000 000",
+                                  "iban": "PT50000201231234567890154",
+                                  "bicSwift": "CGDIPTPL",
+                                  "textoRodape": "Rodape comercial",
+                                  "observacoesLegais": "Observacoes legais",
+                                  "observacoesComerciaisDefault": "Obrigado pela preferencia."
                                 }
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.nomeComercial").value("FAC Demo"))
+                .andExpect(jsonPath("$.iban").value("PT50000201231234567890154"))
                 .andExpect(jsonPath("$.nome").value("FAC Demonstração, Lda"))
                 .andExpect(jsonPath("$.capitalSocial").value(0))
                 .andExpect(jsonPath("$.concelho").exists());
@@ -89,14 +103,18 @@ class EmpresaControllerTests {
                                   "matriculaRegistoComercial": "CRC Águeda 509999999",
                                   "cae": "62010",
                                   "descricaoCae": "Atividades de programação informática",
-                                  "email": "geral@fac.test"
+                                  "email": "geral@fac.test",
+                                  "iban": "PT50000201231234567890154",
+                                  "bicSwift": "CGDIPTPL",
+                                  "textoRodape": "Rodape alterado"
                                 }
                                 """))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         mockMvc.perform(get("/empresa"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nome").value("FAC Demonstração Atualizada, Lda"))
+                .andExpect(jsonPath("$.textoRodape").value("Rodape alterado"))
                 .andExpect(jsonPath("$.freguesiaId").doesNotExist());
     }
 
@@ -149,5 +167,101 @@ class EmpresaControllerTests {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void rejeitaNifPtInvalidoEIbanInvalido() throws Exception {
+        mockMvc.perform(post("/empresa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "FAC Demo, Lda",
+                                  "nif": "599000001",
+                                  "morada": "Rua Principal",
+                                  "codPostalId": "3750-002",
+                                  "localidade": "Agueda",
+                                  "paisId": "PT",
+                                  "capitalSocial": 0,
+                                  "matriculaRegistoComercial": "CRC Agueda 599000001",
+                                  "cae": "62010",
+                                  "descricaoCae": "Programacao",
+                                  "email": "geral@fac.test"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        criarEmpresaMinima();
+
+        mockMvc.perform(put("/empresa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "FAC Demo, Lda",
+                                  "nif": "509999999",
+                                  "morada": "Rua Principal",
+                                  "codPostalId": "3750-002",
+                                  "localidade": "Agueda",
+                                  "paisId": "PT",
+                                  "capitalSocial": 0,
+                                  "matriculaRegistoComercial": "CRC Agueda 509999999",
+                                  "cae": "62010",
+                                  "descricaoCae": "Programacao",
+                                  "email": "geral@fac.test",
+                                  "iban": "PT50000000000000000000000"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void guardaConsultaERemoveLogotipo() throws Exception {
+        criarEmpresaMinima();
+        byte[] png = Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=");
+        MockMultipartFile file = new MockMultipartFile("file", "logo.png", MediaType.IMAGE_PNG_VALUE, png);
+
+        mockMvc.perform(multipart("/empresa/logotipo").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.temLogotipo").value(true))
+                .andExpect(jsonPath("$.logotipoMediaType").value(MediaType.IMAGE_PNG_VALUE));
+
+        mockMvc.perform(get("/empresa/logotipo"))
+                .andExpect(status().isOk())
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(png));
+
+        mockMvc.perform(delete("/empresa/logotipo"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/empresa/logotipo"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void rejeitaLogotipoComTipoInvalido() throws Exception {
+        criarEmpresaMinima();
+        MockMultipartFile file = new MockMultipartFile("file", "logo.txt", MediaType.TEXT_PLAIN_VALUE, "texto".getBytes());
+
+        mockMvc.perform(multipart("/empresa/logotipo").file(file))
+                .andExpect(status().isBadRequest());
+    }
+
+    private void criarEmpresaMinima() throws Exception {
+        mockMvc.perform(post("/empresa")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "FAC Demo, Lda",
+                                  "nif": "509999999",
+                                  "morada": "Rua Principal",
+                                  "codPostalId": "3750-002",
+                                  "localidade": "Agueda",
+                                  "paisId": "PT",
+                                  "capitalSocial": 0,
+                                  "matriculaRegistoComercial": "CRC Agueda 509999999",
+                                  "cae": "62010",
+                                  "descricaoCae": "Programacao",
+                                  "email": "geral@fac.test"
+                                }
+                                """))
+                .andExpect(status().isCreated());
     }
 }

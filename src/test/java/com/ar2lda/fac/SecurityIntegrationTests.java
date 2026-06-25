@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -170,5 +171,17 @@ class SecurityIntegrationTests {
 
         mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/utilizadores/SECTEST/redefinir-password").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{\"novaPassword\":\"Outra#2026Senha\"}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(patch("/utilizadores/SECTEST/estado").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{\"ativo\":false}"))
+                .andExpect(status().isForbidden());
+
+        org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
+                .anyMatch(evento -> evento.getTipoEvento() == TipoAuditoriaEvento.TENTATIVA_ADMINISTRATIVA_NEGADA
+                        && "OPERADOR".equals(evento.getUtilizadorId()));
     }
 }

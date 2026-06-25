@@ -6,6 +6,8 @@ import ParametrosDocumentoView from "./ParametrosDocumentoView";
 import TabelasView from "./TabelasView";
 import ListagensView from "./ListagensView";
 import AuditoriaView from "./AuditoriaView";
+import EmpresaAdminView from "./EmpresaAdminView";
+import AdminUtilizadoresView from "./AdminUtilizadoresView";
 import { apiFetch, AuthSession } from "./api";
 
 type Page<T> = {
@@ -1094,7 +1096,7 @@ type ConfiguracaoViewProps = {
 };
 
 function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeForm, onSave }: ConfiguracaoViewProps) {
-  const [area, setArea] = useState<"EMPRESA" | "PARAMETROS" | "TABELAS">("PARAMETROS");
+  const [area, setArea] = useState<"EMPRESA" | "UTILIZADORES" | "PARAMETROS" | "TABELAS">("PARAMETROS");
 
   function changeField<K extends keyof ParametrosClienteForm>(field: K, value: ParametrosClienteForm[K]) {
     onChangeForm({ ...form, [field]: value });
@@ -1110,24 +1112,21 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
         </div>
         <div className="fac-hero-card">
           <span>Area atual</span>
-          <strong>{area === "EMPRESA" ? "Empresa" : area === "PARAMETROS" ? "Parametros" : "Tabelas"}</strong>
+          <strong>{area === "EMPRESA" ? "Empresa" : area === "UTILIZADORES" ? "Utilizadores" : area === "PARAMETROS" ? "Parametros" : "Tabelas"}</strong>
           <small>Configuracao simples, explicita e centralizada</small>
         </div>
       </section>
 
       <nav aria-label="Areas de configuracao" className="fac-config-nav">
         <button className={area === "EMPRESA" ? "active" : ""} onClick={() => setArea("EMPRESA")} type="button"><strong>Empresa</strong><span>Identificacao e dados fiscais</span></button>
+        <button className={area === "UTILIZADORES" ? "active" : ""} onClick={() => setArea("UTILIZADORES")} type="button"><strong>Utilizadores</strong><span>Perfis, estado e password</span></button>
         <button className={area === "PARAMETROS" ? "active" : ""} onClick={() => setArea("PARAMETROS")} type="button"><strong>Parametros</strong><span>Valores sugeridos da aplicacao</span></button>
         <button className={area === "TABELAS" ? "active" : ""} onClick={() => setArea("TABELAS")} type="button"><strong>Tabelas</strong><span>Catalogos de apoio</span></button>
       </nav>
 
-      {area === "EMPRESA" && <section className="fac-panel">
-        <div className="fac-panel-header">
-          <div><p className="fac-eyebrow">Empresa proprietaria</p><h2>Identificacao da entidade emissora</h2></div>
-          <span className="fac-status">Proximo editor</span>
-        </div>
-        <p className="fac-muted">Esta area concentrara os dados legais, fiscais e de contacto usados nos documentos. O editor sera ligado diretamente a ficha unica da empresa.</p>
-      </section>}
+      {area === "EMPRESA" && <EmpresaAdminView />}
+
+      {area === "UTILIZADORES" && <AdminUtilizadoresView />}
 
       {area === "PARAMETROS" && <>
       <section className="fac-panel">

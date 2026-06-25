@@ -14,6 +14,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -171,7 +173,8 @@ class DocumentoComercialEmissaoIntegridadeTests {
 
         var impressao = documentoService.getImpressao(id);
         assertThat(impressao.empresa().nome()).isEqualTo("FAC Integridade, Lda.");
-        assertThat(impressao.empresa().nif()).isEqualTo("500000001");
+        assertThat(impressao.empresa().nif()).isEqualTo("509999999");
+        assertThat(impressao.empresa().iban()).isEqualTo("PT50000201231234567890154");
         assertThat(impressao.documento().clienteNome()).isEqualTo("Cliente Integridade");
         assertThat(impressao.documento().clienteNif()).isEqualTo("509654321");
         assertThat(impressao.documento().serieDescricao()).isEqualTo("Série concorrente");
@@ -181,6 +184,20 @@ class DocumentoComercialEmissaoIntegridadeTests {
         assertThat(impressao.linhas().getFirst().descricao()).isEqualTo("Artigo Integridade");
         assertThat(impressao.linhas().getFirst().unidade()).isEqualTo("UN");
         assertThat(impressao.linhas().getFirst().tipoTaxaIvaId()).isEqualTo("NORMAL");
+
+        byte[] pdfAnterior = mockMvc.perform(get("/documentos-comerciais/{id}/pdf", id))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+        assertThat(pdfText(pdfAnterior))
+                .contains("FAC Integridade, Lda.", "Rodapé histórico A", "PT50000201231234567890154")
+                .doesNotContain("Empresa alterada");
+
+        Long novoId = criarRascunho("LOCK");
+        emitir(novoId).call();
+        byte[] pdfNovo = mockMvc.perform(get("/documentos-comerciais/{id}/pdf", novoId))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+        assertThat(pdfText(pdfNovo)).contains("Empresa alterada").doesNotContain("FAC Integridade, Lda.");
     }
 
     @Test
@@ -191,7 +208,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         LinhaDocumentoComercial linha = linhaRepository
                 .findByDocumentoComercialIdOrderByNumeroLinha(id).getFirst();
 
-        assertThat(emitido.getFiscalSnapshotVersion()).isEqualTo(1);
+        assertThat(emitido.getFiscalSnapshotVersion()).isEqualTo(2);
         assertThat(emitido.isFiscalmenteConsolidado()).isTrue();
         assertThat(linha.getArtigoCodigo()).isEqualTo("ARTINT");
         assertThat(linha.getBaseTributavel()).isEqualByComparingTo("10.000000");
@@ -458,7 +475,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
     private void prepararEmpresa(CodPostal codPostal, Pais pais) {
         Empresa empresa = empresaRepository.findById(Empresa.EMPRESA_ID).orElseGet(Empresa::new);
         empresa.setNome("FAC Integridade, Lda.");
-        empresa.setNif("500000001");
+        empresa.setNif("509999999");
         empresa.setMorada("Rua da Empresa");
         empresa.setCodPostal(codPostal);
         empresa.setLocalidade("Águeda");
@@ -469,7 +486,17 @@ class DocumentoComercialEmissaoIntegridadeTests {
         empresa.setDescricaoCae("Programação");
         empresa.setEmail("fac.integridade@fac.test");
         empresa.setWeb("https://fac.test");
+        empresa.setIban("PT50000201231234567890154");
+        empresa.setBicSwift("CGDIPTPL");
+        empresa.setTextoRodape("Rodapé histórico A");
+        empresa.setObservacoesLegais("Observação legal A");
         empresaRepository.save(empresa);
+    }
+
+    private String pdfText(byte[] content) throws Exception {
+        try (var document = Loader.loadPDF(content)) {
+            return new PDFTextStripper().getText(document);
+        }
     }
 
     private void cleanupFixture() {
