@@ -1,0 +1,2 @@
+nome;morada;morada1;localidade;nif;tel;tm;email;email1;tspiva;iban;retencao;inativo;observacoes;codPostalId;paisId;moedaId;mPagamentoId;pPagamentoId;rivaId;transporteId
+Cliente Exemplo;Rua Exemplo 1;;Lisboa;509999999;;;cliente.exemplo@fac.demo;;;;false;false;Exemplo ficticio;1000-001;PT;EUR;;;CON;1001

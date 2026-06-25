@@ -29,7 +29,10 @@ public class AdministrativeAccessDeniedHandler implements AccessDeniedHandler {
                        AccessDeniedException accessDeniedException) throws IOException, ServletException {
         if (isAdministrativePath(request.getRequestURI())) {
             Utilizador utilizador = currentUser();
-            auditoriaIsoladaService.registar(TipoAuditoriaEvento.TENTATIVA_ADMINISTRATIVA_NEGADA,
+            TipoAuditoriaEvento evento = isImportExportPath(request.getRequestURI())
+                    ? TipoAuditoriaEvento.TENTATIVA_IMPORTACAO_NEGADA
+                    : TipoAuditoriaEvento.TENTATIVA_ADMINISTRATIVA_NEGADA;
+            auditoriaIsoladaService.registar(evento,
                     "ADMIN", request.getRequestURI(), utilizador, ResultadoAuditoria.FALHA,
                     request.getMethod(), "Tentativa administrativa recusada", "{\"versao\":1}");
         }
@@ -39,7 +42,12 @@ public class AdministrativeAccessDeniedHandler implements AccessDeniedHandler {
     }
 
     private boolean isAdministrativePath(String uri) {
-        return uri != null && (uri.startsWith("/utilizadores") || uri.startsWith("/empresa") || uri.startsWith("/auditoria"));
+        return uri != null && (uri.startsWith("/utilizadores") || uri.startsWith("/empresa")
+                || uri.startsWith("/auditoria") || isImportExportPath(uri));
+    }
+
+    private boolean isImportExportPath(String uri) {
+        return uri != null && (uri.startsWith("/importacoes") || uri.startsWith("/exportacoes"));
     }
 
     private Utilizador currentUser() {

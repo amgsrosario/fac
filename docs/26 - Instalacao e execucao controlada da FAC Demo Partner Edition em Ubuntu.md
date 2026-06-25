@@ -27,7 +27,7 @@ O volume nomeado `fac-demo-postgres-data` preserva os dados entre recriações d
 - `compose.demo.yaml`: stack isolado `fac-demo`.
 - `deploy/demo/Dockerfile.backend`: build Maven e runtime Java 21 sem privilégios.
 - `deploy/demo/Dockerfile.frontend`: build Node 20 e runtime Nginx.
-- `deploy/demo/nginx.conf`: SPA, healthcheck e reverse proxy `/api`.
+- `deploy/demo/nginx.conf`: SPA, healthcheck, reverse proxy `/api` e upload ate 10 MB para importacao de dados mestres.
 - `.dockerignore`: exclui segredos, artefactos e dados locais do contexto de build.
 - `.env.demo.example`: contrato de configuração sem segredos.
 - `scripts/demo/linux/*.sh`: operações de alto nível.

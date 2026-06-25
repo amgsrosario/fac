@@ -14,12 +14,14 @@ public enum PapelUtilizador {
             PermissaoFuncional.DOCUMENTO_OBTER_PDF,
             PermissaoFuncional.SERIE_CONSULTAR,
             PermissaoFuncional.MESTRES_GERIR,
+            PermissaoFuncional.DADOS_MESTRES_EXPORTAR,
             PermissaoFuncional.TESOURARIA_GERIR
     )),
     CONSULTA(EnumSet.of(
             PermissaoFuncional.DOCUMENTO_CONSULTAR,
             PermissaoFuncional.DOCUMENTO_OBTER_PDF,
-            PermissaoFuncional.SERIE_CONSULTAR
+            PermissaoFuncional.SERIE_CONSULTAR,
+            PermissaoFuncional.DADOS_MESTRES_EXPORTAR
     ));
 
     private final Set<PermissaoFuncional> permissoes;

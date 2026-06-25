@@ -1,0 +1,2 @@
+codigo;abreviatura;codigoIdentificacao;descricao;unidade;familiaId;peso;ivaCompraId;ivaVendaId;pvp;inativo;retencao;observacoes
+ARTEXEMPLO;Exemplo;5600000000000;Artigo exemplo;UN;1;1.000;REDUZIDA;NORMAL;10.000000;false;false;Exemplo ficticio

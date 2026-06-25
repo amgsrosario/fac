@@ -47,7 +47,7 @@ public class DemoScenarioCheckService {
         long articles = scalar(jdbc, "select count(*) from artigo");
         long series = scalar(jdbc, "select count(*) from serie where serie='DEMO26' and ((id_tipo_documento='FT' and numerador=6) or (id_tipo_documento='RC' and numerador=2))");
         long commercial = scalar(jdbc, "select count(*) from documento_comercial where serie='DEMO26'");
-        long fiscal = scalar(jdbc, "select count(*) from documento_comercial where serie='DEMO26' and estado in ('EMITIDO','ANULADO') and numero_documento between 1 and 6 and numero_documento_completo is not null and atcud is not null and qr_payload is not null and fiscal_snapshot_version=1");
+        long fiscal = scalar(jdbc, "select count(*) from documento_comercial where serie='DEMO26' and estado in ('EMITIDO','ANULADO') and numero_documento between 1 and 6 and numero_documento_completo is not null and atcud is not null and qr_payload is not null and fiscal_snapshot_version=2");
         long financial = scalar(jdbc, "select count(*) from documento_financeiro where serie='DEMO26' and numero_documento between 1 and 2 and atcud is not null and qr_payload is not null");
         long annulled = scalar(jdbc, "select count(*) from documento_comercial where serie='DEMO26' and estado='ANULADO' and motivo_anulacao is not null and data_hora_anulacao is not null");
         long partial = scalar(jdbc, "select count(*) from pendente p join documento_comercial d on d.id=p.id_documento_comercial where d.serie='DEMO26' and d.estado='EMITIDO' and p.valor_pendente>0 and p.valor_pendente<p.valor_documento");

@@ -1302,6 +1302,18 @@ button:disabled {
   background: #fff;
 }
 
+.fac-code-preview {
+  margin-top: 18px;
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid var(--fac-border);
+  border-radius: 14px;
+  padding: 14px;
+  background: #f7f9fa;
+  color: #26343c;
+  font-size: 0.82rem;
+}
+
 @media (max-width: 980px) {
   .fac-shell,
   .fac-hero,

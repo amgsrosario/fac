@@ -8,6 +8,7 @@ import ListagensView from "./ListagensView";
 import AuditoriaView from "./AuditoriaView";
 import EmpresaAdminView from "./EmpresaAdminView";
 import AdminUtilizadoresView from "./AdminUtilizadoresView";
+import ImportExportView from "./ImportExportView";
 import { apiFetch, AuthSession } from "./api";
 
 type Page<T> = {
@@ -15,7 +16,7 @@ type Page<T> = {
   totalElements: number;
 };
 
-type ViewKey = "Dashboard" | "Clientes" | "Documentos" | "Artigos" | "Tesouraria" | "Listagens" | "Auditoria" | "Configuracao";
+type ViewKey = "Dashboard" | "Clientes" | "Documentos" | "Artigos" | "Tesouraria" | "Listagens" | "ImportExport" | "Auditoria" | "Configuracao";
 
 type Cliente = {
   id: number;
@@ -213,6 +214,7 @@ const menu: { label: ViewKey; hint: string }[] = [
   { label: "Artigos", hint: "Catalogo" },
   { label: "Tesouraria", hint: "Recebimentos" },
   { label: "Listagens", hint: "Consulta e analise" },
+  { label: "ImportExport", hint: "Dados mestres" },
   { label: "Auditoria", hint: "Rastreabilidade" },
   { label: "Configuracao", hint: "Base FAC" }
 ];
@@ -570,6 +572,7 @@ function App({ currentUser, onLogout }: AppProps) {
           {menu.filter((item) => {
             if (item.label === "Auditoria") return currentUser.permissoes?.includes("AUDITORIA_CONSULTAR");
             if (item.label === "Configuracao") return currentUser.permissoes?.includes("CONFIGURACAO_GERIR");
+            if (item.label === "ImportExport") return currentUser.permissoes?.includes("DADOS_MESTRES_IMPORTAR") || currentUser.permissoes?.includes("DADOS_MESTRES_EXPORTAR");
             return true;
           }).map((item) => (
             <button
@@ -578,7 +581,7 @@ function App({ currentUser, onLogout }: AppProps) {
               onClick={() => setActiveView(item.label)}
               type="button"
             >
-              <span>{item.label}</span>
+              <span>{item.label === "ImportExport" ? "Importar/Exportar" : item.label}</span>
               <small>{item.hint}</small>
             </button>
           ))}
@@ -636,6 +639,8 @@ function App({ currentUser, onLogout }: AppProps) {
           <PendentesView />
         ) : activeView === "Listagens" ? (
           <ListagensView />
+        ) : activeView === "ImportExport" ? (
+          <ImportExportView />
         ) : activeView === "Auditoria" ? (
           <AuditoriaView />
         ) : activeView === "Configuracao" ? (
@@ -1301,6 +1306,7 @@ function parametrosClientePayload(form: ParametrosClienteForm) {
 function viewTitle(view: ViewKey) {
   if (view === "Clientes") return "Clientes e conta corrente";
   if (view === "Listagens") return "Listagens e analise operacional";
+  if (view === "ImportExport") return "Importacao e exportacao de dados mestres";
   if (view === "Auditoria") return "Auditoria fiscal";
   if (view === "Configuracao") return "Configuracao simples e explicita";
   return "Faturacao simples, clara e operacional";

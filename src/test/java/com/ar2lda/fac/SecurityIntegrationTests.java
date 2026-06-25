@@ -11,11 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -183,5 +185,51 @@ class SecurityIntegrationTests {
         org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
                 .anyMatch(evento -> evento.getTipoEvento() == TipoAuditoriaEvento.TENTATIVA_ADMINISTRATIVA_NEGADA
                         && "OPERADOR".equals(evento.getUtilizadorId()));
+    }
+
+    @Test
+    void permissoesImportacaoExportacaoDadosMestres() throws Exception {
+        String adminToken = login("security@fac.test", "FacTest1!");
+        Utilizador operador = new Utilizador("OPEXPORT", "Operador Export", "opexport@fac.test",
+                passwordEncoder.encode("FacTest1!"), false);
+        operador.setPapel(PapelUtilizador.OPERADOR);
+        utilizadorRepository.save(operador);
+        String operadorToken = login("opexport@fac.test", "FacTest1!");
+        Utilizador consulta = new Utilizador("CONEXPORT", "Consulta Export", "conexport@fac.test",
+                passwordEncoder.encode("FacTest1!"), false);
+        consulta.setPapel(PapelUtilizador.CONSULTA);
+        utilizadorRepository.save(consulta);
+        String consultaToken = login("conexport@fac.test", "FacTest1!");
+
+        mockMvc.perform(get("/exportacoes/clientes").header("Authorization", "Bearer " + operadorToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/exportacoes/clientes").header("Authorization", "Bearer " + consultaToken))
+                .andExpect(status().isOk());
+
+        MockMultipartFile file = new MockMultipartFile("file", "clientes.csv", "text/csv",
+                "nome;morada;morada1;localidade;nif;tel;tm;email;email1;tspiva;iban;retencao;inativo;observacoes;codPostalId;paisId;moedaId;mPagamentoId;pPagamentoId;rivaId;transporteId\n".getBytes());
+
+        mockMvc.perform(multipart("/importacoes/clientes/validar").file(file)
+                        .header("Authorization", "Bearer " + operadorToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(multipart("/importacoes/clientes/validar").file(file)
+                        .header("Authorization", "Bearer " + consultaToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/importacoes/clientes/modelo").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk());
+
+        org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
+                .anyMatch(evento -> evento.getTipoEvento() == TipoAuditoriaEvento.TENTATIVA_IMPORTACAO_NEGADA
+                        && "OPEXPORT".equals(evento.getUtilizadorId()));
+    }
+
+    private String login(String username, String password) throws Exception {
+        String response = mockMvc.perform(post("/auth/login").contentType("application/json").content("""
+                {"username":"%s","password":"%s"}
+                """.formatted(username, password)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
+                .readTree(response).get("token").asText();
     }
 }
