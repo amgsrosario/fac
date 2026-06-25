@@ -28,7 +28,9 @@ fac:
     exit-after-seed: ${FAC_DEMO_EXIT_AFTER_SEED:false}
     check-on-startup: ${FAC_DEMO_CHECK_ON_STARTUP:false}
     exit-after-check: ${FAC_DEMO_EXIT_AFTER_CHECK:false}
-    expected-database: fac_demo
+    commercial-check-on-startup: ${FAC_COMMERCIAL_DEMO_CHECK_ON_STARTUP:false}
+    exit-after-commercial-check: ${FAC_COMMERCIAL_DEMO_EXIT_AFTER_CHECK:false}
+    expected-database: ${FAC_DEMO_EXPECTED_DATABASE:fac_demo}
     reset-authorized: ${FAC_DEMO_RESET_AUTHORIZED:false}
     password-admin: ${FAC_DEMO_PASSWORD_ADMIN:}
     password-operador: ${FAC_DEMO_PASSWORD_OPERADOR:}

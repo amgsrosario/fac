@@ -41,7 +41,13 @@ frontend/vite.config.d.ts
 
 ### PostgreSQL local backups ###
 backups/database/
+backups/demo/
+backups/test/
+backups/restore-validation/
+backups/logs/
 *.dump
+*.backup
+*.metadata.json
 
 ### FAC Demo local ###
 .env.demo
