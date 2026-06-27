@@ -1,0 +1,35 @@
+:root {
+  --fac-bg: #F7F7F5;
+  --fac-surface: #FFFFFF;
+  --fac-sidebar: #FAFAFA;
+  --fac-border: #E8E8E8;
+  --fac-text: #4B5563;
+  --fac-text-muted: #8A8F98;
+  --fac-petrol: #44515D;
+  --fac-gold: #BA963C;
+  --fac-client-soft: #F3F6F1;
+  --fac-document-soft: #F7F3EA;
+  --fac-product-soft: #F1F5F7;
+  --fac-treasury-soft: #F6F2EC;
+
+  --fac-space-1: 0.25rem;
+  --fac-space-2: 0.5rem;
+  --fac-space-3: 0.75rem;
+  --fac-space-4: 1rem;
+  --fac-space-5: 1.5rem;
+  --fac-space-6: 2rem;
+  --fac-radius-sm: 6px;
+  --fac-radius-md: 8px;
+  --fac-radius-lg: 14px;
+  --fac-control-height: 2.5rem;
+  --fac-focus-ring: 0 0 0 3px rgba(186, 150, 60, 0.18);
+  --fac-shadow-soft: 0 18px 45px rgba(68, 81, 93, 0.10);
+  --fac-error: #A33A3A;
+  --fac-error-soft: #F8EDED;
+  --fac-success: #3F6F50;
+  --fac-success-soft: #EEF6F0;
+  --fac-breakpoint-mobile: 767px;
+  --fac-breakpoint-tablet: 1023px;
+  --fac-z-overlay: 1000;
+  --fac-z-toast: 1100;
+}

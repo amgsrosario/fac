@@ -1,0 +1,233 @@
+.fac-ui,
+.fac-ui * {
+  box-sizing: border-box;
+}
+
+.fac-ui {
+  min-height: 100vh;
+  background: var(--fac-bg);
+  color: var(--fac-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.fac-control,
+.fac-input,
+.fac-select {
+  min-height: var(--fac-control-height);
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm);
+  background: var(--fac-surface);
+  color: var(--fac-text);
+  font: inherit;
+}
+
+.fac-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fac-space-2);
+  min-height: var(--fac-control-height);
+  border: 1px solid transparent;
+  border-radius: var(--fac-radius-sm);
+  padding: 0 var(--fac-space-4);
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.fac-button:disabled,
+.fac-control:disabled,
+.fac-input:disabled,
+.fac-select.fac-disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.fac-button-primary {
+  border-color: var(--fac-petrol);
+  background: var(--fac-petrol);
+  color: #fff;
+}
+
+.fac-button-secondary {
+  border-color: var(--fac-border);
+  background: var(--fac-surface);
+  color: var(--fac-petrol);
+}
+
+.fac-button-destructive {
+  border-color: var(--fac-error);
+  background: var(--fac-error-soft);
+  color: var(--fac-error);
+}
+
+.fac-button-text {
+  border-color: transparent;
+  background: transparent;
+  color: var(--fac-petrol);
+}
+
+.fac-input {
+  width: 100%;
+  padding: 0 var(--fac-space-3);
+}
+
+.fac-input:focus,
+.fac-select:focus-within,
+.fac-button:focus-visible {
+  outline: none;
+  box-shadow: var(--fac-focus-ring);
+}
+
+.fac-field-stack {
+  display: grid;
+  gap: var(--fac-space-2);
+}
+
+.fac-field-stack > span {
+  color: var(--fac-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.fac-select {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 var(--fac-space-3);
+}
+
+.fac-select-panel,
+.fac-dialog,
+.fac-toast-message {
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  background: var(--fac-surface);
+  color: var(--fac-text);
+  box-shadow: var(--fac-shadow-soft);
+}
+
+.fac-select-item {
+  padding: var(--fac-space-3);
+  cursor: pointer;
+}
+
+.fac-select-item:hover,
+.fac-select-item.p-highlight {
+  background: var(--fac-client-soft);
+}
+
+.fac-dialog {
+  max-width: min(92vw, 34rem);
+  padding: var(--fac-space-5);
+}
+
+.fac-dialog-header,
+.fac-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fac-space-3);
+}
+
+.fac-dialog-content {
+  padding: var(--fac-space-4) 0;
+}
+
+.fac-dialog-mask {
+  background: rgba(68, 81, 93, 0.25);
+}
+
+.fac-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  border-radius: 999px;
+  padding: 0 var(--fac-space-3);
+  background: var(--fac-product-soft);
+  color: var(--fac-petrol);
+  font-size: 0.78rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.fac-status-badge-success {
+  background: var(--fac-success-soft);
+  color: var(--fac-success);
+}
+
+.fac-status-badge-warning {
+  background: var(--fac-document-soft);
+  color: var(--fac-gold);
+}
+
+.fac-status-badge-danger {
+  background: var(--fac-error-soft);
+  color: var(--fac-error);
+}
+
+.fac-state {
+  display: grid;
+  gap: var(--fac-space-2);
+  place-items: start;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  padding: var(--fac-space-5);
+  background: var(--fac-surface);
+}
+
+.fac-state strong {
+  color: var(--fac-petrol);
+}
+
+.fac-state p {
+  margin: 0;
+  color: var(--fac-text-muted);
+}
+
+.fac-commercial-shell,
+.fac-mobile-shell {
+  min-height: 100vh;
+  background: var(--fac-bg);
+}
+
+.fac-commercial-shell {
+  display: grid;
+  grid-template-columns: 17rem 1fr;
+}
+
+.fac-commercial-sidebar {
+  border-right: 1px solid var(--fac-border);
+  background: var(--fac-sidebar);
+  padding: var(--fac-space-5);
+}
+
+.fac-commercial-content {
+  padding: var(--fac-space-6);
+}
+
+.fac-mobile-shell {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.fac-mobile-bar {
+  border-bottom: 1px solid var(--fac-border);
+  background: var(--fac-surface);
+  padding: var(--fac-space-4);
+}
+
+.fac-lab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--fac-space-4);
+  margin-top: var(--fac-space-5);
+}
+
+.fac-lab-panel {
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  background: var(--fac-surface);
+  padding: var(--fac-space-5);
+}
