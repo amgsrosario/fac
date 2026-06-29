@@ -4,7 +4,9 @@ export type DeviceClass = "mobile" | "tablet" | "desktop";
 
 export const FAC_BREAKPOINTS = {
   mobileMax: 767,
-  tabletMax: 1023
+  tabletMax: 1023,
+  desktopMin: 1024,
+  wideMin: 1360
 } as const;
 
 function classifyDevice(width: number): DeviceClass {

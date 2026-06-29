@@ -1,6 +1,6 @@
 import { Button, ButtonProps } from "primereact/button";
 
-export type FacButtonVariant = "primary" | "secondary" | "destructive" | "text";
+export type FacButtonVariant = "primary" | "secondary" | "ghost" | "destructive" | "text";
 
 export type FacButtonProps = Omit<ButtonProps, "severity" | "text" | "outlined"> & {
   variant?: FacButtonVariant;

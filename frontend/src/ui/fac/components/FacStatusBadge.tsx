@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-export type FacStatusTone = "neutral" | "success" | "warning" | "danger";
+export type FacStatusTone = "neutral" | "success" | "warning" | "danger" | "info";
 
 export function FacStatusBadge({
   children,

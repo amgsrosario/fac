@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Dropdown, DropdownChangeEvent } from "primereact/dropdown";
 
 export type FacSelectOption = {
@@ -10,6 +11,7 @@ export type FacSelectProps = {
   disabled?: boolean;
   label?: string;
   onChange: (value: string | null) => void;
+  openOnMount?: boolean;
   options: FacSelectOption[];
   placeholder?: string;
   value: string | null;
@@ -20,14 +22,24 @@ export function FacSelect({
   disabled = false,
   label,
   onChange,
+  openOnMount = false,
   options,
   placeholder = "Selecionar",
   value
 }: FacSelectProps) {
+  const dropdownRef = useRef<Dropdown>(null);
+
+  useEffect(() => {
+    if (!openOnMount || disabled) return;
+    const timeoutId = window.setTimeout(() => dropdownRef.current?.show(), 250);
+    return () => window.clearTimeout(timeoutId);
+  }, [disabled, openOnMount]);
+
   const select = (
     <Dropdown
       className={`fac-select ${disabled ? "fac-disabled" : ""} ${className}`.trim()}
       disabled={disabled}
+      appendTo="self"
       onChange={(event: DropdownChangeEvent) => onChange(event.value ?? null)}
       optionLabel="label"
       optionValue="value"
@@ -35,6 +47,7 @@ export function FacSelect({
       panelClassName="fac-select-panel"
       itemTemplate={(option: FacSelectOption) => <div className="fac-select-item">{option.label}</div>}
       placeholder={placeholder}
+      ref={dropdownRef}
       value={value}
     />
   );

@@ -382,3 +382,48 @@ O primeiro ecran recomendado para migracao funcional e `Artigos`, porque tem CRU
 - Definir politica de dialogs/toasts antes de migrar ecras.
 - Definir matriz inicial de capacidades por edicao com o proprietario.
 - Definir quais campos de servicos simples ficam ocultos e quais valores predefinidos recebem.
+
+## 20. Validacao visual da fundacao comercial
+
+Data: 2026-06-29
+
+Foi feita uma consolidacao visual limitada ao laboratorio comercial isolado, sem migrar ecras funcionais.
+
+Areas consolidadas:
+
+- tokens de tipografia, espacamento, foco, estados, alturas de controlo e breakpoints;
+- `FacButton` com variantes `primary`, `secondary`, `ghost`, `text` e `destructive`;
+- `FacSelect` com overlay local e modo de abertura para capturas tecnicas;
+- `FacStatusBadge` com tom `info`;
+- `FacMessage` para mensagens informativas, sucesso, aviso e erro;
+- `DesktopShell` e `MobileShell` com contentores sem overflow horizontal;
+- estilos PrimeReact unstyled para dialog, select e toast com atributos `data-pc-*`;
+- laboratorio `/ui-lab` com estados programaticos por query string: `?demo=dialog`, `?demo=confirm`, `?demo=select`, `?demo=toast`.
+
+Capturas guardadas em:
+
+```text
+docs/ui/commercial-foundation/
+```
+
+Breakpoints validados:
+
+- 375 px;
+- 430 px;
+- 768 px;
+- 1024 px;
+- 1440 px.
+
+O modo comercial foi servido com:
+
+```cmd
+cd /d C:\Projeto_faturação\fac\frontend && set VITE_FAC_UI_MODE=commercial&& .\node_modules\.bin\vite.cmd --host 127.0.0.1 --port 5174
+```
+
+O modo legacy predefinido foi servido sem `VITE_FAC_UI_MODE` em porta separada para confirmar que continua a abrir a entrada legacy.
+
+Relatorio detalhado:
+
+```text
+docs/ui/FAC_UI_FOUNDATION_VISUAL_VALIDATION.md
+```

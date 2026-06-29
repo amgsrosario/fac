@@ -10,7 +10,7 @@ export function MobileShell({
   return (
     <main className="fac-ui fac-mobile-shell">
       <header className="fac-mobile-bar"><strong>{title}</strong></header>
-      <section className="fac-commercial-content">{children}</section>
+      <section className="fac-mobile-content">{children}</section>
     </main>
   );
 }
