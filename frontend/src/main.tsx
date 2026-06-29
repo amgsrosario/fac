@@ -5,7 +5,7 @@ import { PrimeReactProvider } from "primereact/api";
 import App from "./App";
 import LoginView from "./LoginView";
 import { AuthSession, clearAuthSession, getAuthSession } from "./api";
-import { UiFoundationLab } from "./ui/commercial";
+import { CommercialApp } from "./ui/commercial";
 import { facPrimeReactConfig } from "./ui/fac/theme/primeReactConfig";
 import "primeicons/primeicons.css";
 import "./ui/fac/theme/fac-tokens.css";
@@ -31,7 +31,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <PrimeReactProvider value={facPrimeReactConfig}>
       <BrowserRouter>
-        {uiMode === "commercial" ? <UiFoundationLab /> : <Root />}
+        {uiMode === "commercial" ? <CommercialApp /> : <Root />}
       </BrowserRouter>
     </PrimeReactProvider>
   </React.StrictMode>

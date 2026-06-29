@@ -1,0 +1,355 @@
+.fac-services-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--fac-space-5);
+  align-items: end;
+  border-bottom: 1px solid var(--fac-border);
+  padding-bottom: var(--fac-space-5);
+  margin-bottom: var(--fac-space-4);
+}
+
+.fac-services-header h1,
+.fac-services-mobile-header h1 {
+  margin: 0;
+  color: var(--fac-petrol);
+}
+
+.fac-services-header-actions {
+  display: flex;
+  gap: var(--fac-space-3);
+  align-items: center;
+}
+
+.fac-services-summary {
+  display: grid;
+  gap: var(--fac-space-1);
+  min-width: 9rem;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  padding: var(--fac-space-3);
+  background: var(--fac-product-soft);
+}
+
+.fac-services-summary span,
+.fac-services-list-meta,
+.fac-commercial-user small,
+.fac-commercial-nav small {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-sm);
+}
+
+.fac-services-summary strong {
+  color: var(--fac-petrol);
+}
+
+.fac-services-toolbar {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) minmax(12rem, 0.28fr);
+  gap: var(--fac-space-3);
+  align-items: center;
+  margin-bottom: var(--fac-space-4);
+}
+
+.fac-services-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.35fr);
+  gap: var(--fac-space-4);
+  align-items: start;
+}
+
+.fac-services-panel {
+  min-width: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  background: var(--fac-surface);
+  padding: var(--fac-panel-padding);
+}
+
+.fac-services-list-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--fac-space-3);
+  align-items: center;
+  margin-bottom: var(--fac-space-3);
+}
+
+.fac-services-table-wrap {
+  min-width: 0;
+}
+
+.fac-services-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fac-services-table th,
+.fac-services-table td {
+  border-bottom: 1px solid var(--fac-border);
+  padding: var(--fac-space-3);
+  text-align: left;
+}
+
+.fac-services-table th {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fac-services-table tbody tr {
+  cursor: pointer;
+}
+
+.fac-services-table tbody tr:hover,
+.fac-services-table tbody tr.is-selected {
+  background: var(--fac-client-soft);
+}
+
+.fac-services-mobile-list {
+  display: none;
+}
+
+.fac-services-detail {
+  display: grid;
+  gap: var(--fac-space-4);
+}
+
+.fac-services-detail-title {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--fac-space-3);
+  align-items: start;
+}
+
+.fac-services-detail-title h2 {
+  margin: 0;
+}
+
+.fac-services-detail dl {
+  display: grid;
+  gap: var(--fac-space-1);
+  margin: 0;
+}
+
+.fac-services-detail dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--fac-space-3);
+  border-bottom: 1px solid var(--fac-border);
+  padding: var(--fac-space-3) 0;
+}
+
+.fac-services-detail dt {
+  color: var(--fac-text-muted);
+}
+
+.fac-services-detail dd {
+  margin: 0;
+  color: var(--fac-petrol);
+  font-weight: 700;
+  text-align: right;
+}
+
+.fac-services-dialog {
+  width: min(48rem, 94vw);
+  max-width: min(48rem, 94vw);
+}
+
+.fac-services-form {
+  display: grid;
+  gap: var(--fac-space-4);
+}
+
+.fac-services-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fac-space-4);
+}
+
+.fac-services-check {
+  display: flex;
+  gap: var(--fac-space-2);
+  align-items: center;
+  min-height: var(--fac-control-height);
+  padding-top: 1.5rem;
+}
+
+.fac-services-check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--fac-petrol);
+}
+
+.fac-services-check span {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-sm);
+  font-weight: 700;
+}
+
+.fac-services-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--fac-space-3);
+  border-top: 1px solid var(--fac-border);
+  padding-top: var(--fac-space-4);
+}
+
+.fac-commercial-nav {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--fac-space-5);
+  min-height: calc(100vh - (var(--fac-space-5) * 2));
+}
+
+.fac-commercial-brand {
+  display: flex;
+  gap: var(--fac-space-3);
+  align-items: center;
+  color: var(--fac-petrol);
+}
+
+.fac-commercial-brand > span {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm);
+  background: var(--fac-surface);
+  font-weight: 800;
+}
+
+.fac-commercial-brand strong,
+.fac-commercial-brand small,
+.fac-commercial-user span,
+.fac-commercial-user small {
+  display: block;
+}
+
+.fac-commercial-nav nav {
+  display: grid;
+  align-content: start;
+  gap: var(--fac-space-2);
+}
+
+.fac-commercial-nav a {
+  display: grid;
+  gap: var(--fac-space-1);
+  border: 1px solid transparent;
+  border-radius: var(--fac-radius-md);
+  padding: var(--fac-space-3);
+  color: var(--fac-text);
+  text-decoration: none;
+}
+
+.fac-commercial-nav a.active,
+.fac-commercial-nav a:hover {
+  border-color: var(--fac-border);
+  background: var(--fac-surface);
+}
+
+.fac-commercial-user {
+  display: grid;
+  gap: var(--fac-space-2);
+  border-top: 1px solid var(--fac-border);
+  padding-top: var(--fac-space-4);
+}
+
+.fac-services-mobile-page {
+  display: grid;
+  gap: var(--fac-space-3);
+}
+
+.fac-services-mobile-list {
+  gap: var(--fac-space-3);
+}
+
+.fac-services-mobile-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--fac-space-3);
+  align-items: center;
+}
+
+.fac-service-card {
+  display: grid;
+  gap: var(--fac-space-2);
+  width: 100%;
+  min-height: 8rem;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  padding: var(--fac-space-4);
+  background: var(--fac-surface);
+  color: var(--fac-text);
+  text-align: left;
+}
+
+.fac-service-card strong {
+  color: var(--fac-petrol);
+  font-size: var(--fac-font-size-md);
+}
+
+.fac-service-card span:not(.fac-status-badge) {
+  color: var(--fac-text-muted);
+}
+
+@media (max-width: 1023px) {
+  .fac-services-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-services-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 0.32fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .fac-services-header,
+  .fac-services-header-actions,
+  .fac-services-toolbar,
+  .fac-services-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-services-header {
+    gap: var(--fac-space-3);
+    padding-bottom: var(--fac-space-3);
+  }
+
+  .fac-services-header-actions,
+  .fac-services-form-footer {
+    display: grid;
+  }
+
+  .fac-services-summary {
+    min-width: 0;
+  }
+
+  .fac-services-table {
+    display: none;
+  }
+
+  .fac-services-mobile-list {
+    display: grid;
+  }
+
+  .fac-services-panel {
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .fac-services-detail dl div {
+    display: grid;
+    gap: var(--fac-space-1);
+  }
+
+  .fac-services-detail dd {
+    text-align: left;
+  }
+
+  .fac-services-check {
+    min-height: var(--fac-control-height-touch);
+    padding-top: 0;
+  }
+}

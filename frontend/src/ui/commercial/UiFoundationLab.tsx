@@ -18,7 +18,7 @@ import {
   useFacToast
 } from "../fac";
 
-function UiFoundationLabContent() {
+export function UiFoundationLabContent() {
   const demoMode = useMemo(() => new URLSearchParams(window.location.search).get("demo"), []);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
