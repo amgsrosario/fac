@@ -1,0 +1,409 @@
+.fac-customers-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--fac-space-4);
+  align-items: center;
+  border-bottom: 1px solid var(--fac-border);
+  padding-bottom: var(--fac-space-4);
+  margin-bottom: var(--fac-space-4);
+}
+
+.fac-customers-header h1,
+.fac-customers-mobile-header h1 {
+  margin: 0;
+  color: var(--fac-petrol);
+}
+
+.fac-customers-header-actions {
+  display: flex;
+  gap: var(--fac-space-2);
+  align-items: center;
+}
+
+.fac-customers-summary {
+  display: inline-flex;
+  gap: var(--fac-space-2);
+  align-items: baseline;
+  min-width: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: 999px;
+  padding: var(--fac-space-2) var(--fac-space-3);
+  background: var(--fac-surface);
+}
+
+.fac-customers-summary span,
+.fac-customers-list-meta {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-sm);
+}
+
+.fac-customers-summary strong {
+  color: var(--fac-petrol);
+}
+
+.fac-customers-toolbar {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) minmax(12rem, 0.28fr);
+  gap: var(--fac-space-2);
+  align-items: center;
+  margin-bottom: var(--fac-space-3);
+}
+
+.fac-customers-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(19rem, 0.31fr);
+  gap: var(--fac-space-3);
+  align-items: start;
+}
+
+.fac-customers-panel {
+  min-width: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  background: var(--fac-surface);
+  padding: var(--fac-space-4);
+}
+
+.fac-customers-list-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--fac-space-3);
+  align-items: center;
+  margin-bottom: var(--fac-space-2);
+}
+
+.fac-customers-table-wrap {
+  min-width: 0;
+}
+
+.fac-customers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fac-customers-table th,
+.fac-customers-table td {
+  border-bottom: 1px solid var(--fac-border);
+  padding: 0.68rem var(--fac-space-3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.fac-customers-table th {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fac-customers-table tbody tr {
+  cursor: pointer;
+}
+
+.fac-customers-table tbody tr:hover,
+.fac-customers-table tbody tr.is-selected {
+  background: var(--fac-client-soft);
+}
+
+.fac-customers-table td:first-child {
+  width: 6rem;
+  color: var(--fac-petrol);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fac-customers-table td:nth-child(3),
+.fac-customers-table td:nth-child(4),
+.fac-customers-table td:nth-child(6) {
+  width: 7.5rem;
+  white-space: nowrap;
+}
+
+.fac-customers-table td:nth-child(5) {
+  width: 13rem;
+}
+
+.fac-customers-mobile-list {
+  display: none;
+}
+
+.fac-customers-detail {
+  display: grid;
+  gap: var(--fac-space-3);
+}
+
+.fac-customers-detail-title {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--fac-space-3);
+  align-items: start;
+}
+
+.fac-customers-detail-title h2 {
+  margin: 0;
+  line-height: 1.25;
+}
+
+.fac-customers-detail dl {
+  display: grid;
+  gap: var(--fac-space-1);
+  margin: 0;
+}
+
+.fac-customers-detail dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--fac-space-3);
+  border-bottom: 1px solid var(--fac-border);
+  padding: var(--fac-space-2) 0;
+}
+
+.fac-customers-detail dt {
+  color: var(--fac-text-muted);
+}
+
+.fac-customers-detail dd {
+  margin: 0;
+  color: var(--fac-petrol);
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.fac-dialog.fac-customers-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(62rem, calc(100vw - 2rem));
+  max-width: min(62rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+}
+
+.fac-customers-dialog [data-pc-section="header"],
+.fac-customers-dialog .p-dialog-header {
+  flex-shrink: 0;
+  background: var(--fac-surface);
+}
+
+.fac-customers-dialog [data-pc-section="content"],
+.fac-customers-dialog .p-dialog-content {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 0;
+  scroll-padding: var(--fac-space-5);
+}
+
+.fac-customers-dialog [data-pc-section="footer"],
+.fac-customers-dialog .p-dialog-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--fac-border);
+  padding-top: var(--fac-space-4);
+  background: var(--fac-surface);
+}
+
+.fac-customers-form {
+  display: grid;
+  gap: var(--fac-space-4);
+  min-height: 0;
+  padding-bottom: var(--fac-space-3);
+}
+
+.fac-customers-form-section {
+  min-width: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  padding: var(--fac-space-4);
+}
+
+.fac-customers-form-section legend {
+  padding: 0 var(--fac-space-2);
+  color: var(--fac-petrol);
+  font-weight: 800;
+}
+
+.fac-customers-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fac-space-4);
+}
+
+.fac-customers-check {
+  display: flex;
+  gap: var(--fac-space-2);
+  align-items: center;
+  min-height: var(--fac-control-height);
+  padding-top: 1.5rem;
+}
+
+.fac-customers-check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--fac-petrol);
+}
+
+.fac-customers-check span {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-sm);
+  font-weight: 700;
+}
+
+.fac-customers-textarea {
+  display: grid;
+  gap: var(--fac-space-1);
+  grid-column: 1 / -1;
+}
+
+.fac-customers-textarea span {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-sm);
+  font-weight: 700;
+}
+
+.fac-customers-textarea textarea {
+  min-height: 5.5rem;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm);
+  padding: var(--fac-space-3);
+  resize: vertical;
+  color: var(--fac-text);
+  font: inherit;
+}
+
+.fac-customers-form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--fac-space-3);
+  border-top: 1px solid var(--fac-border);
+  padding: var(--fac-space-4) 0 0;
+  background: var(--fac-surface);
+  flex-shrink: 0;
+}
+
+.fac-customers-dialog .fac-customers-form-footer {
+  position: static;
+  border-top: 0;
+  padding: 0;
+}
+
+.fac-customers-dialog .fac-select-panel {
+  max-height: min(16rem, 42dvh);
+  z-index: calc(var(--fac-z-overlay) + 1);
+}
+
+.fac-customers-mobile-page {
+  display: grid;
+  gap: var(--fac-space-3);
+}
+
+.fac-customers-mobile-list {
+  gap: var(--fac-space-3);
+}
+
+.fac-customers-mobile-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--fac-space-3);
+  align-items: center;
+}
+
+.fac-customer-card {
+  display: grid;
+  gap: var(--fac-space-2);
+  width: 100%;
+  min-height: 8rem;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  padding: var(--fac-space-4);
+  background: var(--fac-surface);
+  color: var(--fac-text);
+  text-align: left;
+}
+
+.fac-customer-card strong {
+  color: var(--fac-petrol);
+  font-size: var(--fac-font-size-md);
+  line-height: 1.25;
+}
+
+.fac-customer-card span:not(.fac-status-badge) {
+  color: var(--fac-text-muted);
+}
+
+.fac-customer-card .fac-status-badge {
+  justify-self: start;
+}
+
+@media (max-width: 1023px) {
+  .fac-customers-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-customers-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 0.32fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .fac-customers-header,
+  .fac-customers-header-actions,
+  .fac-customers-toolbar,
+  .fac-customers-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-customers-header {
+    gap: var(--fac-space-3);
+    padding-bottom: var(--fac-space-3);
+  }
+
+  .fac-customers-header-actions,
+  .fac-customers-form-footer {
+    display: grid;
+  }
+
+  .fac-customers-summary {
+    min-width: 0;
+  }
+
+  .fac-customers-table {
+    display: none;
+  }
+
+  .fac-customers-mobile-list {
+    display: grid;
+  }
+
+  .fac-customers-panel {
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .fac-customers-detail dl div {
+    display: grid;
+    gap: var(--fac-space-1);
+  }
+
+  .fac-customers-detail dd {
+    text-align: left;
+  }
+
+  .fac-customers-check {
+    min-height: var(--fac-control-height-touch);
+    padding-top: 0;
+  }
+
+  .fac-customers-form-section {
+    padding: var(--fac-space-3);
+  }
+
+  .fac-customers-form-footer {
+    bottom: env(safe-area-inset-bottom, 0);
+    padding-bottom: max(var(--fac-space-3), env(safe-area-inset-bottom, 0));
+  }
+}

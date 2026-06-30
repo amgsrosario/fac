@@ -647,7 +647,7 @@ function CommercialSidebar({
   currentUser,
   onLogout
 }: {
-  active: "articles";
+  active: "articles" | "customers";
   currentUser: AuthSession;
   onLogout: () => void;
 }) {
@@ -664,6 +664,10 @@ function CommercialSidebar({
         <a className={active === "articles" ? "active" : ""} href="/artigos">
           <strong>Artigos</strong>
           <small>Catalogo</small>
+        </a>
+        <a className={active === "customers" ? "active" : ""} href="/clientes">
+          <strong>Clientes</strong>
+          <small>Documentos</small>
         </a>
         <a href="/ui-lab">
           <strong>UI Lab</strong>

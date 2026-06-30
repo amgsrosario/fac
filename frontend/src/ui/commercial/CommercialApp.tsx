@@ -8,6 +8,7 @@ import {
 } from "../../api";
 import { FacToastProvider } from "../fac";
 import ArticlesView from "./articles/ArticlesView";
+import CustomersView from "./customers/CustomersView";
 import { UiFoundationLabContent } from "./UiFoundationLab";
 
 export default function CommercialApp() {
@@ -37,12 +38,22 @@ export default function CommercialApp() {
       }}
     />
   );
+  const customersView = (
+    <CustomersView
+      currentUser={session}
+      onLogout={() => {
+        clearAuthSession();
+        setSession(null);
+      }}
+    />
+  );
 
   return (
     <FacToastProvider>
       <Routes>
         <Route element={articlesView} path="/services" />
         <Route element={articlesView} path="/artigos" />
+        <Route element={customersView} path="/clientes" />
         <Route element={<UiFoundationLabContent />} path="/ui-lab" />
         <Route element={<Navigate replace to="/artigos" />} path="*" />
       </Routes>
