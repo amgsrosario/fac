@@ -1,8 +1,11 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { FilterMatchMode } from "primereact/api";
 import { apiFetch, AuthSession } from "../../../api";
 import {
   DesktopShell,
   FacButton,
+  FacDataTable,
+  FacDataTableColumn,
   FacDialog,
   FacEmptyState,
   FacInputText,
@@ -15,6 +18,7 @@ import {
   useDeviceClass,
   useFacToast
 } from "../../fac";
+import { CommercialSidebar, ModuleHeader } from "../shared";
 import "./customers.css";
 
 type Page<T> = {
@@ -416,20 +420,20 @@ function CustomersHeader({
   onNew
 }: Parameters<typeof CustomersContent>[0] & { compact?: boolean }) {
   return (
-    <header className={`fac-customers-header ${compact ? "fac-customers-header-compact" : ""}`}>
-      <div>
-        <p className="fac-eyebrow">Clientes</p>
-        <h1>Clientes</h1>
-        {!compact && <p className="fac-muted">Gerir clientes utilizados nos documentos.</p>}
-      </div>
-      <div className="fac-customers-header-actions">
-        <div className="fac-customers-summary" aria-label="Resumo de clientes">
+    <ModuleHeader
+      action={canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo cliente"} onClick={onNew} variant="primary" />}
+      className="fac-customers-header"
+      compact={compact}
+      eyebrow="Clientes"
+      subtitle="Gerir clientes utilizados nos documentos."
+      summary={
+        <div className="fac-module-summary" aria-label="Resumo de clientes">
           <span>{loading ? "A carregar" : `${clientes.length} clientes`}</span>
           <strong>{activeCount} ativos</strong>
         </div>
-        {canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo cliente"} onClick={onNew} variant="primary" />}
-      </div>
-    </header>
+      }
+      title="Clientes"
+    />
   );
 }
 
@@ -458,10 +462,48 @@ function CustomersToolbar({ deviceClass, onSearch, onStateFilter, search, stateF
   );
 }
 
-function CustomersList({ filtered, loading, onSelect, search, selected, clientes, stateFilter }: Parameters<typeof CustomersContent>[0]) {
+function CustomersList({ deviceClass, filtered, loading, onSelect, search, selected, clientes, stateFilter }: Parameters<typeof CustomersContent>[0]) {
   if (loading) return <FacLoadingState description="A carregar clientes." />;
   if (clientes.length === 0) return <FacEmptyState description="Ainda nao existem clientes." />;
   if (filtered.length === 0) return <FacEmptyState description="Sem resultados para a pesquisa e filtros atuais." />;
+
+  const isMobile = deviceClass === "mobile";
+  if (!isMobile) {
+    const tableValue = clientes.filter((cliente) => stateFilter === "all" || (stateFilter === "active" && !cliente.inativo) || (stateFilter === "inactive" && cliente.inativo));
+    const columns: FacDataTableColumn<Cliente>[] = [
+      { dataType: "numeric", field: "id", filter: true, filterPlaceholder: "Codigo", header: "Codigo", sortable: true, style: { width: "6rem" } },
+      { field: "nome", filter: true, filterPlaceholder: "Nome", header: "Nome", sortable: true },
+      { field: "nif", filter: true, filterPlaceholder: "NIF", header: "NIF", sortable: true, style: { width: "8rem" } },
+      { field: "localidade", filter: true, filterPlaceholder: "Localidade", header: "Localidade", sortable: true, style: { width: "9rem" } },
+      { body: (cliente) => primaryContact(cliente), field: "email", filter: true, filterPlaceholder: "Contacto", header: "Contacto", style: { width: "13rem" } },
+      {
+        body: (cliente) => <StateBadge inactive={cliente.inativo} />,
+        field: "inativo",
+        filter: true,
+        filterElement: (options) => <CustomerStateColumnFilter onChange={options.filterApplyCallback} value={options.value} />,
+        filterMatchMode: FilterMatchMode.EQUALS,
+        header: "Estado",
+        sortable: true,
+        style: { width: "7rem" }
+      }
+    ];
+
+    return (
+      <FacDataTable
+        ariaLabel="Tabela de clientes"
+        className="fac-customers-data-table"
+        columns={columns}
+        dataKey="id"
+        emptyMessage="Sem resultados para a pesquisa e filtros atuais."
+        globalFilter={search}
+        globalFilterFields={["id", "nome", "nif", "email", "tel", "tm", "localidade"]}
+        loading={loading}
+        onSelectionChange={(cliente) => cliente && onSelect(cliente.id)}
+        selection={selected}
+        value={tableValue}
+      />
+    );
+  }
 
   return (
     <>
@@ -646,7 +688,7 @@ function FormSection({ children, title }: { children: ReactNode; title: string }
   );
 }
 
-function CommercialSidebar({ active, currentUser, onLogout }: { active: "articles" | "customers"; currentUser: AuthSession; onLogout: () => void }) {
+function LegacyCommercialSidebar({ active, currentUser, onLogout }: { active: "articles" | "customers"; currentUser: AuthSession; onLogout: () => void }) {
   return (
     <div className="fac-commercial-nav">
       <div className="fac-commercial-brand">
@@ -693,6 +735,17 @@ function MobilePageHeader({ action, eyebrow, title }: { action: ReactNode; eyebr
 
 function StateBadge({ inactive }: { inactive: boolean }) {
   return <FacStatusBadge tone={inactive ? "warning" : "success"}>{inactive ? "Inativo" : "Ativo"}</FacStatusBadge>;
+}
+
+function CustomerStateColumnFilter({ onChange, value }: { onChange: (value: unknown) => void; value: unknown }) {
+  const current = typeof value === "boolean" ? String(value) : "";
+  return (
+    <select className="fac-data-table-filter-select" onChange={(event) => onChange(event.target.value === "" ? null : event.target.value === "true")} value={current}>
+      <option value="">Todos</option>
+      <option value="false">Ativo</option>
+      <option value="true">Inativo</option>
+    </select>
+  );
 }
 
 async function fetchPage<T>(url: string): Promise<Page<T>> {

@@ -1,9 +1,12 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { FilterMatchMode } from "primereact/api";
 import { apiFetch, AuthSession } from "../../../api";
 import {
   DEFAULT_PRODUCT_PROFILE,
   DesktopShell,
   FacButton,
+  FacDataTable,
+  FacDataTableColumn,
   FacDialog,
   FacEmptyState,
   FacInputText,
@@ -18,6 +21,7 @@ import {
   useDeviceClass,
   useFacToast
 } from "../../fac";
+import { CommercialSidebar, ModuleHeader } from "../shared";
 import "./articles.css";
 
 type Page<T> = {
@@ -399,20 +403,20 @@ function ServicesHeader({
   services
 }: Parameters<typeof ServicesContent>[0] & { compact?: boolean }) {
   return (
-    <header className={`fac-services-header ${compact ? "fac-services-header-compact" : ""}`}>
-      <div>
-        <p className="fac-eyebrow">Catalogo</p>
-        <h1>Artigos</h1>
-        {!compact && <p className="fac-muted">Gerir produtos e servicos utilizados nos documentos.</p>}
-      </div>
-      <div className="fac-services-header-actions">
-        <div className="fac-services-summary" aria-label="Resumo de artigos">
+    <ModuleHeader
+      action={canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo artigo"} onClick={onNew} variant="primary" />}
+      className="fac-services-header"
+      compact={compact}
+      eyebrow="Catalogo"
+      subtitle="Gerir produtos e servicos utilizados nos documentos."
+      summary={
+        <div className="fac-module-summary" aria-label="Resumo de artigos">
           <span>{loading ? "A carregar" : `${services.length} artigos`}</span>
           <strong>{activeCount} ativos</strong>
         </div>
-        {canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo artigo"} onClick={onNew} variant="primary" />}
-      </div>
-    </header>
+      }
+      title="Artigos"
+    />
   );
 }
 
@@ -448,6 +452,7 @@ function ServicesToolbar({
 }
 
 function ServicesList({
+  deviceClass,
   filtered,
   loading,
   onSelect,
@@ -459,6 +464,59 @@ function ServicesList({
   if (loading) return <FacLoadingState description="A carregar artigos." />;
   if (services.length === 0) return <FacEmptyState description="Ainda nao existem artigos no catalogo." />;
   if (filtered.length === 0) return <FacEmptyState description="Sem resultados para a pesquisa e filtros atuais." />;
+
+  if (deviceClass !== "mobile") {
+    const tableValue = services.filter((service) => stateFilter === "all" || (stateFilter === "active" && !service.inativo) || (stateFilter === "inactive" && service.inativo));
+    const columns: FacDataTableColumn<Artigo>[] = [
+      { field: "codigo", filter: true, filterPlaceholder: "Codigo", header: "Codigo", sortable: true, style: { width: "8rem" } },
+      { field: "descricao", filter: true, filterPlaceholder: "Descricao", header: "Descricao", sortable: true },
+      {
+        field: "unidade",
+        filter: true,
+        filterElement: (options) => <ColumnSelectFilter onChange={options.filterApplyCallback} options={serviceUnitOptions.map((option) => option.value)} value={options.value} />,
+        filterMatchMode: FilterMatchMode.EQUALS,
+        header: "Unidade",
+        sortable: true,
+        style: { width: "7rem" }
+      },
+      { body: (service) => `${money(service.pvp)} EUR`, dataType: "numeric", field: "pvp", header: "PVP", sortable: true, style: { width: "8rem" } },
+      {
+        field: "ivaVendaId",
+        filter: true,
+        filterElement: (options) => <ColumnSelectFilter onChange={options.filterApplyCallback} options={Array.from(new Set(services.map((service) => service.ivaVendaId))).sort()} value={options.value} />,
+        filterMatchMode: FilterMatchMode.EQUALS,
+        header: "IVA",
+        sortable: true,
+        style: { width: "7rem" }
+      },
+      {
+        body: (service) => <StateBadge inactive={service.inativo} />,
+        field: "inativo",
+        filter: true,
+        filterElement: (options) => <StateColumnFilter onChange={options.filterApplyCallback} value={options.value} />,
+        filterMatchMode: FilterMatchMode.EQUALS,
+        header: "Estado",
+        sortable: true,
+        style: { width: "7rem" }
+      }
+    ];
+
+    return (
+      <FacDataTable
+        ariaLabel="Tabela de artigos"
+        className="fac-services-data-table"
+        columns={columns}
+        dataKey="codigo"
+        emptyMessage="Sem resultados para a pesquisa e filtros atuais."
+        globalFilter={search}
+        globalFilterFields={["codigo", "descricao", "abreviatura", "codigoIdentificacao"]}
+        loading={loading}
+        onSelectionChange={(service) => service && onSelect(service.codigo)}
+        selection={selected}
+        value={tableValue}
+      />
+    );
+  }
 
   return (
     <>
@@ -642,7 +700,7 @@ function ServiceFormFields({
   );
 }
 
-function CommercialSidebar({
+function LegacyCommercialSidebar({
   active,
   currentUser,
   onLogout
@@ -705,6 +763,26 @@ function MobilePageHeader({
 
 function StateBadge({ inactive }: { inactive: boolean }) {
   return <FacStatusBadge tone={inactive ? "warning" : "success"}>{inactive ? "Inativo" : "Ativo"}</FacStatusBadge>;
+}
+
+function ColumnSelectFilter({ onChange, options, value }: { onChange: (value: unknown) => void; options: string[]; value: unknown }) {
+  return (
+    <select className="fac-data-table-filter-select" onChange={(event) => onChange(event.target.value || null)} value={typeof value === "string" ? value : ""}>
+      <option value="">Todos</option>
+      {options.map((option) => <option key={option} value={option}>{option}</option>)}
+    </select>
+  );
+}
+
+function StateColumnFilter({ onChange, value }: { onChange: (value: unknown) => void; value: unknown }) {
+  const current = typeof value === "boolean" ? String(value) : "";
+  return (
+    <select className="fac-data-table-filter-select" onChange={(event) => onChange(event.target.value === "" ? null : event.target.value === "true")} value={current}>
+      <option value="">Todos</option>
+      <option value="false">Ativo</option>
+      <option value="true">Inativo</option>
+    </select>
+  );
 }
 
 async function fetchPage<T>(url: string): Promise<Page<T>> {

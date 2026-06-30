@@ -1,0 +1,12 @@
+{
+  "checks": [
+    "artigos-data-table",
+    "clientes-data-table",
+    "services-ok",
+    "ui-lab-ok"
+  ],
+  "consulta": {
+    "canCreate": false,
+    "hasTable": true
+  }
+}

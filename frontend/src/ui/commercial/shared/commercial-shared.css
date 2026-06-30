@@ -1,0 +1,115 @@
+.fac-module-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--fac-space-4);
+  align-items: center;
+  border-bottom: 1px solid var(--fac-border);
+  padding-bottom: var(--fac-space-4);
+  margin-bottom: var(--fac-space-4);
+}
+
+.fac-module-header h1 {
+  margin: 0;
+  color: var(--fac-petrol);
+}
+
+.fac-module-header-actions {
+  display: flex;
+  gap: var(--fac-space-2);
+  align-items: center;
+}
+
+.fac-module-summary {
+  display: inline-flex;
+  gap: var(--fac-space-2);
+  align-items: baseline;
+  min-width: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: 999px;
+  padding: var(--fac-space-2) var(--fac-space-3);
+  background: var(--fac-surface);
+}
+
+.fac-module-summary span,
+.fac-commercial-user small,
+.fac-commercial-nav small {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-sm);
+}
+
+.fac-module-summary strong {
+  color: var(--fac-petrol);
+}
+
+.fac-commercial-nav {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--fac-space-5);
+  min-height: calc(100vh - (var(--fac-space-5) * 2));
+}
+
+.fac-commercial-brand {
+  display: flex;
+  gap: var(--fac-space-3);
+  align-items: center;
+  color: var(--fac-petrol);
+}
+
+.fac-commercial-brand > span {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm);
+  background: var(--fac-surface);
+  font-weight: 800;
+}
+
+.fac-commercial-brand strong,
+.fac-commercial-brand small,
+.fac-commercial-user span,
+.fac-commercial-user small {
+  display: block;
+}
+
+.fac-commercial-nav nav {
+  display: grid;
+  align-content: start;
+  gap: var(--fac-space-2);
+}
+
+.fac-commercial-nav a {
+  display: grid;
+  gap: var(--fac-space-1);
+  border: 1px solid transparent;
+  border-radius: var(--fac-radius-md);
+  padding: var(--fac-space-3);
+  color: var(--fac-text);
+  text-decoration: none;
+}
+
+.fac-commercial-nav a.active,
+.fac-commercial-nav a:hover {
+  border-color: var(--fac-border);
+  background: var(--fac-surface);
+}
+
+.fac-commercial-user {
+  display: grid;
+  gap: var(--fac-space-2);
+  border-top: 1px solid var(--fac-border);
+  padding-top: var(--fac-space-4);
+}
+
+@media (max-width: 767px) {
+  .fac-module-header,
+  .fac-module-header-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-module-header {
+    gap: var(--fac-space-3);
+    padding-bottom: var(--fac-space-3);
+  }
+}

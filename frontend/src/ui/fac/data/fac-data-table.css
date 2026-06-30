@@ -1,0 +1,118 @@
+.fac-data-table {
+  width: 100%;
+  color: var(--fac-text);
+}
+
+.fac-data-table .p-datatable-wrapper {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.fac-data-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fac-data-table th,
+.fac-data-table td {
+  border-bottom: 1px solid var(--fac-border);
+  padding: 0.68rem var(--fac-space-3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.fac-data-table th {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fac-data-table .p-sortable-column {
+  cursor: pointer;
+}
+
+.fac-data-table .p-column-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fac-space-1);
+}
+
+.fac-data-table .p-sortable-column-icon {
+  color: var(--fac-text-muted);
+}
+
+.fac-data-table .p-column-filter-clear-button,
+.fac-data-table .p-column-filter-menu-button {
+  display: none;
+}
+
+.fac-data-table .p-datatable-tbody > tr {
+  cursor: pointer;
+}
+
+.fac-data-table .p-datatable-tbody > tr:hover,
+.fac-data-table .p-datatable-tbody > tr.p-highlight {
+  background: var(--fac-client-soft);
+}
+
+.fac-data-table .p-datatable-tbody > tr:focus {
+  outline: 2px solid var(--fac-focus);
+  outline-offset: -2px;
+}
+
+.fac-data-table .p-column-filter-row input,
+.fac-data-table-filter-select {
+  width: 100%;
+  min-height: 2.2rem;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm);
+  padding: 0 var(--fac-space-2);
+  background: var(--fac-surface);
+  color: var(--fac-text);
+  font: inherit;
+}
+
+.fac-data-table .p-column-filter-row input:focus,
+.fac-data-table-filter-select:focus {
+  outline: 2px solid var(--fac-focus);
+  outline-offset: 1px;
+}
+
+.fac-data-table .p-paginator {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fac-space-2);
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: var(--fac-space-3);
+}
+
+.fac-data-table .p-paginator button,
+.fac-data-table .p-paginator .p-dropdown {
+  min-height: 2.2rem;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm);
+  padding: 0 var(--fac-space-2);
+  background: var(--fac-surface);
+  color: var(--fac-text);
+}
+
+.fac-data-table .p-paginator button:not(.p-disabled):hover {
+  background: var(--fac-client-soft);
+}
+
+.fac-data-table .p-paginator .p-highlight {
+  border-color: var(--fac-petrol);
+  color: var(--fac-petrol);
+  font-weight: 800;
+}
+
+.fac-data-table .p-paginator-current {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-sm);
+}
+
+.fac-data-table .p-datatable-loading-overlay {
+  background: color-mix(in srgb, var(--fac-surface) 82%, transparent);
+}
