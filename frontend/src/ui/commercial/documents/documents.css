@@ -1,0 +1,302 @@
+.fac-documents-screen {
+  display: grid;
+  gap: 1rem;
+}
+
+.fac-documents-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.fac-documents-toolbar {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(18rem, 1fr) minmax(12rem, 16rem);
+}
+
+.fac-documents-layout {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.38fr);
+}
+
+.fac-documents-panel,
+.fac-documents-detail,
+.fac-documents-mobile-page,
+.fac-document-card {
+  background: var(--fac-surface);
+  border: 1px solid var(--fac-border);
+  border-radius: 8px;
+}
+
+.fac-documents-list-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.fac-documents-detail {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.fac-documents-detail-header {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.fac-documents-detail-title {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.fac-documents-detail-title strong {
+  font-size: 1.1rem;
+}
+
+.fac-documents-detail-title span,
+.fac-documents-muted {
+  color: var(--fac-text-muted);
+}
+
+.fac-documents-definition {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fac-documents-definition dt,
+.fac-documents-line-meta,
+.fac-documents-total-row span:first-child,
+.fac-documents-total-final span:first-child {
+  color: var(--fac-text-muted);
+  font-size: 0.8rem;
+}
+
+.fac-documents-definition dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.fac-documents-lines {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.fac-document-line {
+  border: 1px solid var(--fac-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem;
+}
+
+.fac-document-line > div,
+.fac-documents-totals > div,
+.fac-documents-total-final,
+.fac-documents-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.fac-document-line strong {
+  overflow-wrap: anywhere;
+}
+
+.fac-document-line > div {
+  flex-wrap: wrap;
+}
+
+.fac-document-line span {
+  background: var(--fac-surface-soft);
+  border-radius: 6px;
+  padding: 0.25rem 0.45rem;
+}
+
+.fac-documents-totals {
+  border-top: 1px solid var(--fac-border);
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.75rem;
+}
+
+.fac-documents-total-row strong,
+.fac-documents-total-final strong {
+  font-size: 1.15rem;
+}
+
+.fac-documents-actions {
+  border-top: 1px solid var(--fac-border);
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding-top: 0.75rem;
+}
+
+.fac-documents-diagnostics {
+  background: var(--fac-surface-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.75rem;
+}
+
+.fac-documents-diagnostics ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.fac-documents-mobile-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fac-document-card {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  text-align: left;
+  width: 100%;
+}
+
+.fac-document-card[data-selected="true"] {
+  border-color: var(--fac-accent);
+  box-shadow: 0 0 0 1px var(--fac-accent);
+}
+
+.fac-documents-mobile-card-top,
+.fac-documents-mobile-header,
+.fac-documents-mobile-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.fac-document-card strong {
+  overflow-wrap: anywhere;
+}
+
+.fac-document-card dl {
+  display: grid;
+  gap: 0.3rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.fac-document-card dd {
+  margin: 0.1rem 0 0;
+}
+
+.fac-documents-mobile-page {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.fac-documents-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.fac-documents-form-section {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.fac-documents-form-section h3 {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.fac-documents-form-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fac-documents-form-wide {
+  grid-column: 1 / -1;
+}
+
+.fac-documents-textarea textarea {
+  background: var(--fac-surface);
+  border: 1px solid var(--fac-border);
+  border-radius: 6px;
+  color: var(--fac-text);
+  min-height: 5.5rem;
+  padding: 0.6rem 0.7rem;
+  resize: vertical;
+  width: 100%;
+}
+
+.fac-documents-form-footer {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.fac-documents-dialog {
+  max-width: min(64rem, calc(100vw - 2rem));
+}
+
+.fac-documents-void-dialog {
+  max-width: min(32rem, calc(100vw - 2rem));
+}
+
+@media (max-width: 980px) {
+  .fac-documents-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .fac-mobile-shell .fac-documents-toolbar {
+    gap: 0.6rem;
+  }
+
+  .fac-mobile-shell .fac-module-header-actions {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .fac-mobile-shell .fac-module-summary {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .fac-mobile-shell .fac-module-header-actions .fac-button {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .fac-documents-toolbar,
+  .fac-documents-form-grid,
+  .fac-documents-definition {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-documents-header-actions,
+  .fac-documents-mobile-actions,
+  .fac-documents-form-footer {
+    justify-content: stretch;
+  }
+
+  .fac-documents-header-actions > *,
+  .fac-documents-mobile-actions > *,
+  .fac-documents-form-footer > * {
+    flex: 1;
+  }
+
+  .fac-documents-mobile-header {
+    align-items: flex-start;
+  }
+}

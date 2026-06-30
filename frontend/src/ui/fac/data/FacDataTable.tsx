@@ -6,14 +6,15 @@ import { FacEmptyState } from "../feedback";
 import "./fac-data-table.css";
 
 type FacFilterMatchMode = DataTableFilterMetaData["matchMode"];
+type FacDataTableField<T extends object> = Extract<keyof T, string>;
 
 const DEFAULT_FILTER_MATCH_MODE: FacFilterMatchMode = "contains";
 
-export type FacDataTableColumn<T> = {
+export type FacDataTableColumn<T extends object> = {
   body?: (row: T, options: ColumnBodyOptions) => ReactNode;
   className?: string;
   dataType?: "text" | "numeric" | "date" | "boolean";
-  field: string;
+  field: FacDataTableField<T>;
   filter?: boolean;
   filterElement?: (options: FacDataTableFilterElementOptions) => ReactNode;
   filterMatchMode?: FacFilterMatchMode;
@@ -28,14 +29,14 @@ export type FacDataTableFilterElementOptions = {
   value: unknown;
 };
 
-export type FacDataTableProps<T extends Record<string, unknown>> = {
+export type FacDataTableProps<T extends object> = {
   ariaLabel: string;
   className?: string;
   columns: FacDataTableColumn<T>[];
   dataKey: string;
   emptyMessage?: string;
   globalFilter?: string;
-  globalFilterFields?: string[];
+  globalFilterFields?: Array<FacDataTableField<T>>;
   loading?: boolean;
   onLazyPage?: DataTableProps<T[]>["onPage"];
   onLazySort?: DataTableProps<T[]>["onSort"];
@@ -51,7 +52,7 @@ export type FacDataTableProps<T extends Record<string, unknown>> = {
   value: T[];
 } & Pick<DataTableProps<T[]>, "first" | "lazy" | "sortField" | "sortOrder">;
 
-export function FacDataTable<T extends Record<string, unknown>>({
+export function FacDataTable<T extends object>({
   ariaLabel,
   className = "",
   columns,
@@ -92,7 +93,7 @@ export function FacDataTable<T extends Record<string, unknown>>({
       emptyMessage={<FacEmptyState description={emptyMessage} />}
       filterDisplay="row"
       filters={filters}
-      globalFilterFields={globalFilterFields}
+      globalFilterFields={[...globalFilterFields]}
       loading={loading}
       onFilter={(event) => {
         setFilters(event.filters);
@@ -139,7 +140,10 @@ export function FacDataTable<T extends Record<string, unknown>>({
   );
 }
 
-function createFilters<T>(columns: FacDataTableColumn<T>[], globalFilterFields: string[]): DataTableFilterMeta {
+function createFilters<T extends object>(
+  columns: FacDataTableColumn<T>[],
+  globalFilterFields: Array<FacDataTableField<T>>
+): DataTableFilterMeta {
   const filters: DataTableFilterMeta = {};
   if (globalFilterFields.length > 0) {
     filters.global = { value: null, matchMode: DEFAULT_FILTER_MATCH_MODE };

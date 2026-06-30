@@ -10,7 +10,8 @@ export type CommercialNavItem = {
 
 export const defaultCommercialNavItems: CommercialNavItem[] = [
   { description: "Catalogo", href: "/artigos", id: "articles", label: "Artigos" },
-  { description: "Documentos", href: "/clientes", id: "customers", label: "Clientes" },
+  { description: "Entidades", href: "/clientes", id: "customers", label: "Clientes" },
+  { description: "Vendas", href: "/documentos", id: "documents", label: "Documentos" },
   { description: "Fundacao", href: "/ui-lab", id: "ui-lab", label: "UI Lab" }
 ];
 

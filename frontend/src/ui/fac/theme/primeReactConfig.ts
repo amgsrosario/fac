@@ -10,7 +10,7 @@ type FacPrimeReactConfig = {
   unstyled: boolean;
 };
 
-addLocale("pt-FAC", {
+addLocale("pt-PT", {
   accept: "Sim",
   reject: "Nao",
   choose: "Escolher",
@@ -30,7 +30,7 @@ export const facPrimeReactConfig: FacPrimeReactConfig = {
   cssTransition: true,
   hideOverlaysOnDocumentScrolling: false,
   inputStyle: "outlined",
-  locale: "pt-FAC",
+  locale: "pt-PT",
   ripple: false,
   unstyled: true
 };
