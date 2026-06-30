@@ -5,6 +5,8 @@ RUN npm ci
 COPY frontend/ ./
 ARG VITE_FAC_DEMO_MODE=true
 ENV VITE_FAC_DEMO_MODE=${VITE_FAC_DEMO_MODE}
+ARG VITE_FAC_UI_MODE=legacy
+ENV VITE_FAC_UI_MODE=${VITE_FAC_UI_MODE}
 RUN npm run build
 
 FROM nginx:1.27-alpine

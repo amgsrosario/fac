@@ -18,7 +18,7 @@ import {
   useDeviceClass,
   useFacToast
 } from "../../fac";
-import "./services.css";
+import "./articles.css";
 
 type Page<T> = {
   content: T[];
@@ -55,6 +55,7 @@ type TipoTaxaIva = {
 type ServiceForm = {
   codigo: string;
   descricao: string;
+  familiaId: string;
   unidade: string;
   pvp: string;
   ivaVendaId: string;
@@ -62,7 +63,6 @@ type ServiceForm = {
 };
 
 type HiddenDefaults = {
-  familiaId: string;
   ivaCompraId: string;
   peso: string;
   retencao: boolean;
@@ -77,6 +77,7 @@ type MobileScreen = "list" | "detail" | "form";
 const emptyForm: ServiceForm = {
   codigo: "",
   descricao: "",
+  familiaId: "",
   unidade: "UN",
   pvp: "0",
   ivaVendaId: "",
@@ -96,7 +97,7 @@ const serviceUnitOptions = [
   { label: "AVN - Avenca", value: "AVN" }
 ];
 
-export default function ServicesView({
+export default function ArticlesView({
   currentUser,
   onLogout
 }: {
@@ -140,7 +141,7 @@ export default function ServicesView({
       setTiposIva(tiposIvaPage.content);
       setSelectedCodigo((current) => current ?? artigosPage.content[0]?.codigo ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar os servicos.");
+      setError(err instanceof Error ? err.message : "Nao foi possivel carregar os artigos.");
     } finally {
       setLoading(false);
     }
@@ -149,7 +150,8 @@ export default function ServicesView({
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return services.filter((service) => {
-      const matchesSearch = !term || [service.codigo, service.descricao]
+      const matchesSearch = !term || [service.codigo, service.descricao, service.abreviatura, service.codigoIdentificacao]
+        .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(term));
       const matchesState = stateFilter === "all"
         || (stateFilter === "active" && !service.inativo)
@@ -161,7 +163,7 @@ export default function ServicesView({
   const selected = services.find((service) => service.codigo === selectedCodigo) ?? null;
   const selectedIva = tiposIva.find((tipo) => tipo.id === selected?.ivaVendaId)?.descricao ?? selected?.ivaVendaId ?? "-";
   const hiddenDefaultSource = editorOpen && editorMode === "edit" ? selected : null;
-  const defaults = useMemo(() => resolveHiddenDefaults(familias, tiposIva, hiddenDefaultSource), [familias, hiddenDefaultSource, tiposIva]);
+  const defaults = useMemo(() => resolveHiddenDefaults(tiposIva, hiddenDefaultSource), [hiddenDefaultSource, tiposIva]);
   const activeCount = services.filter((service) => !service.inativo).length;
 
   function openNew() {
@@ -179,6 +181,7 @@ export default function ServicesView({
     setForm({
       codigo: service.codigo,
       descricao: service.descricao,
+      familiaId: String(service.familiaId),
       unidade: service.unidade,
       pvp: String(service.pvp),
       ivaVendaId: service.ivaVendaId,
@@ -218,11 +221,11 @@ export default function ServicesView({
       setServices(page.content);
       setSelectedCodigo(form.codigo);
       setEditorOpen(false);
-      setNotice(`Servico ${form.codigo} ${editorMode === "edit" ? "atualizado" : "criado"}.`);
-      showToast({ detail: `Servico ${form.codigo} guardado.`, severity: "success", summary: "Guardado" });
+      setNotice(`Artigo ${form.codigo} ${editorMode === "edit" ? "atualizado" : "criado"}.`);
+      showToast({ detail: `Artigo ${form.codigo} guardado.`, severity: "success", summary: "Guardado" });
       if (isMobile) setMobileScreen("detail");
     } catch (err) {
-      setEditorMessage(err instanceof Error ? err.message : "Nao foi possivel guardar o servico.");
+      setEditorMessage(err instanceof Error ? err.message : "Nao foi possivel guardar o artigo.");
     } finally {
       setSaving(false);
     }
@@ -235,7 +238,7 @@ export default function ServicesView({
 
   const sidebar = (
     <CommercialSidebar
-      active="services"
+      active="articles"
       currentUser={currentUser}
       onLogout={onLogout}
     />
@@ -253,6 +256,7 @@ export default function ServicesView({
       error={error}
       filtered={filtered}
       form={form}
+      familias={familias}
       loading={loading}
       mobileScreen={mobileScreen}
       notice={notice}
@@ -261,7 +265,6 @@ export default function ServicesView({
       onCloseEditor={closeEditor}
       onEdit={openEdit}
       onNew={openNew}
-      onReload={loadData}
       onSave={save}
       onSearch={setSearch}
       onSelect={selectService}
@@ -279,7 +282,7 @@ export default function ServicesView({
   return (
     <ResponsiveSlot
       desktop={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>}
-      mobile={<MobileShell title="FAC Servicos">{content}</MobileShell>}
+      mobile={<MobileShell title="FAC Artigos">{content}</MobileShell>}
       tablet={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>}
     />
   );
@@ -294,6 +297,7 @@ function ServicesContent(props: {
   editorMode: EditorMode;
   editorOpen: boolean;
   error: string | null;
+  familias: Familia[];
   filtered: Artigo[];
   form: ServiceForm;
   loading: boolean;
@@ -304,7 +308,6 @@ function ServicesContent(props: {
   onCloseEditor: () => void;
   onEdit: (service: Artigo) => void;
   onNew: () => void;
-  onReload: () => void;
   onSave: (event?: FormEvent) => void;
   onSearch: (value: string) => void;
   onSelect: (codigo: string) => void;
@@ -332,7 +335,7 @@ function ServicesContent(props: {
       {props.notice && <FacMessage tone="success" title="Operacao concluida">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
       <section
-        aria-label="Catalogo de servicos"
+        aria-label="Catalogo de artigos"
         className="fac-services-layout"
         data-advanced-article-fields={advancedArticleFieldsEnabled ? "on" : "off"}
         data-product-profile={DEFAULT_PRODUCT_PROFILE}
@@ -355,7 +358,7 @@ function MobileServicesContent(props: Parameters<typeof ServicesContent>[0]) {
       <section className="fac-services-mobile-page">
         <MobilePageHeader
           action={<FacButton icon="pi pi-times" label="Fechar" onClick={props.onCloseEditor} variant="ghost" />}
-          eyebrow={props.editorMode === "edit" ? "Editar servico" : "Novo servico"}
+          eyebrow={props.editorMode === "edit" ? "Editar artigo" : "Novo artigo"}
           title={props.editorMode === "edit" ? props.form.codigo : "Novo"}
         />
         <ServiceFormFields {...props} />
@@ -368,7 +371,7 @@ function MobileServicesContent(props: Parameters<typeof ServicesContent>[0]) {
       <section className="fac-services-mobile-page">
         <MobilePageHeader
           action={<FacButton icon="pi pi-arrow-left" label="Lista" onClick={props.onBackToList} variant="ghost" />}
-          eyebrow="Servico"
+          eyebrow="Artigo"
           title={props.selected.descricao}
         />
         <ServiceDetail {...props} />
@@ -398,33 +401,36 @@ function ServicesHeader({
   return (
     <header className={`fac-services-header ${compact ? "fac-services-header-compact" : ""}`}>
       <div>
-        <p className="fac-eyebrow">Catalogo de servicos</p>
-        <h1>Servicos</h1>
-        {!compact && <p className="fac-muted">Cria, consulta e edita servicos mantendo a entidade Artigo e a API atual.</p>}
+        <p className="fac-eyebrow">Catalogo</p>
+        <h1>Artigos</h1>
+        {!compact && <p className="fac-muted">Gerir produtos e servicos utilizados nos documentos.</p>}
       </div>
       <div className="fac-services-header-actions">
-        <div className="fac-services-summary" aria-label="Resumo de servicos">
-          <span>{loading ? "A carregar" : `${services.length} servicos`}</span>
+        <div className="fac-services-summary" aria-label="Resumo de artigos">
+          <span>{loading ? "A carregar" : `${services.length} artigos`}</span>
           <strong>{activeCount} ativos</strong>
         </div>
-        {canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo servico"} onClick={onNew} variant="primary" />}
+        {canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo artigo"} onClick={onNew} variant="primary" />}
       </div>
     </header>
   );
 }
 
 function ServicesToolbar({
+  deviceClass,
   onSearch,
   onStateFilter,
   search,
   stateFilter
 }: Parameters<typeof ServicesContent>[0]) {
+  const placeholder = deviceClass === "mobile" ? "Pesquisar artigos" : "Pesquisar por codigo, descricao ou identificacao";
+
   return (
     <section className="fac-services-toolbar" aria-label="Pesquisa e filtros">
       <FacInputText
-        aria-label="Pesquisar servicos"
+        aria-label="Pesquisar artigos"
         onChange={(event) => onSearch(event.target.value)}
-        placeholder="Pesquisar codigo ou descricao"
+        placeholder={placeholder}
         type="search"
         value={search}
       />
@@ -444,22 +450,20 @@ function ServicesToolbar({
 function ServicesList({
   filtered,
   loading,
-  onReload,
   onSelect,
   search,
   selected,
   services,
   stateFilter
 }: Parameters<typeof ServicesContent>[0]) {
-  if (loading) return <FacLoadingState description="A carregar o catalogo de servicos." />;
-  if (services.length === 0) return <FacEmptyState description="Ainda nao existem servicos no catalogo." />;
+  if (loading) return <FacLoadingState description="A carregar artigos." />;
+  if (services.length === 0) return <FacEmptyState description="Ainda nao existem artigos no catalogo." />;
   if (filtered.length === 0) return <FacEmptyState description="Sem resultados para a pesquisa e filtros atuais." />;
 
   return (
     <>
       <div className="fac-services-list-meta">
         <span>{filtered.length} resultados</span>
-        <FacButton icon="pi pi-refresh" label="Atualizar" onClick={onReload} variant="text" />
       </div>
       <div className="fac-services-table-wrap" data-filter={stateFilter} data-search={search ? "active" : "empty"}>
         <table className="fac-services-table">
@@ -468,7 +472,7 @@ function ServicesList({
               <th>Codigo</th>
               <th>Descricao</th>
               <th>Unidade</th>
-              <th>Preco</th>
+              <th>PVP</th>
               <th>IVA</th>
               <th>Estado</th>
             </tr>
@@ -516,13 +520,13 @@ function ServiceDetail({
   selected,
   selectedIva
 }: Parameters<typeof ServicesContent>[0]) {
-  if (!selected) return <FacEmptyState description="Seleciona um servico para ver o detalhe." />;
+  if (!selected) return <FacEmptyState description="Seleciona um artigo para ver o detalhe." />;
 
   return (
     <section className="fac-services-detail">
       <div className="fac-services-detail-title">
         <div>
-          <p className="fac-eyebrow">Ficha do servico</p>
+          <p className="fac-eyebrow">Detalhe do artigo</p>
           <h2>{selected.descricao}</h2>
         </div>
         <StateBadge inactive={selected.inativo} />
@@ -532,11 +536,11 @@ function ServiceDetail({
         <div><dt>Unidade</dt><dd>{selected.unidade}</dd></div>
         <div><dt>Preco sem IVA</dt><dd>{money(selected.pvp)} EUR</dd></div>
         <div><dt>Taxa de IVA</dt><dd>{selectedIva}</dd></div>
-        <div><dt>Servico ativo</dt><dd>{selected.inativo ? "Nao" : "Sim"}</dd></div>
+        <div><dt>Artigo ativo</dt><dd>{selected.inativo ? "Nao" : "Sim"}</dd></div>
       </dl>
       {canManage
-        ? <FacButton icon="pi pi-pencil" label="Editar servico" onClick={() => onEdit(selected)} variant="primary" />
-        : <FacMessage title="Consulta">Sem permissao para criar ou editar servicos.</FacMessage>}
+        ? <FacButton icon="pi pi-pencil" label="Editar artigo" onClick={() => onEdit(selected)} variant="primary" />
+        : <FacMessage title="Consulta">Sem permissao para criar ou editar artigos.</FacMessage>}
     </section>
   );
 }
@@ -545,7 +549,7 @@ function ServiceEditorDialog(props: Parameters<typeof ServicesContent>[0]) {
   return (
     <FacDialog
       className="fac-services-dialog"
-      header={props.editorMode === "edit" ? "Editar servico" : "Novo servico"}
+      header={props.editorMode === "edit" ? "Editar artigo" : "Novo artigo"}
       onHide={props.onCloseEditor}
       visible={props.editorOpen}
     >
@@ -558,6 +562,7 @@ function ServiceFormFields({
   defaults,
   editorMessage,
   editorMode,
+  familias,
   form,
   onChangeForm,
   onCloseEditor,
@@ -569,15 +574,14 @@ function ServiceFormFields({
     label: `${tipo.descricao}${tipo.inativo && tipo.id !== form.ivaVendaId ? " (inativo)" : ""}`,
     value: tipo.id
   }));
+  const familiaOptions = familias.map((familia) => ({
+    label: familia.descricao,
+    value: String(familia.id)
+  }));
 
   return (
     <form className="fac-services-form" onSubmit={onSave}>
       {editorMessage && <FacMessage tone="error" title="Validacao">{editorMessage}</FacMessage>}
-      {!defaults.familiaId && (
-        <FacMessage tone="warning" title="Familia obrigatoria">
-          Nao foi encontrada uma familia de servicos nos catalogos atuais. A criacao fica bloqueada para evitar IDs fixos.
-        </FacMessage>
-      )}
       <div className="fac-services-form-grid">
         <FacInputText
           disabled={editorMode === "edit"}
@@ -593,6 +597,12 @@ function ServiceFormFields({
           onChange={(event) => onChangeForm({ ...form, descricao: event.target.value })}
           required
           value={form.descricao}
+        />
+        <FacSelect
+          label="Familia"
+          onChange={(value) => onChangeForm({ ...form, familiaId: value ?? "" })}
+          options={familiaOptions}
+          value={form.familiaId}
         />
         <FacSelect
           label="Unidade"
@@ -621,12 +631,12 @@ function ServiceFormFields({
             onChange={(event) => onChangeForm({ ...form, inativo: !event.target.checked })}
             type="checkbox"
           />
-          <span>Servico ativo</span>
+          <span>Artigo ativo</span>
         </label>
       </div>
       <div className="fac-services-form-footer">
         <FacButton label="Cancelar" onClick={onCloseEditor} type="button" variant="ghost" />
-        <FacButton disabled={saving || !defaults.familiaId} icon="pi pi-save" label={saving ? "A guardar..." : "Guardar"} type="submit" variant="primary" />
+        <FacButton disabled={saving} icon="pi pi-save" label={saving ? "A guardar..." : "Guardar"} type="submit" variant="primary" />
       </div>
     </form>
   );
@@ -637,7 +647,7 @@ function CommercialSidebar({
   currentUser,
   onLogout
 }: {
-  active: "services";
+  active: "articles";
   currentUser: AuthSession;
   onLogout: () => void;
 }) {
@@ -647,12 +657,12 @@ function CommercialSidebar({
         <span>FAC</span>
         <div>
           <strong>FAC</strong>
-          <small>Commercial</small>
+          <small>Comercial</small>
         </div>
       </div>
       <nav aria-label="Navegacao comercial">
-        <a className={active === "services" ? "active" : ""} href="/services">
-          <strong>Servicos</strong>
+        <a className={active === "articles" ? "active" : ""} href="/artigos">
+          <strong>Artigos</strong>
           <small>Catalogo</small>
         </a>
         <a href="/ui-lab">
@@ -716,9 +726,9 @@ async function responseError(response: Response) {
 function validate(form: ServiceForm, editing: boolean, defaults: HiddenDefaults) {
   if (!editing && !/^[A-Z0-9]{1,50}$/.test(form.codigo)) return "O codigo deve conter apenas letras maiusculas e numeros.";
   if (!form.descricao.trim()) return "A descricao e obrigatoria.";
+  if (!form.familiaId) return "A familia e obrigatoria.";
   if (!form.unidade.trim()) return "A unidade e obrigatoria.";
   if (!form.ivaVendaId) return "A taxa de IVA e obrigatoria.";
-  if (!defaults.familiaId) return "A familia obrigatoria nao tem valor seguro nos catalogos atuais.";
   if (!defaults.ivaCompraId) return "O IVA de compra obrigatorio nao tem valor seguro nos catalogos atuais.";
   if (form.pvp === "" || Number(form.pvp) < 0) return "O preco deve ser igual ou superior a zero.";
   return null;
@@ -731,7 +741,7 @@ function toPayload(form: ServiceForm, defaults: HiddenDefaults, creating: boolea
     codigoIdentificacao: blankToNull(defaults.codigoIdentificacao),
     descricao: form.descricao.trim(),
     unidade: form.unidade.trim().toUpperCase(),
-    familiaId: Number(defaults.familiaId),
+    familiaId: Number(form.familiaId),
     peso: Number(defaults.peso),
     ivaCompraId: defaults.ivaCompraId,
     ivaVendaId: form.ivaVendaId,
@@ -742,14 +752,11 @@ function toPayload(form: ServiceForm, defaults: HiddenDefaults, creating: boolea
   };
 }
 
-function resolveHiddenDefaults(familias: Familia[], tiposIva: TipoTaxaIva[], selected: Artigo | null): HiddenDefaults {
-  const familia = familias.find((item) => normalizeText(item.descricao) === "servicos")
-    ?? familias.find((item) => normalizeText(item.descricao).includes("servic"));
+function resolveHiddenDefaults(tiposIva: TipoTaxaIva[], selected: Artigo | null): HiddenDefaults {
   const ivaCompra = selected?.ivaCompraId
     ? tiposIva.find((tipo) => tipo.id === selected.ivaCompraId) ?? firstActiveIva(tiposIva)
     : firstActiveIva(tiposIva);
   return {
-    familiaId: selected?.familiaId != null ? String(selected.familiaId) : familia ? String(familia.id) : "",
     ivaCompraId: ivaCompra?.id ?? "",
     peso: String(selected?.peso ?? 0),
     retencao: selected?.retencao ?? false,
@@ -765,10 +772,6 @@ function firstActiveIva(tiposIva: TipoTaxaIva[]) {
 
 function normalizeCode(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-}
-
-function normalizeText(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
 function blankToNull(value: string) {

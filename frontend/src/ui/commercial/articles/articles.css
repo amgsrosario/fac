@@ -1,10 +1,10 @@
 .fac-services-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--fac-space-5);
-  align-items: end;
+  gap: var(--fac-space-4);
+  align-items: center;
   border-bottom: 1px solid var(--fac-border);
-  padding-bottom: var(--fac-space-5);
+  padding-bottom: var(--fac-space-4);
   margin-bottom: var(--fac-space-4);
 }
 
@@ -16,18 +16,19 @@
 
 .fac-services-header-actions {
   display: flex;
-  gap: var(--fac-space-3);
+  gap: var(--fac-space-2);
   align-items: center;
 }
 
 .fac-services-summary {
-  display: grid;
-  gap: var(--fac-space-1);
-  min-width: 9rem;
+  display: inline-flex;
+  gap: var(--fac-space-2);
+  align-items: baseline;
+  min-width: 0;
   border: 1px solid var(--fac-border);
-  border-radius: var(--fac-radius-md);
-  padding: var(--fac-space-3);
-  background: var(--fac-product-soft);
+  border-radius: 999px;
+  padding: var(--fac-space-2) var(--fac-space-3);
+  background: var(--fac-surface);
 }
 
 .fac-services-summary span,
@@ -45,15 +46,15 @@
 .fac-services-toolbar {
   display: grid;
   grid-template-columns: minmax(18rem, 1fr) minmax(12rem, 0.28fr);
-  gap: var(--fac-space-3);
+  gap: var(--fac-space-2);
   align-items: center;
-  margin-bottom: var(--fac-space-4);
+  margin-bottom: var(--fac-space-3);
 }
 
 .fac-services-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.35fr);
-  gap: var(--fac-space-4);
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.3fr);
+  gap: var(--fac-space-3);
   align-items: start;
 }
 
@@ -62,7 +63,7 @@
   border: 1px solid var(--fac-border);
   border-radius: var(--fac-radius-md);
   background: var(--fac-surface);
-  padding: var(--fac-panel-padding);
+  padding: var(--fac-space-4);
 }
 
 .fac-services-list-meta {
@@ -70,7 +71,7 @@
   justify-content: space-between;
   gap: var(--fac-space-3);
   align-items: center;
-  margin-bottom: var(--fac-space-3);
+  margin-bottom: var(--fac-space-2);
 }
 
 .fac-services-table-wrap {
@@ -85,7 +86,7 @@
 .fac-services-table th,
 .fac-services-table td {
   border-bottom: 1px solid var(--fac-border);
-  padding: var(--fac-space-3);
+  padding: 0.68rem var(--fac-space-3);
   text-align: left;
 }
 
@@ -105,13 +106,27 @@
   background: var(--fac-client-soft);
 }
 
+.fac-services-table td:first-child {
+  width: 8rem;
+  color: var(--fac-petrol);
+  font-weight: 700;
+}
+
+.fac-services-table td:nth-child(3),
+.fac-services-table td:nth-child(4),
+.fac-services-table td:nth-child(5),
+.fac-services-table td:nth-child(6) {
+  width: 7rem;
+  white-space: nowrap;
+}
+
 .fac-services-mobile-list {
   display: none;
 }
 
 .fac-services-detail {
   display: grid;
-  gap: var(--fac-space-4);
+  gap: var(--fac-space-3);
 }
 
 .fac-services-detail-title {
@@ -136,7 +151,7 @@
   justify-content: space-between;
   gap: var(--fac-space-3);
   border-bottom: 1px solid var(--fac-border);
-  padding: var(--fac-space-3) 0;
+  padding: var(--fac-space-2) 0;
 }
 
 .fac-services-detail dt {
@@ -291,6 +306,10 @@
 
 .fac-service-card span:not(.fac-status-badge) {
   color: var(--fac-text-muted);
+}
+
+.fac-service-card .fac-status-badge {
+  justify-self: start;
 }
 
 @media (max-width: 1023px) {
