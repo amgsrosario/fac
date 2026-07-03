@@ -42,8 +42,13 @@ public class LinhaDocumentoComercial {
     @ToString.Include
     private Integer numeroLinha;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_artigo", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_linha", length = 20, nullable = false)
+    @Setter
+    private TipoLinhaDocumento tipoLinha = TipoLinhaDocumento.COMERCIAL;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_artigo")
     @Setter
     private Artigo artigo;
 
@@ -52,15 +57,15 @@ public class LinhaDocumentoComercial {
     @ToString.Include
     private String descricao;
 
-    @Column(precision = 19, scale = 6, nullable = false)
+    @Column(precision = 19, scale = 6)
     @Setter
     private BigDecimal quantidade;
 
-    @Column(precision = 19, scale = 6, nullable = false)
+    @Column(precision = 19, scale = 6)
     @Setter
     private BigDecimal precoUnitario;
 
-    @Column(precision = 19, scale = 6, nullable = false)
+    @Column(precision = 19, scale = 6)
     @Setter
     private BigDecimal valorBruto;
 
@@ -69,24 +74,24 @@ public class LinhaDocumentoComercial {
     @Setter
     private TipoDescontoLinha tipoDesconto = TipoDescontoLinha.VALOR;
 
-    @Column(precision = 19, scale = 6, nullable = false)
+    @Column(precision = 19, scale = 6)
     @Setter
     private BigDecimal desconto;
 
-    @Column(precision = 19, scale = 6, nullable = false)
+    @Column(precision = 19, scale = 6)
     @Setter
     private BigDecimal valorDesconto;
 
-    @Column(precision = 19, scale = 6, nullable = false)
+    @Column(precision = 19, scale = 6)
     @Setter
     private BigDecimal valorLinha;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_tipo_taxa_iva", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tipo_taxa_iva")
     @Setter
     private TipoTaxaIva tipoTaxaIva;
 
-    @Column(precision = 5, scale = 2, nullable = false)
+    @Column(precision = 5, scale = 2)
     @Setter
     private BigDecimal percentagemIva;
 

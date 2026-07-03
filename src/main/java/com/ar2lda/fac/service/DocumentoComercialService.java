@@ -33,6 +33,7 @@ import com.ar2lda.fac.model.Serie;
 import com.ar2lda.fac.model.SerieId;
 import com.ar2lda.fac.model.TipoDocumento;
 import com.ar2lda.fac.model.TipoAuditoriaEvento;
+import com.ar2lda.fac.model.TipoLinhaDocumento;
 import com.ar2lda.fac.model.PermissaoFuncional;
 import com.ar2lda.fac.model.ResultadoAuditoria;
 import com.ar2lda.fac.model.Transporte;
@@ -223,7 +224,7 @@ public class DocumentoComercialService {
 
         boolean podeEmitir = documento.getEstado() == EstadoDocumentoComercial.RASCUNHO
                 && !documento.isAnulado()
-                && !linhas.isEmpty()
+                && linhas.stream().anyMatch(linha -> linha.getTipoLinha() == TipoLinhaDocumento.COMERCIAL)
                 && totais.coerente();
         boolean podeAnular = documento.getEstado() == EstadoDocumentoComercial.EMITIDO
                 && !documento.isAnulado()
@@ -267,6 +268,8 @@ public class DocumentoComercialService {
                     table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
                     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                     th { background: #f3f4f6; }
+                    .linha-texto td { background: #fff; }
+                    .linha-texto-conteudo { line-height: 1.45; overflow-wrap: anywhere; }
                     .ok { color: #166534; font-weight: bold; }
                     .erro { color: #991b1b; font-weight: bold; }
                     .muted { color: #666; }
@@ -572,8 +575,8 @@ public class DocumentoComercialService {
         }
     }
     private void validateTemLinhas(DocumentoComercial documento) {
-        if (!linhaRepository.existsByDocumentoComercialId(documento.getId())) {
-            throw new BadRequestException("Documento comercial deve ter pelo menos uma linha para ser emitido");
+        if (!linhaRepository.existsByDocumentoComercialIdAndTipoLinha(documento.getId(), TipoLinhaDocumento.COMERCIAL)) {
+            throw new BadRequestException("Documento comercial deve ter pelo menos uma linha comercial para ser emitido");
         }
     }
 
@@ -627,6 +630,9 @@ public class DocumentoComercialService {
         BigDecimal linhasValorTotal = ZERO;
 
         for (LinhaDocumentoComercial linha : linhas) {
+            if (linha.getTipoLinha() == TipoLinhaDocumento.TEXTO) {
+                continue;
+            }
             BigDecimal valorLinha = scale6(linha.getValorLinha());
             BigDecimal valorIva = valorLinha
                     .multiply(linha.getPercentagemIva())
@@ -725,14 +731,22 @@ public class DocumentoComercialService {
         html.append("<th>#</th><th>Artigo</th><th>Descricao</th><th>Qtd.</th><th>Preco</th><th>Valor linha</th><th>IVA</th>");
         html.append("</tr></thead><tbody>");
         for (LinhaDocumentoComercialDto linha : linhas) {
-            html.append("<tr>");
-            html.append("<td>").append(escape(linha.numeroLinha())).append("</td>");
-            html.append("<td>").append(escape(linha.artigoId())).append("</td>");
-            html.append("<td>").append(escape(linha.descricao())).append("</td>");
-            html.append("<td>").append(format(linha.quantidade())).append("</td>");
-            html.append("<td>").append(format(linha.precoUnitario())).append("</td>");
-            html.append("<td>").append(format(linha.valorLinha())).append("</td>");
-            html.append("<td>").append(escape(linha.tipoTaxaIvaId())).append(" ").append(format(linha.percentagemIva())).append("%</td>");
+            if (linha.tipoLinha() == TipoLinhaDocumento.TEXTO) {
+                html.append("<tr class=\"linha-texto\">");
+                html.append("<td>").append(escape(linha.numeroLinha())).append("</td>");
+                html.append("<td colspan=\"6\" class=\"linha-texto-conteudo\">")
+                        .append(escape(linha.descricao()).replace("\n", "<br>"))
+                        .append("</td>");
+            } else {
+                html.append("<tr>");
+                html.append("<td>").append(escape(linha.numeroLinha())).append("</td>");
+                html.append("<td>").append(escape(linha.artigoId())).append("</td>");
+                html.append("<td>").append(escape(linha.descricao())).append("</td>");
+                html.append("<td>").append(format(linha.quantidade())).append("</td>");
+                html.append("<td>").append(format(linha.precoUnitario())).append("</td>");
+                html.append("<td>").append(format(linha.valorLinha())).append("</td>");
+                html.append("<td>").append(escape(linha.tipoTaxaIvaId())).append(" ").append(format(linha.percentagemIva())).append("%</td>");
+            }
             html.append("</tr>");
         }
         html.append("</tbody></table>");

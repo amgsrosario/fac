@@ -3,6 +3,7 @@ package com.ar2lda.fac.controller;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialCreateDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialUpdateDto;
+import com.ar2lda.fac.controller.dto.ReordenarLinhasDocumentoDto;
 import com.ar2lda.fac.service.LinhaDocumentoComercialService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,14 @@ public class LinhaDocumentoComercialController {
     @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
     public LinhaDocumentoComercialDto getById(@PathVariable Long documentoId, @PathVariable Long linhaId) {
         return service.getById(documentoId, linhaId);
+    }
+
+    @PutMapping("/ordem")
+    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EDITAR_RASCUNHO')")
+    public List<LinhaDocumentoComercialDto> reorder(
+            @PathVariable Long documentoId,
+            @RequestBody @Valid ReordenarLinhasDocumentoDto dto) {
+        return service.reordenarLinhas(documentoId, dto.linhaIds());
     }
 
     @PutMapping("/{linhaId}")

@@ -1,4 +1,5 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FilterMatchMode } from "primereact/api";
 import { apiFetch, AuthSession } from "../../../api";
 import {
@@ -227,6 +228,7 @@ const emptyForm: DocumentForm = {
 
 export default function DocumentsView({ currentUser, onLogout }: { currentUser: AuthSession; onLogout: () => void }) {
   const { deviceClass, isMobile } = useDeviceClass();
+  const navigate = useNavigate();
   const { showToast } = useFacToast();
   const [documentos, setDocumentos] = useState<DocumentoComercial[]>([]);
   const [linhas, setLinhas] = useState<LinhaDocumento[]>([]);
@@ -357,11 +359,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
 
   function openNew() {
     if (!canCreate) return;
-    const next = initialiseForm(catalogos);
-    setForm(next);
-    setEditorMessage(null);
-    setEditorOpen(true);
-    setMobileScreen("form");
+    navigate("/documentos/novo");
   }
 
   function closeEditor() {
@@ -508,6 +506,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       onCloseAnular={() => setAnularOpen(false)}
       onCloseEditor={closeEditor}
       onEmitir={emitir}
+      onEditDraft={(id) => navigate(`/documentos/${id}`)}
       onNew={openNew}
       onOpenAnular={() => { setMotivoAnulacao(""); setAnularOpen(true); }}
       onOpenPdf={openPdf}
@@ -561,6 +560,7 @@ function DocumentsContent(props: {
   onCloseAnular: () => void;
   onCloseEditor: () => void;
   onEmitir: () => void;
+  onEditDraft: (id: number) => void;
   onNew: () => void;
   onOpenAnular: () => void;
   onOpenPdf: () => void;
@@ -713,7 +713,7 @@ function DocumentsList({ deviceClass, documentos, filtered, loading, onSelect, s
 }
 
 function DocumentDetail(props: Parameters<typeof DocumentsContent>[0]) {
-  const { canEmit, canPdf, canVoid, detailLoading, diagnostico, linhas, onEmitir, onOpenAnular, onOpenPdf, saving, selected } = props;
+  const { canEditDraft, canEmit, canPdf, canVoid, detailLoading, diagnostico, linhas, onEditDraft, onEmitir, onOpenAnular, onOpenPdf, saving, selected } = props;
   if (!selected) return <FacEmptyState description="Seleciona um documento para ver o detalhe." />;
   const canEmitNow = canEmit && selected.estado === "RASCUNHO" && (diagnostico?.podeEmitir ?? linhas.length > 0);
   const canVoidNow = canVoid && selected.estado === "EMITIDO" && (diagnostico?.podeAnular ?? !selected.anulado);
@@ -742,6 +742,7 @@ function DocumentDetail(props: Parameters<typeof DocumentsContent>[0]) {
       <DocumentTotals documento={selected} />
       {diagnostico?.bloqueios?.length ? <FacMessage title="Bloqueios" tone="warning">{diagnostico.bloqueios.join(" ")}</FacMessage> : null}
       <div className="fac-documents-actions">
+        {canEditDraft && selected.estado === "RASCUNHO" && <FacButton icon="pi pi-pencil" label="Editar rascunho" onClick={() => onEditDraft(selected.id)} variant="primary" />}
         {canPdf && <FacButton icon="pi pi-file-pdf" label="Ver PDF" onClick={onOpenPdf} variant="secondary" />}
         {canEmitNow && <FacButton disabled={saving} icon="pi pi-check" label="Emitir" onClick={onEmitir} variant="primary" />}
         {canVoidNow && <FacButton disabled={saving} icon="pi pi-ban" label="Anular" onClick={onOpenAnular} variant="destructive" />}

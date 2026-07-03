@@ -20,6 +20,7 @@ public interface LinhaDocumentoComercialMapper {
                 e.getId(),
                 e.getDocumentoComercial() != null ? e.getDocumentoComercial().getId() : null,
                 e.getNumeroLinha(),
+                e.getTipoLinha(),
                 consolidado ? e.getArtigoCodigo() : e.getArtigo() != null ? e.getArtigo().getCodigo() : null,
                 e.getDescricao(),
                 e.getQuantidade(),

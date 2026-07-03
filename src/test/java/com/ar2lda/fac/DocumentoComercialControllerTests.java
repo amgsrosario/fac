@@ -51,7 +51,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -233,6 +235,68 @@ class DocumentoComercialControllerTests {
         ));
     }
 
+    private String criarDocumentoComPrimeiraLinha() throws Exception {
+        return mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 1,
+                                    "precoUnitario": 10
+                                  }
+                                }
+                                """.formatted(cliente.getId(), armazem.getId())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+    }
+
+    private Long documentoId(String documentoLocation) {
+        return Long.valueOf(documentoLocation.substring(documentoLocation.lastIndexOf('/') + 1));
+    }
+
+    private Long adicionarLinhaComercial(String documentoLocation, String descricao) throws Exception {
+        mockMvc.perform(post(documentoLocation + "/linhas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "artigoId": "ARTLINHA",
+                                  "descricao": "%s",
+                                  "quantidade": 1,
+                                  "precoUnitario": 10
+                                }
+                                """.formatted(descricao)))
+                .andExpect(status().isCreated());
+        List<com.ar2lda.fac.model.LinhaDocumentoComercial> linhas =
+                linhaDocumentoComercialRepository.findByDocumentoComercialIdOrderByNumeroLinha(documentoId(documentoLocation));
+        return linhas.get(linhas.size() - 1).getId();
+    }
+
+    private Long adicionarLinhaTexto(String documentoLocation, String descricao) throws Exception {
+        mockMvc.perform(post(documentoLocation + "/linhas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoLinha": "TEXTO",
+                                  "descricao": "%s"
+                                }
+                                """.formatted(descricao)))
+                .andExpect(status().isCreated());
+        List<com.ar2lda.fac.model.LinhaDocumentoComercial> linhas =
+                linhaDocumentoComercialRepository.findByDocumentoComercialIdOrderByNumeroLinha(documentoId(documentoLocation));
+        return linhas.get(linhas.size() - 1).getId();
+    }
+
     @Test
     void criaDocumentoComPrimeiraLinhaAtomicamente() throws Exception {
         mockMvc.perform(post("/documentos-comerciais")
@@ -404,6 +468,276 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.valorIvaTotal").value(4.140000))
                 .andExpect(jsonPath("$.valorTotal").value(22.140000))
                 .andExpect(jsonPath("$.peso").value(2.500));
+    }
+
+    @Test
+    void criaLinhaTextoSemAlterarTotaisComerciais() throws Exception {
+        String documentoLocation = mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "2026-06-06",
+                                    "clienteId": %d,
+                                    "armazemCargaId": %d,
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 2,
+                                    "precoUnitario": 10
+                                  }
+                                }
+                                """.formatted(cliente.getId(), armazem.getId())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+
+        mockMvc.perform(post(documentoLocation + "/linhas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoLinha": "TEXTO",
+                                  "descricao": "Nota documental\\nsem impacto comercial"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.numeroLinha").value(2))
+                .andExpect(jsonPath("$.tipoLinha").value("TEXTO"))
+                .andExpect(jsonPath("$.descricao").value("Nota documental\nsem impacto comercial"))
+                .andExpect(jsonPath("$.artigoId").value(nullValue()))
+                .andExpect(jsonPath("$.quantidade").value(nullValue()))
+                .andExpect(jsonPath("$.valorLinha").value(nullValue()))
+                .andExpect(jsonPath("$.tipoTaxaIvaId").value(nullValue()));
+
+        mockMvc.perform(get(documentoLocation))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valorBruto").value(20.000000))
+                .andExpect(jsonPath("$.valorDesconto").value(0.000000))
+                .andExpect(jsonPath("$.valorSujeitoNormal").value(20.000000))
+                .andExpect(jsonPath("$.valorIvaNormal").value(4.600000))
+                .andExpect(jsonPath("$.valorIvaTotal").value(4.600000))
+                .andExpect(jsonPath("$.valorTotal").value(24.600000))
+                .andExpect(jsonPath("$.peso").value(2.500));
+
+        mockMvc.perform(get(documentoLocation + "/linhas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].tipoLinha").value("COMERCIAL"))
+                .andExpect(jsonPath("$[1].tipoLinha").value("TEXTO"));
+    }
+
+    @Test
+    void reordenaTresLinhasComerciaisSemViolarUnicidade() throws Exception {
+        String documentoLocation = criarDocumentoComPrimeiraLinha();
+        Long primeira = linhaDocumentoComercialRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documentoId(documentoLocation)).get(0).getId();
+        Long segunda = adicionarLinhaComercial(documentoLocation, "Segunda");
+        Long terceira = adicionarLinhaComercial(documentoLocation, "Terceira");
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": [%d, %d, %d]
+                                }
+                                """.formatted(terceira, segunda, primeira)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(terceira))
+                .andExpect(jsonPath("$[0].numeroLinha").value(1))
+                .andExpect(jsonPath("$[1].id").value(segunda))
+                .andExpect(jsonPath("$[1].numeroLinha").value(2))
+                .andExpect(jsonPath("$[2].id").value(primeira))
+                .andExpect(jsonPath("$[2].numeroLinha").value(3));
+
+        mockMvc.perform(get(documentoLocation + "/linhas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(terceira))
+                .andExpect(jsonPath("$[0].numeroLinha").value(1))
+                .andExpect(jsonPath("$[1].id").value(segunda))
+                .andExpect(jsonPath("$[1].numeroLinha").value(2))
+                .andExpect(jsonPath("$[2].id").value(primeira))
+                .andExpect(jsonPath("$[2].numeroLinha").value(3));
+    }
+
+    @Test
+    void reordenaMisturaDeTextoEComercialPreservandoDadosETotais() throws Exception {
+        String documentoLocation = criarDocumentoComPrimeiraLinha();
+        Long comercial1 = linhaDocumentoComercialRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documentoId(documentoLocation)).get(0).getId();
+        Long texto1 = adicionarLinhaTexto(documentoLocation, "Texto inicial");
+        Long texto2 = adicionarLinhaTexto(documentoLocation, "Texto intermédio");
+        Long comercial2 = adicionarLinhaComercial(documentoLocation, "Comercial final");
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": [%d, %d, %d, %d]
+                                }
+                                """.formatted(texto2, comercial2, texto1, comercial1)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(texto2))
+                .andExpect(jsonPath("$[0].tipoLinha").value("TEXTO"))
+                .andExpect(jsonPath("$[0].descricao").value("Texto intermédio"))
+                .andExpect(jsonPath("$[1].id").value(comercial2))
+                .andExpect(jsonPath("$[1].tipoLinha").value("COMERCIAL"))
+                .andExpect(jsonPath("$[2].id").value(texto1))
+                .andExpect(jsonPath("$[2].tipoLinha").value("TEXTO"))
+                .andExpect(jsonPath("$[3].id").value(comercial1))
+                .andExpect(jsonPath("$[3].tipoLinha").value("COMERCIAL"));
+
+        mockMvc.perform(get(documentoLocation))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valorBruto").value(20.000000))
+                .andExpect(jsonPath("$.valorIvaTotal").value(4.600000))
+                .andExpect(jsonPath("$.valorTotal").value(24.600000));
+    }
+
+    @Test
+    void rejeitaReordenacaoComConjuntoInvalidoSemAlterarOrdem() throws Exception {
+        String documentoLocation = criarDocumentoComPrimeiraLinha();
+        Long primeira = linhaDocumentoComercialRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documentoId(documentoLocation)).get(0).getId();
+        Long segunda = adicionarLinhaComercial(documentoLocation, "Segunda");
+        Long terceira = adicionarLinhaComercial(documentoLocation, "Terceira");
+        String outroDocumento = criarDocumentoComPrimeiraLinha();
+        Long linhaOutroDocumento = linhaDocumentoComercialRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documentoId(outroDocumento)).get(0).getId();
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": [%d, %d, %d]
+                                }
+                                """.formatted(primeira, primeira, terceira)))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": [%d, %d]
+                                }
+                                """.formatted(primeira, segunda)))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": [%d, %d, 999999]
+                                }
+                                """.formatted(primeira, segunda)))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": [%d, %d, %d]
+                                }
+                                """.formatted(primeira, segunda, linhaOutroDocumento)))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": []
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get(documentoLocation + "/linhas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(primeira))
+                .andExpect(jsonPath("$[0].numeroLinha").value(1))
+                .andExpect(jsonPath("$[1].id").value(segunda))
+                .andExpect(jsonPath("$[1].numeroLinha").value(2))
+                .andExpect(jsonPath("$[2].id").value(terceira))
+                .andExpect(jsonPath("$[2].numeroLinha").value(3));
+    }
+
+    @Test
+    void reordenacaoSoEPermitidaEmRascunho() throws Exception {
+        String documentoLocation = criarDocumentoComPrimeiraLinha();
+        Long primeira = linhaDocumentoComercialRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documentoId(documentoLocation)).get(0).getId();
+        Long segunda = adicionarLinhaComercial(documentoLocation, "Segunda");
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": [%d, %d]
+                                }
+                                """.formatted(segunda, primeira)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post(documentoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "emissorId": "EMISSOR"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": [%d, %d]
+                                }
+                                """.formatted(primeira, segunda)))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(delete(documentoLocation + "/linhas/" + primeira))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(post(documentoLocation + "/anular")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "motivo": "Teste de estado"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put(documentoLocation + "/linhas/ordem")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "linhaIds": [%d, %d]
+                                }
+                                """.formatted(primeira, segunda)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deleteCompactaNumeroLinhaPreservandoOrdemRelativaIncluindoTexto() throws Exception {
+        String documentoLocation = criarDocumentoComPrimeiraLinha();
+        Long primeira = linhaDocumentoComercialRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documentoId(documentoLocation)).get(0).getId();
+        Long texto = adicionarLinhaTexto(documentoLocation, "Texto a remover");
+        Long terceira = adicionarLinhaComercial(documentoLocation, "Terceira");
+        Long quarta = adicionarLinhaTexto(documentoLocation, "Texto final");
+
+        mockMvc.perform(delete(documentoLocation + "/linhas/" + texto))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(documentoLocation + "/linhas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(primeira))
+                .andExpect(jsonPath("$[0].numeroLinha").value(1))
+                .andExpect(jsonPath("$[1].id").value(terceira))
+                .andExpect(jsonPath("$[1].numeroLinha").value(2))
+                .andExpect(jsonPath("$[2].id").value(quarta))
+                .andExpect(jsonPath("$[2].numeroLinha").value(3));
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.ar2lda.fac.exception.BadRequestException;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.model.EstadoDocumentoComercial;
 import com.ar2lda.fac.model.TipoAuditoriaEvento;
+import com.ar2lda.fac.model.TipoLinhaDocumento;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -73,16 +74,7 @@ public class DocumentoComercialPdfService {
         DocumentoComercialDto documento = impressao.documento();
         StringBuilder linhas = new StringBuilder();
         for (LinhaDocumentoComercialDto linha : impressao.linhas()) {
-            linhas.append("<tr>")
-                    .append(td(String.valueOf(linha.numeroLinha()), "center"))
-                    .append(td(linha.artigoId(), ""))
-                    .append(td(linha.descricao(), ""))
-                    .append(td(decimal(linha.quantidade(), 6), "number"))
-                    .append(td(money(linha.precoUnitario()), "number"))
-                    .append(td(money(linha.valorDesconto()), "number"))
-                    .append(td(decimal(linha.percentagemIva(), 2) + "%", "number"))
-                    .append(td(money(linha.valorLinha()), "number"))
-                    .append("</tr>");
+            linhas.append(renderLinha(linha));
         }
 
         String anulada = documento.estado() == EstadoDocumentoComercial.ANULADO
@@ -130,6 +122,9 @@ public class DocumentoComercialPdfService {
                     .lines tr { page-break-inside: avoid; }
                     .lines th { background: #f2f3f1; color: #44515d; font-size: 7.5pt; padding: 6px 4px; border-bottom: 1px solid #cfd3d5; text-align: left; }
                     .lines td { padding: 6px 4px; border-bottom: 1px solid #e5e7e7; vertical-align: top; }
+                    .lines .text-row td { border-bottom-color: #edf0f0; }
+                    .lines .text-number { color: #777f87; }
+                    .lines .text-body { line-height: 1.45; word-wrap: break-word; }
                     .number { text-align: right; white-space: nowrap; }
                     .center { text-align: center; }
                     .summary { width: 100%%; page-break-inside: avoid; }
@@ -221,6 +216,25 @@ public class DocumentoComercialPdfService {
                 + Base64.getEncoder().encodeToString(empresa.logo()) + "\" alt=\"Logotipo\" />";
     }
 
+    private String renderLinha(LinhaDocumentoComercialDto linha) {
+        if (linha.tipoLinha() == TipoLinhaDocumento.TEXTO) {
+            return "<tr class=\"text-row\">"
+                    + td(String.valueOf(linha.numeroLinha()), "center text-number")
+                    + "<td class=\"text-body\" colspan=\"7\">" + escMultiline(linha.descricao()) + "</td>"
+                    + "</tr>";
+        }
+        return "<tr>"
+                + td(String.valueOf(linha.numeroLinha()), "center")
+                + td(linha.artigoId(), "")
+                + td(linha.descricao(), "")
+                + td(decimal(linha.quantidade(), 6), "number")
+                + td(money(linha.precoUnitario()), "number")
+                + td(money(linha.valorDesconto()), "number")
+                + td(decimal(linha.percentagemIva(), 2) + "%", "number")
+                + td(money(linha.valorLinha()), "number")
+                + "</tr>";
+    }
+
     private String footer(EmitenteFiscalSnapshotDto empresa, DocumentoComercialDto documento) {
         String base = "Emitido por " + esc(documento.emissorId()) + " em "
                 + (documento.momentoEmissao() == null ? "-" : esc(documento.momentoEmissao().toString()))
@@ -306,6 +320,10 @@ public class DocumentoComercialPdfService {
         String text = value(raw);
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                 .replace("\"", "&quot;").replace("'", "&#39;");
+    }
+
+    private String escMultiline(Object raw) {
+        return esc(raw).replace("\n", "<br />");
     }
 
     private String value(Object value) {

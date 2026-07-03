@@ -12,6 +12,7 @@ import com.ar2lda.fac.model.DocumentoComercial;
 import com.ar2lda.fac.model.EstadoDocumentoComercial;
 import com.ar2lda.fac.model.LinhaDocumentoComercial;
 import com.ar2lda.fac.model.TipoDescontoLinha;
+import com.ar2lda.fac.model.TipoLinhaDocumento;
 import com.ar2lda.fac.model.TipoTaxaIva;
 import com.ar2lda.fac.repository.ArtigoRepository;
 import com.ar2lda.fac.repository.DocumentoComercialRepository;
@@ -23,7 +24,13 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,14 +48,18 @@ public class LinhaDocumentoComercialService {
     public LinhaDocumentoComercialDto create(Long documentoId, LinhaDocumentoComercialCreateDto dto) {
         DocumentoComercial documento = findDocumento(documentoId);
         validateRascunho(documento);
-        Artigo artigo = findArtigo(dto.artigoId());
-        TipoTaxaIva tipoTaxaIva = findTipoTaxaIvaOrDefault(dto.tipoTaxaIvaId(), artigo.getIvaVenda());
 
         LinhaDocumentoComercial linha = new LinhaDocumentoComercial();
         linha.setDocumentoComercial(documento);
         linha.setNumeroLinha(linhaRepository.findMaxNumeroLinha(documentoId) + 1);
-        applyValues(linha, documento, artigo, tipoTaxaIva, dto.descricao(), dto.quantidade(), dto.precoUnitario(),
-                dto.tipoDesconto(), dto.desconto(), dto.peso());
+        TipoLinhaDocumento tipoLinha = dto.tipoLinha() != null ? dto.tipoLinha() : TipoLinhaDocumento.COMERCIAL;
+        linha.setTipoLinha(tipoLinha);
+        if (tipoLinha == TipoLinhaDocumento.TEXTO) {
+            applyTextoValues(linha, dto.descricao());
+        } else {
+            applyComercialValues(linha, documento, dto.artigoId(), dto.descricao(), dto.quantidade(), dto.precoUnitario(),
+                    dto.tipoDesconto(), dto.desconto(), dto.tipoTaxaIvaId(), dto.peso());
+        }
 
         LinhaDocumentoComercial saved = linhaRepository.save(linha);
         recalcularTotais(documento);
@@ -66,14 +77,26 @@ public class LinhaDocumentoComercialService {
     }
 
     @Transactional
+    public List<LinhaDocumentoComercialDto> reordenarLinhas(Long documentoId, List<Long> linhaIds) {
+        DocumentoComercial documento = findDocumento(documentoId);
+        validateRascunho(documento);
+        List<LinhaDocumentoComercial> linhasOrdenadas = reordenarLinhasPersistidas(documentoId, linhaIds);
+        return linhasOrdenadas.stream()
+                .map(mapper::toDTO)
+                .toList();
+    }
+
+    @Transactional
     public LinhaDocumentoComercialDto update(Long documentoId, Long linhaId, LinhaDocumentoComercialUpdateDto dto) {
         DocumentoComercial documento = findDocumento(documentoId);
         validateRascunho(documento);
         LinhaDocumentoComercial linha = findLinha(documentoId, linhaId);
-        Artigo artigo = findArtigo(dto.artigoId());
-        TipoTaxaIva tipoTaxaIva = findTipoTaxaIvaOrDefault(dto.tipoTaxaIvaId(), artigo.getIvaVenda());
-        applyValues(linha, documento, artigo, tipoTaxaIva, dto.descricao(), dto.quantidade(), dto.precoUnitario(),
-                dto.tipoDesconto(), dto.desconto(), dto.peso());
+        if (linha.getTipoLinha() == TipoLinhaDocumento.TEXTO) {
+            applyTextoValues(linha, dto.descricao());
+        } else {
+            applyComercialValues(linha, documento, dto.artigoId(), dto.descricao(), dto.quantidade(), dto.precoUnitario(),
+                    dto.tipoDesconto(), dto.desconto(), dto.tipoTaxaIvaId(), dto.peso());
+        }
         LinhaDocumentoComercial saved = linhaRepository.save(linha);
         recalcularTotais(documento);
         return mapper.toDTO(saved);
@@ -85,14 +108,91 @@ public class LinhaDocumentoComercialService {
         validateRascunho(documento);
         LinhaDocumentoComercial linha = findLinha(documentoId, linhaId);
         linhaRepository.delete(linha);
+        linhaRepository.flush();
+        compactarOrdem(documentoId);
         recalcularTotais(documento);
     }
 
-    private void applyValues(LinhaDocumentoComercial linha, DocumentoComercial documento, Artigo artigo, TipoTaxaIva tipoTaxaIva,
-                             String descricao, BigDecimal quantidade, BigDecimal precoUnitario, TipoDescontoLinha tipoDesconto,
-                             BigDecimal desconto, BigDecimal peso) {
-        BigDecimal quantidade6 = scale6(quantidade);
-        BigDecimal preco6 = scale6(precoUnitario);
+    private List<LinhaDocumentoComercial> reordenarLinhasPersistidas(Long documentoId, List<Long> linhaIds) {
+        List<LinhaDocumentoComercial> linhasAtuais = linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(documentoId);
+        if (linhaIds == null) {
+            throw new BadRequestException("Lista de linhas e obrigatoria");
+        }
+        if (!linhasAtuais.isEmpty() && linhaIds.isEmpty()) {
+            throw new BadRequestException("Lista de linhas nao pode ser vazia quando o documento tem linhas");
+        }
+        if (linhasAtuais.isEmpty()) {
+            if (!linhaIds.isEmpty()) {
+                throw new BadRequestException("Lista de linhas nao corresponde ao documento");
+            }
+            return List.of();
+        }
+
+        Set<Long> idsRecebidos = new HashSet<>();
+        for (Long id : linhaIds) {
+            if (id == null) {
+                throw new BadRequestException("Lista de linhas contem identificador nulo");
+            }
+            if (!idsRecebidos.add(id)) {
+                throw new BadRequestException("Lista de linhas contem identificadores duplicados");
+            }
+        }
+
+        Map<Long, LinhaDocumentoComercial> linhasPorId = linhasAtuais.stream()
+                .collect(Collectors.toMap(LinhaDocumentoComercial::getId, Function.identity()));
+        if (idsRecebidos.size() != linhasAtuais.size() || !linhasPorId.keySet().equals(idsRecebidos)) {
+            throw new BadRequestException("Lista de linhas deve representar exatamente as linhas atuais do documento");
+        }
+
+        List<LinhaDocumentoComercial> novaOrdem = new ArrayList<>();
+        for (Long id : linhaIds) {
+            novaOrdem.add(linhasPorId.get(id));
+        }
+        aplicarOrdemSegura(novaOrdem);
+        return novaOrdem;
+    }
+
+    private void compactarOrdem(Long documentoId) {
+        aplicarOrdemSegura(linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(documentoId));
+    }
+
+    private void aplicarOrdemSegura(List<LinhaDocumentoComercial> linhasOrdenadas) {
+        for (int index = 0; index < linhasOrdenadas.size(); index++) {
+            linhasOrdenadas.get(index).setNumeroLinha(-1_000_000 - index);
+        }
+        linhaRepository.flush();
+
+        for (int index = 0; index < linhasOrdenadas.size(); index++) {
+            linhasOrdenadas.get(index).setNumeroLinha(index + 1);
+        }
+        linhaRepository.flush();
+    }
+
+    private void applyTextoValues(LinhaDocumentoComercial linha, String descricao) {
+        if (descricao == null || descricao.isBlank()) {
+            throw new BadRequestException("Descricao e obrigatoria em linhas de texto");
+        }
+        linha.setDescricao(descricao);
+        linha.setArtigo(null);
+        linha.setQuantidade(null);
+        linha.setPrecoUnitario(null);
+        linha.setValorBruto(null);
+        linha.setTipoDesconto(null);
+        linha.setDesconto(null);
+        linha.setValorDesconto(null);
+        linha.setValorLinha(null);
+        linha.setTipoTaxaIva(null);
+        linha.setPercentagemIva(null);
+        linha.setPeso(null);
+    }
+
+    private void applyComercialValues(LinhaDocumentoComercial linha, DocumentoComercial documento, String artigoId, String descricao,
+                                      BigDecimal quantidade, BigDecimal precoUnitario, TipoDescontoLinha tipoDesconto,
+                                      BigDecimal desconto, String tipoTaxaIvaId, BigDecimal peso) {
+        Artigo artigo = findArtigo(requireText(artigoId, "Artigo e obrigatorio"));
+        TipoTaxaIva tipoTaxaIva = findTipoTaxaIvaOrDefault(tipoTaxaIvaId, artigo.getIvaVenda());
+        BigDecimal quantidade6 = scale6(requireValue(quantidade, "Quantidade e obrigatoria"));
+        BigDecimal preco6 = scale6(requireValue(precoUnitario, "Preco unitario e obrigatorio"));
         TipoDescontoLinha tipo = tipoDesconto != null ? tipoDesconto : TipoDescontoLinha.VALOR;
         BigDecimal desconto6 = desconto != null ? scale6(desconto) : ZERO;
         BigDecimal valorBruto = quantidade6.multiply(preco6).setScale(6, RoundingMode.HALF_UP);
@@ -102,6 +202,7 @@ public class LinhaDocumentoComercialService {
             throw new BadRequestException("Valor do desconto não pode ser superior ao valor bruto da linha");
         }
 
+        linha.setTipoLinha(TipoLinhaDocumento.COMERCIAL);
         linha.setArtigo(artigo);
         linha.setDescricao(descricao == null || descricao.isBlank() ? artigo.getDescricao() : descricao);
         linha.setQuantidade(quantidade6);
@@ -157,6 +258,9 @@ public class LinhaDocumentoComercialService {
         BigDecimal peso = BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP);
 
         for (LinhaDocumentoComercial linha : linhas) {
+            if (linha.getTipoLinha() == TipoLinhaDocumento.TEXTO) {
+                continue;
+            }
             valorBruto = valorBruto.add(linha.getValorBruto());
             valorDesconto = valorDesconto.add(linha.getValorDesconto());
             if (linha.getPeso() != null) {
@@ -204,7 +308,9 @@ public class LinhaDocumentoComercialService {
                 .subtract(documento.getValorRetencao() != null ? documento.getValorRetencao() : ZERO);
         documento.setValorIvaTotal(valorIvaTotal.setScale(6, RoundingMode.HALF_UP));
         documento.setValorTotal(valorTotal.setScale(6, RoundingMode.HALF_UP));
-        documento.setPeso(linhas.isEmpty() ? null : peso.setScale(3, RoundingMode.HALF_UP));
+        documento.setPeso(linhas.stream().noneMatch(linha -> linha.getTipoLinha() == TipoLinhaDocumento.COMERCIAL)
+                ? null
+                : peso.setScale(3, RoundingMode.HALF_UP));
         documentoRepository.save(documento);
     }
 
@@ -212,6 +318,9 @@ public class LinhaDocumentoComercialService {
         List<LinhaDocumentoComercial> linhas = linhaRepository
                 .findByDocumentoComercialIdOrderByNumeroLinha(documento.getId());
         for (LinhaDocumentoComercial linha : linhas) {
+            if (linha.getTipoLinha() == TipoLinhaDocumento.TEXTO) {
+                continue;
+            }
             BigDecimal base = linha.getValorLinha().setScale(6, RoundingMode.HALF_UP);
             BigDecimal imposto = base.multiply(linha.getPercentagemIva())
                     .divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
@@ -249,6 +358,20 @@ public class LinhaDocumentoComercialService {
 
     private BigDecimal scale6(BigDecimal value) {
         return value.setScale(6, RoundingMode.HALF_UP);
+    }
+
+    private String requireText(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new BadRequestException(message);
+        }
+        return value;
+    }
+
+    private BigDecimal requireValue(BigDecimal value, String message) {
+        if (value == null) {
+            throw new BadRequestException(message);
+        }
+        return value;
     }
 
     private void validateRascunho(DocumentoComercial documento) {

@@ -10,6 +10,7 @@ import { FacToastProvider } from "../fac";
 import ArticlesView from "./articles/ArticlesView";
 import CustomersView from "./customers/CustomersView";
 import DocumentsLabView from "./documents-lab/DocumentsLabView";
+import DraftDocumentEditor from "./documents/DraftDocumentEditor";
 import DocumentsView from "./documents/DocumentsView";
 import { UiFoundationLabContent } from "./UiFoundationLab";
 import "./shared/commercial-shared.css";
@@ -59,6 +60,15 @@ export default function CommercialApp() {
       }}
     />
   );
+  const draftDocumentsView = (
+    <DraftDocumentEditor
+      currentUser={session}
+      onLogout={() => {
+        clearAuthSession();
+        setSession(null);
+      }}
+    />
+  );
   const documentsLabView = (
     <DocumentsLabView
       currentUser={session}
@@ -76,6 +86,8 @@ export default function CommercialApp() {
         <Route element={articlesView} path="/artigos" />
         <Route element={customersView} path="/clientes" />
         <Route element={documentsView} path="/documentos" />
+        <Route element={draftDocumentsView} path="/documentos/novo" />
+        <Route element={draftDocumentsView} path="/documentos/:id" />
         <Route element={documentsLabView} path="/documentos-lab" />
         <Route element={<UiFoundationLabContent />} path="/ui-lab" />
         <Route element={<Navigate replace to="/artigos" />} path="*" />

@@ -14,7 +14,7 @@ class FlywaySchemaIntegrationTests {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void esquemaEstaNaVersaoSeisEContemSnapshotFiscalBlocoTresMD28EMD29() {
+    void esquemaEstaNaVersaoSeteEContemSnapshotFiscalBlocoTresMD28EMD29() {
         Integer versao = jdbcTemplate.queryForObject(
                 "select max(version::integer) from flyway_schema_history where success",
                 Integer.class
@@ -50,7 +50,7 @@ class FlywaySchemaIntegrationTests {
                   and column_name in ('id', 'tipo', 'estado', 'payload_json', 'expira_em', 'confirmado_em', 'versao')
                 """, Integer.class);
 
-        assertThat(versao).isEqualTo(6);
+        assertThat(versao).isEqualTo(7);
         assertThat(colunasSnapshot).isEqualTo(2);
         assertThat(estruturasBlocoTres).isEqualTo(3);
         assertThat(estruturasMd28).isEqualTo(10);

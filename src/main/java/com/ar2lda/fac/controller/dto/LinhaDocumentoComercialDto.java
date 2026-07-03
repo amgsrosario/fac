@@ -1,6 +1,7 @@
 package com.ar2lda.fac.controller.dto;
 
 import com.ar2lda.fac.model.TipoDescontoLinha;
+import com.ar2lda.fac.model.TipoLinhaDocumento;
 
 import java.math.BigDecimal;
 
@@ -8,6 +9,7 @@ public record LinhaDocumentoComercialDto(
         Long id,
         Long documentoComercialId,
         Integer numeroLinha,
+        TipoLinhaDocumento tipoLinha,
         String artigoId,
         String descricao,
         BigDecimal quantidade,

@@ -97,7 +97,7 @@ public class DemoScenarioService {
     }
     private LinhaDocumentoComercialCreateDto line(String artigo, BigDecimal quantidade) {
         BigDecimal price = switch (artigo) { case "AZ075" -> new BigDecimal("12.50"); case "AZ5L" -> new BigDecimal("54.90"); case "VTRES" -> new BigDecimal("18.90"); case "VBREG" -> new BigDecimal("11.90"); case "CABAZ" -> new BigDecimal("39.90"); case "TRINT" -> new BigDecimal("35.00"); default -> new BigDecimal("10.00"); };
-        return new LinhaDocumentoComercialCreateDto(artigo,null,quantidade,price,TipoDescontoLinha.PERCENTAGEM,BigDecimal.ZERO,null,null);
+        return new LinhaDocumentoComercialCreateDto(TipoLinhaDocumento.COMERCIAL,artigo,null,quantidade,price,TipoDescontoLinha.PERCENTAGEM,BigDecimal.ZERO,null,null);
     }
     private void pagar(long documentoId, BigDecimal value) {
         var p = pendenteRepository.findByDocumentoComercialId(documentoId).orElseThrow();

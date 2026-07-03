@@ -5,6 +5,7 @@ import com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto;
 import com.ar2lda.fac.controller.dto.EmitenteFiscalSnapshotDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoComercialDto;
 import com.ar2lda.fac.model.EstadoDocumentoComercial;
+import com.ar2lda.fac.model.TipoLinhaDocumento;
 import com.ar2lda.fac.service.AuditoriaService;
 import com.ar2lda.fac.service.DocumentoComercialPdfService;
 import com.ar2lda.fac.service.DocumentoComercialService;
@@ -113,12 +114,81 @@ class DocumentoComercialPdfServiceTests {
     }
 
     @Test
+    void pdfRenderizaLinhaTextoSemValoresComerciais() throws Exception {
+        byte[] pdf = gerarComLinhaTexto();
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            String text = new PDFTextStripper().getText(document);
+            assertThat(text)
+                    .contains("Nota documental")
+                    .contains("segunda linha")
+                    .doesNotContain("null")
+                    .doesNotContain("0.00 0.00 0.00");
+        }
+    }
+
+    @Test
+    void pdfRespeitaOrdemDeLinhasTextoEComerciais() throws Exception {
+        byte[] pdf = gerarComLinhasPersonalizadas(List.of(
+                linhaTexto(1, "Introducao documental"),
+                linhaTexto(2, "Nota consecutiva"),
+                linhaComercial(3, "ART-3", "Artigo intermedio"),
+                linhaTexto(4, "Nota entre artigos"),
+                linhaComercial(5, "ART-5", "Artigo final"),
+                linhaTexto(6, "Nota final")
+        ));
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            String text = new PDFTextStripper().getText(document);
+            assertThat(text).containsSubsequence(
+                    "Introducao documental",
+                    "Nota consecutiva",
+                    "ART-3",
+                    "Nota entre artigos",
+                    "ART-5",
+                    "Nota final"
+            );
+            assertThat(text).doesNotContain("Introducao documental 0.00");
+        }
+    }
+
+    @Test
+    void pdfPaginaLinhasTextoSemOcultarConteudoNemTotais() throws Exception {
+        List<LinhaDocumentoComercialDto> linhas = new ArrayList<>();
+        for (int number = 1; number <= 48; number++) {
+            linhas.add(linhaTexto(number * 2 - 1,
+                    "Texto documental paginado " + number + " com conteudo visivel integralmente"));
+            linhas.add(linhaComercial(number * 2, "ART-P" + number, "Artigo paginado " + number));
+        }
+
+        byte[] pdf = gerarComLinhasPersonalizadas(linhas);
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(3);
+            assertMultipageStructure(document);
+            String allText = new PDFTextStripper().getText(document);
+            assertThat(allText)
+                    .contains("Texto documental paginado 1")
+                    .contains("Texto documental paginado 24")
+                    .contains("Texto documental paginado 48")
+                    .contains("ART-P48");
+            assertFinalArea(document);
+        }
+    }
+
+    @Test
     void produzArtefactosParaValidacaoVisual() throws Exception {
         Path output = Path.of("target", "pdf-validation");
         Files.createDirectories(output);
         Files.write(output.resolve("fac-documento-1-pagina.pdf"), gerar(1, Scenario.standard()));
         Files.write(output.resolve("fac-documento-2-paginas.pdf"), gerar(35, Scenario.standard()));
         Files.write(output.resolve("fac-documento-3-ou-mais-paginas.pdf"), gerar(90, Scenario.longContent()));
+        Files.write(output.resolve("fac-documento-linhas-texto.pdf"), gerarComLinhasPersonalizadas(List.of(
+                linhaTexto(1, "Introducao documental"),
+                linhaTexto(2, "Nota consecutiva"),
+                linhaComercial(3, "ART-3", "Artigo intermedio"),
+                linhaTexto(4, "Nota final")
+        )));
     }
 
     private byte[] gerar(int lineCount, Scenario scenario) {
@@ -172,6 +242,7 @@ class DocumentoComercialPdfServiceTests {
         for (int number = 1; number <= lineCount; number++) {
             LinhaDocumentoComercialDto linha = mock(LinhaDocumentoComercialDto.class);
             when(linha.numeroLinha()).thenReturn(number);
+            when(linha.tipoLinha()).thenReturn(TipoLinhaDocumento.COMERCIAL);
             when(linha.artigoId()).thenReturn("ART-" + number);
             String description = scenario.longDescription
                     ? "Artigo com descrição longa para testar quebra controlada de texto, continuidade da tabela e ausência de sobreposição na página " + number
@@ -186,6 +257,81 @@ class DocumentoComercialPdfServiceTests {
         }
         when(documentoService.getImpressao(6L)).thenReturn(new DocumentoComercialImpressaoDto(empresa, documento, linhas));
         return pdfService.gerarParaValidacao(6L).content();
+    }
+
+    private byte[] gerarComLinhaTexto() {
+        return gerarComLinhasPersonalizadas(List.of(
+                linhaComercial(1, "ART-1", "Artigo de demonstracao"),
+                linhaTexto(2, "Nota documental\nsegunda linha")
+        ));
+    }
+
+    private byte[] gerarComLinhasPersonalizadas(List<LinhaDocumentoComercialDto> linhas) {
+        DocumentoComercialDto documento = mock(DocumentoComercialDto.class);
+        when(documento.estado()).thenReturn(EstadoDocumentoComercial.EMITIDO);
+        when(documento.numeroDocumento()).thenReturn(6L);
+        when(documento.numeroDocumentoCompleto()).thenReturn(DOCUMENT_NUMBER);
+        when(documento.tipoDocumentoId()).thenReturn("FT");
+        when(documento.tipoDocumentoDescricao()).thenReturn("Fatura");
+        when(documento.serie()).thenReturn("DEMO26");
+        when(documento.dataEmissao()).thenReturn(LocalDate.of(2026, 6, 24));
+        when(documento.dataVencimento()).thenReturn(LocalDate.of(2026, 7, 24));
+        when(documento.clienteNome()).thenReturn(CLIENT);
+        when(documento.clienteNif()).thenReturn("509999990");
+        when(documento.clienteMorada()).thenReturn("Rua da Demonstracao, 10");
+        when(documento.clienteCodPostal()).thenReturn("4000-001");
+        when(documento.clienteLocalidade()).thenReturn("Porto");
+        when(documento.moedaCodigo()).thenReturn("EUR");
+        when(documento.moedaSimbolo()).thenReturn("EUR");
+        when(documento.regimeIvaCodigo()).thenReturn("PT");
+        when(documento.pPagamentoId()).thenReturn("30D");
+        when(documento.mPagamentoId()).thenReturn(1);
+        when(documento.valorBruto()).thenReturn(new BigDecimal("10.00"));
+        when(documento.valorDesconto()).thenReturn(BigDecimal.ZERO);
+        when(documento.valorIsento()).thenReturn(BigDecimal.ZERO);
+        when(documento.valorSujeitoReduzida()).thenReturn(BigDecimal.ZERO);
+        when(documento.valorSujeitoIntermedia()).thenReturn(BigDecimal.ZERO);
+        when(documento.valorSujeitoNormal()).thenReturn(new BigDecimal("10.00"));
+        when(documento.valorIvaReduzida()).thenReturn(BigDecimal.ZERO);
+        when(documento.valorIvaIntermedia()).thenReturn(BigDecimal.ZERO);
+        when(documento.valorIvaNormal()).thenReturn(new BigDecimal("2.30"));
+        when(documento.valorIvaTotal()).thenReturn(new BigDecimal("2.30"));
+        when(documento.valorRetencao()).thenReturn(BigDecimal.ZERO);
+        when(documento.valorTotal()).thenReturn(new BigDecimal("12.30"));
+        when(documento.atcud()).thenReturn(ATCUD);
+        when(documento.qrPayload()).thenReturn("A:509999999*B:509999990*C:PT*D:FT*E:N*F:20260624*G:FT DEMO26/6*H:DEMO2026-6*I1:PT*I7:10.00*I8:2.30*N:2.30*O:12.30*Q:TESTE");
+        when(documento.emissorId()).thenReturn("ADMIN");
+        when(documento.momentoEmissao()).thenReturn(OffsetDateTime.parse("2026-06-24T10:30:00+01:00"));
+
+        EmitenteFiscalSnapshotDto empresa = new EmitenteFiscalSnapshotDto(
+                COMPANY, "509999999", "Avenida Central, 100", null, "1000-001", "Lisboa", "PT",
+                "geral@fac.demo", "www.fac.demo", new BigDecimal("50000.00"), "CRC Lisboa 99999",
+                "62010", "Atividades de programacao informatica"
+        );
+        when(documentoService.getImpressao(6L)).thenReturn(new DocumentoComercialImpressaoDto(empresa, documento, linhas));
+        return pdfService.gerarParaValidacao(6L).content();
+    }
+
+    private LinhaDocumentoComercialDto linhaComercial(int numeroLinha, String artigoId, String descricao) {
+        LinhaDocumentoComercialDto linha = mock(LinhaDocumentoComercialDto.class);
+        when(linha.numeroLinha()).thenReturn(numeroLinha);
+        when(linha.tipoLinha()).thenReturn(TipoLinhaDocumento.COMERCIAL);
+        when(linha.artigoId()).thenReturn(artigoId);
+        when(linha.descricao()).thenReturn(descricao);
+        when(linha.quantidade()).thenReturn(new BigDecimal("1.000000"));
+        when(linha.precoUnitario()).thenReturn(new BigDecimal("10.00"));
+        when(linha.valorDesconto()).thenReturn(BigDecimal.ZERO);
+        when(linha.percentagemIva()).thenReturn(new BigDecimal("23.00"));
+        when(linha.valorLinha()).thenReturn(new BigDecimal("10.00"));
+        return linha;
+    }
+
+    private LinhaDocumentoComercialDto linhaTexto(int numeroLinha, String descricao) {
+        LinhaDocumentoComercialDto linha = mock(LinhaDocumentoComercialDto.class);
+        when(linha.numeroLinha()).thenReturn(numeroLinha);
+        when(linha.tipoLinha()).thenReturn(TipoLinhaDocumento.TEXTO);
+        when(linha.descricao()).thenReturn(descricao);
+        return linha;
     }
 
     private void assertMultipageStructure(PDDocument document) throws IOException {
