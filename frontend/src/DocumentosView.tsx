@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch, getAuthSession, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 
@@ -156,6 +157,7 @@ const emptyLineForm: LineForm = {
 };
 
 export default function DocumentosView() {
+  const navigate = useNavigate();
   const [documentos, setDocumentos] = useState<DocumentoComercial[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [linhas, setLinhas] = useState<LinhaDocumento[]>([]);
@@ -375,38 +377,8 @@ export default function DocumentosView() {
     }
   }
 
-  async function openDraftEditor() {
-    setLoading(true);
-    setMessage(null);
-    setNotice(null);
-    try {
-      const [clientesPage, tiposPage, seriesPage, armazensPage, artigosPage, parametros] = await Promise.all([
-        fetchJson<Page<Cliente>>("/api/clientes?size=300&sort=nome,asc"),
-        fetchJson<Page<TipoDocumento>>("/api/tipos-documento?size=100&sort=descricao,asc"),
-        fetchJson<Page<Serie>>("/api/series?size=200&sort=serie,asc"),
-        fetchJson<Page<Armazem>>("/api/armazens?size=100&sort=nome,asc"),
-        fetchJson<Page<Artigo>>("/api/artigos?size=500&sort=descricao,asc"),
-        fetchOptionalJson<ParametrosDocumento>("/api/parametros-documento-comercial")
-      ]);
-      const comerciais = tiposPage.content.filter((tipo) => tipo.areaGestao === 1 || tipo.areaGestao === 2);
-      setClientes(clientesPage.content);
-      setTiposDocumento(comerciais);
-      setSeries(seriesPage.content.filter((serie) => comerciais.some((tipo) => tipo.id === serie.tipoDocumentoId)));
-      setArmazens(armazensPage.content);
-      setArtigos(artigosPage.content.filter((artigo) => !artigo.inativo));
-      setLineForm(emptyLineForm);
-      setDraftForm({
-        ...emptyDraftForm,
-        tipoDocumentoId: parametros?.tipoDocumentoId ?? "",
-        serie: parametros?.serie ?? "",
-        armazemCargaId: parametros?.armazemCargaId != null ? String(parametros.armazemCargaId) : ""
-      });
-      setEditorOpen(true);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel preparar o novo documento.");
-    } finally {
-      setLoading(false);
-    }
+  function openDraftEditor() {
+    navigate("/documentos/novo");
   }
 
   async function createDraft() {
@@ -598,7 +570,7 @@ export default function DocumentosView() {
             <thead><tr>{documentoColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead>
             <tbody>
               {filtered.map((documento) => (
-                <tr className={documento.id === selectedId ? "fac-row-selected" : ""} key={documento.id} onClick={() => setSelectedId(documento.id)}>
+                <tr className={documento.id === selectedId ? "fac-row-selected" : ""} key={documento.id} onClick={() => navigate(`/documentos/${documento.id}`)}>
                   {documentoColumns.visibleColumns.map((column) => <td key={column.key}>{documentoColumnValue(documento, column.key)}</td>)}
                 </tr>
               ))}

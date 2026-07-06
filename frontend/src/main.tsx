@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { PrimeReactProvider } from "primereact/api";
 import App from "./App";
 import LoginView from "./LoginView";
 import { AuthSession, clearAuthSession, getAuthSession } from "./api";
 import { CommercialApp } from "./ui/commercial";
+import DraftDocumentEditor from "./ui/commercial/documents/DraftDocumentEditor";
 import { facPrimeReactConfig } from "./ui/fac/theme/primeReactConfig";
 import "primeicons/primeicons.css";
 import "./ui/fac/theme/fac-tokens.css";
@@ -16,6 +17,10 @@ const uiMode = import.meta.env.VITE_FAC_UI_MODE === "commercial" ? "commercial" 
 
 function Root() {
   const [session, setSession] = useState<AuthSession | null>(() => getAuthSession());
+  const logout = () => {
+    clearAuthSession();
+    setSession(null);
+  };
 
   useEffect(() => {
     const unauthorized = () => setSession(null);
@@ -24,7 +29,13 @@ function Root() {
   }, []);
 
   if (!session) return <LoginView onAuthenticated={setSession} />;
-  return <App currentUser={session} onLogout={() => { clearAuthSession(); setSession(null); }} />;
+  return (
+    <Routes>
+      <Route element={<DraftDocumentEditor currentUser={session} onLogout={logout} />} path="/documentos/novo" />
+      <Route element={<DraftDocumentEditor currentUser={session} onLogout={logout} />} path="/documentos/:id" />
+      <Route element={<App currentUser={session} onLogout={logout} />} path="*" />
+    </Routes>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

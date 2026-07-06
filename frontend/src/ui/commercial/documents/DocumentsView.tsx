@@ -471,8 +471,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   }
 
   function selectDocument(id: number) {
-    setSelectedId(id);
-    if (isMobile) setMobileScreen("detail");
+    navigate(`/documentos/${id}`);
   }
 
   const sidebar = <CommercialSidebar active="documents" currentUser={currentUser} onLogout={onLogout} />;
