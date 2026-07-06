@@ -7,6 +7,7 @@ import LoginView from "./LoginView";
 import { AuthSession, clearAuthSession, getAuthSession } from "./api";
 import { CommercialApp } from "./ui/commercial";
 import DraftDocumentEditor from "./ui/commercial/documents/DraftDocumentEditor";
+import { FacToastProvider } from "./ui/fac";
 import { facPrimeReactConfig } from "./ui/fac/theme/primeReactConfig";
 import "primeicons/primeicons.css";
 import "./ui/fac/theme/fac-tokens.css";
@@ -30,11 +31,13 @@ function Root() {
 
   if (!session) return <LoginView onAuthenticated={setSession} />;
   return (
-    <Routes>
-      <Route element={<DraftDocumentEditor currentUser={session} onLogout={logout} />} path="/documentos/novo" />
-      <Route element={<DraftDocumentEditor currentUser={session} onLogout={logout} />} path="/documentos/:id" />
-      <Route element={<App currentUser={session} onLogout={logout} />} path="*" />
-    </Routes>
+    <FacToastProvider>
+      <Routes>
+        <Route element={<DraftDocumentEditor currentUser={session} onLogout={logout} />} path="/documentos/novo" />
+        <Route element={<DraftDocumentEditor currentUser={session} onLogout={logout} />} path="/documentos/:id" />
+        <Route element={<App currentUser={session} onLogout={logout} />} path="*" />
+      </Routes>
+    </FacToastProvider>
   );
 }
 
