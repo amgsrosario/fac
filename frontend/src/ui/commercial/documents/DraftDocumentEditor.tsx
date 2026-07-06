@@ -1,7 +1,7 @@
 import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, AuthSession } from "../../../api";
-import { DesktopShell, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useDeviceClass, useFacToast } from "../../fac";
+import { DesktopShell, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useFacToast } from "../../fac";
 import { CommercialSidebar } from "../shared";
 
 type Page<T> = { content: T[] };
@@ -151,11 +151,10 @@ const emptyLine = (tipoLinha: TipoLinha = "COMERCIAL"): EditorLine => ({
   dirty: true
 });
 
-export default function DraftDocumentEditor({ currentUser, onLogout }: { currentUser: AuthSession; onLogout: () => void }) {
+export default function DraftDocumentEditor({ currentUser, embedded = false, onLogout }: { currentUser: AuthSession; embedded?: boolean; onLogout: () => void }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useFacToast();
-  const { deviceClass } = useDeviceClass();
   const documentId = id ? Number(id) : null;
   const [step, setStep] = useState<Step>("header");
   const [documento, setDocumento] = useState<DocumentoComercial | null>(null);
@@ -199,7 +198,7 @@ export default function DraftDocumentEditor({ currentUser, onLogout }: { current
   const canVoidCurrent = Boolean(documento && documento.estado === "EMITIDO" && canVoid && (diagnostico?.podeAnular ?? false));
   const canOpenPdfCurrent = Boolean(documento && documento.estado !== "RASCUNHO" && canPdf);
   const totals = useMemo(() => calculateTotals(lines, catalogos), [catalogos, lines]);
-  const sidebar = <CommercialSidebar active="documents" currentUser={currentUser} onLogout={() => confirmLeave(dirty) && onLogout()} />;
+  const sidebar = embedded ? null : <CommercialSidebar active="documents" currentUser={currentUser} onLogout={() => confirmLeave(dirty) && onLogout()} />;
 
   useEffect(() => {
     loadInitial();
@@ -426,7 +425,8 @@ export default function DraftDocumentEditor({ currentUser, onLogout }: { current
     if (saving || !canEditCurrent) return;
     setError(null);
     setNotice(null);
-    const localLines = isLineFilled(activeLine) ? resequenceLines([...lines, { ...activeLine, uid: crypto.randomUUID(), dirty: true }]) : lines;
+    const draftLines = isLineFilled(activeLine) ? resequenceLines([...lines, { ...activeLine, uid: crypto.randomUUID(), dirty: true }]) : lines;
+    const localLines = resequenceLines(draftLines.filter((line) => !isEmptyCommercialLine(line)));
     const validation = validateHeader(header) ?? validateHasCommercialLine(localLines) ?? localLines.map(validateLine).find(Boolean) ?? null;
     if (validation) {
       setError(validation);
@@ -439,7 +439,7 @@ export default function DraftDocumentEditor({ currentUser, onLogout }: { current
       let persistedLines: EditorLine[] = localLines;
 
       if (!currentId) {
-        const firstCommercial = localLines.find((line) => line.tipoLinha === "COMERCIAL" && validateLine(line) === null);
+        const firstCommercial = localLines.find(isValidCommercialLine);
         if (!firstCommercial) throw new Error("Crie pelo menos uma linha comercial valida antes de guardar.");
         const created = await requestJson<DocumentoComercial>("/api/documentos-comerciais", {
           documento: headerCreatePayload(header),
@@ -656,6 +656,8 @@ export default function DraftDocumentEditor({ currentUser, onLogout }: { current
       )}
     </section>
   );
+
+  if (embedded) return content;
 
   return (
     <ResponsiveSlot
@@ -950,13 +952,14 @@ function validateHeader(header: HeaderState) {
 }
 
 function validateHasCommercialLine(lines: EditorLine[]) {
-  return lines.some((line) => line.tipoLinha === "COMERCIAL" && validateLine(line) === null)
+  return lines.some(isValidCommercialLine)
     ? null
     : "Crie pelo menos uma linha comercial valida antes de guardar.";
 }
 
 function validateLine(line: EditorLine) {
   if (line.tipoLinha === "TEXTO") return line.descricao.trim() ? null : "A linha de texto precisa de descricao.";
+  if (isEmptyCommercialLine(line)) return null;
   if (!line.artigoId) return "Cada linha comercial precisa de artigo.";
   if (!line.descricao.trim()) return "Cada linha comercial precisa de descricao.";
   if (Number(line.quantidade) <= 0) return "A quantidade deve ser maior que zero.";
@@ -967,12 +970,36 @@ function validateLine(line: EditorLine) {
 
 function isLineFilled(line: EditorLine) {
   if (line.tipoLinha === "TEXTO") return Boolean(line.descricao.trim());
-  return [line.artigoId, line.descricao, line.quantidade, line.precoUnitario, line.tipoTaxaIvaId].some(Boolean);
+  return !isEmptyCommercialLine(line);
+}
+
+function isValidCommercialLine(line: EditorLine) {
+  return line.tipoLinha === "COMERCIAL" && !isEmptyCommercialLine(line) && validateLine(line) === null;
+}
+
+function isEmptyCommercialLine(line: EditorLine) {
+  if (line.tipoLinha !== "COMERCIAL") return false;
+  return !line.artigoId
+    && !line.descricao.trim()
+    && !hasRelevantQuantity(line.quantidade)
+    && !hasRelevantNumber(line.precoUnitario)
+    && !hasRelevantNumber(line.desconto)
+    && !line.tipoTaxaIvaId;
+}
+
+function hasRelevantQuantity(value: string) {
+  if (!value.trim()) return false;
+  return Number(value) !== 1;
+}
+
+function hasRelevantNumber(value: string) {
+  if (!value.trim()) return false;
+  return Number(value) !== 0;
 }
 
 function calculateTotals(lines: EditorLine[], catalogos: Catalogos): Totals {
   return lines.reduce<Totals>((acc, line) => {
-    if (line.tipoLinha === "TEXTO") return acc;
+    if (line.tipoLinha === "TEXTO" || isEmptyCommercialLine(line)) return acc;
     const values = lineCommercialValues(line, catalogos);
     return {
       subtotal: acc.subtotal + values.base,
@@ -984,7 +1011,7 @@ function calculateTotals(lines: EditorLine[], catalogos: Catalogos): Totals {
 }
 
 function lineTotal(line: EditorLine, catalogos: Catalogos) {
-  if (line.tipoLinha === "TEXTO") return 0;
+  if (line.tipoLinha === "TEXTO" || isEmptyCommercialLine(line)) return 0;
   return lineCommercialValues(line, catalogos).total;
 }
 

@@ -33,8 +33,10 @@ function Root() {
   return (
     <FacToastProvider>
       <Routes>
-        <Route element={<DraftDocumentEditor currentUser={session} onLogout={logout} />} path="/documentos/novo" />
-        <Route element={<DraftDocumentEditor currentUser={session} onLogout={logout} />} path="/documentos/:id" />
+        <Route element={<App currentUser={session} initialView="Dashboard" onLogout={logout} />} path="/" />
+        <Route element={<App currentUser={session} initialView="Documentos" onLogout={logout} />} path="/documentos" />
+        <Route element={<App currentUser={session} embeddedContent={<DraftDocumentEditor currentUser={session} embedded onLogout={logout} />} initialView="Documentos" onLogout={logout} />} path="/documentos/novo" />
+        <Route element={<App currentUser={session} embeddedContent={<DraftDocumentEditor currentUser={session} embedded onLogout={logout} />} initialView="Documentos" onLogout={logout} />} path="/documentos/:id" />
         <Route element={<App currentUser={session} onLogout={logout} />} path="*" />
       </Routes>
     </FacToastProvider>

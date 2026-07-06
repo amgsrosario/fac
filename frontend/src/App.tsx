@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import ArtigosView from "./ArtigosView";
 import DocumentosView from "./DocumentosView";
 import PendentesView from "./PendentesView";
@@ -253,10 +254,18 @@ const emptyParametrosClienteForm: ParametrosClienteForm = {
   retencao: ""
 };
 
-type AppProps = { currentUser: AuthSession; onLogout: () => void };
+type AppProps = {
+  currentUser: AuthSession;
+  embeddedContent?: ReactNode;
+  initialView?: ViewKey;
+  onLogout: () => void;
+};
 
-function App({ currentUser, onLogout }: AppProps) {
-  const [activeView, setActiveView] = useState<ViewKey>("Dashboard");
+function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout }: AppProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navigationView = viewFromNavigationState(location.state);
+  const [activeView, setActiveView] = useState<ViewKey>(navigationView ?? initialView);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [clientes, setClientes] = useState<Page<Cliente> | null>(null);
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(null);
@@ -486,15 +495,17 @@ function App({ currentUser, onLogout }: AppProps) {
     }
   }
 
+  const shellView = embeddedContent ? initialView : activeView;
+
   async function refreshActiveView() {
-    if (activeView === "Clientes") {
+    if (shellView === "Clientes") {
       await loadClientes();
       if (selectedClienteId) {
         await loadContaCorrente(selectedClienteId);
       }
       return;
     }
-    if (activeView === "Configuracao") {
+    if (shellView === "Configuracao") {
       await loadParametrosCliente();
       return;
     }
@@ -507,16 +518,33 @@ function App({ currentUser, onLogout }: AppProps) {
   }, []);
 
   useEffect(() => {
+    if (!embeddedContent) {
+      setActiveView(navigationView ?? initialView);
+    }
+  }, [embeddedContent, initialView, navigationView]);
+
+  useEffect(() => {
     if (selectedClienteId) {
       loadContaCorrente(selectedClienteId);
     }
   }, [selectedClienteId]);
 
   useEffect(() => {
-    if (activeView === "Configuracao") {
+    if (shellView === "Configuracao") {
       loadParametrosCliente();
     }
-  }, [activeView]);
+  }, [shellView]);
+
+  function selectView(view: ViewKey) {
+    setActiveView(view);
+    if (view === "Dashboard") {
+      navigate("/");
+    } else if (view === "Documentos") {
+      navigate("/documentos");
+    } else {
+      navigate("/", { state: { activeView: view } });
+    }
+  }
 
   const saldoPendente = useMemo(
     () => dashboardData?.pendentes.content.reduce((total, pendente) => total + Number(pendente.valorPendente || 0), 0) ?? 0,
@@ -576,9 +604,9 @@ function App({ currentUser, onLogout }: AppProps) {
             return true;
           }).map((item) => (
             <button
-              className={activeView === item.label ? "active" : ""}
+              className={shellView === item.label ? "active" : ""}
               key={item.label}
-              onClick={() => setActiveView(item.label)}
+              onClick={() => selectView(item.label)}
               type="button"
             >
               <span>{item.label === "ImportExport" ? "Importar/Exportar" : item.label}</span>
@@ -592,23 +620,23 @@ function App({ currentUser, onLogout }: AppProps) {
         <header className="fac-topbar">
           <div>
             <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "FAC Demo Partner Edition · Ambiente de demonstração" : "FAC · Aplicação de faturação"}</p>
-            <h1>{viewTitle(activeView)}</h1>
+            <h1>{viewTitle(shellView)}</h1>
           </div>
           <div className="fac-topbar-actions">
             <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.papel} · {currentUser.codigo}</small></div>
             <input
               onChange={(event) => setClienteSearch(event.target.value)}
-              disabled={activeView === "Configuracao" || activeView === "Listagens"}
-              placeholder={activeView === "Clientes" ? "Pesquisar cliente, NIF ou email" : activeView === "Configuracao" ? "Configuracao da aplicacao" : activeView === "Listagens" ? "Pesquisa disponivel dentro da listagem" : "Pesquisar documento, cliente ou artigo"}
+              disabled={shellView === "Configuracao" || shellView === "Listagens"}
+              placeholder={shellView === "Clientes" ? "Pesquisar cliente, NIF ou email" : shellView === "Configuracao" ? "Configuracao da aplicacao" : shellView === "Listagens" ? "Pesquisa disponivel dentro da listagem" : "Pesquisar documento, cliente ou artigo"}
               type="search"
-              value={activeView === "Clientes" ? clienteSearch : ""}
+              value={shellView === "Clientes" ? clienteSearch : ""}
             />
-            {activeView !== "Listagens" && <button onClick={refreshActiveView} type="button">Atualizar</button>}
+            {shellView !== "Listagens" && <button onClick={refreshActiveView} type="button">Atualizar</button>}
             <button className="fac-ghost-button" onClick={onLogout} type="button">Sair</button>
           </div>
         </header>
 
-        {activeView === "Clientes" ? (
+        {embeddedContent ? embeddedContent : shellView === "Clientes" ? (
           <ClientesView
             catalogos={clienteCatalogos}
             clientes={filteredClientes}
@@ -631,19 +659,19 @@ function App({ currentUser, onLogout }: AppProps) {
             onSaveCliente={editingClienteId ? updateCliente : createCliente}
             onSelectCliente={setSelectedClienteId}
           />
-        ) : activeView === "Documentos" ? (
+        ) : shellView === "Documentos" ? (
           <DocumentosView />
-        ) : activeView === "Artigos" ? (
+        ) : shellView === "Artigos" ? (
           <ArtigosView />
-        ) : activeView === "Tesouraria" ? (
+        ) : shellView === "Tesouraria" ? (
           <PendentesView />
-        ) : activeView === "Listagens" ? (
+        ) : shellView === "Listagens" ? (
           <ListagensView />
-        ) : activeView === "ImportExport" ? (
+        ) : shellView === "ImportExport" ? (
           <ImportExportView />
-        ) : activeView === "Auditoria" ? (
+        ) : shellView === "Auditoria" ? (
           <AuditoriaView />
-        ) : activeView === "Configuracao" ? (
+        ) : shellView === "Configuracao" ? (
           <ConfiguracaoView
             catalogos={clienteCatalogos}
             exists={parametrosClienteExists}
@@ -658,7 +686,7 @@ function App({ currentUser, onLogout }: AppProps) {
             error={error}
             loading={loading}
             metrics={metrics}
-            onNavigate={setActiveView}
+            onNavigate={selectView}
           />
         )}
 
@@ -1389,6 +1417,12 @@ function datePt(value: string) {
     return "-";
   }
   return value.split("-").reverse().join("/");
+}
+
+function viewFromNavigationState(state: unknown): ViewKey | null {
+  if (!state || typeof state !== "object" || !("activeView" in state)) return null;
+  const view = (state as { activeView?: unknown }).activeView;
+  return typeof view === "string" && menu.some((item) => item.label === view) ? view as ViewKey : null;
 }
 
 function todayIso() {
