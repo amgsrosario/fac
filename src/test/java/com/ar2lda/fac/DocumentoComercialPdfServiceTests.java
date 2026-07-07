@@ -21,7 +21,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -180,6 +182,9 @@ class DocumentoComercialPdfServiceTests {
     void produzArtefactosParaValidacaoVisual() throws Exception {
         Path output = Path.of("target", "pdf-validation");
         Files.createDirectories(output);
+        DocumentoComercialImpressaoDto impressao = criarImpressao(18, Scenario.standard());
+        Files.writeString(output.resolve("documento-comercial.html"), renderHtml(impressao), StandardCharsets.UTF_8);
+        Files.write(output.resolve("documento-comercial.pdf"), gerar(impressao));
         Files.write(output.resolve("fac-documento-1-pagina.pdf"), gerar(1, Scenario.standard()));
         Files.write(output.resolve("fac-documento-2-paginas.pdf"), gerar(35, Scenario.standard()));
         Files.write(output.resolve("fac-documento-3-ou-mais-paginas.pdf"), gerar(90, Scenario.longContent()));
@@ -192,6 +197,15 @@ class DocumentoComercialPdfServiceTests {
     }
 
     private byte[] gerar(int lineCount, Scenario scenario) {
+        return gerar(criarImpressao(lineCount, scenario));
+    }
+
+    private byte[] gerar(DocumentoComercialImpressaoDto impressao) {
+        when(documentoService.getImpressao(6L)).thenReturn(impressao);
+        return pdfService.gerarParaValidacao(6L).content();
+    }
+
+    private DocumentoComercialImpressaoDto criarImpressao(int lineCount, Scenario scenario) {
         DocumentoComercialDto documento = mock(DocumentoComercialDto.class);
         when(documento.estado()).thenReturn(scenario.cancelled ? EstadoDocumentoComercial.ANULADO : EstadoDocumentoComercial.EMITIDO);
         when(documento.numeroDocumento()).thenReturn(6L);
@@ -255,8 +269,7 @@ class DocumentoComercialPdfServiceTests {
             when(linha.valorLinha()).thenReturn(new BigDecimal("10.00"));
             linhas.add(linha);
         }
-        when(documentoService.getImpressao(6L)).thenReturn(new DocumentoComercialImpressaoDto(empresa, documento, linhas));
-        return pdfService.gerarParaValidacao(6L).content();
+        return new DocumentoComercialImpressaoDto(empresa, documento, linhas);
     }
 
     private byte[] gerarComLinhaTexto() {
@@ -264,6 +277,13 @@ class DocumentoComercialPdfServiceTests {
                 linhaComercial(1, "ART-1", "Artigo de demonstracao"),
                 linhaTexto(2, "Nota documental\nsegunda linha")
         ));
+    }
+
+    private String renderHtml(DocumentoComercialImpressaoDto impressao) throws Exception {
+        Method buildHtml = DocumentoComercialPdfService.class
+                .getDeclaredMethod("buildHtml", DocumentoComercialImpressaoDto.class);
+        buildHtml.setAccessible(true);
+        return (String) buildHtml.invoke(pdfService, impressao);
     }
 
     private byte[] gerarComLinhasPersonalizadas(List<LinhaDocumentoComercialDto> linhas) {
