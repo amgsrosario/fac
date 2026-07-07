@@ -27,7 +27,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +43,7 @@ class DocumentoComercialPdfServiceTests {
     private static final String COMPANY = "FAC Demonstração, Lda.";
     private static final String CLIENT = "Cliente Demonstração Norte";
     private static final String ATCUD = "DEMO2026-6";
+    private static final DateTimeFormatter ARTIFACT_TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSS");
 
     private DocumentoComercialService documentoService;
     private DocumentoComercialPdfService pdfService;
@@ -182,18 +185,45 @@ class DocumentoComercialPdfServiceTests {
     void produzArtefactosParaValidacaoVisual() throws Exception {
         Path output = Path.of("target", "pdf-validation");
         Files.createDirectories(output);
+        String runId = ARTIFACT_TIMESTAMP.format(LocalDateTime.now());
         DocumentoComercialImpressaoDto impressao = criarImpressao(18, Scenario.standard());
-        Files.writeString(output.resolve("documento-comercial.html"), renderHtml(impressao), StandardCharsets.UTF_8);
-        Files.write(output.resolve("documento-comercial.pdf"), gerar(impressao));
-        Files.write(output.resolve("fac-documento-1-pagina.pdf"), gerar(1, Scenario.standard()));
-        Files.write(output.resolve("fac-documento-2-paginas.pdf"), gerar(35, Scenario.standard()));
-        Files.write(output.resolve("fac-documento-3-ou-mais-paginas.pdf"), gerar(90, Scenario.longContent()));
-        Files.write(output.resolve("fac-documento-linhas-texto.pdf"), gerarComLinhasPersonalizadas(List.of(
+        writeArtifact(output, "documento-comercial-" + runId + ".html", "documento-comercial.html", renderHtml(impressao));
+        writeArtifact(output, "documento-comercial-" + runId + ".pdf", "documento-comercial.pdf", gerar(impressao));
+        writeArtifact(output, "fac-documento-1-pagina-" + runId + ".pdf", "fac-documento-1-pagina.pdf", gerar(1, Scenario.standard()));
+        writeArtifact(output, "fac-documento-2-paginas-" + runId + ".pdf", "fac-documento-2-paginas.pdf", gerar(35, Scenario.standard()));
+        writeArtifact(output, "fac-documento-3-ou-mais-paginas-" + runId + ".pdf", "fac-documento-3-ou-mais-paginas.pdf", gerar(90, Scenario.longContent()));
+        writeArtifact(output, "fac-documento-linhas-texto-" + runId + ".pdf", "fac-documento-linhas-texto.pdf", gerarComLinhasPersonalizadas(List.of(
                 linhaTexto(1, "Introducao documental"),
                 linhaTexto(2, "Nota consecutiva"),
                 linhaComercial(3, "ART-3", "Artigo intermedio"),
                 linhaTexto(4, "Nota final")
         )));
+    }
+
+    private void writeArtifact(Path output, String uniqueName, String latestName, String content) throws IOException {
+        Files.writeString(output.resolve(uniqueName), content, StandardCharsets.UTF_8);
+        writeLatest(output.resolve(latestName), content);
+    }
+
+    private void writeArtifact(Path output, String uniqueName, String latestName, byte[] content) throws IOException {
+        Files.write(output.resolve(uniqueName), content);
+        writeLatest(output.resolve(latestName), content);
+    }
+
+    private void writeLatest(Path latest, String content) {
+        try {
+            Files.writeString(latest, content, StandardCharsets.UTF_8);
+        } catch (IOException ignored) {
+            // O ficheiro latest pode estar aberto no visualizador; o artefacto com nome unico ja foi gerado.
+        }
+    }
+
+    private void writeLatest(Path latest, byte[] content) {
+        try {
+            Files.write(latest, content);
+        } catch (IOException ignored) {
+            // O ficheiro latest pode estar aberto no visualizador; o artefacto com nome unico ja foi gerado.
+        }
     }
 
     private byte[] gerar(int lineCount, Scenario scenario) {
