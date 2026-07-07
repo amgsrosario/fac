@@ -811,7 +811,7 @@ function validate(form: ServiceForm, editing: boolean, defaults: HiddenDefaults)
   if (!form.familiaId) return "A familia e obrigatoria.";
   if (!form.unidade.trim()) return "A unidade e obrigatoria.";
   if (!form.ivaVendaId) return "A taxa de IVA e obrigatoria.";
-  if (!defaults.ivaCompraId) return "O IVA de compra obrigatorio nao tem valor seguro nos catalogos atuais.";
+  if (!defaults.ivaCompraId) return "Nao existe uma taxa de IVA segura nos catalogos atuais.";
   if (form.pvp === "" || Number(form.pvp) < 0) return "O preco deve ser igual ou superior a zero.";
   return null;
 }

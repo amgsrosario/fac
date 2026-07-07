@@ -73,7 +73,6 @@ const ARTIGO_COLUMNS: ConfigurableColumn[] = [
   { key: "codigoIdentificacao", label: "Identificacao", visible: false },
   { key: "familia", label: "Familia", visible: false },
   { key: "unidade", label: "Unidade", visible: true },
-  { key: "ivaCompra", label: "IVA compra", visible: false },
   { key: "ivaVenda", label: "IVA venda", visible: false },
   { key: "pvp", label: "PVP", visible: true },
   { key: "peso", label: "Peso", visible: false },
@@ -122,8 +121,9 @@ export default function ArtigosView() {
   }
 
   function openNew() {
+    const defaultIva = firstActiveIva(tiposIva)?.id ?? "";
     setEditingCodigo(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, ivaCompraId: defaultIva, ivaVendaId: defaultIva });
     setMessage(null);
     setNotice(null);
     setEditorOpen(true);
@@ -212,12 +212,6 @@ export default function ArtigosView() {
             </select>
           </Field>
           <Field label="Peso"><input min="0" onChange={(event) => change("peso", event.target.value)} step="0.001" type="number" value={form.peso} /></Field>
-          <Field label="IVA na compra">
-            <select onChange={(event) => change("ivaCompraId", event.target.value)} value={form.ivaCompraId}>
-              <option value="">Selecionar</option>
-              {tiposIva.map((tipo) => <option disabled={tipo.inativo && tipo.id !== form.ivaCompraId} key={tipo.id} value={tipo.id}>{tipo.descricao}{tipo.inativo ? " (inativo)" : ""}</option>)}
-            </select>
-          </Field>
           <Field label="IVA na venda">
             <select onChange={(event) => change("ivaVendaId", event.target.value)} value={form.ivaVendaId}>
               <option value="">Selecionar</option>
@@ -302,7 +296,6 @@ function artigoColumnValue(artigo: Artigo, key: string, familias: Familia[]) {
     case "codigoIdentificacao": return artigo.codigoIdentificacao ?? "-";
     case "familia": return familias.find((familia) => familia.id === artigo.familiaId)?.descricao ?? artigo.familiaId;
     case "unidade": return artigo.unidade;
-    case "ivaCompra": return artigo.ivaCompraId;
     case "ivaVenda": return artigo.ivaVendaId;
     case "pvp": return money(artigo.pvp);
     case "peso": return artigo.peso ?? 0;
@@ -341,7 +334,7 @@ function validate(form: ArtigoForm, editing: boolean) {
   if (!form.descricao.trim()) return "A descricao e obrigatoria.";
   if (!form.unidade.trim()) return "A unidade e obrigatoria.";
   if (!form.familiaId) return "A familia e obrigatoria.";
-  if (!form.ivaCompraId || !form.ivaVendaId) return "O IVA na compra e na venda e obrigatorio.";
+  if (!form.ivaVendaId) return "O IVA na venda e obrigatorio.";
   if (form.pvp === "" || Number(form.pvp) < 0) return "O PVP deve ser igual ou superior a zero.";
   if (form.peso !== "" && Number(form.peso) < 0) return "O peso nao pode ser negativo.";
   return null;
@@ -374,7 +367,7 @@ function toPayload(form: ArtigoForm, creating: boolean) {
     unidade: form.unidade.trim().toUpperCase(),
     familiaId: Number(form.familiaId),
     peso: form.peso === "" ? null : Number(form.peso),
-    ivaCompraId: form.ivaCompraId,
+    ivaCompraId: creating ? form.ivaVendaId : form.ivaCompraId || form.ivaVendaId,
     ivaVendaId: form.ivaVendaId,
     pvp: Number(form.pvp),
     inativo: form.inativo,
@@ -390,6 +383,10 @@ function normalizeCode(value: string) {
 function blankToNull(value: string) {
   const trimmed = value.trim();
   return trimmed || null;
+}
+
+function firstActiveIva(tiposIva: TipoTaxaIva[]) {
+  return tiposIva.find((tipo) => !tipo.inativo) ?? tiposIva[0] ?? null;
 }
 
 function money(value: number) {
