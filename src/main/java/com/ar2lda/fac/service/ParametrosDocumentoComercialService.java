@@ -55,7 +55,7 @@ public class ParametrosDocumentoComercialService {
                 .orElseThrow(() -> new NotFoundException("Parâmetros de documento comercial não encontrados"));
     }
 
-    private void applyRelations(String tipoDocumentoId, String serie, Long armazemCargaId,
+    private void applyRelations(String tipoDocumentoId, String serie, String armazemCargaId,
                                 ParametrosDocumentoComercial entity) {
         Serie serieEncontrada = findSerie(tipoDocumentoId, serie);
         entity.setTipoDocumento(serieEncontrada != null ? serieEncontrada.getTipoDocumento() : null);
@@ -79,7 +79,7 @@ public class ParametrosDocumentoComercialService {
         return encontrada;
     }
 
-    private Armazem findArmazem(Long id) {
+    private Armazem findArmazem(String id) {
         if (id == null) return null;
         return armazemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Armazém não encontrado: " + id));

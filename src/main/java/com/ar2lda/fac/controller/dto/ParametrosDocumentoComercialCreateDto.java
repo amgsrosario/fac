@@ -7,6 +7,6 @@ public record ParametrosDocumentoComercialCreateDto(
         String tipoDocumentoId,
         @Size(max = 10, message = "Série deve ter no máximo 10 caracteres")
         String serie,
-        Long armazemCargaId
+        String armazemCargaId
 ) {
 }

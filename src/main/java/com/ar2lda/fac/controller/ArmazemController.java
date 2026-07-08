@@ -40,18 +40,18 @@ public class ArmazemController implements GenericController {
     }
 
     @GetMapping("/{id}")
-    public ArmazemDto getById(@PathVariable Long id) {
+    public ArmazemDto getById(@PathVariable String id) {
         return service.getById(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody @Valid ArmazemUpdateDto dto) {
+    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody @Valid ArmazemUpdateDto dto) {
         service.update(id, dto);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

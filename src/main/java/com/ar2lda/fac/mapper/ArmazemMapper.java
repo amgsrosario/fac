@@ -30,7 +30,7 @@ public interface ArmazemMapper {
         if (dto == null) {
             return null;
         }
-        return new Armazem(dto.nome(), dto.morada(), dto.morada1(), dto.localidade());
+        return new Armazem(dto.id(), dto.nome(), dto.morada(), dto.morada1(), dto.localidade());
     }
 
     default void applyUpdate(ArmazemUpdateDto dto, @MappingTarget Armazem entity) {

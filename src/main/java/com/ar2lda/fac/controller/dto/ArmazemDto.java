@@ -1,7 +1,7 @@
 package com.ar2lda.fac.controller.dto;
 
 public record ArmazemDto(
-        Long id,
+        String id,
         String nome,
         String morada,
         String morada1,

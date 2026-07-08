@@ -51,6 +51,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.nullValue;
@@ -210,7 +211,7 @@ class DocumentoComercialControllerTests {
         cliente.setTransporte(transporte);
         cliente = clienteRepository.save(cliente);
 
-        armazem = new Armazem("Armazém Documento", "Rua Armazém", null, "Águeda");
+        armazem = new Armazem("T01", "Armazém Documento", "Rua Armazém", null, "Águeda");
         armazem.setCodPostal(codPostal);
         armazem.setPais(pais);
         armazem = armazemRepository.save(armazem);
@@ -245,7 +246,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -308,7 +309,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -329,7 +330,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -364,7 +365,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30",
                                     "matricula": "AA-00-AA",
                                     "peso": 12.345,
@@ -401,7 +402,7 @@ class DocumentoComercialControllerTests {
                         .content("""
                                 {
                                   "dataEmissao": "2026-06-07",
-                                  "armazemCargaId": %d,
+                                  "armazemCargaId": "%s",
                                   "pPagamentoId": "P30",
                                   "matricula": "BB-00-BB",
                                   "observacoes": "Rascunho atualizado"
@@ -431,7 +432,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -481,7 +482,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -751,7 +752,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -812,7 +813,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "SEMAT",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -858,7 +859,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -921,7 +922,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -974,6 +975,11 @@ class DocumentoComercialControllerTests {
 
     @Test
     void documentoFinanceiroLiquidaParcialmentePendente() throws Exception {
+        LocalDate dataEmissao = LocalDate.now().minusDays(15);
+        LocalDate dataVencimento = dataEmissao.plusDays(pPagamento.getDias());
+        int anoDocumentoFinanceiro = dataEmissao.getYear();
+        String atcudDocumentoFinanceiro = "RCB" + anoDocumentoFinanceiro + "-1";
+
         String documentoLocation = mockMvc.perform(post("/documentos-comerciais")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -981,9 +987,9 @@ class DocumentoComercialControllerTests {
                                   "documento": {
                                     "tipoDocumentoId": "DCT",
                                     "serie": "A",
-                                    "dataEmissao": "2026-06-06",
+                                    "dataEmissao": "%s",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -992,7 +998,7 @@ class DocumentoComercialControllerTests {
                                     "precoUnitario": 10
                                   }
                                 }
-                                """.formatted(cliente.getId(), armazem.getId())))
+                                """.formatted(dataEmissao, cliente.getId(), armazem.getId())))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -1018,11 +1024,11 @@ class DocumentoComercialControllerTests {
                                 {
                                   "tipoDocumentoId": "RCB",
                                   "serie": "A",
-                                  "dataEmissao": "2026-06-06",
+                                  "dataEmissao": "%s",
                                   "clienteId": %d,
                                   "moedaId": "EUR",
                                   "mPagamentoId": %d,
-                                  "dataHoraOperacao": "2026-06-06T12:00:00+01:00",
+                                  "dataHoraOperacao": "%sT12:00:00+01:00",
                                   "emissorId": "EMISSOR",
                                   "linhas": [
                                     {
@@ -1032,18 +1038,18 @@ class DocumentoComercialControllerTests {
                                     }
                                   ]
                                 }
-                                """.formatted(cliente.getId(), mPagamento.getId(), pendente.getId())))
+                                """.formatted(dataEmissao, cliente.getId(), mPagamento.getId(), dataEmissao, pendente.getId())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.tipoDocumentoId").value("RCB"))
                 .andExpect(jsonPath("$.numeroDocumento").value(1))
-                .andExpect(jsonPath("$.atcud").value("RCB2026-1"))
+                .andExpect(jsonPath("$.atcud").value(atcudDocumentoFinanceiro))
                 .andExpect(jsonPath("$.valorPagamentoBruto").value(10.000000))
                 .andExpect(jsonPath("$.valorDescontoFinanceiro").value(1.000000))
                 .andExpect(jsonPath("$.valorPagamentoLiquido").value(9.000000))
                 .andExpect(jsonPath("$.mPagamentoId").value(mPagamento.getId()))
                 .andExpect(jsonPath("$.emissorId").value("EMISSOR"))
-                .andExpect(jsonPath("$.linhas[0].dataDocumento").value("2026-06-06"))
-                .andExpect(jsonPath("$.linhas[0].dataVencimento").value("2026-07-06"))
+                .andExpect(jsonPath("$.linhas[0].dataDocumento").value(dataEmissao.toString()))
+                .andExpect(jsonPath("$.linhas[0].dataVencimento").value(dataVencimento.toString()))
                 .andExpect(jsonPath("$.linhas[0].tipoDocumentoId").value("DCT"))
                 .andExpect(jsonPath("$.linhas[0].numeroDocumento").value(1))
                 .andExpect(jsonPath("$.linhas[0].serieDocumento").value("A"))
@@ -1059,8 +1065,8 @@ class DocumentoComercialControllerTests {
                 .getHeader("Location");
 
         com.ar2lda.fac.model.DocumentoFinanceiro documentoFinanceiro = documentoFinanceiroRepository.findAll().get(0);
-        org.assertj.core.api.Assertions.assertThat(documentoFinanceiro.getCodigoValidacaoAt()).isEqualTo("RCB2026");
-        org.assertj.core.api.Assertions.assertThat(documentoFinanceiro.getAtcud()).isEqualTo("RCB2026-1");
+        org.assertj.core.api.Assertions.assertThat(documentoFinanceiro.getCodigoValidacaoAt()).isEqualTo("RCB" + anoDocumentoFinanceiro);
+        org.assertj.core.api.Assertions.assertThat(documentoFinanceiro.getAtcud()).isEqualTo(atcudDocumentoFinanceiro);
 
         mockMvc.perform(get(financeiroLocation))
                 .andExpect(status().isOk())
@@ -1072,7 +1078,7 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.empresa.nif").value("500000000"))
                 .andExpect(jsonPath("$.documento.tipoDocumentoId").value("RCB"))
                 .andExpect(jsonPath("$.documento.numeroDocumento").value(1))
-                .andExpect(jsonPath("$.documento.atcud").value("RCB2026-1"))
+                .andExpect(jsonPath("$.documento.atcud").value(atcudDocumentoFinanceiro))
                 .andExpect(jsonPath("$.documento.valorPagamentoBruto").value(10.000000))
                 .andExpect(jsonPath("$.documento.valorPagamentoLiquido").value(9.000000))
                 .andExpect(jsonPath("$.documento.impresso").value(false))
@@ -1143,7 +1149,7 @@ class DocumentoComercialControllerTests {
         mockMvc.perform(post(financeiroLocation + "/anular"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.anulado").value(true))
-                .andExpect(jsonPath("$.atcud").value("RCB2026-1"));
+                .andExpect(jsonPath("$.atcud").value(atcudDocumentoFinanceiro));
 
         Pendente pendenteReposto = pendenteRepository.findById(pendente.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteReposto.getValorPendente()).isEqualByComparingTo("24.600000");
@@ -1252,7 +1258,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
@@ -1336,7 +1342,7 @@ class DocumentoComercialControllerTests {
                                     "serie": "A",
                                     "dataEmissao": "2026-06-06",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {

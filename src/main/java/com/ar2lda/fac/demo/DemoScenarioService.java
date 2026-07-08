@@ -92,7 +92,7 @@ public class DemoScenarioService {
         return documentoService.emitir(dto.id(), new DocumentoComercialEmitirDto("admin.demo"));
     }
     private DocumentoComercialDto criar(long cliente, String artigo, int quantidade, String obs) {
-        var header = new DocumentoComercialCreateDto("FT","DEMO26",LocalDate.of(2026,6,23),cliente,null,1001L,"EUR","CON",1001,"P30",1001,null,null,null,null,null,null,obs);
+        var header = new DocumentoComercialCreateDto("FT","DEMO26",LocalDate.of(2026,6,23),cliente,null,"001","EUR","CON",1001,"P30",1001,null,null,null,null,null,null,obs);
         return criacaoService.createComPrimeiraLinha(new DocumentoComercialComLinhaCreateDto(header, line(artigo, BigDecimal.valueOf(quantidade))));
     }
     private LinhaDocumentoComercialCreateDto line(String artigo, BigDecimal quantidade) {

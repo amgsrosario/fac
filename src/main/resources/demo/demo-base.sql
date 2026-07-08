@@ -263,7 +263,7 @@ insert into armazem (
     id_freguesia
 )
 values (
-    1001,
+    '001',
     'Sede',
     'Rua da Empresa, 1',
     null,
@@ -354,7 +354,7 @@ on conflict (id) do update set
 
 insert into pais (id, nome) values ('ES', 'Espanha') on conflict (id) do update set nome=excluded.nome;
 insert into codpostal (id, nome) values ('7000-001','Evora Demo'),('28000','Madrid Demo') on conflict (id) do update set nome=excluded.nome;
-update armazem set nome='Armazem Alentejo Sabores', morada='Avenida das Oliveiras, 14', id_codpostal='7000-001', localidade='Evora Demo' where id=1001;
+update armazem set nome='Armazem Alentejo Sabores', morada='Avenida das Oliveiras, 14', id_codpostal='7000-001', localidade='Evora Demo' where id='001';
 
 insert into familia (id, descricao) values (1002,'Azeites'),(1003,'Vinhos'),(1004,'Cabazes e servicos') on conflict (id) do update set descricao=excluded.descricao;
 insert into artigo (codigo,abreviatura,codigo_identificacao,descricao,unidade,id_familia,peso,id_iva_compra,id_iva_venda,pvp,inativo,retencao,observacoes) values
@@ -386,7 +386,7 @@ delete from artigo where codigo = 'SERVHORA';
 -- Utilizador emissor: DEMO
 -- Cliente: 1001
 -- Artigo: SERVHORA
--- Armazem: 1001
+-- Armazem: 001
 -- Tipo documento comercial: FT
 -- Tipo documento financeiro: RC
 -- Serie: 2026

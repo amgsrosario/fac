@@ -105,7 +105,7 @@ class QrFiscalPayloadBuilderTests {
                 LocalDate.of(2026, 7, 15),
                 1001L,
                 null,
-                1L,
+                "001",
                 "EUR",
                 "NOR",
                 1,

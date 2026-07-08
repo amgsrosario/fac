@@ -4,6 +4,6 @@ public record ParametrosDocumentoComercialDto(
         Long id,
         String tipoDocumentoId,
         String serie,
-        Long armazemCargaId
+        String armazemCargaId
 ) {
 }

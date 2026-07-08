@@ -14,7 +14,7 @@ class FlywaySchemaIntegrationTests {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void esquemaEstaNaVersaoSeteEContemSnapshotFiscalBlocoTresMD28EMD29() {
+    void esquemaEstaNaVersaoOitoEContemSnapshotFiscalBlocoTresMD28EMD29EArmazemNatural() {
         Integer versao = jdbcTemplate.queryForObject(
                 "select max(version::integer) from flyway_schema_history where success",
                 Integer.class
@@ -50,10 +50,19 @@ class FlywaySchemaIntegrationTests {
                   and column_name in ('id', 'tipo', 'estado', 'payload_json', 'expira_em', 'confirmado_em', 'versao')
                 """, Integer.class);
 
-        assertThat(versao).isEqualTo(7);
+        Integer armazemNatural = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.columns
+                where table_schema = 'public'
+                  and ((table_name = 'armazem' and column_name = 'id' and data_type = 'character varying' and character_maximum_length = 3)
+                    or (table_name = 'documento_comercial' and column_name = 'id_armazem_carga' and data_type = 'character varying' and character_maximum_length = 3)
+                    or (table_name = 'parametros_documento_comercial' and column_name = 'id_armazem_carga' and data_type = 'character varying' and character_maximum_length = 3))
+                """, Integer.class);
+
+        assertThat(versao).isEqualTo(8);
         assertThat(colunasSnapshot).isEqualTo(2);
         assertThat(estruturasBlocoTres).isEqualTo(3);
         assertThat(estruturasMd28).isEqualTo(10);
         assertThat(estruturasMd29).isEqualTo(7);
+        assertThat(armazemNatural).isEqualTo(3);
     }
 }

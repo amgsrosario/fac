@@ -161,7 +161,7 @@ type CatalogoNumero = {
 };
 
 type Armazem = {
-  id: number;
+  id: string;
   nome: string;
 };
 
@@ -386,7 +386,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
           serie: form.serie,
           dataEmissao: form.dataEmissao,
           clienteId: Number(form.clienteId),
-          armazemCargaId: Number(form.armazemCargaId),
+          armazemCargaId: form.armazemCargaId,
           moedaId: nullable(form.moedaId),
           rivaId: nullable(form.rivaId),
           mPagamentoId: nullableNumber(form.mPagamentoId),
@@ -799,7 +799,7 @@ function DocumentFormFields({ catalogos, editorMessage, form, inlineFooter = fal
           <FacSelect label="Serie" onChange={(value) => onChangeForm({ ...form, serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={form.serie} />
           <FacInputText label="Data" onChange={(event) => onChangeForm({ ...form, dataEmissao: event.target.value })} required type="date" value={form.dataEmissao} />
           <FacSelect label="Cliente" onChange={(value) => onChangeForm(applyClientDefaults({ ...form, clienteId: value ?? "" }, catalogos))} options={catalogos.clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({ label: `${cliente.nome} - ${cliente.nif}`, value: String(cliente.id) }))} value={form.clienteId} />
-          <FacSelect label="Armazem carga" onChange={(value) => onChangeForm({ ...form, armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: armazem.nome, value: String(armazem.id) }))} value={form.armazemCargaId} />
+          <FacSelect label="Armazem carga" onChange={(value) => onChangeForm({ ...form, armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={form.armazemCargaId} />
           <FacSelect label="Moeda" onChange={(value) => onChangeForm({ ...form, moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={form.moedaId} />
         </div>
       </section>

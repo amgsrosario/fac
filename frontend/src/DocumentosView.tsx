@@ -85,7 +85,7 @@ type Serie = {
 };
 
 type Armazem = {
-  id: number;
+  id: string;
   nome: string;
 };
 
@@ -126,7 +126,7 @@ type DraftForm = {
 type ParametrosDocumento = {
   tipoDocumentoId?: string;
   serie?: string;
-  armazemCargaId?: number;
+  armazemCargaId?: string;
 };
 
 type LineForm = {
@@ -397,7 +397,7 @@ export default function DocumentosView() {
           dataEmissao: draftForm.dataEmissao,
           clienteId: Number(draftForm.clienteId),
           moradaEnvioId: null,
-          armazemCargaId: Number(draftForm.armazemCargaId),
+          armazemCargaId: draftForm.armazemCargaId,
           moedaId: null,
           rivaId: null,
           mPagamentoId: null,
@@ -494,7 +494,7 @@ export default function DocumentosView() {
           <Field label="Armazem de carga">
             <select onChange={(event) => changeDraft("armazemCargaId", event.target.value)} value={draftForm.armazemCargaId}>
               <option value="">Selecionar</option>
-              {armazens.map((armazem) => <option key={armazem.id} value={armazem.id}>{armazem.nome}</option>)}
+              {armazens.map((armazem) => <option key={armazem.id} value={armazem.id}>{armazem.id} - {armazem.nome}</option>)}
             </select>
           </Field>
           <Field label="Observacoes"><textarea maxLength={250} onChange={(event) => changeDraft("observacoes", event.target.value)} value={draftForm.observacoes} /></Field>

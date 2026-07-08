@@ -31,7 +31,7 @@ class ParametrosDocumentoComercialControllerTests {
     @Autowired
     private EntityManager entityManager;
 
-    private Long armazemId;
+    private String armazemId;
 
     @BeforeEach
     void setup() throws Exception {
@@ -50,6 +50,7 @@ class ParametrosDocumentoComercialControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "id": "P01",
                                   "nome": "Armazém parâmetros documento",
                                   "morada": "Rua de teste",
                                   "codPostalId": "3750-995",
@@ -59,7 +60,7 @@ class ParametrosDocumentoComercialControllerTests {
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        armazemId = Long.valueOf(response.replaceAll(".*\\\"id\\\":(\\d+).*", "$1"));
+        armazemId = response.replaceAll(".*\\\"id\\\":\\\"([^\\\"]+)\\\".*", "$1");
     }
 
     @Test
@@ -146,12 +147,12 @@ class ParametrosDocumentoComercialControllerTests {
                 .andExpect(status().isCreated());
     }
 
-    private String json(String tipoDocumentoId, String serie, Long armazemId) {
+    private String json(String tipoDocumentoId, String serie, String armazemId) {
         return """
                 {
                   "tipoDocumentoId": "%s",
                   "serie": "%s",
-                  "armazemCargaId": %d
+                  "armazemCargaId": "%s"
                 }
                 """.formatted(tipoDocumentoId, serie, armazemId);
     }

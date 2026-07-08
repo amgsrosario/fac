@@ -18,7 +18,7 @@ type DocumentoComercial = {
   estado: EstadoDocumento;
   dataEmissao: string;
   clienteId: number;
-  armazemCargaId?: number | null;
+  armazemCargaId?: string | null;
   moedaId?: string | null;
   rivaId?: string | null;
   mPagamentoId?: number | null;
@@ -72,7 +72,7 @@ type Artigo = { codigo: string; descricao: string; unidade: string; pvp: number;
 type CatalogoString = { id: string; nome: string };
 type CatalogoNumero = { id: number; nome: string };
 type TipoTaxaIva = { id: string; descricao: string; inativo: boolean };
-type Armazem = { id: number; nome: string };
+type Armazem = { id: string; nome: string };
 
 type Catalogos = {
   artigos: Artigo[];
@@ -689,7 +689,7 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
         <FacSelect disabled={readOnly} label="Serie" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
         <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
         <FacSelect disabled={readOnly} label="Cliente" onChange={onChooseClient} options={catalogos.clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({ label: `${cliente.nome} - ${cliente.nif}`, value: String(cliente.id) }))} value={header.clienteId} />
-        <FacSelect disabled={readOnly} label="Armazem de carga" onChange={(value) => onUpdate({ armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: armazem.nome, value: String(armazem.id) }))} value={header.armazemCargaId} />
+        <FacSelect disabled={readOnly} label="Armazem de carga" onChange={(value) => onUpdate({ armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={header.armazemCargaId} />
         <FacSelect disabled={readOnly} label="Moeda" onChange={(value) => onUpdate({ moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={header.moedaId} />
         <FacSelect disabled={readOnly} label="Regime IVA" onChange={(value) => onUpdate({ rivaId: value ?? "" })} options={catalogos.regimesIva.map((regime) => ({ label: regime.nome, value: regime.id }))} value={header.rivaId} />
         <FacSelect disabled={readOnly} label="Modo de pagamento" onChange={(value) => onUpdate({ mPagamentoId: value ?? "" })} options={catalogos.modosPagamento.map((modo) => ({ label: modo.nome, value: String(modo.id) }))} value={header.mPagamentoId} />
@@ -905,7 +905,7 @@ function lineFromDto(line: LinhaDocumento): EditorLine {
 function headerPayload(header: HeaderState) {
   return {
     dataEmissao: header.dataEmissao,
-    armazemCargaId: Number(header.armazemCargaId),
+    armazemCargaId: header.armazemCargaId,
     moedaId: nullable(header.moedaId),
     rivaId: nullable(header.rivaId),
     mPagamentoId: nullableNumber(header.mPagamentoId),

@@ -23,7 +23,7 @@ public record DocumentoComercialDto(
         LocalDate dataVencimento,
         Long clienteId,
         Long moradaEnvioId,
-        Long armazemCargaId,
+        String armazemCargaId,
         String moedaId,
         String rivaId,
         Integer mPagamentoId,

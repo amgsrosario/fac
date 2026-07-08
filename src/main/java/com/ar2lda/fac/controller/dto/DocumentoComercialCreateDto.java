@@ -21,7 +21,7 @@ public record DocumentoComercialCreateDto(
         Long clienteId,
         Long moradaEnvioId,
         @NotNull(message = "Armazém de carga é obrigatório")
-        Long armazemCargaId,
+        String armazemCargaId,
         String moedaId,
         String rivaId,
         Integer mPagamentoId,

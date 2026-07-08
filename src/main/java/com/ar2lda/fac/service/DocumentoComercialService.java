@@ -407,7 +407,7 @@ public class DocumentoComercialService {
         return mapper.toDTO(saved);
     }
 
-    private void applyEditableFields(DocumentoComercial documento, Cliente cliente, Long moradaEnvioId, Long armazemCargaId,
+    private void applyEditableFields(DocumentoComercial documento, Cliente cliente, Long moradaEnvioId, String armazemCargaId,
                                      String moedaId, String rivaId, Integer mPagamentoId, String pPagamentoId,
                                      Integer transporteId, java.time.LocalDate dataCarga, java.time.LocalTime horaCarga,
                                      String matricula, java.time.LocalDate dataDescarga, java.time.LocalTime horaDescarga,
@@ -521,7 +521,7 @@ public class DocumentoComercialService {
         return morada;
     }
 
-    private Armazem findArmazem(Long id) {
+    private Armazem findArmazem(String id) {
         return armazemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Armazém de carga não encontrado: " + id));
     }

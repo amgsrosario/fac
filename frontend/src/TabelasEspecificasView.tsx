@@ -62,8 +62,8 @@ const configs: Record<TableKey, Config> = {
   },
   armazens: {
     key: "armazens", label: "Armazens", endpoint: "/api/armazens",
-    fields: [field("nome", "Nome", { required: true, maxLength: 100 }), field("morada", "Morada", { required: true, maxLength: 60 }), field("morada1", "Morada complementar", { maxLength: 60 }), field("codPostalId", "Codigo postal", { type: "select", required: true, options: "codigosPostais" }), field("localidade", "Localidade", { required: true, maxLength: 50 }), field("paisId", "Pais", { type: "select", required: true, options: "paises" }), field("freguesiaId", "Freguesia", { type: "select", options: "freguesias" })],
-    columns: [{ key: "id", label: "ID" }, { key: "nome", label: "Nome" }, { key: "localidade", label: "Localidade" }, { key: "paisId", label: "Pais" }],
+    fields: [field("id", "Codigo", { required: true, maxLength: 3, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 100 }), field("morada", "Morada", { required: true, maxLength: 60 }), field("morada1", "Morada complementar", { maxLength: 60 }), field("codPostalId", "Codigo postal", { type: "select", required: true, options: "codigosPostais" }), field("localidade", "Localidade", { required: true, maxLength: 50 }), field("paisId", "Pais", { type: "select", required: true, options: "paises" }), field("freguesiaId", "Freguesia", { type: "select", options: "freguesias" })],
+    columns: [{ key: "id", label: "Codigo" }, { key: "nome", label: "Nome" }, { key: "localidade", label: "Localidade" }, { key: "paisId", label: "Pais" }],
     rowId: (row) => String(row.id), itemUrl: (row) => `/api/armazens/${encodeURIComponent(String(row.id))}`
   }
 };

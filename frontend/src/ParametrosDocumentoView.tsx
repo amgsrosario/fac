@@ -4,8 +4,8 @@ import { apiFetch } from "./api";
 type Page<T> = { content: T[] };
 type TipoDocumento = { id: string; descricao: string; areaGestao: number };
 type Serie = { serie: string; tipoDocumentoId: string; nome: string };
-type Armazem = { id: number; nome: string };
-type Parametros = { tipoDocumentoId?: string; serie?: string; armazemCargaId?: number };
+type Armazem = { id: string; nome: string };
+type Parametros = { tipoDocumentoId?: string; serie?: string; armazemCargaId?: string };
 
 type Form = {
   tipoDocumentoId: string;
@@ -69,7 +69,7 @@ export default function ParametrosDocumentoView() {
         body: JSON.stringify({
           tipoDocumentoId: blankToNull(form.tipoDocumentoId),
           serie: blankToNull(form.serie),
-          armazemCargaId: form.armazemCargaId ? Number(form.armazemCargaId) : null
+          armazemCargaId: blankToNull(form.armazemCargaId)
         })
       });
       if (!response.ok) throw new Error(await responseError(response));
@@ -109,7 +109,7 @@ export default function ParametrosDocumentoView() {
         <Field label="Armazem de carga">
           <select onChange={(event) => setForm((current) => ({ ...current, armazemCargaId: event.target.value }))} value={form.armazemCargaId}>
             <option value="">Nao sugerir</option>
-            {armazens.map((armazem) => <option key={armazem.id} value={armazem.id}>{armazem.nome}</option>)}
+            {armazens.map((armazem) => <option key={armazem.id} value={armazem.id}>{armazem.id} - {armazem.nome}</option>)}
           </select>
         </Field>
       </div>

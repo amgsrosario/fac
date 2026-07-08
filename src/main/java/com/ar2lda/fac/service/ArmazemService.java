@@ -38,23 +38,23 @@ public class ArmazemService {
         return armazemRepository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public ArmazemDto getById(Long id) {
+    public ArmazemDto getById(String id) {
         return mapper.toDTO(findEntityById(id));
     }
 
-    public void update(Long id, ArmazemUpdateDto dto) {
+    public void update(String id, ArmazemUpdateDto dto) {
         Armazem existing = findEntityById(id);
         mapper.applyUpdate(dto, existing);
         applyRelations(dto.codPostalId(), dto.paisId(), dto.freguesiaId(), existing);
         armazemRepository.save(existing);
     }
 
-    public void delete(Long id) {
+    public void delete(String id) {
         armazemRepository.delete(findEntityById(id));
         armazemRepository.flush();
     }
 
-    private Armazem findEntityById(Long id) {
+    private Armazem findEntityById(String id) {
         return armazemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Armazém não encontrado: " + id));
     }

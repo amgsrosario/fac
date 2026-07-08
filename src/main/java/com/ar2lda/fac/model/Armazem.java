@@ -3,8 +3,6 @@ package com.ar2lda.fac.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -20,9 +18,10 @@ import lombok.ToString;
 public class Armazem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(length = 3, nullable = false)
+    @Setter
     @ToString.Include
-    private Long id;
+    private String id;
 
     @Column(length = 100, nullable = false)
     @Setter
@@ -62,7 +61,8 @@ public class Armazem {
     public Armazem() {
     }
 
-    public Armazem(String nome, String morada, String morada1, String localidade) {
+    public Armazem(String id, String nome, String morada, String morada1, String localidade) {
+        this.id = id;
         this.nome = nome;
         this.morada = morada;
         this.morada1 = morada1;

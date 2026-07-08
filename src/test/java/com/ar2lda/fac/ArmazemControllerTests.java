@@ -43,6 +43,7 @@ class ArmazemControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "id": "001",
                                   "nome": "Armazém Principal",
                                   "morada": "Rua Principal",
                                   "morada1": "Zona Industrial",
@@ -53,7 +54,7 @@ class ArmazemControllerTests {
                                 }
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.id").value("001"))
                 .andExpect(jsonPath("$.nome").value("Armazém Principal"))
                 .andExpect(jsonPath("$.codPostalId").value("3750-991"))
                 .andExpect(jsonPath("$.paisId").value("PT"))
@@ -93,6 +94,7 @@ class ArmazemControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "id": "002",
                                   "nome": "Armazém Teste",
                                   "morada": "Rua Principal",
                                   "codPostalId": "3750-991",

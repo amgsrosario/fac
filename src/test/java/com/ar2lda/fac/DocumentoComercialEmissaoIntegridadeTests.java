@@ -110,7 +110,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         cliente.setTransporte(transporte);
         cliente = clienteRepository.save(cliente);
 
-        armazem = new Armazem("Armazém Integridade", "Rua Armazém", null, "Águeda");
+        armazem = new Armazem("T02", "Armazém Integridade", "Rua Armazém", null, "Águeda");
         armazem.setCodPostal(codPostal);
         armazem.setPais(pais);
         armazem = armazemRepository.save(armazem);
@@ -411,7 +411,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
                                     "serie": "%s",
                                     "dataEmissao": "2026-06-22",
                                     "clienteId": %d,
-                                    "armazemCargaId": %d,
+                                    "armazemCargaId": "%s",
                                     "pPagamentoId": "P30"
                                   },
                                   "linha": {
