@@ -13,6 +13,34 @@ Este documento serve como mapa rápido dos ambientes FAC usados em desenvolvimen
 | `5050` | pgAdmin local |
 | `admin.demo` | Utilizador da demo; não pertence necessariamente ao ambiente local ligado à base `fac` |
 
+## Ambiente Oficial De Desenvolvimento
+
+O ambiente oficial actual para testar o código local mais recente é:
+
+| Serviço | URL / acesso | Nota |
+| --- | --- | --- |
+| Frontend local | `http://localhost:5173` | Vite em desenvolvimento |
+| Backend local | `http://localhost:8080` | Spring Boot local |
+| Base de dados | `localhost:25432`, base `fac` | PostgreSQL Docker no container `facdb` |
+| pgAdmin | `http://localhost:5050` | Container `fac-pgadmin` |
+| Demo Docker antiga | `http://localhost:8088` | Deve permanecer parada nesta fase |
+
+Nesta fase, usar `5173` + `8080` + base `fac` como caminho normal de desenvolvimento. A demo Docker antiga em `8088` não deve ser usada para validar o código local mais recente, para evitar confusão entre ambientes.
+
+### Verificação Rápida
+
+```powershell
+Invoke-WebRequest http://localhost:8080/actuator/health -UseBasicParsing -TimeoutSec 10
+Invoke-WebRequest http://localhost:5173/api/actuator/health -UseBasicParsing -TimeoutSec 10
+netstat -ano | findstr ":8088"
+```
+
+Interpretação:
+
+- `8080/actuator/health` valida o backend local.
+- `5173/api/actuator/health` valida o proxy Vite para o backend local.
+- `netstat -ano | findstr ":8088"` não deve listar um processo se a demo Docker antiga estiver parada.
+
 ## Ambiente Local De Desenvolvimento
 
 ### Frontend
@@ -62,6 +90,8 @@ Nota: `admin.demo` não existe na base `fac`, salvo se for criado manualmente ou
 | Container | `fac-pgadmin` |
 
 ## Demo Docker Completa
+
+A demo Docker completa é o ambiente antigo em `http://localhost:8088`. Deve permanecer parada nesta fase, salvo quando houver uma tarefa explícita de validação ou reposição da demo.
 
 ### Frontend Demo
 
