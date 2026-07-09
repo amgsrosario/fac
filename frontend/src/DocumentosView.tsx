@@ -183,6 +183,7 @@ export default function DocumentosView() {
   const documentoColumns = useConfiguredColumns("fac.documentos.colunas", DOCUMENTO_COLUMNS);
   const newDocumentClientRef = useRef<HTMLSelectElement>(null);
   const lineArticleRef = useRef<HTMLSelectElement>(null);
+  const emissionPanelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     loadDocumentos();
@@ -200,6 +201,12 @@ export default function DocumentosView() {
     if (editorOpen) window.setTimeout(() => newDocumentClientRef.current?.focus(), 0);
     else if (lineEditorOpen) window.setTimeout(() => lineArticleRef.current?.focus(), 0);
   }, [editorOpen, lineEditorOpen]);
+
+  useEffect(() => {
+    if (emissionOpen) {
+      window.setTimeout(() => emissionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    }
+  }, [emissionOpen]);
 
   async function loadDocumentos() {
     setLoading(true);
@@ -603,7 +610,7 @@ export default function DocumentosView() {
       {annulOpen && selected && <div className="fac-dialog-backdrop" role="presentation"><div aria-labelledby="annul-title" aria-modal="true" className="fac-dialog" role="dialog"><h2 id="annul-title">Anular {reference(selected)}</h2><p>O documento e os dados fiscais originais serao preservados. Esta operacao e definitiva.</p><label className="fac-field"><span>Motivo da anulacao</span><textarea autoFocus maxLength={500} onChange={(event) => setAnnulReason(event.target.value)} value={annulReason} /></label><small>{annulReason.trim().length}/500 (minimo 5)</small><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => setAnnulOpen(false)} type="button">Cancelar</button><button className="fac-link-danger" disabled={loading || annulReason.trim().length < 5} onClick={annulDocument} type="button">{loading ? "A anular..." : "Confirmar anulacao"}</button></div></div></div>}
 
       {emissionOpen && selectedIsDraft && diagnostico && (
-        <section className="fac-panel fac-section-panel fac-emission-panel">
+        <section className="fac-panel fac-section-panel fac-emission-panel" ref={emissionPanelRef}>
           <div className="fac-panel-header">
             <div><p className="fac-eyebrow">Emissao definitiva</p><h2>{diagnostico.referencia}</h2></div>
             <button className="fac-ghost-button" onClick={() => setEmissionOpen(false)} type="button">Fechar conferencia</button>
