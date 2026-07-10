@@ -179,6 +179,7 @@ export default function DocumentosView() {
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
   const [annulOpen, setAnnulOpen] = useState(false);
   const [annulReason, setAnnulReason] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [columnEditorOpen, setColumnEditorOpen] = useState(false);
   const documentoColumns = useConfiguredColumns("fac.documentos.colunas", DOCUMENTO_COLUMNS);
   const newDocumentClientRef = useRef<HTMLSelectElement>(null);
@@ -190,11 +191,8 @@ export default function DocumentosView() {
   }, []);
 
   useEffect(() => {
-    if (selectedId == null) {
-      setLinhas([]);
-      return;
-    }
-    loadLinhas(selectedId);
+    setLinhas([]);
+    setLineEditorOpen(false);
   }, [selectedId]);
 
   useEffect(() => {
@@ -384,6 +382,26 @@ export default function DocumentosView() {
     }
   }
 
+  async function deleteDraft() {
+    if (!selected || selected.estado !== "RASCUNHO") return;
+    setLoading(true);
+    setMessage(null);
+    setNotice(null);
+    try {
+      const response = await apiFetch(`/api/documentos-comerciais/${selected.id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error(await responseError(response));
+      const page = await fetchJson<Page<DocumentoComercial>>("/api/documentos-comerciais?size=200&sort=id,desc");
+      setDocumentos(page.content);
+      setSelectedId(page.content[0]?.id ?? null);
+      setDeleteOpen(false);
+      setNotice("Rascunho eliminado com sucesso.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel eliminar o rascunho.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function openDraftEditor() {
     navigate("/documentos/novo");
   }
@@ -460,6 +478,7 @@ export default function DocumentosView() {
   const selectedIsDraft = selected?.estado === "RASCUNHO";
   const canCreate = hasPermission("DOCUMENTO_CRIAR");
   const canEdit = hasPermission("DOCUMENTO_EDITAR_RASCUNHO");
+  const canDeleteDraft = hasPermission("DOCUMENTO_ELIMINAR_RASCUNHO");
   const canEmit = hasPermission("DOCUMENTO_EMITIR");
   const canAnnul = hasPermission("DOCUMENTO_ANULAR");
   const canPdf = hasPermission("DOCUMENTO_OBTER_PDF");
@@ -545,8 +564,8 @@ export default function DocumentosView() {
       <section className="fac-hero">
         <div>
           <p className="fac-eyebrow">Documentos comerciais</p>
-          <h2>Consulta operacional e conferencia por documento</h2>
-          <p>Abre o documento, confere as linhas e acede aos diagnosticos sem executar ainda acoes fiscais.</p>
+          <h2>Consulta operacional por documento</h2>
+          <p>Pesquisa, seleciona e abre documentos comerciais para consulta ou edicao de rascunhos.</p>
         </div>
         <div className="fac-hero-card">
           <span>Documentos carregados</span>
@@ -599,15 +618,18 @@ export default function DocumentosView() {
             <div><dt>Liquidado</dt><dd>{selected?.liquidado ? "Sim" : "Nao"}</dd></div>
             {selected?.estado === "ANULADO" && <><div><dt>Motivo da anulacao</dt><dd>{selected.motivoAnulacao ?? "-"}</dd></div><div><dt>Anulado em</dt><dd>{selected.dataHoraAnulacao ? new Date(selected.dataHoraAnulacao).toLocaleString("pt-PT") : "-"}</dd></div><div><dt>Anulado por</dt><dd>{selected.anuladoPorNome ?? selected.anuladoPorUtilizadorId ?? "-"}</dd></div></>}
           </dl>
-          <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openHtml(selected.id)} type="button">Diagnostico HTML</button>
-          <button className="fac-ghost-button" disabled={!selected} onClick={() => selected && openJson(selected.id)} type="button">Diagnostico JSON</button>
-          {(selected?.estado === "EMITIDO" || selected?.estado === "ANULADO") && canPdf && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
-          {selected?.estado === "EMITIDO" && canAnnul && <button className="fac-link-danger" disabled={loading} onClick={() => { setAnnulReason(""); setAnnulOpen(true); }} type="button">Anular fatura</button>}
+          {selected && !selectedIsDraft && <button className="fac-primary-button" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Consultar documento</button>}
+          {selectedIsDraft && canEdit && <button className="fac-primary-button" disabled={loading} onClick={() => selected && navigate(`/documentos/${selected.id}`)} type="button">Editar rascunho</button>}
           {selectedIsDraft && canEmit && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
+          {selectedIsDraft && canDeleteDraft && <button className="fac-link-danger" disabled={loading} onClick={() => setDeleteOpen(true)} type="button">Eliminar rascunho</button>}
+          {(selected?.estado === "EMITIDO" || selected?.estado === "ANULADO") && canPdf && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
+          {selected?.estado === "EMITIDO" && canAnnul && <button className="fac-link-danger" disabled={loading} onClick={() => { setAnnulReason(""); setAnnulOpen(true); }} type="button">Anular documento</button>}
         </aside>
       </section>
 
       {annulOpen && selected && <div className="fac-dialog-backdrop" role="presentation"><div aria-labelledby="annul-title" aria-modal="true" className="fac-dialog" role="dialog"><h2 id="annul-title">Anular {reference(selected)}</h2><p>O documento e os dados fiscais originais serao preservados. Esta operacao e definitiva.</p><label className="fac-field"><span>Motivo da anulacao</span><textarea autoFocus maxLength={500} onChange={(event) => setAnnulReason(event.target.value)} value={annulReason} /></label><small>{annulReason.trim().length}/500 (minimo 5)</small><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => setAnnulOpen(false)} type="button">Cancelar</button><button className="fac-link-danger" disabled={loading || annulReason.trim().length < 5} onClick={annulDocument} type="button">{loading ? "A anular..." : "Confirmar anulacao"}</button></div></div></div>}
+
+      {deleteOpen && selectedIsDraft && selected && <div className="fac-dialog-backdrop" role="presentation"><div aria-labelledby="delete-title" aria-modal="true" className="fac-dialog" role="dialog"><h2 id="delete-title">Eliminar {reference(selected)}?</h2><p>O rascunho e todas as respetivas linhas serao eliminados. Esta acao nao pode ser revertida.</p><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => setDeleteOpen(false)} type="button">Cancelar</button><button className="fac-link-danger" disabled={loading} onClick={deleteDraft} type="button">{loading ? "A eliminar..." : "Eliminar rascunho"}</button></div></div></div>}
 
       {emissionOpen && selectedIsDraft && diagnostico && (
         <section className="fac-panel fac-section-panel fac-emission-panel" ref={emissionPanelRef}>
@@ -634,56 +656,6 @@ export default function DocumentosView() {
         </section>
       )}
 
-      <section className="fac-panel fac-section-panel">
-        <div className="fac-panel-header">
-          <div><p className="fac-eyebrow">Linhas</p><h2>{selected ? reference(selected) : "Sem documento"}</h2></div>
-          <div className="fac-inline-actions">
-            <span className="fac-muted">{linesLoading ? "A carregar..." : `${linhas.length} linhas`}</span>
-            {selectedIsDraft && canEdit && <button className="fac-primary-button" disabled={linesLoading} onClick={openLineEditor} type="button">Adicionar linha</button>}
-          </div>
-        </div>
-
-        {lineEditorOpen && selectedIsDraft && canEdit && (
-          <div className="fac-line-editor">
-            <div className="fac-form-grid">
-              <Field label="Artigo">
-                <select ref={lineArticleRef} onChange={(event) => selectArticle(event.target.value, artigos, setLineForm)} value={lineForm.artigoId}>
-                  <option value="">Selecionar</option>
-                  {artigos.map((artigo) => <option key={artigo.codigo} value={artigo.codigo}>{artigo.codigo} - {artigo.descricao}</option>)}
-                </select>
-              </Field>
-              <Field label="Descricao"><input maxLength={80} onChange={(event) => setLineForm((current) => ({ ...current, descricao: event.target.value }))} placeholder="Usa a descricao do artigo" value={lineForm.descricao} /></Field>
-              <Field label="Quantidade"><input min="0.000001" onChange={(event) => setLineForm((current) => ({ ...current, quantidade: event.target.value }))} step="0.000001" type="number" value={lineForm.quantidade} /></Field>
-              <Field label="Preco unitario"><input min="0" onChange={(event) => setLineForm((current) => ({ ...current, precoUnitario: event.target.value }))} step="0.000001" type="number" value={lineForm.precoUnitario} /></Field>
-              <Field label="Tipo de desconto">
-                <select onChange={(event) => setLineForm((current) => ({ ...current, tipoDesconto: event.target.value as LineForm["tipoDesconto"] }))} value={lineForm.tipoDesconto}>
-                  <option value="PERCENTAGEM">Percentagem</option><option value="VALOR">Valor</option>
-                </select>
-              </Field>
-              <Field label={lineForm.tipoDesconto === "PERCENTAGEM" ? "Desconto (%)" : "Desconto (valor)"}><input min="0" onChange={(event) => setLineForm((current) => ({ ...current, desconto: event.target.value }))} step="0.000001" type="number" value={lineForm.desconto} /></Field>
-            </div>
-            <div className="fac-form-footer">
-              <span className="fac-muted">IVA, peso e totais sao calculados pelo backend a partir do artigo e do regime do documento.</span>
-              <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setLineEditorOpen(false)} type="button">Cancelar</button><button className="fac-primary-button" disabled={linesLoading} onClick={createLine} type="button">Guardar linha</button></div>
-            </div>
-          </div>
-        )}
-
-        <table className="fac-table">
-          <thead><tr><th>Linha</th><th>Artigo</th><th>Descricao</th><th>Quantidade</th><th>Preco</th><th>IVA</th><th>Valor</th>{selectedIsDraft && <th>Acoes</th>}</tr></thead>
-          <tbody>
-            {linhas.map((linha) => (
-              <tr key={linha.id}>
-                <td>{linha.numeroLinha}</td><td>{linha.artigoId}</td><td>{linha.descricao}</td>
-                <td>{decimal(linha.quantidade)}</td><td>{money(linha.precoUnitario)}</td>
-                <td>{decimal(linha.percentagemIva)}%</td><td>{money(linha.valorLinha)}</td>
-                {selectedIsDraft && <td><button className="fac-link-danger" disabled={linesLoading} onClick={() => deleteLine(linha.id)} type="button">Remover</button></td>}
-              </tr>
-            ))}
-            {!linesLoading && linhas.length === 0 && <tr><td colSpan={selectedIsDraft ? 8 : 7}>Documento sem linhas.</td></tr>}
-          </tbody>
-        </table>
-      </section>
     </>
   );
 }

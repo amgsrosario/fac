@@ -318,6 +318,7 @@ public class DocumentoComercialService {
     public void delete(Long id) {
         DocumentoComercial documento = findDocumentoForUpdate(id);
         validateRascunho(documento);
+        linhaRepository.deleteByDocumentoComercialId(id);
         documentoRepository.delete(documento);
         auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_ELIMINADO_RASCUNHO, "DOCUMENTO_COMERCIAL", id,
                 "Rascunho eliminado", "{\"versao\":1}");

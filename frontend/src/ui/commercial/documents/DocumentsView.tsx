@@ -4,6 +4,7 @@ import { FilterMatchMode } from "primereact/api";
 import { apiFetch, AuthSession } from "../../../api";
 import {
   DesktopShell,
+  EntitySearchSelect,
   FacButton,
   FacDataTable,
   FacDataTableColumn,
@@ -258,11 +259,13 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   const [form, setForm] = useState<DocumentForm>(emptyForm);
   const [editorMessage, setEditorMessage] = useState<string | null>(null);
   const [anularOpen, setAnularOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [motivoAnulacao, setMotivoAnulacao] = useState("");
   const [mobileScreen, setMobileScreen] = useState<MobileScreen>("list");
 
   const canCreate = currentUser.permissoes.includes("DOCUMENTO_CRIAR");
   const canEditDraft = currentUser.permissoes.includes("DOCUMENTO_EDITAR_RASCUNHO");
+  const canDeleteDraft = currentUser.permissoes.includes("DOCUMENTO_ELIMINAR_RASCUNHO");
   const canEmit = currentUser.permissoes.includes("DOCUMENTO_EMITIR");
   const canVoid = currentUser.permissoes.includes("DOCUMENTO_ANULAR");
   const canPdf = currentUser.permissoes.includes("DOCUMENTO_OBTER_PDF");
@@ -319,11 +322,8 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   async function loadDetail(id: number) {
     setDetailLoading(true);
     try {
-      const [impressao, diag] = await Promise.all([
-        requestJson<DocumentoImpressao>(`/api/documentos-comerciais/${id}/impressao`),
-        requestJson<Diagnostico>(`/api/documentos-comerciais/${id}/diagnostico`)
-      ]);
-      setLinhas(impressao.linhas);
+      const diag = await requestJson<Diagnostico>(`/api/documentos-comerciais/${id}/diagnostico`);
+      setLinhas([]);
       setDiagnostico(diag);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nao foi possivel carregar detalhe do documento.");
@@ -449,6 +449,28 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
     }
   }
 
+  async function deleteDraft() {
+    if (!selected || selected.estado !== "RASCUNHO" || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await requestNoContent(`/api/documentos-comerciais/${selected.id}`, "DELETE");
+      setDeleteOpen(false);
+      const page = await fetchPage<DocumentoComercial>("/api/documentos-comerciais?size=300&sort=dataEmissao,desc&sort=id,desc");
+      setDocumentos(page.content);
+      setSelectedId(page.content[0]?.id ?? null);
+      setLinhas([]);
+      setDiagnostico(null);
+      setNotice("Rascunho eliminado com sucesso.");
+      showToast({ detail: "Rascunho eliminado com sucesso.", severity: "success", summary: "Documentos" });
+      if (isMobile) setMobileScreen("list");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nao foi possivel eliminar o rascunho.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function openPdf() {
     if (!selected) return;
     try {
@@ -479,6 +501,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
     <DocumentsContent
       activeCount={activeCount}
       canCreate={canCreate}
+      canDeleteDraft={canDeleteDraft}
       canEditDraft={canEditDraft}
       canEmit={canEmit}
       canPdf={canPdf}
@@ -503,11 +526,14 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       onChangeForm={setForm}
       onChangeMotivo={setMotivoAnulacao}
       onCloseAnular={() => setAnularOpen(false)}
+      onCloseDelete={() => setDeleteOpen(false)}
       onCloseEditor={closeEditor}
+      onDeleteDraft={deleteDraft}
       onEmitir={emitir}
       onEditDraft={(id) => navigate(`/documentos/${id}`)}
       onNew={openNew}
       onOpenAnular={() => { setMotivoAnulacao(""); setAnularOpen(true); }}
+      onOpenDelete={() => setDeleteOpen(true)}
       onOpenPdf={openPdf}
       onSave={save}
       onSearch={setSearch}
@@ -518,6 +544,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       selected={selected}
       stateFilter={stateFilter}
       voidOpen={anularOpen}
+      deleteOpen={deleteOpen}
     />
   );
 
@@ -533,6 +560,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
 function DocumentsContent(props: {
   activeCount: number;
   canCreate: boolean;
+  canDeleteDraft: boolean;
   canEditDraft: boolean;
   canEmit: boolean;
   canPdf: boolean;
@@ -557,11 +585,14 @@ function DocumentsContent(props: {
   onChangeForm: (form: DocumentForm) => void;
   onChangeMotivo: (value: string) => void;
   onCloseAnular: () => void;
+  onCloseDelete: () => void;
   onCloseEditor: () => void;
+  onDeleteDraft: () => void;
   onEmitir: () => void;
   onEditDraft: (id: number) => void;
   onNew: () => void;
   onOpenAnular: () => void;
+  onOpenDelete: () => void;
   onOpenPdf: () => void;
   onSave: (event?: FormEvent) => void;
   onSearch: (value: string) => void;
@@ -572,6 +603,7 @@ function DocumentsContent(props: {
   selected: DocumentoComercial | null;
   stateFilter: StateFilter;
   voidOpen: boolean;
+  deleteOpen: boolean;
 }) {
   if (props.deviceClass === "mobile") return <MobileDocumentsContent {...props} />;
 
@@ -591,6 +623,7 @@ function DocumentsContent(props: {
       </section>
       <DocumentEditorDialog {...props} />
       <VoidDialog {...props} />
+      <DeleteDraftDialog {...props} />
     </>
   );
 }
@@ -712,10 +745,11 @@ function DocumentsList({ deviceClass, documentos, filtered, loading, onSelect, s
 }
 
 function DocumentDetail(props: Parameters<typeof DocumentsContent>[0]) {
-  const { canEditDraft, canEmit, canPdf, canVoid, detailLoading, diagnostico, linhas, onEditDraft, onEmitir, onOpenAnular, onOpenPdf, saving, selected } = props;
+  const { canDeleteDraft, canEditDraft, canEmit, canPdf, canVoid, detailLoading, diagnostico, linhas, onEditDraft, onEmitir, onOpenAnular, onOpenDelete, onOpenPdf, saving, selected } = props;
   if (!selected) return <FacEmptyState description="Seleciona um documento para ver o detalhe." />;
   const canEmitNow = canEmit && selected.estado === "RASCUNHO" && (diagnostico?.podeEmitir ?? linhas.length > 0);
   const canVoidNow = canVoid && selected.estado === "EMITIDO" && (diagnostico?.podeAnular ?? !selected.anulado);
+  const openLabel = selected.estado === "RASCUNHO" ? "Editar rascunho" : "Consultar documento";
 
   return (
     <section className="fac-documents-detail">
@@ -737,31 +771,15 @@ function DocumentDetail(props: Parameters<typeof DocumentsContent>[0]) {
         {selected.temQrFiscal && <div><dt>QR fiscal</dt><dd>Disponivel</dd></div>}
         {selected.motivoAnulacao && <div><dt>Motivo anulacao</dt><dd>{selected.motivoAnulacao}</dd></div>}
       </dl>
-      {detailLoading ? <FacLoadingState description="A carregar linhas." /> : <DocumentLines linhas={linhas} documento={selected} />}
       <DocumentTotals documento={selected} />
       {diagnostico?.bloqueios?.length ? <FacMessage title="Bloqueios" tone="warning">{diagnostico.bloqueios.join(" ")}</FacMessage> : null}
       <div className="fac-documents-actions">
-        {canEditDraft && selected.estado === "RASCUNHO" && <FacButton icon="pi pi-pencil" label="Editar rascunho" onClick={() => onEditDraft(selected.id)} variant="primary" />}
+        {(selected.estado !== "RASCUNHO" || canEditDraft) && <FacButton icon={selected.estado === "RASCUNHO" ? "pi pi-pencil" : "pi pi-eye"} label={openLabel} onClick={() => onEditDraft(selected.id)} variant="primary" />}
+        {canEmitNow && <FacButton disabled={saving || detailLoading} icon="pi pi-check" label="Conferir e emitir" onClick={onEmitir} variant="secondary" />}
+        {canDeleteDraft && selected.estado === "RASCUNHO" && <FacButton disabled={saving} icon="pi pi-trash" label="Eliminar rascunho" onClick={onOpenDelete} variant="destructive" />}
         {canPdf && <FacButton icon="pi pi-file-pdf" label="Ver PDF" onClick={onOpenPdf} variant="secondary" />}
-        {canEmitNow && <FacButton disabled={saving} icon="pi pi-check" label="Emitir" onClick={onEmitir} variant="primary" />}
-        {canVoidNow && <FacButton disabled={saving} icon="pi pi-ban" label="Anular" onClick={onOpenAnular} variant="destructive" />}
+        {canVoidNow && <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={onOpenAnular} variant="destructive" />}
       </div>
-    </section>
-  );
-}
-
-function DocumentLines({ documento, linhas }: { documento: DocumentoComercial; linhas: LinhaDocumento[] }) {
-  if (linhas.length === 0) return <FacEmptyState description="Documento sem linhas." />;
-  return (
-    <section className="fac-documents-lines">
-      <h3>Linhas</h3>
-      {linhas.map((linha) => (
-        <article className="fac-document-line" key={linha.id}>
-          <div><strong>{linha.descricao}</strong><span>{linha.artigoId} - {linha.unidade ?? "-"}</span></div>
-          <div><span>Qtd. {formatNumber(linha.quantidade)}</span><span>{money(linha.precoUnitario, documento)}</span></div>
-          <div><span>IVA {linha.tipoTaxaIvaId ?? "-"} {formatNumber(linha.percentagemIva)}%</span><strong>{money(linha.totalLinha, documento)}</strong></div>
-        </article>
-      ))}
     </section>
   );
 }
@@ -798,7 +816,7 @@ function DocumentFormFields({ catalogos, editorMessage, form, inlineFooter = fal
           <FacSelect label="Tipo" onChange={(value) => onChangeForm({ ...form, tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={form.tipoDocumentoId} />
           <FacSelect label="Serie" onChange={(value) => onChangeForm({ ...form, serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={form.serie} />
           <FacInputText label="Data" onChange={(event) => onChangeForm({ ...form, dataEmissao: event.target.value })} required type="date" value={form.dataEmissao} />
-          <FacSelect label="Cliente" onChange={(value) => onChangeForm(applyClientDefaults({ ...form, clienteId: value ?? "" }, catalogos))} options={catalogos.clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({ label: `${cliente.nome} - ${cliente.nif}`, value: String(cliente.id) }))} value={form.clienteId} />
+          <EntitySearchSelect label="Cliente" onChange={(value) => onChangeForm(applyClientDefaults({ ...form, clienteId: value ?? "" }, catalogos))} options={clienteOptions(catalogos.clientes)} value={form.clienteId} />
           <FacSelect label="Armazem carga" onChange={(value) => onChangeForm({ ...form, armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={form.armazemCargaId} />
           <FacSelect label="Moeda" onChange={(value) => onChangeForm({ ...form, moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={form.moedaId} />
         </div>
@@ -806,11 +824,11 @@ function DocumentFormFields({ catalogos, editorMessage, form, inlineFooter = fal
       <section className="fac-documents-form-section">
         <h3>Primeira linha</h3>
         <div className="fac-documents-form-grid">
-          <FacSelect label="Artigo" onChange={(value) => onChangeForm(applyArticleDefaults({ ...form, artigoId: value ?? "" }, catalogos))} options={catalogos.artigos.map((artigo) => ({ label: `${artigo.codigo} - ${artigo.descricao}`, value: artigo.codigo }))} value={form.artigoId} />
+          <EntitySearchSelect label="Artigo" onChange={(value) => onChangeForm(applyArticleDefaults({ ...form, artigoId: value ?? "" }, catalogos))} options={artigoOptions(catalogos.artigos, catalogos.tiposIva)} value={form.artigoId} />
           <FacInputText label="Descricao" maxLength={80} onChange={(event) => onChangeForm({ ...form, descricao: event.target.value })} value={form.descricao || selectedArticle?.descricao || ""} />
           <FacInputText label="Quantidade" min="0.000001" onChange={(event) => onChangeForm({ ...form, quantidade: event.target.value })} required step="0.000001" type="number" value={form.quantidade} />
           <FacInputText label="Preco unitario" min="0" onChange={(event) => onChangeForm({ ...form, precoUnitario: event.target.value })} required step="0.000001" type="number" value={form.precoUnitario} />
-          <FacSelect label="IVA" onChange={(value) => onChangeForm({ ...form, tipoTaxaIvaId: value ?? "" })} options={catalogos.tiposIva.map((iva) => ({ label: iva.descricao, value: iva.id }))} value={form.tipoTaxaIvaId} />
+          <FacSelect label="IVA" onChange={(value) => onChangeForm({ ...form, tipoTaxaIvaId: value ?? "" })} options={catalogos.tiposIva.map((iva) => ({ label: ivaCompactLabel(iva), value: iva.id }))} value={form.tipoTaxaIvaId} />
           <FacInputText label="Desconto" min="0" onChange={(event) => onChangeForm({ ...form, desconto: event.target.value })} step="0.000001" type="number" value={form.desconto} />
         </div>
       </section>
@@ -834,13 +852,27 @@ function VoidDialog(props: Parameters<typeof DocumentsContent>[0]) {
   return (
     <FacDialog
       className="fac-documents-void-dialog"
-      footer={<div className="fac-documents-form-footer"><FacButton label="Cancelar" onClick={props.onCloseAnular} variant="ghost" /><FacButton disabled={props.saving} icon="pi pi-ban" label="Anular" onClick={props.onAnular} variant="destructive" /></div>}
+      footer={<div className="fac-documents-form-footer"><FacButton label="Cancelar" onClick={props.onCloseAnular} variant="ghost" /><FacButton disabled={props.saving} icon="pi pi-ban" label="Anular documento" onClick={props.onAnular} variant="destructive" /></div>}
       header="Anular documento"
       onHide={props.onCloseAnular}
       visible={props.voidOpen}
     >
       <FacMessage tone="warning" title="Anulacao fiscal">A anulacao preserva o documento e a auditoria. Nao elimina fisicamente o registo.</FacMessage>
       <label className="fac-documents-textarea"><span>Motivo</span><textarea maxLength={500} minLength={5} onChange={(event) => props.onChangeMotivo(event.target.value)} value={props.motivoAnulacao} /></label>
+    </FacDialog>
+  );
+}
+
+function DeleteDraftDialog(props: Parameters<typeof DocumentsContent>[0]) {
+  return (
+    <FacDialog
+      className="fac-documents-void-dialog"
+      footer={<div className="fac-documents-form-footer"><FacButton label="Cancelar" onClick={props.onCloseDelete} variant="ghost" /><FacButton disabled={props.saving} icon="pi pi-trash" label="Eliminar rascunho" onClick={props.onDeleteDraft} variant="destructive" /></div>}
+      header="Eliminar rascunho?"
+      onHide={props.onCloseDelete}
+      visible={props.deleteOpen}
+    >
+      <p>O documento e todas as respetivas linhas serao eliminados. Esta acao nao pode ser revertida.</p>
     </FacDialog>
   );
 }
@@ -881,6 +913,11 @@ async function requestJson<T>(url: string, body?: unknown, method: "GET" | "POST
   const response = await apiFetch(url, body === undefined ? undefined : { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();
+}
+
+async function requestNoContent(url: string, method: "DELETE") {
+  const response = await apiFetch(url, { method });
+  if (!response.ok) throw new Error(await responseError(response));
 }
 
 async function responseError(response: Response) {
@@ -937,6 +974,36 @@ function applyArticleDefaults(form: DocumentForm, catalogos: Catalogos) {
     precoUnitario: String(artigo.pvp),
     tipoTaxaIvaId: artigo.ivaVendaId
   };
+}
+
+function clienteOptions(clientes: Cliente[]) {
+  return clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({
+    compactLabel: cliente.nome,
+    label: cliente.nome,
+    meta: cliente.id ? `Cliente ${cliente.id}` : undefined,
+    secondary: `NIF ${cliente.nif}`,
+    value: String(cliente.id)
+  }));
+}
+
+function artigoOptions(artigos: Artigo[], tiposIva: TipoTaxaIva[]) {
+  return artigos.map((artigo) => {
+    const iva = tiposIva.find((item) => item.id === artigo.ivaVendaId);
+    return {
+      compactLabel: artigo.codigo,
+      label: `${artigo.codigo} - ${artigo.descricao}`,
+      meta: `${formatNumber(artigo.pvp)} EUR - IVA ${iva ? ivaCompactLabel(iva) : artigo.ivaVendaId}`,
+      secondary: artigo.unidade,
+      value: artigo.codigo
+    };
+  });
+}
+
+function ivaCompactLabel(iva: TipoTaxaIva) {
+  const percent = iva.descricao.match(/(\d+(?:[,.]\d+)?)/)?.[1]?.replace(",", ".");
+  if (percent) return `${Number(percent).toLocaleString("pt-PT", { maximumFractionDigits: 2 })}%`;
+  if (iva.id.length <= 3) return iva.id;
+  return iva.id.slice(0, 3).toUpperCase();
 }
 
 function validateForm(form: DocumentForm) {

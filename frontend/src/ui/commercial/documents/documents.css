@@ -138,6 +138,30 @@
   padding-top: 0.75rem;
 }
 
+.fac-entity-search {
+  min-height: 2.45rem;
+  width: 100%;
+}
+
+.fac-entity-search-item {
+  display: grid;
+  gap: 0.15rem;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.fac-entity-search-item strong,
+.fac-entity-search .p-dropdown-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fac-entity-search-item span,
+.fac-entity-search-item small {
+  color: var(--fac-text-muted);
+}
+
 .fac-documents-diagnostics {
   background: var(--fac-surface-soft);
   border-radius: 8px;
@@ -424,9 +448,21 @@
 
 .fac-draft-lines-table {
   border-collapse: collapse;
-  min-width: 72rem;
+  min-width: 86rem;
   width: 100%;
 }
+
+.fac-draft-col-number { width: 3%; }
+.fac-draft-col-type { width: 7%; }
+.fac-draft-col-article { width: 15%; }
+.fac-draft-col-description { width: 30%; }
+.fac-draft-col-qty { width: 8%; }
+.fac-draft-col-unit { width: 5%; }
+.fac-draft-col-price { width: 10%; }
+.fac-draft-col-discount { width: 8%; }
+.fac-draft-col-vat { width: 7%; }
+.fac-draft-col-total { width: 8%; }
+.fac-draft-col-actions { width: 1%; }
 
 .fac-draft-lines-table th {
   background: var(--fac-surface-soft);
@@ -460,6 +496,24 @@
   color: var(--fac-text);
   min-height: 2.25rem;
   padding: 0.35rem 0.45rem;
+  width: 100%;
+}
+
+.fac-draft-cell-number {
+  text-align: right;
+}
+
+.fac-draft-cell-select {
+  min-height: 2.25rem;
+}
+
+.fac-draft-cell-select .p-dropdown-label {
+  padding-bottom: 0.35rem;
+  padding-top: 0.35rem;
+}
+
+.fac-draft-number,
+.fac-draft-number .p-inputnumber-input {
   width: 100%;
 }
 

@@ -420,6 +420,50 @@ class DocumentoComercialControllerTests {
 
         mockMvc.perform(delete(location))
                 .andExpect(status().isNoContent());
+
+        Long deletedId = documentoId(location);
+        org.assertj.core.api.Assertions.assertThat(documentoRepository.findById(deletedId)).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(
+                linhaDocumentoComercialRepository.findByDocumentoComercialIdOrderByNumeroLinha(deletedId)
+        ).isEmpty();
+    }
+
+    @Test
+    void naoEliminaDocumentoEmitidoOuAnulado() throws Exception {
+        String emitidoLocation = criarDocumentoComPrimeiraLinha();
+
+        mockMvc.perform(post(emitidoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "emissorId": "EMISSOR"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete(emitidoLocation))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Documento comercial já foi emitido ou está num estado incompatível"));
+
+        String anuladoLocation = criarDocumentoComPrimeiraLinha();
+
+        mockMvc.perform(post(anuladoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "emissorId": "EMISSOR"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post(anuladoLocation + "/anular")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Documento anulado para teste\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete(anuladoLocation))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Documento comercial já foi emitido ou está num estado incompatível"));
     }
 
     @Test

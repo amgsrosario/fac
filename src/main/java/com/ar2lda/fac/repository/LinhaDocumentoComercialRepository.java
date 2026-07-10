@@ -18,6 +18,8 @@ public interface LinhaDocumentoComercialRepository extends JpaRepository<LinhaDo
 
     boolean existsByDocumentoComercialIdAndTipoLinha(Long documentoId, TipoLinhaDocumento tipoLinha);
 
+    void deleteByDocumentoComercialId(Long documentoId);
+
     @Query("""
             select coalesce(max(l.numeroLinha), 0)
             from LinhaDocumentoComercial l

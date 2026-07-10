@@ -1,7 +1,8 @@
 import { KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { InputNumber, InputNumberValueChangeEvent } from "primereact/inputnumber";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, AuthSession } from "../../../api";
-import { DesktopShell, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useFacToast } from "../../fac";
+import { DesktopShell, EntitySearchSelect, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useFacToast } from "../../fac";
 import { CommercialSidebar } from "../shared";
 
 type Page<T> = { content: T[] };
@@ -173,6 +174,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
   const [impressao, setImpressao] = useState<DocumentoImpressao | null>(null);
   const [anularOpen, setAnularOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [motivoAnulacao, setMotivoAnulacao] = useState("");
   const [catalogos, setCatalogos] = useState<Catalogos>({
     artigos: [],
@@ -189,6 +191,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   });
 
   const canEdit = currentUser.permissoes.includes("DOCUMENTO_EDITAR_RASCUNHO");
+  const canDeleteDraft = currentUser.permissoes.includes("DOCUMENTO_ELIMINAR_RASCUNHO");
   const canEmit = currentUser.permissoes.includes("DOCUMENTO_EMITIR");
   const canVoid = currentUser.permissoes.includes("DOCUMENTO_ANULAR");
   const canPdf = currentUser.permissoes.includes("DOCUMENTO_OBTER_PDF");
@@ -409,7 +412,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     if (event.key === "Enter") {
       const target = event.target as HTMLElement;
       if (target.matches("textarea")) return;
-      if (target.hasAttribute("data-active-line")) {
+      if (target.hasAttribute("data-active-line") || target.closest("[data-active-line]")) {
         event.preventDefault();
         commitActiveLine("COMERCIAL");
       }
@@ -555,6 +558,22 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     }
   }
 
+  async function deleteDraft() {
+    if (!documento || documento.estado !== "RASCUNHO" || saving || !canDeleteDraft) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await requestNoContent(`/api/documentos-comerciais/${documento.id}`, "DELETE");
+      setDirty(false);
+      showToast({ detail: "Rascunho eliminado com sucesso.", severity: "success", summary: "Documentos" });
+      navigate("/documentos", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nao foi possivel eliminar o rascunho.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function refreshAfterStateChange(idToRefresh: number, message: string) {
     const [freshDoc, freshLines] = await Promise.all([
       refreshDocumentMeta(idToRefresh),
@@ -596,15 +615,15 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         <div className="fac-draft-actions">
           {dirty && <span className="fac-draft-dirty">Alteracoes por guardar</span>}
           <FacButton icon="pi pi-arrow-left" label="Lista" onClick={goBack} variant="ghost" />
+          {documento && documento.estado === "RASCUNHO" && canDeleteDraft && <FacButton disabled={saving || loading} icon="pi pi-trash" label="Eliminar rascunho" onClick={() => setDeleteOpen(true)} variant="destructive" />}
           {canOpenPdfCurrent && <FacButton disabled={saving} icon="pi pi-file-pdf" label="PDF" onClick={openPdf} variant="secondary" />}
-          {canVoidCurrent && <FacButton disabled={saving} icon="pi pi-ban" label="Anular" onClick={() => setAnularOpen(true)} variant="destructive" />}
-          {canEmit && isDraft && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label="Emitir" onClick={emitDocument} variant="secondary" />}
+          {canVoidCurrent && <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={() => setAnularOpen(true)} variant="destructive" />}
+          {canEmit && isDraft && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label="Conferir e emitir" onClick={emitDocument} variant="secondary" />}
           {isDraft && <FacButton disabled={saving || loading || !canEditCurrent} icon="pi pi-save" label={saving ? "A guardar..." : "Guardar rascunho"} onClick={saveDraft} variant="primary" />}
         </div>
       </header>
       {error && <FacMessage tone="error" title="Erro">{error}</FacMessage>}
       {notice && <FacMessage tone="success" title="Estado">{notice}</FacMessage>}
-      {diagnostico && <DraftDiagnostics diagnostico={diagnostico} documento={documento} impressao={impressao} />}
       {loading ? (
         <div className="fac-draft-loading">A carregar rascunho.</div>
       ) : (
@@ -650,7 +669,19 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
           <textarea maxLength={500} minLength={5} onChange={(event) => setMotivoAnulacao(event.target.value)} placeholder="Motivo da anulacao" value={motivoAnulacao} />
           <div className="fac-draft-actions">
             <FacButton label="Cancelar" onClick={() => setAnularOpen(false)} variant="ghost" />
-            <FacButton disabled={saving} icon="pi pi-ban" label="Confirmar anulacao" onClick={voidDocument} variant="destructive" />
+            <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={voidDocument} variant="destructive" />
+          </div>
+        </div>
+      )}
+      {deleteOpen && (
+        <div className="fac-draft-void-panel" role="dialog" aria-modal="true" aria-label="Eliminar rascunho">
+          <div>
+            <strong>Eliminar rascunho?</strong>
+            <span>O documento e todas as respetivas linhas serao eliminados. Esta acao nao pode ser revertida.</span>
+          </div>
+          <div className="fac-draft-actions">
+            <FacButton label="Cancelar" onClick={() => setDeleteOpen(false)} variant="ghost" />
+            <FacButton disabled={saving} icon="pi pi-trash" label="Eliminar rascunho" onClick={deleteDraft} variant="destructive" />
           </div>
         </div>
       )}
@@ -668,18 +699,6 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   );
 }
 
-function DraftDiagnostics({ diagnostico, documento, impressao }: { diagnostico: DiagnosticoDocumento; documento: DocumentoComercial | null; impressao: DocumentoImpressao | null }) {
-  const messages = [...(diagnostico.bloqueios ?? []), ...(diagnostico.alertas ?? [])];
-  return (
-    <aside className="fac-draft-diagnostics" aria-label="Diagnostico e impressao">
-      <div><span>Diagnostico</span><strong>{diagnostico.podeEmitir ? "Pronto para emissao" : diagnostico.podeAnular ? "Pode anular" : "Com verificacoes"}</strong></div>
-      <div><span>Impressao</span><strong>{impressao ? `${impressao.linhas.length} linhas ordenadas` : "Nao carregada"}</strong></div>
-      {documento?.numeroDocumentoCompleto && <div><span>Referencia</span><strong>{documento.numeroDocumentoCompleto}</strong></div>}
-      {messages.length > 0 && <ul>{messages.map((message) => <li key={message}>{message}</li>)}</ul>}
-    </aside>
-  );
-}
-
 function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, readOnly }: { catalogos: Catalogos; header: HeaderState; onChooseClient: (clienteId: string | null) => void; onContinue: () => void; onUpdate: (patch: Partial<HeaderState>) => void; readOnly: boolean }) {
   const series = catalogos.series.filter((serie) => serie.tipoDocumentoId === header.tipoDocumentoId);
   return (
@@ -688,7 +707,7 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
         <FacSelect disabled={readOnly} label="Tipo" onChange={(value) => onUpdate({ tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={header.tipoDocumentoId} />
         <FacSelect disabled={readOnly} label="Serie" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
         <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
-        <FacSelect disabled={readOnly} label="Cliente" onChange={onChooseClient} options={catalogos.clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({ label: `${cliente.nome} - ${cliente.nif}`, value: String(cliente.id) }))} value={header.clienteId} />
+        <EntitySearchSelect disabled={readOnly} label="Cliente" onChange={onChooseClient} options={clienteOptions(catalogos.clientes)} value={header.clienteId} />
         <FacSelect disabled={readOnly} label="Armazem de carga" onChange={(value) => onUpdate({ armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={header.armazemCargaId} />
         <FacSelect disabled={readOnly} label="Moeda" onChange={(value) => onUpdate({ moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={header.moedaId} />
         <FacSelect disabled={readOnly} label="Regime IVA" onChange={(value) => onUpdate({ rivaId: value ?? "" })} options={catalogos.regimesIva.map((regime) => ({ label: regime.nome, value: regime.id }))} value={header.rivaId} />
@@ -730,6 +749,19 @@ function DraftLines(props: {
       </div>
       <div className="fac-draft-lines-wrap">
         <table className="fac-draft-lines-table">
+          <colgroup>
+            <col className="fac-draft-col-number" />
+            <col className="fac-draft-col-type" />
+            <col className="fac-draft-col-article" />
+            <col className="fac-draft-col-description" />
+            <col className="fac-draft-col-qty" />
+            <col className="fac-draft-col-unit" />
+            <col className="fac-draft-col-price" />
+            <col className="fac-draft-col-discount" />
+            <col className="fac-draft-col-vat" />
+            <col className="fac-draft-col-total" />
+            <col className="fac-draft-col-actions" />
+          </colgroup>
           <thead><tr><th>#</th><th>Tipo</th><th>Artigo</th><th>Descricao</th><th>Qtd.</th><th>Un.</th><th>Preco</th><th>Desc.</th><th>IVA</th><th>Total</th><th></th></tr></thead>
           <tbody>
             {props.lines.map((line, index) => (
@@ -773,13 +805,13 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
         </>
       ) : (
         <>
-          <td><select className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} onChange={(event) => active ? props.onChooseActiveArticle(event.target.value || null) : props.onChooseArticle(line.uid, event.target.value || null)} value={line.artigoId}><option value="">Artigo</option>{catalogos.artigos.map((artigo) => <option key={artigo.codigo} value={artigo.codigo}>{artigo.codigo} - {artigo.descricao}</option>)}</select></td>
+          <td><EntitySearchSelect className="fac-draft-cell-select" disabled={disabled} onChange={(value) => active ? props.onChooseActiveArticle(value) : props.onChooseArticle(line.uid, value)} options={artigoOptions(catalogos.artigos, catalogos.tiposIva)} placeholder="Artigo" value={line.artigoId} /></td>
           <td><input className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} maxLength={80} onChange={(event) => update({ descricao: event.target.value })} value={line.descricao} /></td>
-          <td><input className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} inputMode="decimal" onChange={(event) => update({ quantidade: event.target.value })} value={line.quantidade} /></td>
+          <td><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ quantidade: value })} value={line.quantidade} /></td>
           <td><input className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} onChange={(event) => update({ unidade: event.target.value })} value={line.unidade} /></td>
-          <td><input className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} inputMode="decimal" onChange={(event) => update({ precoUnitario: event.target.value })} value={line.precoUnitario} /></td>
-          <td><input className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} inputMode="decimal" onChange={(event) => update({ desconto: event.target.value })} value={line.desconto} /></td>
-          <td><select className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} onChange={(event) => update({ tipoTaxaIvaId: event.target.value })} value={line.tipoTaxaIvaId}><option value="">IVA</option>{catalogos.tiposIva.map((iva) => <option key={iva.id} value={iva.id}>{iva.descricao}</option>)}</select></td>
+          <td><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ precoUnitario: value })} value={line.precoUnitario} /></td>
+          <td><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ desconto: value })} value={line.desconto} /></td>
+          <td><select className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} onChange={(event) => update({ tipoTaxaIvaId: event.target.value })} title={catalogos.tiposIva.find((iva) => iva.id === line.tipoTaxaIvaId)?.descricao} value={line.tipoTaxaIvaId}><option value="">IVA</option>{catalogos.tiposIva.map((iva) => <option key={iva.id} value={iva.id}>{ivaCompactLabel(iva)}</option>)}</select></td>
           <td className="fac-draft-money">{money(lineTotal(line, catalogos))}</td>
           <td className="fac-draft-row-actions">{active ? <FacButton label="OK" onClick={() => props.onCommitActiveLine("COMERCIAL")} variant="secondary" /> : <RowActions {...props} line={line} />}</td>
         </>
@@ -798,6 +830,63 @@ function RowActions(props: Parameters<typeof DraftLines>[0] & { line: EditorLine
       <button aria-label="Remover linha" onClick={() => props.onRemoveLine(props.line.uid)} type="button">X</button>
     </>
   );
+}
+
+function DecimalInput({ active, disabled, min, onChange, value }: { active?: boolean; disabled: boolean; min: number; onChange: (value: string) => void; value: string }) {
+  return (
+    <InputNumber
+      className="fac-draft-number"
+      data-active-line={active || undefined}
+      disabled={disabled}
+      inputClassName="fac-draft-cell fac-draft-cell-number"
+      locale="pt-PT"
+      maxFractionDigits={6}
+      min={min}
+      minFractionDigits={0}
+      onFocus={(event) => event.target.select()}
+      onValueChange={(event: InputNumberValueChangeEvent) => onChange(event.value === null || event.value === undefined ? "" : String(event.value))}
+      useGrouping
+      value={decimalValue(value)}
+    />
+  );
+}
+
+function decimalValue(value: string) {
+  if (!value.trim()) return null;
+  const compact = value.replace(/\s/g, "");
+  const normalized = compact.includes(",") ? compact.replace(/\./g, "").replace(",", ".") : compact;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function clienteOptions(clientes: Cliente[]) {
+  return clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({
+    compactLabel: cliente.nome,
+    label: cliente.nome,
+    meta: cliente.id ? `Cliente ${cliente.id}` : undefined,
+    secondary: `NIF ${cliente.nif}`,
+    value: String(cliente.id)
+  }));
+}
+
+function artigoOptions(artigos: Artigo[], tiposIva: TipoTaxaIva[]) {
+  return artigos.map((artigo) => {
+    const iva = tiposIva.find((item) => item.id === artigo.ivaVendaId);
+    return {
+      compactLabel: artigo.codigo,
+      label: `${artigo.codigo} - ${artigo.descricao}`,
+      meta: `${money(Number(artigo.pvp))} - IVA ${iva ? ivaCompactLabel(iva) : artigo.ivaVendaId}`,
+      secondary: artigo.unidade,
+      value: artigo.codigo
+    };
+  });
+}
+
+function ivaCompactLabel(iva: TipoTaxaIva) {
+  const percent = iva.descricao.match(/(\d+(?:[,.]\d+)?)/)?.[1]?.replace(",", ".");
+  if (percent) return `${Number(percent).toLocaleString("pt-PT", { maximumFractionDigits: 2 })}%`;
+  if (iva.id.length <= 3) return iva.id;
+  return iva.id.slice(0, 3).toUpperCase();
 }
 
 async function loadCatalogos(): Promise<Catalogos> {
