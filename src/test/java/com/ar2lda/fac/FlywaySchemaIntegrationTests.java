@@ -14,7 +14,7 @@ class FlywaySchemaIntegrationTests {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void esquemaEstaNaVersaoOitoEContemSnapshotFiscalBlocoTresMD28EMD29EArmazemNatural() {
+    void esquemaEstaNaVersaoNoveEContemSnapshotFiscalBlocoTresMD28EMD29EChavesNaturais() {
         Integer versao = jdbcTemplate.queryForObject(
                 "select max(version::integer) from flyway_schema_history where success",
                 Integer.class
@@ -58,11 +58,22 @@ class FlywaySchemaIntegrationTests {
                     or (table_name = 'parametros_documento_comercial' and column_name = 'id_armazem_carga' and data_type = 'character varying' and character_maximum_length = 3))
                 """, Integer.class);
 
-        assertThat(versao).isEqualTo(8);
+        Integer modoPagamentoNatural = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.columns
+                where table_schema = 'public'
+                  and ((table_name = 'mpagamento' and column_name = 'id' and data_type = 'character varying' and character_maximum_length = 3)
+                    or (table_name = 'cliente' and column_name = 'id_mpagamento' and data_type = 'character varying' and character_maximum_length = 3)
+                    or (table_name = 'documento_comercial' and column_name = 'id_mpagamento' and data_type = 'character varying' and character_maximum_length = 3)
+                    or (table_name = 'documento_financeiro' and column_name = 'id_mpagamento' and data_type = 'character varying' and character_maximum_length = 3)
+                    or (table_name = 'parametros_cliente' and column_name = 'id_mpagamento' and data_type = 'character varying' and character_maximum_length = 3))
+                """, Integer.class);
+
+        assertThat(versao).isEqualTo(9);
         assertThat(colunasSnapshot).isEqualTo(2);
         assertThat(estruturasBlocoTres).isEqualTo(3);
         assertThat(estruturasMd28).isEqualTo(10);
         assertThat(estruturasMd29).isEqualTo(7);
         assertThat(armazemNatural).isEqualTo(3);
+        assertThat(modoPagamentoNatural).isEqualTo(5);
     }
 }

@@ -38,7 +38,7 @@ type Cliente = {
   codPostalId?: string;
   paisId?: string;
   moedaId?: string;
-  mPagamentoId?: number;
+  mPagamentoId?: string;
   pPagamentoId?: string;
   rivaId?: string;
   transporteId?: number;
@@ -59,7 +59,7 @@ type ParametrosCliente = {
   paisId?: string;
   moedaId?: string;
   rivaId?: string;
-  mPagamentoId?: number;
+  mPagamentoId?: string;
   pPagamentoId?: string;
   transporteId?: number;
   retencao?: boolean;
@@ -103,7 +103,7 @@ type ClienteCatalogos = {
   paises: CatalogoString[];
   moedas: CatalogoString[];
   regimesIva: CatalogoString[];
-  modosPagamento: CatalogoNumero[];
+  modosPagamento: CatalogoString[];
   prazosPagamento: CatalogoString[];
   transportes: CatalogoNumero[];
 };
@@ -337,7 +337,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       fetchPage<CatalogoString>("/api/paises?size=300&sort=nome,asc"),
       fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
       fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
-      fetchPage<CatalogoNumero>("/api/mpagamentos?size=100&sort=nome,asc"),
+      fetchPage<CatalogoString>("/api/mpagamentos?size=100&sort=nome,asc"),
       fetchPage<CatalogoString>("/api/p-pagamentos?size=100&sort=nome,asc"),
       fetchPage<CatalogoNumero>("/api/transportes?size=100&sort=nome,asc")
     ]);
@@ -1324,7 +1324,7 @@ function parametrosClientePayload(form: ParametrosClienteForm) {
     paisId: blankToNull(form.paisId),
     moedaId: blankToNull(form.moedaId),
     rivaId: blankToNull(form.rivaId),
-    mPagamentoId: numberOrNull(form.mPagamentoId),
+    mPagamentoId: form.mPagamentoId || null,
     pPagamentoId: blankToNull(form.pPagamentoId),
     transporteId: numberOrNull(form.transporteId),
     retencao: form.retencao === "" ? null : form.retencao === "true"
@@ -1385,7 +1385,7 @@ function clientePayload(form: ClienteForm) {
     codPostalId: form.codPostalId.trim(),
     paisId: form.paisId,
     moedaId: form.moedaId,
-    mPagamentoId: numberOrNull(form.mPagamentoId),
+    mPagamentoId: form.mPagamentoId || null,
     pPagamentoId: blankToNull(form.pPagamentoId),
     rivaId: blankToNull(form.rivaId),
     transporteId: numberOrNull(form.transporteId)

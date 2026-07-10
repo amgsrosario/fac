@@ -15,7 +15,7 @@ const simpleCode = (key: string, label: string, group: string, endpoint: string,
 
 const configs: Config[] = [
   simpleNumber("familias", "Familias", "Comercial", "/api/familias", "descricao"),
-  simpleNumber("mpagamentos", "Modos de pagamento", "Comercial", "/api/mpagamentos"),
+  simpleCode("mpagamentos", "Modos de pagamento", "Comercial", "/api/mpagamentos", 30),
   { key: "ppagamentos", label: "Prazos de pagamento", group: "Comercial", endpoint: "/api/p-pagamentos", fields: [text("id", "Codigo", 3, true, true), text("nome", "Nome", 30, true), { key: "dias", label: "Dias", type: "number", required: true }], columns: [text("id", "Codigo", 0), text("nome", "Nome", 0), text("dias", "Dias", 0)] },
   simpleNumber("transportes", "Transportes", "Comercial", "/api/transportes"),
   simpleCode("paises", "Paises", "Localizacao", "/api/paises", 50),

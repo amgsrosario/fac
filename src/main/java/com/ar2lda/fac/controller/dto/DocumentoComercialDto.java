@@ -26,7 +26,7 @@ public record DocumentoComercialDto(
         String armazemCargaId,
         String moedaId,
         String rivaId,
-        Integer mPagamentoId,
+        String mPagamentoId,
         String pPagamentoId,
         Integer transporteId,
         String clienteNome,

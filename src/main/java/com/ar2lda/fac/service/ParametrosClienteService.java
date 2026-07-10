@@ -67,7 +67,7 @@ public class ParametrosClienteService {
                 .orElseThrow(() -> new NotFoundException("Parâmetros de cliente não encontrados"));
     }
 
-    private void applyRelations(String paisId, String moedaId, String rivaId, Integer mPagamentoId,
+    private void applyRelations(String paisId, String moedaId, String rivaId, String mPagamentoId,
                                 String pPagamentoId, Integer transporteId, ParametrosCliente entity) {
         entity.setPais(findPais(paisId));
         entity.setMoeda(findMoeda(moedaId));
@@ -95,9 +95,9 @@ public class ParametrosClienteService {
                 .orElseThrow(() -> new NotFoundException("Regime de IVA não encontrado: " + id));
     }
 
-    private MPagamento findMPagamento(Integer id) {
-        if (id == null) return null;
-        return mPagamentoRepository.findById(id)
+    private MPagamento findMPagamento(String id) {
+        if (id == null || id.isBlank()) return null;
+        return mPagamentoRepository.findById(id.toUpperCase())
                 .orElseThrow(() -> new NotFoundException("Modo de pagamento não encontrado: " + id));
     }
 

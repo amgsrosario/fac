@@ -27,7 +27,7 @@ type LinhaFinanceira = {
 type DocumentoFinanceiro = {
   id: number; clienteId: number; tipoDocumentoId: string; serie: string; numeroDocumento: number;
   dataEmissao: string; moedaId: string; valorPagamentoBruto: number; valorDescontoFinanceiro: number;
-  valorPagamentoLiquido: number; mPagamentoId: number; emissorId: string; anulado: boolean; impresso: boolean;
+  valorPagamentoLiquido: number; mPagamentoId: string; emissorId: string; anulado: boolean; impresso: boolean;
   momentoEmissao?: string; linhas: LinhaFinanceira[];
 };
 type LinhaComercialListagem = LinhaComercial & { documento: DocumentoComercial };

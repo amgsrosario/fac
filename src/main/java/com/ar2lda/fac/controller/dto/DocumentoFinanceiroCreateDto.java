@@ -30,7 +30,7 @@ public record DocumentoFinanceiroCreateDto(
         String moedaId,
 
         @NotNull(message = "Modo de pagamento Ã© obrigatÃ³rio")
-        Integer mPagamentoId,
+        String mPagamentoId,
 
         OffsetDateTime dataHoraOperacao,
 

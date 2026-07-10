@@ -408,7 +408,7 @@ public class DocumentoComercialService {
     }
 
     private void applyEditableFields(DocumentoComercial documento, Cliente cliente, Long moradaEnvioId, String armazemCargaId,
-                                     String moedaId, String rivaId, Integer mPagamentoId, String pPagamentoId,
+                                     String moedaId, String rivaId, String mPagamentoId, String pPagamentoId,
                                      Integer transporteId, java.time.LocalDate dataCarga, java.time.LocalTime horaCarga,
                                      String matricula, java.time.LocalDate dataDescarga, java.time.LocalTime horaDescarga,
                                      java.math.BigDecimal peso, String observacoes) {
@@ -542,11 +542,11 @@ public class DocumentoComercialService {
                 .orElseThrow(() -> new NotFoundException("Regime de IVA não encontrado: " + id));
     }
 
-    private MPagamento findMPagamentoOrDefault(Integer id, MPagamento defaultValue) {
-        if (id == null) {
+    private MPagamento findMPagamentoOrDefault(String id, MPagamento defaultValue) {
+        if (id == null || id.isBlank()) {
             return defaultValue;
         }
-        return mPagamentoRepository.findById(id)
+        return mPagamentoRepository.findById(id.toUpperCase())
                 .orElseThrow(() -> new NotFoundException("Modo de pagamento não encontrado: " + id));
     }
 

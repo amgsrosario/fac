@@ -286,7 +286,7 @@ public class DadosMestresTransferService {
         exists(line, row, errors, "codPostalId", "CLIENTE_CODPOSTAL_INEXISTENTE", id -> codPostalRepository.existsById(id));
         exists(line, row, errors, "moedaId", "CLIENTE_MOEDA_INEXISTENTE", id -> moedaRepository.existsById(id));
         exists(line, row, errors, "rivaId", "CLIENTE_RIVA_INEXISTENTE", id -> rIvaRepository.existsById(id));
-        integerExists(line, row, errors, "mPagamentoId", "CLIENTE_MPAGAMENTO_INVALIDO", id -> mPagamentoRepository.existsById(id));
+        exists(line, row, errors, "mPagamentoId", "CLIENTE_MPAGAMENTO_INVALIDO", id -> mPagamentoRepository.existsById(id.toUpperCase(Locale.ROOT)));
         exists(line, row, errors, "pPagamentoId", "CLIENTE_PPAGAMENTO_INEXISTENTE", id -> pPagamentoRepository.existsById(id));
         integerExists(line, row, errors, "transporteId", "CLIENTE_TRANSPORTE_INVALIDO", id -> transporteRepository.existsById(id));
         parseBoolean(line, row, errors, "retencao");
@@ -471,7 +471,7 @@ public class DadosMestresTransferService {
                 blankToNull(row, "localidade"), value(row, "nif"), blankToNull(row, "tel"), blankToNull(row, "tm"),
                 value(row, "email"), blankToNull(row, "email1"), blankToNull(row, "tspiva"), blankToNull(row, "iban"),
                 bool(row, "retencao"), bool(row, "inativo"), blankToNull(row, "observacoes"), value(row, "codPostalId"),
-                value(row, "paisId"), value(row, "moedaId"), integerOrNull(row, "mPagamentoId"),
+                value(row, "paisId"), value(row, "moedaId"), upperOrNull(row, "mPagamentoId"),
                 blankToNull(row, "pPagamentoId"), blankToNull(row, "rivaId"), Integer.valueOf(value(row, "transporteId")));
     }
 
@@ -733,6 +733,11 @@ public class DadosMestresTransferService {
     private String blankToNull(Map<String, String> row, String key) {
         String value = value(row, key);
         return value.isBlank() ? null : value;
+    }
+
+    private String upperOrNull(Map<String, String> row, String key) {
+        String value = value(row, key);
+        return value.isBlank() ? null : value.toUpperCase(Locale.ROOT);
     }
 
     private boolean bool(Map<String, String> row, String key) {

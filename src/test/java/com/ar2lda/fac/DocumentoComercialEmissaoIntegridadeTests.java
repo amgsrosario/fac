@@ -85,6 +85,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
             return pPagamentoRepository.save(entity);
         });
         MPagamento modo = new MPagamento();
+        modo.setId("INT");
         modo.setNome("Transferência integridade");
         modo = mPagamentoRepository.save(modo);
         Transporte transporte = transporteRepository.save(new Transporte("Transporte integridade"));

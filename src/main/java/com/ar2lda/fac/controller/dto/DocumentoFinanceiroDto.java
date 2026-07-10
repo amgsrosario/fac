@@ -20,7 +20,7 @@ public record DocumentoFinanceiroDto(
         BigDecimal valorPagamentoBruto,
         BigDecimal valorDescontoFinanceiro,
         BigDecimal valorPagamentoLiquido,
-        Integer mPagamentoId,
+        String mPagamentoId,
         OffsetDateTime dataHoraOperacao,
         String emissorId,
         OffsetDateTime momentoEmissao,

@@ -5,7 +5,7 @@ public record ParametrosClienteDto(
         String paisId,
         String moedaId,
         String rivaId,
-        Integer mPagamentoId,
+        String mPagamentoId,
         String pPagamentoId,
         Integer transporteId,
         Boolean retencao

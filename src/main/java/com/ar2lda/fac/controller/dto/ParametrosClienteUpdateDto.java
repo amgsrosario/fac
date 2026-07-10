@@ -9,7 +9,7 @@ public record ParametrosClienteUpdateDto(
         String moedaId,
         @Size(max = 3, message = "Regime de IVA deve ter no máximo 3 caracteres")
         String rivaId,
-        Integer mPagamentoId,
+        String mPagamentoId,
         @Size(max = 3, message = "Prazo de pagamento deve ter no máximo 3 caracteres")
         String pPagamentoId,
         Integer transporteId,

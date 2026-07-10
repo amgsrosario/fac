@@ -46,7 +46,7 @@ type DocumentoComercial = {
   clienteId: number;
   moedaId?: string | null;
   rivaId?: string | null;
-  mPagamentoId?: number | null;
+  mPagamentoId?: string | null;
   pPagamentoId?: string | null;
   transporteId?: number | null;
   clienteNome: string;
@@ -130,7 +130,7 @@ type Cliente = {
   inativo: boolean;
   moedaId?: string | null;
   rivaId?: string | null;
-  mPagamentoId?: number | null;
+  mPagamentoId?: string | null;
   pPagamentoId?: string | null;
   transporteId?: number | null;
 };
@@ -175,7 +175,7 @@ type Catalogos = {
   tiposDocumento: TipoDocumento[];
   tiposIva: TipoTaxaIva[];
   transportes: CatalogoNumero[];
-  modosPagamento: CatalogoNumero[];
+  modosPagamento: CatalogoString[];
   prazosPagamento: CatalogoString[];
 };
 
@@ -288,7 +288,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
         fetchPage<Armazem>("/api/armazens?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
-        fetchPage<CatalogoNumero>("/api/mpagamentos?size=100&sort=nome,asc"),
+        fetchPage<CatalogoString>("/api/mpagamentos?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/p-pagamentos?size=100&sort=nome,asc"),
         fetchPage<CatalogoNumero>("/api/transportes?size=100&sort=nome,asc"),
         fetchPage<TipoTaxaIva>("/api/tipos-taxa-iva?size=100&sort=descricao,asc")
@@ -389,7 +389,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
           armazemCargaId: form.armazemCargaId,
           moedaId: nullable(form.moedaId),
           rivaId: nullable(form.rivaId),
-          mPagamentoId: nullableNumber(form.mPagamentoId),
+          mPagamentoId: form.mPagamentoId || null,
           pPagamentoId: nullable(form.pPagamentoId),
           transporteId: nullableNumber(form.transporteId),
           observacoes: nullable(form.observacoes)

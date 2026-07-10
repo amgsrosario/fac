@@ -19,7 +19,7 @@ public record ClienteDto(
         String codPostalId,
         String paisId,
         String moedaId,
-        Integer mPagamentoId,
+        String mPagamentoId,
         String pPagamentoId,
         String rivaId,
         Integer transporteId

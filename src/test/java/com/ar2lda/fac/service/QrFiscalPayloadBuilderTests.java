@@ -108,7 +108,7 @@ class QrFiscalPayloadBuilderTests {
                 "001",
                 "EUR",
                 "NOR",
-                1,
+                "TFB",
                 "P30",
                 1,
                 "Cliente Lda",

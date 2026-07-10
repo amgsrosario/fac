@@ -700,7 +700,7 @@ function buildRecebimentoPayload(pendente) {
         dataEmissao: valueOf("#recebimento-data"),
         clienteId: pendente.clienteId,
         moedaId: pendente.moedaId,
-        mPagamentoId: numberOrNull(valueOf("#recebimento-mpagamento")),
+        mPagamentoId: valueOf("#recebimento-mpagamento") || null,
         dataHoraOperacao: null,
         emissorId: valueOf("#recebimento-emissor"),
         observacoes: `Recebimento preparado na interface para ${referencia(pendente.tipoDocumentoId, pendente.serieDocumento, pendente.numeroDocumento)}`,

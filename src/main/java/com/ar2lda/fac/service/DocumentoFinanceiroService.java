@@ -405,8 +405,8 @@ public class DocumentoFinanceiroService {
                 .orElseThrow(() -> new NotFoundException("Moeda nao encontrada: " + id));
     }
 
-    private MPagamento findMPagamento(Integer id) {
-        return mPagamentoRepository.findById(id)
+    private MPagamento findMPagamento(String id) {
+        return mPagamentoRepository.findById(id.toUpperCase())
                 .orElseThrow(() -> new NotFoundException("Modo de pagamento nao encontrado: " + id));
     }
 

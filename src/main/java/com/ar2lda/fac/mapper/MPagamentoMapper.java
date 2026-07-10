@@ -21,6 +21,7 @@ public interface MPagamentoMapper {
             return null;
         }
         MPagamento entity = new MPagamento();
+        entity.setId(dto.id() == null ? null : dto.id().toUpperCase());
         entity.setNome(dto.nome());
         return entity;
     }

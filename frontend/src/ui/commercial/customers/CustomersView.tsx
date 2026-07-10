@@ -45,7 +45,7 @@ type Cliente = {
   codPostalId?: string;
   paisId?: string;
   moedaId?: string;
-  mPagamentoId?: number;
+  mPagamentoId?: string;
   pPagamentoId?: string;
   rivaId?: string;
   transporteId?: number;
@@ -66,7 +66,7 @@ type ClienteCatalogos = {
   paises: CatalogoString[];
   moedas: CatalogoString[];
   regimesIva: CatalogoString[];
-  modosPagamento: CatalogoNumero[];
+  modosPagamento: CatalogoString[];
   prazosPagamento: CatalogoString[];
   transportes: CatalogoNumero[];
 };
@@ -164,7 +164,7 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
         fetchPage<CatalogoString>("/api/paises?size=300&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
-        fetchPage<CatalogoNumero>("/api/mpagamentos?size=100&sort=nome,asc"),
+        fetchPage<CatalogoString>("/api/mpagamentos?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/p-pagamentos?size=100&sort=nome,asc"),
         fetchPage<CatalogoNumero>("/api/transportes?size=100&sort=nome,asc")
       ]);
@@ -832,7 +832,7 @@ function toPayload(form: ClienteForm) {
     codPostalId: form.codPostalId.trim(),
     paisId: form.paisId,
     moedaId: form.moedaId,
-    mPagamentoId: numberOrNull(form.mPagamentoId),
+    mPagamentoId: form.mPagamentoId || null,
     pPagamentoId: blankToNull(form.pPagamentoId),
     rivaId: blankToNull(form.rivaId),
     transporteId: numberOrNull(form.transporteId)

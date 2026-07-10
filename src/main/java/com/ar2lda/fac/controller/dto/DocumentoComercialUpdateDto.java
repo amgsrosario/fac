@@ -15,7 +15,7 @@ public record DocumentoComercialUpdateDto(
         String armazemCargaId,
         String moedaId,
         String rivaId,
-        Integer mPagamentoId,
+        String mPagamentoId,
         String pPagamentoId,
         Integer transporteId,
         LocalDate dataCarga,

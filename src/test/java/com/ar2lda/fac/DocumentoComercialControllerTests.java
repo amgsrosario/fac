@@ -168,6 +168,7 @@ class DocumentoComercialControllerTests {
         });
         Transporte transporte = transporteRepository.save(new Transporte("Transporte documento"));
         mPagamento = new MPagamento();
+        mPagamento.setId("MDC");
         mPagamento.setNome("Transferencia");
         mPagamento = mPagamentoRepository.save(mPagamento);
 
@@ -1027,7 +1028,7 @@ class DocumentoComercialControllerTests {
                                   "dataEmissao": "%s",
                                   "clienteId": %d,
                                   "moedaId": "EUR",
-                                  "mPagamentoId": %d,
+                                  "mPagamentoId": "%s",
                                   "dataHoraOperacao": "%sT12:00:00+01:00",
                                   "emissorId": "EMISSOR",
                                   "linhas": [
@@ -1199,7 +1200,7 @@ class DocumentoComercialControllerTests {
                                   "dataEmissao": "2026-06-06",
                                   "clienteId": %d,
                                   "moedaId": "EUR",
-                                  "mPagamentoId": %d,
+                                  "mPagamentoId": "%s",
                                   "emissorId": "EMISSOR",
                                   "linhas": [
                                     {
@@ -1294,7 +1295,7 @@ class DocumentoComercialControllerTests {
                                   "dataEmissao": "2026-06-09",
                                   "clienteId": %d,
                                   "moedaId": "EUR",
-                                  "mPagamentoId": %d,
+                                  "mPagamentoId": "%s",
                                   "emissorId": "EMISSOR",
                                   "linhas": [
                                     {
@@ -1317,7 +1318,7 @@ class DocumentoComercialControllerTests {
                                   "dataEmissao": "2026-06-08",
                                   "clienteId": %d,
                                   "moedaId": "EUR",
-                                  "mPagamentoId": %d,
+                                  "mPagamentoId": "%s",
                                   "emissorId": "EMISSOR",
                                   "linhas": [
                                     {

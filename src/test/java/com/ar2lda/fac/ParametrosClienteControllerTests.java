@@ -59,7 +59,7 @@ class ParametrosClienteControllerTests {
     @Autowired
     private TransporteRepository transporteRepository;
 
-    private Integer mPagamentoId;
+    private String mPagamentoId;
     private Integer transporteId;
 
     @BeforeEach
@@ -79,6 +79,7 @@ class ParametrosClienteControllerTests {
         });
 
         MPagamento modo = new MPagamento();
+        modo.setId("MPC");
         modo.setNome("Modo teste");
         mPagamentoId = mPagamentoRepository.save(modo).getId();
         transporteId = transporteRepository.save(new Transporte("Transporte teste")).getId();
@@ -164,7 +165,7 @@ class ParametrosClienteControllerTests {
                   "paisId": "TST",
                   "moedaId": "TST",
                   "rivaId": "TST",
-                  "mPagamentoId": %d,
+                  "mPagamentoId": "%s",
                   "pPagamentoId": "TST",
                   "transporteId": %d,
                   "retencao": %s

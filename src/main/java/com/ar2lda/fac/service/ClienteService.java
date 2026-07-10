@@ -86,7 +86,7 @@ public class ClienteService {
                 .orElseThrow(() -> new NotFoundException("Cliente não encontrado: " + id));
     }
 
-    private void applyRelations(String codPostalId, String paisId, String moedaId, Integer mPagamentoId, String pPagamentoId,
+    private void applyRelations(String codPostalId, String paisId, String moedaId, String mPagamentoId, String pPagamentoId,
                                 String rivaId, Integer transporteId, Cliente cliente) {
         cliente.setCodPostal(findCodPostal(codPostalId));
         cliente.setPais(findPais(paisId));
@@ -112,9 +112,9 @@ public class ClienteService {
                 .orElseThrow(() -> new NotFoundException("Moeda não encontrada: " + id));
     }
 
-    private MPagamento findMPagamento(Integer id) {
-        if (id == null) return null;
-        return mPagamentoRepository.findById(id)
+    private MPagamento findMPagamento(String id) {
+        if (id == null || id.isBlank()) return null;
+        return mPagamentoRepository.findById(id.toUpperCase())
                 .orElseThrow(() -> new NotFoundException("Modo de pagamento não encontrado: " + id));
     }
 

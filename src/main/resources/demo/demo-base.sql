@@ -56,7 +56,7 @@ on conflict (id) do update set
     dias = excluded.dias;
 
 insert into mpagamento (id, nome)
-values (1001, 'Transferencia bancaria')
+values ('TFB', 'Transferencia bancaria')
 on conflict (id) do update set nome = excluded.nome;
 
 insert into transporte (id, nome)
@@ -229,7 +229,7 @@ values (
     null,
     'Servico tecnico por hora',
     'H',
-    1001,
+    'TFB',
     0.000,
     'NORMAL',
     'NORMAL',
@@ -369,11 +369,11 @@ insert into artigo (codigo,abreviatura,codigo_identificacao,descricao,unidade,id
 on conflict (codigo) do update set descricao=excluded.descricao,pvp=excluded.pvp,id_iva_venda=excluded.id_iva_venda,inativo=false;
 
 insert into cliente (id,nome,morada,morada1,localidade,id_codpostal,id_pais,nif,id_moeda,tel,tm,email,email1,id_mpagamento,id_ppagamento,id_riva,tspiva,iban,retencao,id_transporte,inativo,observacoes) values
-(1101,'Mercearia Campo Dourado, Lda.','Rua do Mercado Demo, 8',null,'Evora Demo','7000-001','PT','599100011','EUR',null,null,'compras@campo-dourado.demo',null,1001,'P30','CON',null,null,false,1001,false,'Cliente empresarial nacional ficticio'),
-(1102,'Sabores de Madrid SL','Calle Olivo Demo, 21',null,'Madrid Demo','28000','ES','ESB9900001','EUR',null,null,'compras@sabores-madrid.demo',null,1001,'P30','CON',null,null,false,1001,false,'Cliente espanhol ficticio; fiscalidade limitada ao modelo atual'),
-(1103,'Consumidor Final Demo','Praca Central Demo, 3',null,'Evora Demo','7000-001','PT','999999990','EUR',null,null,null,null,1001,'P30','CON',null,null,false,1001,false,'Consumidor final ficticio'),
-(1104,'Casa dos Sabores do Sul, Lda.','Rua das Adegas Demo, 17',null,'Evora Demo','7000-001','PT','599100029','EUR',null,null,'financeiro@casa-sabores.demo',null,1001,'P30','CON',null,null,false,1001,false,'Cliente com varios movimentos para extrato'),
-(1105,'Cliente Documento Anulado, Lda.','Travessa do Montado Demo, 5',null,'Evora Demo','7000-001','PT','599100037','EUR',null,null,'arquivo@cliente-anulado.demo',null,1001,'P30','CON',null,null,false,1001,false,'Cliente reservado ao documento anulado')
+(1101,'Mercearia Campo Dourado, Lda.','Rua do Mercado Demo, 8',null,'Evora Demo','7000-001','PT','599100011','EUR',null,null,'compras@campo-dourado.demo',null,'TFB','P30','CON',null,null,false,1001,false,'Cliente empresarial nacional ficticio'),
+(1102,'Sabores de Madrid SL','Calle Olivo Demo, 21',null,'Madrid Demo','28000','ES','ESB9900001','EUR',null,null,'compras@sabores-madrid.demo',null,'TFB','P30','CON',null,null,false,1001,false,'Cliente espanhol ficticio; fiscalidade limitada ao modelo atual'),
+(1103,'Consumidor Final Demo','Praca Central Demo, 3',null,'Evora Demo','7000-001','PT','999999990','EUR',null,null,null,null,'TFB','P30','CON',null,null,false,1001,false,'Consumidor final ficticio'),
+(1104,'Casa dos Sabores do Sul, Lda.','Rua das Adegas Demo, 17',null,'Evora Demo','7000-001','PT','599100029','EUR',null,null,'financeiro@casa-sabores.demo',null,'TFB','P30','CON',null,null,false,1001,false,'Cliente com varios movimentos para extrato'),
+(1105,'Cliente Documento Anulado, Lda.','Travessa do Montado Demo, 5',null,'Evora Demo','7000-001','PT','599100037','EUR',null,null,'arquivo@cliente-anulado.demo',null,'TFB','P30','CON',null,null,false,1001,false,'Cliente reservado ao documento anulado')
 on conflict (id) do update set nome=excluded.nome,morada=excluded.morada,id_codpostal=excluded.id_codpostal,id_pais=excluded.id_pais,nif=excluded.nif,email=excluded.email,inativo=false;
 
 -- O cenário comercial consolidado usa exatamente os cinco clientes e oito artigos acima.
@@ -393,5 +393,5 @@ delete from artigo where codigo = 'SERVHORA';
 -- Moeda: EUR
 -- Regime IVA: CON
 -- Prazo pagamento: P30
--- Modo pagamento: 1001
+-- Modo pagamento: TFB
 -- Transporte: 1001

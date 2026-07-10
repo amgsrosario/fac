@@ -19,7 +19,7 @@ type Pendente = {
 type Cliente = { id: number; nome: string; nif: string; inativo: boolean };
 type TipoDocumento = { id: string; descricao: string; areaGestao: number };
 type Serie = { serie: string; tipoDocumentoId: string; nome: string };
-type MPagamento = { id: number; nome: string };
+type MPagamento = { id: string; nome: string };
 type DocumentoFinanceiro = {
   id: number;
   clienteId: number;
@@ -29,7 +29,7 @@ type DocumentoFinanceiro = {
   dataEmissao: string;
   valorPagamentoLiquido: number;
   moedaId: string;
-  mPagamentoId: number;
+  mPagamentoId: string;
   emissorId: string;
   anulado: boolean;
 };
@@ -281,7 +281,7 @@ export default function PendentesView() {
         dataEmissao: form.dataEmissao,
         clienteId: Number(form.clienteId),
         moedaId: form.moedaId,
-        mPagamentoId: Number(form.mPagamentoId),
+        mPagamentoId: form.mPagamentoId,
         dataHoraOperacao: null,
         emissorId: form.emissorId,
         observacoes: blankToNull(form.observacoes),

@@ -12,10 +12,10 @@ import lombok.ToString;
 public class MPagamento {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(length = 3, nullable = false)
     @Setter
     @ToString.Include
-    private Integer id;
+    private String id;
 
     @Column(length = 30, nullable = false)
     @Setter

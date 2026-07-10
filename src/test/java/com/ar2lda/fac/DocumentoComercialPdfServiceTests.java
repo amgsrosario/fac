@@ -255,7 +255,7 @@ class DocumentoComercialPdfServiceTests {
         when(documento.moedaSimbolo()).thenReturn("€");
         when(documento.regimeIvaCodigo()).thenReturn("PT");
         when(documento.pPagamentoId()).thenReturn("30D");
-        when(documento.mPagamentoId()).thenReturn(1);
+        when(documento.mPagamentoId()).thenReturn("NUM");
         when(documento.valorBruto()).thenReturn(new BigDecimal("1234.50"));
         when(documento.valorDesconto()).thenReturn(new BigDecimal("12.50"));
         when(documento.valorIsento()).thenReturn(new BigDecimal("10.00"));
@@ -335,7 +335,7 @@ class DocumentoComercialPdfServiceTests {
         when(documento.moedaSimbolo()).thenReturn("EUR");
         when(documento.regimeIvaCodigo()).thenReturn("PT");
         when(documento.pPagamentoId()).thenReturn("30D");
-        when(documento.mPagamentoId()).thenReturn(1);
+        when(documento.mPagamentoId()).thenReturn("NUM");
         when(documento.valorBruto()).thenReturn(new BigDecimal("10.00"));
         when(documento.valorDesconto()).thenReturn(BigDecimal.ZERO);
         when(documento.valorIsento()).thenReturn(BigDecimal.ZERO);

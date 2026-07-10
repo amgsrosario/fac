@@ -92,7 +92,7 @@ public class DemoScenarioService {
         return documentoService.emitir(dto.id(), new DocumentoComercialEmitirDto("admin.demo"));
     }
     private DocumentoComercialDto criar(long cliente, String artigo, int quantidade, String obs) {
-        var header = new DocumentoComercialCreateDto("FT","DEMO26",LocalDate.of(2026,6,23),cliente,null,"001","EUR","CON",1001,"P30",1001,null,null,null,null,null,null,obs);
+        var header = new DocumentoComercialCreateDto("FT","DEMO26",LocalDate.of(2026,6,23),cliente,null,"001","EUR","CON","TFB","P30",1001,null,null,null,null,null,null,obs);
         return criacaoService.createComPrimeiraLinha(new DocumentoComercialComLinhaCreateDto(header, line(artigo, BigDecimal.valueOf(quantidade))));
     }
     private LinhaDocumentoComercialCreateDto line(String artigo, BigDecimal quantidade) {
@@ -101,7 +101,7 @@ public class DemoScenarioService {
     }
     private void pagar(long documentoId, BigDecimal value) {
         var p = pendenteRepository.findByDocumentoComercialId(documentoId).orElseThrow();
-        financeiroService.create(new DocumentoFinanceiroCreateDto("RC","DEMO26",LocalDate.of(2026,6,24),p.getCliente().getId(),"EUR",1001,null,"admin.demo","Recebimento demonstrativo",List.of(new LinhaDocumentoFinanceiroCreateDto(p.getId(),value,BigDecimal.ZERO,BigDecimal.ZERO))));
+        financeiroService.create(new DocumentoFinanceiroCreateDto("RC","DEMO26",LocalDate.of(2026,6,24),p.getCliente().getId(),"EUR","TFB",null,"admin.demo","Recebimento demonstrativo",List.of(new LinhaDocumentoFinanceiroCreateDto(p.getId(),value,BigDecimal.ZERO,BigDecimal.ZERO))));
     }
     private void saveUser(String code, String name, String email, String password, PapelUtilizador role) {
         Utilizador u = new Utilizador(code,name,email,passwordEncoder.encode(password),false); u.setPapel(role); utilizadorRepository.save(u);
