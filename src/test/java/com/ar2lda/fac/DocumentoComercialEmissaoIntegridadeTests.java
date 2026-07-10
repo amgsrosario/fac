@@ -88,7 +88,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         modo.setId("INT");
         modo.setNome("Transferência integridade");
         modo = mPagamentoRepository.save(modo);
-        Transporte transporte = transporteRepository.save(new Transporte("Transporte integridade"));
+        Transporte transporte = transporteRepository.save(new Transporte("INT", "Transporte integridade"));
 
         TipoDocumento tipo = new TipoDocumento(
                 "IC1", "Integridade emissão", null, null, null, null, 1, 1, 1, false);

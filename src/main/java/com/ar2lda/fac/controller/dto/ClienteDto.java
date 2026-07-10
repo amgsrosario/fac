@@ -22,5 +22,5 @@ public record ClienteDto(
         String mPagamentoId,
         String pPagamentoId,
         String rivaId,
-        Integer transporteId
+        String transporteId
 ) {}

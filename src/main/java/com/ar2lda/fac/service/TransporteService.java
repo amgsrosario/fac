@@ -27,23 +27,23 @@ public class TransporteService {
         return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public TransporteDto getById(Integer id) {
+    public TransporteDto getById(String id) {
         return mapper.toDTO(findEntityById(id));
     }
 
-    public void update(Integer id, TransporteUpdateDto dto) {
+    public void update(String id, TransporteUpdateDto dto) {
         Transporte existing = findEntityById(id);
         mapper.applyUpdate(dto, existing);
         repository.save(existing);
     }
 
-    public void delete(Integer id) {
+    public void delete(String id) {
         repository.delete(findEntityById(id));
         repository.flush();
     }
 
-    private Transporte findEntityById(Integer id) {
-        return repository.findById(id)
+    private Transporte findEntityById(String id) {
+        return repository.findById(id.toUpperCase())
                 .orElseThrow(() -> new NotFoundException("Transporte não encontrado: " + id));
     }
 }

@@ -20,7 +20,7 @@ public interface TransporteMapper {
         if (dto == null) {
             return null;
         }
-        return new Transporte(dto.nome());
+        return new Transporte(dto.id() == null ? null : dto.id().toUpperCase(), dto.nome());
     }
 
     default void applyUpdate(TransporteUpdateDto dto, @MappingTarget Transporte entity) {

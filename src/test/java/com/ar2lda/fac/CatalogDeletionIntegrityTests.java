@@ -35,7 +35,7 @@ class CatalogDeletionIntegrityTests {
         Moeda moeda = moedaRepository.save(new Moeda(
                 "ZXC", "Moeda integridade", BigDecimal.ONE, BigDecimal.ONE, "ZX", 2, "998"));
         CodPostal codPostal = codPostalRepository.save(new CodPostal("9999-998", "Local integridade"));
-        Transporte transporte = transporteRepository.save(new Transporte("Transporte integridade"));
+        Transporte transporte = transporteRepository.save(new Transporte("CDI", "Transporte integridade"));
 
         Cliente cliente = new Cliente();
         cliente.setNome("Cliente integridade");

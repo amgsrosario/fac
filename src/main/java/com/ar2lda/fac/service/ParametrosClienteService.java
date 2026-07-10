@@ -68,7 +68,7 @@ public class ParametrosClienteService {
     }
 
     private void applyRelations(String paisId, String moedaId, String rivaId, String mPagamentoId,
-                                String pPagamentoId, Integer transporteId, ParametrosCliente entity) {
+                                String pPagamentoId, String transporteId, ParametrosCliente entity) {
         entity.setPais(findPais(paisId));
         entity.setMoeda(findMoeda(moedaId));
         entity.setRiva(findRIva(rivaId));
@@ -107,9 +107,9 @@ public class ParametrosClienteService {
                 .orElseThrow(() -> new NotFoundException("Prazo de pagamento não encontrado: " + id));
     }
 
-    private Transporte findTransporte(Integer id) {
-        if (id == null) return null;
-        return transporteRepository.findById(id)
+    private Transporte findTransporte(String id) {
+        if (id == null || id.isBlank()) return null;
+        return transporteRepository.findById(id.toUpperCase())
                 .orElseThrow(() -> new NotFoundException("Transporte não encontrado: " + id));
     }
 }

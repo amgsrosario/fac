@@ -59,7 +59,7 @@ class DadosMestresImportExportTests {
     @Autowired
     private FamiliaRepository familiaRepository;
 
-    private Integer transporteId;
+    private String transporteId;
     private Long familiaId;
 
     @BeforeEach
@@ -70,7 +70,7 @@ class DadosMestresImportExportTests {
                 .orElseGet(() -> moedaRepository.save(new Moeda("EUR", "Euro", BigDecimal.ONE, BigDecimal.ONE, "EUR", 2, "978")));
         rIvaRepository.findById("CON")
                 .orElseGet(() -> rIvaRepository.save(new RIva("CON", "Continente")));
-        transporteId = transporteRepository.save(new Transporte("Transporte importacao")).getId();
+        transporteId = transporteRepository.save(new Transporte("IMP", "Transporte importacao")).getId();
         familiaId = familiaRepository.save(new Familia("Familia importacao")).getId();
     }
 
@@ -189,7 +189,7 @@ class DadosMestresImportExportTests {
     }
 
     private String clienteLine(String nome, String nif) {
-        return "%s;Rua A;;Agueda;%s;;;cliente.%s@fac.test;;;;false;false;Observacao;3750-029;PT;EUR;;;CON;%d\n"
+        return "%s;Rua A;;Agueda;%s;;;cliente.%s@fac.test;;;;false;false;Observacao;3750-029;PT;EUR;;;CON;%s\n"
                 .formatted(nome, nif, nif, transporteId);
     }
 

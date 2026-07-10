@@ -41,7 +41,7 @@ type Cliente = {
   mPagamentoId?: string;
   pPagamentoId?: string;
   rivaId?: string;
-  transporteId?: number;
+  transporteId?: string;
 };
 
 type CatalogoString = {
@@ -61,7 +61,7 @@ type ParametrosCliente = {
   rivaId?: string;
   mPagamentoId?: string;
   pPagamentoId?: string;
-  transporteId?: number;
+  transporteId?: string;
   retencao?: boolean;
 };
 
@@ -105,7 +105,7 @@ type ClienteCatalogos = {
   regimesIva: CatalogoString[];
   modosPagamento: CatalogoString[];
   prazosPagamento: CatalogoString[];
-  transportes: CatalogoNumero[];
+  transportes: CatalogoString[];
 };
 
 type ClienteColumnKey = "id" | "nome" | "nif" | "email" | "tel" | "localidade" | "paisId" | "moedaId" | "rivaId" | "estado";
@@ -339,7 +339,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
       fetchPage<CatalogoString>("/api/mpagamentos?size=100&sort=nome,asc"),
       fetchPage<CatalogoString>("/api/p-pagamentos?size=100&sort=nome,asc"),
-      fetchPage<CatalogoNumero>("/api/transportes?size=100&sort=nome,asc")
+      fetchPage<CatalogoString>("/api/transportes?size=100&sort=nome,asc")
     ]);
     setClienteCatalogos({
       paises: paises.content,
@@ -1326,7 +1326,7 @@ function parametrosClientePayload(form: ParametrosClienteForm) {
     rivaId: blankToNull(form.rivaId),
     mPagamentoId: form.mPagamentoId || null,
     pPagamentoId: blankToNull(form.pPagamentoId),
-    transporteId: numberOrNull(form.transporteId),
+    transporteId: form.transporteId || null,
     retencao: form.retencao === "" ? null : form.retencao === "true"
   };
 }
@@ -1388,7 +1388,7 @@ function clientePayload(form: ClienteForm) {
     mPagamentoId: form.mPagamentoId || null,
     pPagamentoId: blankToNull(form.pPagamentoId),
     rivaId: blankToNull(form.rivaId),
-    transporteId: numberOrNull(form.transporteId)
+    transporteId: form.transporteId || null
   };
 }
 

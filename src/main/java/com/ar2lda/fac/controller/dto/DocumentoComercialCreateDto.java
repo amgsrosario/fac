@@ -26,7 +26,7 @@ public record DocumentoComercialCreateDto(
         String rivaId,
         String mPagamentoId,
         String pPagamentoId,
-        Integer transporteId,
+        String transporteId,
         LocalDate dataCarga,
         LocalTime horaCarga,
         @Size(max = 100, message = "Matrícula deve ter no máximo 100 caracteres")

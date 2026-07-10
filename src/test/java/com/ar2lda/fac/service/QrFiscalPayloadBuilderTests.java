@@ -110,7 +110,7 @@ class QrFiscalPayloadBuilderTests {
                 "NOR",
                 "TFB",
                 "P30",
-                1,
+                "001",
                 "Cliente Lda",
                 clienteNif,
                 "Rua do Cliente, 10",

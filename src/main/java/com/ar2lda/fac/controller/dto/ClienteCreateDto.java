@@ -45,5 +45,5 @@ public record ClienteCreateDto(
         String pPagamentoId,
         String rivaId,
         @NotNull(message = "Transporte é obrigatório")
-        Integer transporteId
+        String transporteId
 ) {}

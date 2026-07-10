@@ -17,7 +17,7 @@ const configs: Config[] = [
   simpleNumber("familias", "Familias", "Comercial", "/api/familias", "descricao"),
   simpleCode("mpagamentos", "Modos de pagamento", "Comercial", "/api/mpagamentos", 30),
   { key: "ppagamentos", label: "Prazos de pagamento", group: "Comercial", endpoint: "/api/p-pagamentos", fields: [text("id", "Codigo", 3, true, true), text("nome", "Nome", 30, true), { key: "dias", label: "Dias", type: "number", required: true }], columns: [text("id", "Codigo", 0), text("nome", "Nome", 0), text("dias", "Dias", 0)] },
-  simpleNumber("transportes", "Transportes", "Comercial", "/api/transportes"),
+  simpleCode("transportes", "Transportes", "Comercial", "/api/transportes", 30),
   simpleCode("paises", "Paises", "Localizacao", "/api/paises", 50),
   { key: "moedas", label: "Moedas", group: "Sistema", endpoint: "/api/moedas", fields: [text("id", "Codigo ISO", 3, true, true), text("nome", "Nome", 30, true), text("simbolo", "Simbolo", 5, true), { key: "ndecimais", label: "Decimais", type: "number", required: true }, text("ciso", "Codigo ISO adicional", 10), { key: "vcompra", label: "Cambio compra", type: "number" }, { key: "vvenda", label: "Cambio venda", type: "number" }], columns: [text("id", "Codigo", 0), text("nome", "Nome", 0), text("simbolo", "Simbolo", 0), text("ndecimais", "Decimais", 0)] },
   { key: "taxas", label: "Taxas de IVA", group: "Fiscalidade", endpoint: "/api/tipos-taxa-iva", fields: [text("id", "Codigo", 20, true, true), text("descricao", "Descricao", 50, true), { key: "inativo", label: "Inativo", type: "checkbox" }], columns: [text("id", "Codigo", 0), text("descricao", "Descricao", 0), text("inativo", "Estado", 0)] },

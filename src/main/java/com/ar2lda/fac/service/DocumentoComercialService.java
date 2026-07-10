@@ -409,7 +409,7 @@ public class DocumentoComercialService {
 
     private void applyEditableFields(DocumentoComercial documento, Cliente cliente, Long moradaEnvioId, String armazemCargaId,
                                      String moedaId, String rivaId, String mPagamentoId, String pPagamentoId,
-                                     Integer transporteId, java.time.LocalDate dataCarga, java.time.LocalTime horaCarga,
+                                     String transporteId, java.time.LocalDate dataCarga, java.time.LocalTime horaCarga,
                                      String matricula, java.time.LocalDate dataDescarga, java.time.LocalTime horaDescarga,
                                      java.math.BigDecimal peso, String observacoes) {
         Morada moradaEnvio = findMoradaEnvio(moradaEnvioId, cliente);
@@ -561,11 +561,11 @@ public class DocumentoComercialService {
                 .orElseThrow(() -> new NotFoundException("Prazo de pagamento não encontrado: " + id));
     }
 
-    private Transporte findTransporteOrDefault(Integer id, Transporte defaultValue) {
-        if (id == null) {
+    private Transporte findTransporteOrDefault(String id, Transporte defaultValue) {
+        if (id == null || id.isBlank()) {
             return defaultValue;
         }
-        return transporteRepository.findById(id)
+        return transporteRepository.findById(id.toUpperCase())
                 .orElseThrow(() -> new NotFoundException("Transporte não encontrado: " + id));
     }
 

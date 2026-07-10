@@ -60,7 +60,7 @@ class ParametrosClienteControllerTests {
     private TransporteRepository transporteRepository;
 
     private String mPagamentoId;
-    private Integer transporteId;
+    private String transporteId;
 
     @BeforeEach
     void setup() {
@@ -82,7 +82,7 @@ class ParametrosClienteControllerTests {
         modo.setId("MPC");
         modo.setNome("Modo teste");
         mPagamentoId = mPagamentoRepository.save(modo).getId();
-        transporteId = transporteRepository.save(new Transporte("Transporte teste")).getId();
+        transporteId = transporteRepository.save(new Transporte("TPC", "Transporte teste")).getId();
         prazo.getId();
     }
 
@@ -167,7 +167,7 @@ class ParametrosClienteControllerTests {
                   "rivaId": "TST",
                   "mPagamentoId": "%s",
                   "pPagamentoId": "TST",
-                  "transporteId": %d,
+                  "transporteId": "%s",
                   "retencao": %s
                 }
                 """.formatted(mPagamentoId, transporteId, retencao);

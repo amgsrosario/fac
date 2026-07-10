@@ -48,7 +48,7 @@ type Cliente = {
   mPagamentoId?: string;
   pPagamentoId?: string;
   rivaId?: string;
-  transporteId?: number;
+  transporteId?: string;
 };
 
 type CatalogoString = {
@@ -68,7 +68,7 @@ type ClienteCatalogos = {
   regimesIva: CatalogoString[];
   modosPagamento: CatalogoString[];
   prazosPagamento: CatalogoString[];
-  transportes: CatalogoNumero[];
+  transportes: CatalogoString[];
 };
 
 type ClienteForm = {
@@ -166,7 +166,7 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
         fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/mpagamentos?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/p-pagamentos?size=100&sort=nome,asc"),
-        fetchPage<CatalogoNumero>("/api/transportes?size=100&sort=nome,asc")
+        fetchPage<CatalogoString>("/api/transportes?size=100&sort=nome,asc")
       ]);
       setClientes(clientesPage.content);
       setCatalogos({
@@ -835,7 +835,7 @@ function toPayload(form: ClienteForm) {
     mPagamentoId: form.mPagamentoId || null,
     pPagamentoId: blankToNull(form.pPagamentoId),
     rivaId: blankToNull(form.rivaId),
-    transporteId: numberOrNull(form.transporteId)
+    transporteId: form.transporteId || null
   };
 }
 

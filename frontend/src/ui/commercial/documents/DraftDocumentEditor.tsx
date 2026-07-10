@@ -23,7 +23,7 @@ type DocumentoComercial = {
   rivaId?: string | null;
   mPagamentoId?: string | null;
   pPagamentoId?: string | null;
-  transporteId?: number | null;
+  transporteId?: string | null;
   observacoes?: string | null;
   clienteNome?: string | null;
   valorBruto?: string | number | null;
@@ -67,7 +67,7 @@ type DocumentoImpressao = {
 
 type TipoDocumento = { id: string; descricao: string; areaGestao: number };
 type Serie = { serie: string; tipoDocumentoId: string; nome: string };
-type Cliente = { id: number; nome: string; nif: string; inativo: boolean; moedaId?: string | null; rivaId?: string | null; mPagamentoId?: string | null; pPagamentoId?: string | null; transporteId?: number | null };
+type Cliente = { id: number; nome: string; nif: string; inativo: boolean; moedaId?: string | null; rivaId?: string | null; mPagamentoId?: string | null; pPagamentoId?: string | null; transporteId?: string | null };
 type Artigo = { codigo: string; descricao: string; unidade: string; pvp: number; ivaVendaId: string; inativo: boolean };
 type CatalogoString = { id: string; nome: string };
 type CatalogoNumero = { id: number; nome: string };
@@ -83,7 +83,7 @@ type Catalogos = {
   series: Serie[];
   tiposDocumento: TipoDocumento[];
   tiposIva: TipoTaxaIva[];
-  transportes: CatalogoNumero[];
+  transportes: CatalogoString[];
   modosPagamento: CatalogoString[];
   prazosPagamento: CatalogoString[];
 };
@@ -811,7 +811,7 @@ async function loadCatalogos(): Promise<Catalogos> {
     fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
     fetchPage<CatalogoString>("/api/mpagamentos?size=100&sort=nome,asc"),
     fetchPage<CatalogoString>("/api/p-pagamentos?size=100&sort=nome,asc"),
-    fetchPage<CatalogoNumero>("/api/transportes?size=100&sort=nome,asc"),
+    fetchPage<CatalogoString>("/api/transportes?size=100&sort=nome,asc"),
     fetchPage<TipoTaxaIva>("/api/tipos-taxa-iva?size=100&sort=descricao,asc")
   ]);
   return {
@@ -910,7 +910,7 @@ function headerPayload(header: HeaderState) {
     rivaId: nullable(header.rivaId),
     mPagamentoId: header.mPagamentoId || null,
     pPagamentoId: nullable(header.pPagamentoId),
-    transporteId: nullableNumber(header.transporteId),
+    transporteId: header.transporteId || null,
     observacoes: nullable(header.observacoes)
   };
 }

@@ -33,18 +33,18 @@ public class TransporteController implements GenericController {
     }
 
     @GetMapping("/{id}")
-    public TransporteDto getById(@PathVariable Integer id) {
+    public TransporteDto getById(@PathVariable String id) {
         return service.getById(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Integer id, @RequestBody @Valid TransporteUpdateDto dto) {
+    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody @Valid TransporteUpdateDto dto) {
         service.update(id, dto);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

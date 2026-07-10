@@ -166,7 +166,7 @@ class DocumentoComercialControllerTests {
             prazo.setDias(30);
             return pPagamentoRepository.save(prazo);
         });
-        Transporte transporte = transporteRepository.save(new Transporte("Transporte documento"));
+        Transporte transporte = transporteRepository.save(new Transporte("DCT", "Transporte documento"));
         mPagamento = new MPagamento();
         mPagamento.setId("MDC");
         mPagamento.setNome("Transferencia");

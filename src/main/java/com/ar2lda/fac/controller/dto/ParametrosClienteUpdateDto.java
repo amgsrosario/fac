@@ -12,7 +12,7 @@ public record ParametrosClienteUpdateDto(
         String mPagamentoId,
         @Size(max = 3, message = "Prazo de pagamento deve ter no máximo 3 caracteres")
         String pPagamentoId,
-        Integer transporteId,
+        String transporteId,
         Boolean retencao
 ) {
 }

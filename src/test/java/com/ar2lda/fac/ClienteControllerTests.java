@@ -43,7 +43,7 @@ class ClienteControllerTests {
     @Autowired
     private TransporteRepository transporteRepository;
 
-    private Integer transporteId;
+    private String transporteId;
 
     @BeforeEach
     void setup() {
@@ -53,7 +53,7 @@ class ClienteControllerTests {
                 .orElseGet(() -> moedaRepository.save(new Moeda("EUR", "Euro", BigDecimal.ONE, BigDecimal.ONE, "EUR", 2, "978")));
         rIvaRepository.findById("CON")
                 .orElseGet(() -> rIvaRepository.save(new RIva("CON", "Continente")));
-        transporteId = transporteRepository.save(new Transporte("Transporte teste")).getId();
+        transporteId = transporteRepository.save(new Transporte("CLI", "Transporte teste")).getId();
     }
 
     @Test
@@ -72,7 +72,7 @@ class ClienteControllerTests {
                                   "codPostalId": "3750-003",
                                   "paisId": "PT",
                                   "moedaId": "EUR",
-                                  "transporteId": %d
+                                  "transporteId": "%s"
                                 }
                                 """.formatted(transporteId)))
                 .andExpect(status().isCreated())

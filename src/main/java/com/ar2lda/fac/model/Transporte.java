@@ -15,14 +15,20 @@ import lombok.ToString;
 public class Transporte {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(length = 3, nullable = false)
+    @Setter
     @ToString.Include
-    private Integer id;
+    private String id;
 
     @Column(length = 30, nullable = false)
     @Setter
     @ToString.Include
     private String nome;
+
+    public Transporte(String id, String nome){
+        this.id=id;
+        this.nome=nome;
+    }
 
     public Transporte(String nome){
         this.nome=nome;

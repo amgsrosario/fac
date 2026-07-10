@@ -87,7 +87,7 @@ public class ClienteService {
     }
 
     private void applyRelations(String codPostalId, String paisId, String moedaId, String mPagamentoId, String pPagamentoId,
-                                String rivaId, Integer transporteId, Cliente cliente) {
+                                String rivaId, String transporteId, Cliente cliente) {
         cliente.setCodPostal(findCodPostal(codPostalId));
         cliente.setPais(findPais(paisId));
         cliente.setMoeda(findMoeda(moedaId));
@@ -130,8 +130,8 @@ public class ClienteService {
                 .orElseThrow(() -> new NotFoundException("Regime de IVA não encontrado: " + id));
     }
 
-    private Transporte findTransporte(Integer id) {
-        return transporteRepository.findById(id)
+    private Transporte findTransporte(String id) {
+        return transporteRepository.findById(id.toUpperCase())
                 .orElseThrow(() -> new NotFoundException("Transporte não encontrado: " + id));
     }
 

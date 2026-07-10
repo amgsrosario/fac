@@ -48,7 +48,7 @@ type DocumentoComercial = {
   rivaId?: string | null;
   mPagamentoId?: string | null;
   pPagamentoId?: string | null;
-  transporteId?: number | null;
+  transporteId?: string | null;
   clienteNome: string;
   clienteNif: string;
   clienteMorada?: string | null;
@@ -132,7 +132,7 @@ type Cliente = {
   rivaId?: string | null;
   mPagamentoId?: string | null;
   pPagamentoId?: string | null;
-  transporteId?: number | null;
+  transporteId?: string | null;
 };
 
 type Artigo = {
@@ -174,7 +174,7 @@ type Catalogos = {
   series: Serie[];
   tiposDocumento: TipoDocumento[];
   tiposIva: TipoTaxaIva[];
-  transportes: CatalogoNumero[];
+  transportes: CatalogoString[];
   modosPagamento: CatalogoString[];
   prazosPagamento: CatalogoString[];
 };
@@ -290,7 +290,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
         fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/mpagamentos?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/p-pagamentos?size=100&sort=nome,asc"),
-        fetchPage<CatalogoNumero>("/api/transportes?size=100&sort=nome,asc"),
+        fetchPage<CatalogoString>("/api/transportes?size=100&sort=nome,asc"),
         fetchPage<TipoTaxaIva>("/api/tipos-taxa-iva?size=100&sort=descricao,asc")
       ]);
       const commercialTypes = tiposPage.content.filter((tipo) => tipo.areaGestao === 2);
@@ -391,7 +391,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
           rivaId: nullable(form.rivaId),
           mPagamentoId: form.mPagamentoId || null,
           pPagamentoId: nullable(form.pPagamentoId),
-          transporteId: nullableNumber(form.transporteId),
+          transporteId: form.transporteId || null,
           observacoes: nullable(form.observacoes)
         },
         linha: {

@@ -52,7 +52,7 @@ class DocumentoFinanceiroPdfServiceTests {
                 BigDecimal.ZERO, "CRC Agueda", "62010", "Programacao", "fac@example.pt", "https://fac.example.pt");
         ClienteDto cliente = new ClienteDto(1001L, "Cliente Lda", "Rua do Cliente, 10", null, "Agueda",
                 "509999990", null, null, "cliente@example.pt", null, null, null, false, false, null,
-                "3750-001", "PT", "EUR", "TFB", "P30", "CON", 1001);
+                "3750-001", "PT", "EUR", "TFB", "P30", "CON", "001");
         LinhaDocumentoFinanceiroDto linha = new LinhaDocumentoFinanceiroDto(1L, 1, 10L,
                 LocalDate.of(2026, 6, 8), LocalDate.of(2026, 7, 8), "FT", 9L, "2026",
                 new BigDecimal("123.00"), new BigDecimal("123.00"), new BigDecimal("50.00"),
