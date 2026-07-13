@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ArtigosView from "./ArtigosView";
 import DocumentosView from "./DocumentosView";
@@ -222,17 +222,16 @@ const menuGroups: MenuGroup[] = [
     ]
   },
   { title: "Tesouraria", items: [{ label: "Tesouraria", hint: "Recebimentos" }] },
-  { title: "Analise", items: [{ label: "Listagens", hint: "Consulta e analise" }] },
-  { title: "Configuracao", items: [{ label: "Configuracao", hint: "Base FAC" }] },
-  {
-    title: "Administracao",
-    items: [
-      { label: "ImportExport", hint: "Dados mestres" },
-      { label: "Auditoria", hint: "Rastreabilidade" }
-    ]
-  }
+  { title: "Analise", items: [{ label: "Listagens", hint: "Consulta e analise" }] }
 ];
-const menu: MenuItem[] = menuGroups.flatMap((group) => group.items);
+
+const adminMenuItems: MenuItem[] = [
+  { label: "Configuracao", hint: "Base FAC" },
+  { label: "Auditoria", hint: "Rastreabilidade" },
+  { label: "ImportExport", hint: "Dados mestres" }
+];
+
+const navigationItems: MenuItem[] = [...menuGroups.flatMap((group) => group.items), ...adminMenuItems];
 
 const emptyClienteForm: ClienteForm = {
   nome: "",
@@ -278,8 +277,10 @@ type AppProps = {
 function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout }: AppProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const adminAccessRef = useRef<HTMLDivElement>(null);
   const navigationView = viewFromNavigationState(location.state);
   const [activeView, setActiveView] = useState<ViewKey>(navigationView ?? initialView);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [clientes, setClientes] = useState<Page<Cliente> | null>(null);
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(null);
@@ -549,6 +550,33 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     }
   }, [shellView]);
 
+  useEffect(() => {
+    setAdminMenuOpen(false);
+  }, [shellView]);
+
+  useEffect(() => {
+    if (!adminMenuOpen) return;
+
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!adminAccessRef.current?.contains(event.target as Node)) {
+        setAdminMenuOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setAdminMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [adminMenuOpen]);
+
   function selectView(view: ViewKey) {
     setActiveView(view);
     if (view === "Dashboard") {
@@ -558,6 +586,11 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     } else {
       navigate("/", { state: { activeView: view } });
     }
+  }
+
+  function selectAdminView(view: ViewKey) {
+    selectView(view);
+    setAdminMenuOpen(false);
   }
 
   const saldoPendente = useMemo(
@@ -594,6 +627,8 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   const visibleMenuGroups = menuGroups
     .map((group) => ({ ...group, items: group.items.filter(canShowMenuItem) }))
     .filter((group) => group.items.length > 0);
+  const visibleAdminMenuItems = adminMenuItems.filter(canShowMenuItem);
+  const isAdminView = visibleAdminMenuItems.some((item) => item.label === shellView);
 
   function canShowMenuItem(item: MenuItem) {
     if (item.label === "Auditoria") return currentUser.permissoes?.includes("AUDITORIA_CONSULTAR");
@@ -647,6 +682,38 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             <h1>{viewTitle(shellView)}</h1>
           </div>
           <div className="fac-topbar-actions">
+            {visibleAdminMenuItems.length > 0 && (
+              <div className="fac-admin-access" ref={adminAccessRef}>
+                <button
+                  aria-expanded={adminMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label="Administração e configuração"
+                  className={`fac-admin-trigger${isAdminView ? " active" : ""}`}
+                  onClick={() => setAdminMenuOpen((open) => !open)}
+                  title="Administração e configuração"
+                  type="button"
+                >
+                  <i aria-hidden="true" className="pi pi-shield" />
+                </button>
+                {adminMenuOpen && (
+                  <div className="fac-admin-menu" role="menu">
+                    <p>Administração</p>
+                    {visibleAdminMenuItems.map((item) => (
+                      <button
+                        className={shellView === item.label ? "active" : ""}
+                        key={item.label}
+                        onClick={() => selectAdminView(item.label)}
+                        role="menuitem"
+                        type="button"
+                      >
+                        <span>{item.label === "ImportExport" ? "Importar/Exportar" : item.label}</span>
+                        <small>{item.hint}</small>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.papel} · {currentUser.codigo}</small></div>
             <input
               onChange={(event) => setClienteSearch(event.target.value)}
@@ -1446,7 +1513,7 @@ function datePt(value: string) {
 function viewFromNavigationState(state: unknown): ViewKey | null {
   if (!state || typeof state !== "object" || !("activeView" in state)) return null;
   const view = (state as { activeView?: unknown }).activeView;
-  return typeof view === "string" && menu.some((item) => item.label === view) ? view as ViewKey : null;
+  return typeof view === "string" && navigationItems.some((item) => item.label === view) ? view as ViewKey : null;
 }
 
 function todayIso() {
