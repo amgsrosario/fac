@@ -208,17 +208,31 @@ type DashboardData = {
   financeiros: Page<DocumentoFinanceiro>;
 };
 
-const menu: { label: ViewKey; hint: string }[] = [
-  { label: "Dashboard", hint: "Visao geral" },
-  { label: "Clientes", hint: "Conta corrente" },
-  { label: "Documentos", hint: "Faturacao" },
-  { label: "Artigos", hint: "Catalogo" },
-  { label: "Tesouraria", hint: "Recebimentos" },
-  { label: "Listagens", hint: "Consulta e analise" },
-  { label: "ImportExport", hint: "Dados mestres" },
-  { label: "Auditoria", hint: "Rastreabilidade" },
-  { label: "Configuracao", hint: "Base FAC" }
+type MenuItem = { label: ViewKey; hint: string };
+type MenuGroup = { title: string; items: MenuItem[] };
+
+const menuGroups: MenuGroup[] = [
+  { title: "Dashboard", items: [{ label: "Dashboard", hint: "Visao geral" }] },
+  { title: "Vendas", items: [{ label: "Documentos", hint: "Faturacao" }] },
+  {
+    title: "Dados comerciais",
+    items: [
+      { label: "Clientes", hint: "Conta corrente" },
+      { label: "Artigos", hint: "Catalogo" }
+    ]
+  },
+  { title: "Tesouraria", items: [{ label: "Tesouraria", hint: "Recebimentos" }] },
+  { title: "Analise", items: [{ label: "Listagens", hint: "Consulta e analise" }] },
+  { title: "Configuracao", items: [{ label: "Configuracao", hint: "Base FAC" }] },
+  {
+    title: "Administracao",
+    items: [
+      { label: "ImportExport", hint: "Dados mestres" },
+      { label: "Auditoria", hint: "Rastreabilidade" }
+    ]
+  }
 ];
+const menu: MenuItem[] = menuGroups.flatMap((group) => group.items);
 
 const emptyClienteForm: ClienteForm = {
   nome: "",
@@ -577,6 +591,16 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 
   const selectedCliente = clientes?.content.find((cliente) => cliente.id === selectedClienteId) ?? null;
   const contaResumo = contaCorrente?.totais[0] ?? null;
+  const visibleMenuGroups = menuGroups
+    .map((group) => ({ ...group, items: group.items.filter(canShowMenuItem) }))
+    .filter((group) => group.items.length > 0);
+
+  function canShowMenuItem(item: MenuItem) {
+    if (item.label === "Auditoria") return currentUser.permissoes?.includes("AUDITORIA_CONSULTAR");
+    if (item.label === "Configuracao") return currentUser.permissoes?.includes("CONFIGURACAO_GERIR");
+    if (item.label === "ImportExport") return currentUser.permissoes?.includes("DADOS_MESTRES_IMPORTAR") || currentUser.permissoes?.includes("DADOS_MESTRES_EXPORTAR");
+    return true;
+  }
 
   const metrics = [
     { label: "Saldo pendente", value: `${money(saldoPendente)} EUR`, tone: "client" },
@@ -597,21 +621,21 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         </div>
 
         <nav className="fac-menu" aria-label="Navegacao principal">
-          {menu.filter((item) => {
-            if (item.label === "Auditoria") return currentUser.permissoes?.includes("AUDITORIA_CONSULTAR");
-            if (item.label === "Configuracao") return currentUser.permissoes?.includes("CONFIGURACAO_GERIR");
-            if (item.label === "ImportExport") return currentUser.permissoes?.includes("DADOS_MESTRES_IMPORTAR") || currentUser.permissoes?.includes("DADOS_MESTRES_EXPORTAR");
-            return true;
-          }).map((item) => (
-            <button
-              className={shellView === item.label ? "active" : ""}
-              key={item.label}
-              onClick={() => selectView(item.label)}
-              type="button"
-            >
-              <span>{item.label === "ImportExport" ? "Importar/Exportar" : item.label}</span>
-              <small>{item.hint}</small>
-            </button>
+          {visibleMenuGroups.map((group) => (
+            <section className="fac-menu-section" key={group.title}>
+              <p>{group.title}</p>
+              {group.items.map((item) => (
+                <button
+                  className={shellView === item.label ? "active" : ""}
+                  key={item.label}
+                  onClick={() => selectView(item.label)}
+                  type="button"
+                >
+                  <span>{item.label === "ImportExport" ? "Importar/Exportar" : item.label}</span>
+                  <small>{item.hint}</small>
+                </button>
+              ))}
+            </section>
           ))}
         </nav>
       </aside>

@@ -76,7 +76,21 @@
 .fac-commercial-nav nav {
   display: grid;
   align-content: start;
+  gap: var(--fac-space-4);
+}
+
+.fac-commercial-nav-section {
+  display: grid;
   gap: var(--fac-space-2);
+}
+
+.fac-commercial-nav-section p {
+  margin: 0;
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .fac-commercial-nav a {
