@@ -64,15 +64,15 @@ type ServiceForm = {
   pvp: string;
   ivaVendaId: string;
   inativo: boolean;
+  retencao: boolean;
+  observacoes: string;
 };
 
 type HiddenDefaults = {
   ivaCompraId: string;
   peso: string;
-  retencao: boolean;
   abreviatura: string;
   codigoIdentificacao: string;
-  observacoes: string;
 };
 
 type EditorMode = "create" | "edit";
@@ -85,7 +85,9 @@ const emptyForm: ServiceForm = {
   unidade: "UN",
   pvp: "0",
   ivaVendaId: "",
-  inativo: false
+  inativo: false,
+  retencao: false,
+  observacoes: ""
 };
 
 const servicesCapabilities = getCapabilities(DEFAULT_PRODUCT_PROFILE);
@@ -189,7 +191,9 @@ export default function ArticlesView({
       unidade: service.unidade,
       pvp: String(service.pvp),
       ivaVendaId: service.ivaVendaId,
-      inativo: service.inativo
+      inativo: service.inativo,
+      retencao: service.retencao,
+      observacoes: service.observacoes ?? ""
     });
     setEditorMessage(null);
     setEditorOpen(true);
@@ -616,6 +620,15 @@ function ServiceEditorDialog(props: Parameters<typeof ServicesContent>[0]) {
   );
 }
 
+function FormSection({ children, title }: { children: ReactNode; title: string }) {
+  return (
+    <fieldset className="fac-services-form-section">
+      <legend>{title}</legend>
+      <div className="fac-services-form-grid">{children}</div>
+    </fieldset>
+  );
+}
+
 function ServiceFormFields({
   defaults,
   editorMessage,
@@ -628,6 +641,7 @@ function ServiceFormFields({
   saving,
   tiposIva
 }: Parameters<typeof ServicesContent>[0]) {
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
   const ivaOptions = tiposIva.map((tipo) => ({
     label: `${tipo.descricao}${tipo.inativo && tipo.id !== form.ivaVendaId ? " (inativo)" : ""}`,
     value: tipo.id
@@ -637,60 +651,92 @@ function ServiceFormFields({
     value: String(familia.id)
   }));
 
+  useEffect(() => {
+    setMoreOptionsOpen(editorMode === "edit" && Boolean(form.familiaId || form.observacoes.trim() || form.retencao || form.inativo));
+  }, [editorMode, form.codigo]);
+
   return (
     <form className="fac-services-form" onSubmit={onSave}>
       {editorMessage && <FacMessage tone="error" title="Validacao">{editorMessage}</FacMessage>}
-      <div className="fac-services-form-grid">
-        <FacInputText
-          disabled={editorMode === "edit"}
-          label="Codigo"
-          maxLength={50}
-          onChange={(event) => onChangeForm({ ...form, codigo: normalizeCode(event.target.value) })}
-          required
-          value={form.codigo}
-        />
-        <FacInputText
-          label="Descricao"
-          maxLength={80}
-          onChange={(event) => onChangeForm({ ...form, descricao: event.target.value })}
-          required
-          value={form.descricao}
-        />
-        <FacSelect
-          label="Familia"
-          onChange={(value) => onChangeForm({ ...form, familiaId: value ?? "" })}
-          options={familiaOptions}
-          value={form.familiaId}
-        />
-        <FacSelect
-          label="Unidade"
-          onChange={(value) => onChangeForm({ ...form, unidade: value ?? "" })}
-          options={serviceUnitOptions}
-          value={form.unidade}
-        />
-        <FacInputText
-          label="Preco sem IVA"
-          min="0"
-          onChange={(event) => onChangeForm({ ...form, pvp: event.target.value })}
-          required
-          step="0.000001"
-          type="number"
-          value={form.pvp}
-        />
-        <FacSelect
-          label="Taxa de IVA"
-          onChange={(value) => onChangeForm({ ...form, ivaVendaId: value ?? "" })}
-          options={ivaOptions}
-          value={form.ivaVendaId}
-        />
-        <label className="fac-services-check">
-          <input
-            checked={!form.inativo}
-            onChange={(event) => onChangeForm({ ...form, inativo: !event.target.checked })}
-            type="checkbox"
+      <div className="fac-services-form-sections">
+        <FormSection title="Identificacao">
+          <FacInputText
+            disabled={editorMode === "edit"}
+            label="Codigo"
+            maxLength={50}
+            onChange={(event) => onChangeForm({ ...form, codigo: normalizeCode(event.target.value) })}
+            required
+            value={form.codigo}
           />
-          <span>Artigo ativo</span>
-        </label>
+          <FacInputText
+            label="Descricao"
+            maxLength={80}
+            onChange={(event) => onChangeForm({ ...form, descricao: event.target.value })}
+            required
+            value={form.descricao}
+          />
+          <FacSelect
+            label="Unidade"
+            onChange={(value) => onChangeForm({ ...form, unidade: value ?? "" })}
+            options={serviceUnitOptions}
+            value={form.unidade}
+          />
+        </FormSection>
+
+        <FormSection title="Preco e fiscalidade">
+          <FacInputText
+            label="Preco sem IVA"
+            min="0"
+            onChange={(event) => onChangeForm({ ...form, pvp: event.target.value })}
+            required
+            step="0.000001"
+            type="number"
+            value={form.pvp}
+          />
+          <FacSelect
+            label="Taxa de IVA"
+            onChange={(value) => onChangeForm({ ...form, ivaVendaId: value ?? "" })}
+            options={ivaOptions}
+            value={form.ivaVendaId}
+          />
+        </FormSection>
+
+        <section className={`fac-services-more-options${moreOptionsOpen ? " open" : ""}`}>
+          <button
+            aria-controls="fac-service-more-options"
+            aria-expanded={moreOptionsOpen}
+            className="fac-services-more-trigger"
+            onClick={() => setMoreOptionsOpen((open) => !open)}
+            type="button"
+          >
+            <span>Mais opções</span>
+            {(form.familiaId || form.observacoes.trim() || form.retencao || form.inativo) && <small>Com valores</small>}
+          </button>
+          <div className="fac-services-form-grid" hidden={!moreOptionsOpen} id="fac-service-more-options">
+            <FacSelect
+              label="Familia"
+              onChange={(value) => onChangeForm({ ...form, familiaId: value ?? "" })}
+              options={familiaOptions}
+              value={form.familiaId}
+            />
+            <label className="fac-services-textarea">
+              <span>Observacoes</span>
+              <textarea maxLength={250} onChange={(event) => onChangeForm({ ...form, observacoes: event.target.value })} value={form.observacoes} />
+            </label>
+            <label className="fac-services-check">
+              <input checked={form.retencao} onChange={(event) => onChangeForm({ ...form, retencao: event.target.checked })} type="checkbox" />
+              <span>Sujeito a retencao</span>
+            </label>
+            <label className="fac-services-check">
+              <input
+                checked={!form.inativo}
+                onChange={(event) => onChangeForm({ ...form, inativo: !event.target.checked })}
+                type="checkbox"
+              />
+              <span>Artigo ativo</span>
+            </label>
+          </div>
+        </section>
       </div>
       <div className="fac-services-form-footer">
         <FacButton label="Cancelar" onClick={onCloseEditor} type="button" variant="ghost" />
@@ -829,8 +875,8 @@ function toPayload(form: ServiceForm, defaults: HiddenDefaults, creating: boolea
     ivaVendaId: form.ivaVendaId,
     pvp: Number(form.pvp),
     inativo: form.inativo,
-    retencao: defaults.retencao,
-    observacoes: blankToNull(defaults.observacoes)
+    retencao: form.retencao,
+    observacoes: blankToNull(form.observacoes)
   };
 }
 
@@ -841,10 +887,8 @@ function resolveHiddenDefaults(tiposIva: TipoTaxaIva[], selected: Artigo | null)
   return {
     ivaCompraId: ivaCompra?.id ?? "",
     peso: String(selected?.peso ?? 0),
-    retencao: selected?.retencao ?? false,
     abreviatura: selected?.abreviatura ?? "",
-    codigoIdentificacao: selected?.codigoIdentificacao ?? "",
-    observacoes: selected?.observacoes ?? ""
+    codigoIdentificacao: selected?.codigoIdentificacao ?? ""
   };
 }
 

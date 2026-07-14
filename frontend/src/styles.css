@@ -1202,6 +1202,54 @@ button:disabled {
   gap: 15px;
 }
 
+.fac-article-form-sections {
+  display: grid;
+  gap: 16px;
+}
+
+.fac-article-form-section,
+.fac-article-more-options {
+  min-width: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: 16px;
+  padding: 16px;
+  background: var(--fac-sidebar);
+}
+
+.fac-article-form-section legend {
+  padding: 0 8px;
+  color: var(--fac-petrol);
+  font-weight: 800;
+}
+
+.fac-article-more-options-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  color: var(--fac-petrol);
+  background: transparent;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fac-article-more-options-trigger small {
+  color: var(--fac-gold);
+  font-size: 0.78rem;
+}
+
+.fac-article-more-options-trigger:focus-visible {
+  border-radius: 10px;
+  outline: 3px solid rgba(186, 150, 60, 0.24);
+  outline-offset: 6px;
+}
+
+.fac-article-more-options .fac-form-grid {
+  margin-top: 16px;
+}
+
 .fac-client-form-sections {
   display: grid;
   gap: 16px;

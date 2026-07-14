@@ -175,10 +175,57 @@
   gap: var(--fac-space-4);
 }
 
+.fac-services-form-sections {
+  display: grid;
+  gap: var(--fac-space-4);
+}
+
+.fac-services-form-section,
+.fac-services-more-options {
+  min-width: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  padding: var(--fac-space-4);
+}
+
+.fac-services-form-section legend {
+  padding: 0 var(--fac-space-2);
+  color: var(--fac-petrol);
+  font-weight: 800;
+}
+
 .fac-services-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--fac-space-4);
+}
+
+.fac-services-more-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  color: var(--fac-petrol);
+  background: transparent;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fac-services-more-trigger small {
+  color: var(--fac-gold);
+  font-size: var(--fac-font-size-xs);
+}
+
+.fac-services-more-trigger:focus-visible {
+  border-radius: var(--fac-radius-sm);
+  outline: 3px solid rgba(186, 150, 60, 0.24);
+  outline-offset: var(--fac-space-2);
+}
+
+.fac-services-more-options .fac-services-form-grid {
+  margin-top: var(--fac-space-4);
 }
 
 .fac-services-check {
@@ -187,6 +234,23 @@
   align-items: center;
   min-height: var(--fac-control-height);
   padding-top: 1.5rem;
+}
+
+.fac-services-textarea {
+  display: grid;
+  gap: var(--fac-space-1);
+  min-width: 0;
+}
+
+.fac-services-textarea span {
+  color: var(--fac-text-muted);
+  font-size: var(--fac-font-size-sm);
+  font-weight: 700;
+}
+
+.fac-services-textarea textarea {
+  min-height: 5.5rem;
+  resize: vertical;
 }
 
 .fac-services-check input {

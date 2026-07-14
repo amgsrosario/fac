@@ -92,6 +92,7 @@ export default function ArtigosView() {
   const [columnEditorOpen, setColumnEditorOpen] = useState(false);
   const artigoColumns = useConfiguredColumns("fac.artigos.colunas", ARTIGO_COLUMNS);
   const [form, setForm] = useState<ArtigoForm>(emptyForm);
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -99,6 +100,11 @@ export default function ArtigosView() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!editorOpen) return;
+    setMoreOptionsOpen(Boolean(editingCodigo && (form.familiaId || form.observacoes.trim() || form.retencao || form.inativo)));
+  }, [editorOpen, editingCodigo]);
 
   async function loadData() {
     setLoading(true);
@@ -197,31 +203,48 @@ export default function ArtigosView() {
 
         {message && <p className="fac-message">{message}</p>}
 
-        <div className="fac-form-grid">
-          <Field label="Codigo">
-            <input disabled={editingCodigo != null} maxLength={50} onChange={(event) => change("codigo", normalizeCode(event.target.value))} value={form.codigo} />
-          </Field>
-          <Field label="Abreviatura"><input maxLength={30} onChange={(event) => change("abreviatura", event.target.value)} value={form.abreviatura} /></Field>
-          <Field label="Codigo de identificacao"><input maxLength={100} onChange={(event) => change("codigoIdentificacao", event.target.value)} value={form.codigoIdentificacao} /></Field>
-          <Field label="Descricao"><input maxLength={80} onChange={(event) => change("descricao", event.target.value)} value={form.descricao} /></Field>
-          <Field label="Unidade"><input maxLength={3} onChange={(event) => change("unidade", event.target.value.toUpperCase())} value={form.unidade} /></Field>
-          <Field label="Familia">
-            <select onChange={(event) => change("familiaId", event.target.value)} value={form.familiaId}>
-              <option value="">Selecionar</option>
-              {familias.map((familia) => <option key={familia.id} value={familia.id}>{familia.descricao}</option>)}
-            </select>
-          </Field>
-          <Field label="Peso"><input min="0" onChange={(event) => change("peso", event.target.value)} step="0.001" type="number" value={form.peso} /></Field>
-          <Field label="IVA na venda">
-            <select onChange={(event) => change("ivaVendaId", event.target.value)} value={form.ivaVendaId}>
-              <option value="">Selecionar</option>
-              {tiposIva.map((tipo) => <option disabled={tipo.inativo && tipo.id !== form.ivaVendaId} key={tipo.id} value={tipo.id}>{tipo.descricao}{tipo.inativo ? " (inativo)" : ""}</option>)}
-            </select>
-          </Field>
-          <Field label="PVP"><input min="0" onChange={(event) => change("pvp", event.target.value)} step="0.000001" type="number" value={form.pvp} /></Field>
-          <label className="fac-check-field"><input checked={form.retencao} onChange={(event) => change("retencao", event.target.checked)} type="checkbox" /><span>Sujeito a retencao</span></label>
-          <label className="fac-check-field"><input checked={form.inativo} onChange={(event) => change("inativo", event.target.checked)} type="checkbox" /><span>Artigo inativo</span></label>
-          <Field label="Observacoes"><textarea maxLength={250} onChange={(event) => change("observacoes", event.target.value)} value={form.observacoes} /></Field>
+        <div className="fac-article-form-sections">
+          <FormSection title="Identificacao">
+            <Field label="Codigo">
+              <input disabled={editingCodigo != null} maxLength={50} onChange={(event) => change("codigo", normalizeCode(event.target.value))} value={form.codigo} />
+            </Field>
+            <Field label="Descricao"><input maxLength={80} onChange={(event) => change("descricao", event.target.value)} value={form.descricao} /></Field>
+            <Field label="Unidade"><input maxLength={3} onChange={(event) => change("unidade", event.target.value.toUpperCase())} value={form.unidade} /></Field>
+          </FormSection>
+
+          <FormSection title="Preco e fiscalidade">
+            <Field label="PVP"><input min="0" onChange={(event) => change("pvp", event.target.value)} step="0.000001" type="number" value={form.pvp} /></Field>
+            <Field label="IVA na venda">
+              <select onChange={(event) => change("ivaVendaId", event.target.value)} value={form.ivaVendaId}>
+                <option value="">Selecionar</option>
+                {tiposIva.map((tipo) => <option disabled={tipo.inativo && tipo.id !== form.ivaVendaId} key={tipo.id} value={tipo.id}>{tipo.descricao}{tipo.inativo ? " (inativo)" : ""}</option>)}
+              </select>
+            </Field>
+          </FormSection>
+
+          <section className={`fac-article-more-options ${moreOptionsOpen ? "open" : ""}`}>
+            <button
+              aria-controls="fac-article-more-options"
+              aria-expanded={moreOptionsOpen}
+              className="fac-article-more-options-trigger"
+              onClick={() => setMoreOptionsOpen((open) => !open)}
+              type="button"
+            >
+              <span>Mais opções</span>
+              {(form.familiaId || form.observacoes.trim() || form.retencao || form.inativo) && <small>Com valores</small>}
+            </button>
+            <div className="fac-form-grid" hidden={!moreOptionsOpen} id="fac-article-more-options">
+              <Field label="Familia">
+                <select onChange={(event) => change("familiaId", event.target.value)} value={form.familiaId}>
+                  <option value="">Selecionar</option>
+                  {familias.map((familia) => <option key={familia.id} value={familia.id}>{familia.descricao}</option>)}
+                </select>
+              </Field>
+              <Field label="Observacoes"><textarea maxLength={250} onChange={(event) => change("observacoes", event.target.value)} value={form.observacoes} /></Field>
+              <label className="fac-check-field"><input checked={form.retencao} onChange={(event) => change("retencao", event.target.checked)} type="checkbox" /><span>Sujeito a retencao</span></label>
+              <label className="fac-check-field"><input checked={form.inativo} onChange={(event) => change("inativo", event.target.checked)} type="checkbox" /><span>Artigo inativo</span></label>
+            </div>
+          </section>
         </div>
 
         <div className="fac-form-footer">
@@ -307,6 +330,15 @@ function artigoColumnValue(artigo: Artigo, key: string, familias: Familia[]) {
 
 function Field({ children, label }: { children: React.ReactNode; label: string }) {
   return <label className="fac-field"><span>{label}</span>{children}</label>;
+}
+
+function FormSection({ children, title }: { children: React.ReactNode; title: string }) {
+  return (
+    <fieldset className="fac-article-form-section">
+      <legend>{title}</legend>
+      <div className="fac-form-grid">{children}</div>
+    </fieldset>
+  );
 }
 
 async function fetchPage<T>(url: string): Promise<Page<T>> {
