@@ -8,6 +8,8 @@ type Values = Record<string, string | boolean>;
 type Feedback = { kind: "info" | "success" | "error"; text: string };
 type Field = { key: string; label: string; type?: "text" | "number" | "checkbox"; required?: boolean; maxLength?: number; createOnly?: boolean };
 type Config = { key: string; label: string; group: string; endpoint: string; fields: Field[]; columns: Field[] };
+type TableEntry = { key: string; label: string; description: string; kind: "generic" | "specific" };
+type TableCategory = { key: string; title: string; description: string; items: TableEntry[] };
 
 const text = (key: string, label: string, maxLength: number, required = false, createOnly = false): Field => ({ key, label, maxLength, required, createOnly });
 const simpleNumber = (key: string, label: string, group: string, endpoint: string, field = "nome"): Config => ({ key, label, group, endpoint, fields: [text(field, field === "nome" ? "Nome" : "Descricao", 30, true)], columns: [text("id", "ID", 0), text(field, field === "nome" ? "Nome" : "Descricao", 0)] });
@@ -25,6 +27,45 @@ const configs: Config[] = [
   { key: "isencoes", label: "Motivos de isencao", group: "Fiscalidade", endpoint: "/api/motivos-isencao", fields: [text("id", "Codigo", 3, true, true), text("nome", "Nome", 60, true), text("ivaSaftId", "IVA SAF-T", 3, true)], columns: [text("id", "Codigo", 0), text("nome", "Nome", 0), text("ivaSaftId", "IVA SAF-T", 0)] }
 ];
 
+const tableCategories: TableCategory[] = [
+  {
+    key: "comercial",
+    title: "Configuracao comercial",
+    description: "Elementos usados na operacao comercial e na emissao de documentos.",
+    items: [
+      { key: "series", label: "Series", description: "Series documentais e numeradores", kind: "specific" },
+      { key: "mpagamentos", label: "Modos de pagamento", description: "Formas de liquidacao", kind: "generic" },
+      { key: "ppagamentos", label: "Prazos de pagamento", description: "Condicoes e dias de vencimento", kind: "generic" },
+      { key: "transportes", label: "Transportes", description: "Meios de expedicao", kind: "generic" },
+      { key: "armazens", label: "Armazens", description: "Locais de carga e stock", kind: "specific" },
+      { key: "familias", label: "Familias", description: "Agrupamento do catalogo", kind: "generic" }
+    ]
+  },
+  {
+    key: "fiscal",
+    title: "Configuracao fiscal",
+    description: "Tabelas fiscais utilizadas na faturacao e no cumprimento declarativo.",
+    items: [
+      { key: "riva", label: "Regimes de IVA", description: "Regimes e taxas associadas", kind: "specific" },
+      { key: "isencoes", label: "Motivos de isencao", description: "Justificacoes fiscais de isencao", kind: "generic" },
+      { key: "taxas", label: "Taxas de IVA", description: "Tipos de taxa fiscal", kind: "generic" },
+      { key: "iva-saft", label: "IVA SAF-T", description: "Codigos declarativos", kind: "generic" }
+    ]
+  },
+  {
+    key: "avancada",
+    title: "Configuracao avancada",
+    description: "Dados estruturais e tabelas de manutencao menos frequente.",
+    items: [
+      { key: "paises", label: "Paises", description: "Codigos de pais", kind: "generic" },
+      { key: "moedas", label: "Moedas", description: "Moedas e casas decimais", kind: "generic" },
+      { key: "codpostal", label: "Codigos postais", description: "Codigos e localidades", kind: "specific" },
+      { key: "freguesias", label: "Freguesias", description: "Divisoes administrativas", kind: "specific" },
+      { key: "tipos-documento", label: "Tipos de documento", description: "Tipos fiscais e area de gestao", kind: "specific" }
+    ]
+  }
+];
+
 export default function TabelasView() {
   const [active, setActive] = useState<Config | null>(null);
   const [specificActive, setSpecificActive] = useState<(typeof specificTables)[number]["key"] | null>(null);
@@ -36,6 +77,8 @@ export default function TabelasView() {
   const [pendingDelete, setPendingDelete] = useState<Row | null>(null);
 
   useEffect(() => { if (active) load(active); }, [active?.key]);
+
+  const activeKey = active?.key ?? specificActive;
 
   async function load(config: Config) {
     setLoading(true); setMessage(null);
@@ -76,6 +119,19 @@ export default function TabelasView() {
     setPendingDelete(row);
   }
 
+  function selectTable(item: TableEntry) {
+    setPendingDelete(null);
+    setMessage(null);
+    if (item.kind === "specific") {
+      setActive(null);
+      setSpecificActive(item.key as (typeof specificTables)[number]["key"]);
+      return;
+    }
+    const config = configs.find((current) => current.key === item.key) ?? null;
+    setSpecificActive(null);
+    setActive(config);
+  }
+
   async function confirmRemove() {
     if (!active || !pendingDelete) return;
     const row = pendingDelete;
@@ -100,17 +156,19 @@ export default function TabelasView() {
     }
   }
 
-  if (specificActive) return <TabelasEspecificasView onBack={() => setSpecificActive(null)} tableKey={specificActive} />;
+  if (specificActive) return <>
+    <TableDirectory activeKey={activeKey} compact onSelect={selectTable} />
+    <TabelasEspecificasView onBack={() => setSpecificActive(null)} tableKey={specificActive} />
+  </>;
 
   if (!active) return <section className="fac-panel">
-    <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabelas</p><h2>Catalogos de apoio</h2></div><span className="fac-muted">Seleciona uma tabela</span></div>
-    <div className="fac-table-groups">
-      {[...new Set(configs.map((item) => item.group))].map((group) => <article className="fac-table-group" key={group}><p className="fac-eyebrow">{group}</p>{configs.filter((item) => item.group === group).map((item) => <button className="fac-table-link" key={item.key} onClick={() => setActive(item)} type="button"><span>{item.label}</span><small>Abrir</small></button>)}</article>)}
-      {[...new Set(specificTables.map((item) => item.group))].map((group) => <article className="fac-table-group" key={`specific-${group}`}><p className="fac-eyebrow">{group}</p>{specificTables.filter((item) => item.group === group).map((item) => <button className="fac-table-link" key={item.key} onClick={() => setSpecificActive(item.key)} type="button"><span>{item.label}</span><small>Abrir</small></button>)}</article>)}
-    </div>
+    <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabelas</p><h2>Escolha uma area de configuracao</h2></div><span className="fac-muted">Catalogos agrupados por funcao</span></div>
+    <TableDirectory activeKey={activeKey} onSelect={selectTable} />
   </section>;
 
-  return <section className="fac-panel">
+  return <>
+  <TableDirectory activeKey={activeKey} compact onSelect={selectTable} />
+  <section className="fac-panel">
     <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabela</p><h2>{active.label}</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setActive(null)} type="button">Voltar</button><button className="fac-primary-button" onClick={() => reset()} type="button">Novo registo</button></div></div>
     {message && <p className={`fac-editor-message fac-editor-message-${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>{message.text}</p>}
     <div className="fac-table-editor"><div className="fac-form-grid">{active.fields.map((field) => field.type === "checkbox" ? <label className="fac-check-field" key={field.key}><input checked={Boolean(values[field.key])} onChange={(event) => setValues((current) => ({ ...current, [field.key]: event.target.checked }))} type="checkbox"/><span>{field.label}</span></label> : <label className="fac-field" key={field.key}><span>{field.label}</span><input disabled={field.createOnly && editingId != null} maxLength={field.maxLength} min={field.type === "number" ? 0 : undefined} onChange={(event) => setValues((current) => ({ ...current, [field.key]: event.target.value }))} step={field.type === "number" ? "0.000001" : undefined} type={field.type ?? "text"} value={String(values[field.key] ?? "")}/></label>)}</div><div className="fac-form-footer"><span className="fac-muted">{editingId == null ? "Novo registo" : `A editar ${editingId}`}</span><button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar"}</button></div></div>
@@ -128,7 +186,34 @@ export default function TabelasView() {
         </div>
       </div>
     </div>}
-  </section>;
+  </section>
+  </>;
+}
+
+function TableDirectory({ activeKey, compact = false, onSelect }: { activeKey: string | null; compact?: boolean; onSelect: (item: TableEntry) => void }) {
+  return (
+    <div className={compact ? "fac-table-groups fac-table-groups-compact" : "fac-table-groups"}>
+      {tableCategories.map((category) => (
+        <article className="fac-table-group" key={category.key}>
+          <p className="fac-eyebrow">{category.title}</p>
+          {!compact && <small>{category.description}</small>}
+          <div className="fac-table-group-links">
+            {category.items.map((item) => (
+              <button
+                className={`fac-table-link${activeKey === item.key ? " active" : ""}`}
+                key={item.key}
+                onClick={() => onSelect(item)}
+                type="button"
+              >
+                <span>{item.label}</span>
+                <small>{item.description}</small>
+              </button>
+            ))}
+          </div>
+        </article>
+      ))}
+    </div>
+  );
 }
 
 function toPayload(config: Config, values: Values, editing: boolean) { return Object.fromEntries(config.fields.filter((field) => !(editing && field.createOnly)).map((field) => [field.key, field.type === "number" ? (values[field.key] === "" ? null : Number(values[field.key])) : field.type === "checkbox" ? Boolean(values[field.key]) : String(values[field.key] ?? "").trim()])); }

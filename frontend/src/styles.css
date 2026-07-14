@@ -1233,9 +1233,13 @@ button:disabled {
 
 .fac-table-groups {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
+}
+
+.fac-table-groups-compact {
+  align-items: start;
 }
 
 .fac-table-group {
@@ -1245,7 +1249,18 @@ button:disabled {
   background: var(--fac-sidebar);
 }
 
-.fac-table-group > div {
+.fac-table-group > small {
+  display: block;
+  margin-bottom: 12px;
+  line-height: 1.45;
+}
+
+.fac-table-group-links {
+  display: grid;
+  gap: 7px;
+}
+
+.fac-table-group > div:not(.fac-table-group-links) {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -1253,22 +1268,33 @@ button:disabled {
   border-bottom: 1px solid var(--fac-border);
 }
 
-.fac-table-group > div:last-child {
+.fac-table-group > div:not(.fac-table-group-links):last-child {
   border-bottom: 0;
 }
 
 .fac-table-link {
   width: 100%;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 0;
-  border: 0;
-  border-bottom: 1px solid var(--fac-border);
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+  border: 1px solid transparent;
+  border-radius: 12px;
   color: var(--fac-text);
   background: transparent;
   text-align: left;
   cursor: pointer;
+}
+
+.fac-table-link small {
+  color: var(--fac-text-muted);
+}
+
+.fac-table-link.active,
+.fac-table-link:hover,
+.fac-table-link:focus-visible {
+  border-color: var(--fac-border);
+  background: var(--fac-surface);
+  outline: none;
 }
 
 .fac-table-link:hover span {
