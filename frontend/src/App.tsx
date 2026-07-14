@@ -900,11 +900,17 @@ function ClientesView({
   onSelectCliente
 }: ClientesViewProps) {
   const [columnEditorOpen, setColumnEditorOpen] = useState(false);
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
   const [columns, setColumns] = useState<ClienteColumn[]>(loadClientColumns);
 
   useEffect(() => {
     window.localStorage.setItem(CLIENT_COLUMNS_STORAGE, JSON.stringify(columns));
   }, [columns]);
+
+  useEffect(() => {
+    if (!editorOpen) return;
+    setMoreOptionsOpen(Boolean(editingClienteId && (form.transporteId || form.observacoes.trim() || form.inativo)));
+  }, [editorOpen, editingClienteId]);
 
   function changeField<K extends keyof ClienteForm>(field: K, value: ClienteForm[K]) {
     onChangeForm({ ...form, [field]: value });
@@ -1065,64 +1071,88 @@ function ClientesView({
 
           {editorMessage && <p className="fac-editor-message">{editorMessage}</p>}
 
-          <div className="fac-form-grid">
-            <Field label="Nome"><input maxLength={80} onChange={(event) => changeField("nome", event.target.value)} value={form.nome} /></Field>
-            <Field label="NIF"><input maxLength={9} onChange={(event) => changeField("nif", event.target.value)} value={form.nif} /></Field>
-            <Field label="Email"><input maxLength={120} onChange={(event) => changeField("email", event.target.value)} type="email" value={form.email} /></Field>
-            <Field label="Segundo email"><input maxLength={120} onChange={(event) => changeField("email1", event.target.value)} type="email" value={form.email1} /></Field>
-            <Field label="Telefone"><input maxLength={20} onChange={(event) => changeField("tel", event.target.value)} value={form.tel} /></Field>
-            <Field label="Telemovel"><input maxLength={20} onChange={(event) => changeField("tm", event.target.value)} value={form.tm} /></Field>
-            <Field label="Morada"><input maxLength={60} onChange={(event) => changeField("morada", event.target.value)} value={form.morada} /></Field>
-            <Field label="Morada complementar"><input maxLength={60} onChange={(event) => changeField("morada1", event.target.value)} value={form.morada1} /></Field>
-            <Field label="Codigo postal"><input onChange={(event) => changeField("codPostalId", event.target.value)} value={form.codPostalId} /></Field>
-            <Field label="Localidade"><input maxLength={50} onChange={(event) => changeField("localidade", event.target.value)} value={form.localidade} /></Field>
-            <Field label="Pais">
-              <select onChange={(event) => changeField("paisId", event.target.value)} value={form.paisId}>
-                <option value="">Sem valor</option>
-                {catalogos?.paises.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
-              </select>
-            </Field>
-            <Field label="Moeda">
-              <select onChange={(event) => changeField("moedaId", event.target.value)} value={form.moedaId}>
-                <option value="">Sem valor</option>
-                {catalogos?.moedas.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
-              </select>
-            </Field>
-            <Field label="Regime de IVA">
-              <select onChange={(event) => changeField("rivaId", event.target.value)} value={form.rivaId}>
-                <option value="">Sem valor</option>
-                {catalogos?.regimesIva.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
-              </select>
-            </Field>
-            <Field label="Modo de pagamento">
-              <select onChange={(event) => changeField("mPagamentoId", event.target.value)} value={form.mPagamentoId}>
-                <option value="">Sem valor</option>
-                {catalogos?.modosPagamento.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
-              </select>
-            </Field>
-            <Field label="Prazo de pagamento">
-              <select onChange={(event) => changeField("pPagamentoId", event.target.value)} value={form.pPagamentoId}>
-                <option value="">Sem valor</option>
-                {catalogos?.prazosPagamento.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
-              </select>
-            </Field>
-            <Field label="Transporte">
-              <select onChange={(event) => changeField("transporteId", event.target.value)} value={form.transporteId}>
-                <option value="">Sem valor</option>
-                {catalogos?.transportes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
-              </select>
-            </Field>
-            <Field label="TSPIVA"><input maxLength={20} onChange={(event) => changeField("tspiva", event.target.value)} value={form.tspiva} /></Field>
-            <Field label="IBAN"><input maxLength={34} onChange={(event) => changeField("iban", event.target.value)} value={form.iban} /></Field>
-            <label className="fac-check-field">
-              <input checked={form.retencao} onChange={(event) => changeField("retencao", event.target.checked)} type="checkbox" />
-              <span>Cliente sujeito a retencao</span>
-            </label>
-            <label className="fac-check-field">
-              <input checked={form.inativo} onChange={(event) => changeField("inativo", event.target.checked)} type="checkbox" />
-              <span>Cliente inativo</span>
-            </label>
-            <Field label="Observacoes"><textarea maxLength={300} onChange={(event) => changeField("observacoes", event.target.value)} value={form.observacoes} /></Field>
+          <div className="fac-client-form-sections">
+            <FormSection title="Identificacao">
+              <Field label="Nome"><input maxLength={80} onChange={(event) => changeField("nome", event.target.value)} value={form.nome} /></Field>
+              <Field label="NIF"><input maxLength={9} onChange={(event) => changeField("nif", event.target.value)} value={form.nif} /></Field>
+              <Field label="Regime de IVA">
+                <select onChange={(event) => changeField("rivaId", event.target.value)} value={form.rivaId}>
+                  <option value="">Sem valor</option>
+                  {catalogos?.regimesIva.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                </select>
+              </Field>
+            </FormSection>
+
+            <FormSection title="Contactos">
+              <Field label="Email"><input maxLength={120} onChange={(event) => changeField("email", event.target.value)} type="email" value={form.email} /></Field>
+              <Field label="Telefone"><input maxLength={20} onChange={(event) => changeField("tel", event.target.value)} value={form.tel} /></Field>
+              <Field label="Telemovel"><input maxLength={20} onChange={(event) => changeField("tm", event.target.value)} value={form.tm} /></Field>
+            </FormSection>
+
+            <FormSection title="Morada">
+              <Field label="Morada"><input maxLength={60} onChange={(event) => changeField("morada", event.target.value)} value={form.morada} /></Field>
+              <Field label="Morada complementar"><input maxLength={60} onChange={(event) => changeField("morada1", event.target.value)} value={form.morada1} /></Field>
+              <Field label="Codigo postal"><input onChange={(event) => changeField("codPostalId", event.target.value)} value={form.codPostalId} /></Field>
+              <Field label="Localidade"><input maxLength={50} onChange={(event) => changeField("localidade", event.target.value)} value={form.localidade} /></Field>
+              <Field label="Pais">
+                <select onChange={(event) => changeField("paisId", event.target.value)} value={form.paisId}>
+                  <option value="">Sem valor</option>
+                  {catalogos?.paises.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                </select>
+              </Field>
+            </FormSection>
+
+            <FormSection title="Condicoes comerciais e financeiras">
+              <Field label="Moeda">
+                <select onChange={(event) => changeField("moedaId", event.target.value)} value={form.moedaId}>
+                  <option value="">Sem valor</option>
+                  {catalogos?.moedas.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                </select>
+              </Field>
+              <Field label="Modo de pagamento">
+                <select onChange={(event) => changeField("mPagamentoId", event.target.value)} value={form.mPagamentoId}>
+                  <option value="">Sem valor</option>
+                  {catalogos?.modosPagamento.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                </select>
+              </Field>
+              <Field label="Prazo de pagamento">
+                <select onChange={(event) => changeField("pPagamentoId", event.target.value)} value={form.pPagamentoId}>
+                  <option value="">Sem valor</option>
+                  {catalogos?.prazosPagamento.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                </select>
+              </Field>
+              <Field label="IBAN"><input maxLength={34} onChange={(event) => changeField("iban", event.target.value)} value={form.iban} /></Field>
+              <label className="fac-check-field">
+                <input checked={form.retencao} onChange={(event) => changeField("retencao", event.target.checked)} type="checkbox" />
+                <span>Cliente sujeito a retencao</span>
+              </label>
+            </FormSection>
+
+            <section className={`fac-more-options ${moreOptionsOpen ? "open" : ""}`}>
+              <button
+                aria-controls="fac-client-more-options"
+                aria-expanded={moreOptionsOpen}
+                className="fac-more-options-trigger"
+                onClick={() => setMoreOptionsOpen((open) => !open)}
+                type="button"
+              >
+                <span>Mais opções</span>
+                {(form.transporteId || form.observacoes.trim() || form.inativo) && <small>Com valores</small>}
+              </button>
+              <div className="fac-form-grid" hidden={!moreOptionsOpen} id="fac-client-more-options">
+                <Field label="Transporte">
+                  <select onChange={(event) => changeField("transporteId", event.target.value)} value={form.transporteId}>
+                    <option value="">Sem valor</option>
+                    {catalogos?.transportes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                  </select>
+                </Field>
+                <Field label="Observacoes"><textarea maxLength={300} onChange={(event) => changeField("observacoes", event.target.value)} value={form.observacoes} /></Field>
+                <label className="fac-check-field">
+                  <input checked={form.inativo} onChange={(event) => changeField("inativo", event.target.checked)} type="checkbox" />
+                  <span>Cliente inativo</span>
+                </label>
+              </div>
+            </section>
           </div>
 
           <div className="fac-form-footer">
@@ -1332,6 +1362,15 @@ function Field({ children, label }: { children: React.ReactNode; label: string }
       <span>{label}</span>
       {children}
     </label>
+  );
+}
+
+function FormSection({ children, title }: { children: React.ReactNode; title: string }) {
+  return (
+    <fieldset className="fac-client-form-section">
+      <legend>{title}</legend>
+      <div className="fac-form-grid">{children}</div>
+    </fieldset>
   );
 }
 

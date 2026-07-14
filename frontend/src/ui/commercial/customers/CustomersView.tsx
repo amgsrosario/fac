@@ -608,6 +608,12 @@ function CustomerEditorDialog(props: Parameters<typeof CustomersContent>[0]) {
 }
 
 function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId, inlineFooter = true, onChangeForm, onCloseEditor, onSave, saving, selected }: Parameters<typeof CustomersContent>[0] & { formId?: string; inlineFooter?: boolean }) {
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
+
+  useEffect(() => {
+    setMoreOptionsOpen(editorMode === "edit" && Boolean(form.transporteId || form.observacoes.trim() || form.inativo));
+  }, [editorMode, selected?.id]);
+
   return (
     <form className="fac-customers-form" id={formId} onSubmit={onSave}>
       {editorMessage && <FacMessage tone="error" title="Validacao">{editorMessage}</FacMessage>}
@@ -616,15 +622,11 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
         {editorMode === "edit" && <FacInputText disabled label="Codigo" value={selected ? String(selected.id) : ""} />}
         <FacInputText label="Nome" maxLength={80} onChange={(event) => onChangeForm({ ...form, nome: event.target.value })} required value={form.nome} />
         <FacInputText label="NIF" maxLength={9} onChange={(event) => onChangeForm({ ...form, nif: event.target.value })} required value={form.nif} />
-        <label className="fac-customers-check">
-          <input checked={!form.inativo} onChange={(event) => onChangeForm({ ...form, inativo: !event.target.checked })} type="checkbox" />
-          <span>Cliente ativo</span>
-        </label>
+        <FacSelect label="Regime de IVA" onChange={(value) => onChangeForm({ ...form, rivaId: value ?? "" })} options={catalogOptions(catalogos.regimesIva)} value={form.rivaId} />
       </FormSection>
 
       <FormSection title="Contactos">
         <FacInputText label="Email" maxLength={120} onChange={(event) => onChangeForm({ ...form, email: event.target.value })} required type="email" value={form.email} />
-        <FacInputText label="Segundo email" maxLength={120} onChange={(event) => onChangeForm({ ...form, email1: event.target.value })} type="email" value={form.email1} />
         <FacInputText label="Telefone" maxLength={20} onChange={(event) => onChangeForm({ ...form, tel: event.target.value })} value={form.tel} />
         <FacInputText label="Telemovel" maxLength={20} onChange={(event) => onChangeForm({ ...form, tm: event.target.value })} value={form.tm} />
       </FormSection>
@@ -637,26 +639,40 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
         <FacSelect label="Pais" onChange={(value) => onChangeForm({ ...form, paisId: value ?? "" })} options={catalogOptions(catalogos.paises)} value={form.paisId} />
       </FormSection>
 
-      <FormSection title="Condicoes comerciais">
+      <FormSection title="Condicoes comerciais e financeiras">
         <FacSelect label="Moeda" onChange={(value) => onChangeForm({ ...form, moedaId: value ?? "" })} options={catalogOptions(catalogos.moedas)} value={form.moedaId} />
-        <FacSelect label="Regime de IVA" onChange={(value) => onChangeForm({ ...form, rivaId: value ?? "" })} options={catalogOptions(catalogos.regimesIva)} value={form.rivaId} />
         <FacSelect label="Modo de pagamento" onChange={(value) => onChangeForm({ ...form, mPagamentoId: value ?? "" })} options={catalogOptions(catalogos.modosPagamento)} value={form.mPagamentoId} />
         <FacSelect label="Prazo de pagamento" onChange={(value) => onChangeForm({ ...form, pPagamentoId: value ?? "" })} options={catalogOptions(catalogos.prazosPagamento)} value={form.pPagamentoId} />
-        <FacSelect label="Transporte" onChange={(value) => onChangeForm({ ...form, transporteId: value ?? "" })} options={catalogOptions(catalogos.transportes)} value={form.transporteId} />
+        <FacInputText label="IBAN" maxLength={34} onChange={(event) => onChangeForm({ ...form, iban: event.target.value })} value={form.iban} />
         <label className="fac-customers-check">
           <input checked={form.retencao} onChange={(event) => onChangeForm({ ...form, retencao: event.target.checked })} type="checkbox" />
           <span>Sujeito a retencao</span>
         </label>
       </FormSection>
 
-      <FormSection title="Notas">
-        <FacInputText label="TSPIVA" maxLength={20} onChange={(event) => onChangeForm({ ...form, tspiva: event.target.value })} value={form.tspiva} />
-        <FacInputText label="IBAN" maxLength={34} onChange={(event) => onChangeForm({ ...form, iban: event.target.value })} value={form.iban} />
-        <label className="fac-customers-textarea">
-          <span>Observacoes</span>
-          <textarea maxLength={300} onChange={(event) => onChangeForm({ ...form, observacoes: event.target.value })} value={form.observacoes} />
-        </label>
-      </FormSection>
+      <section className={`fac-customers-more-options${moreOptionsOpen ? " open" : ""}`}>
+        <button
+          aria-controls="fac-commercial-customer-more-options"
+          aria-expanded={moreOptionsOpen}
+          className="fac-customers-more-trigger"
+          onClick={() => setMoreOptionsOpen((open) => !open)}
+          type="button"
+        >
+          <span>Mais opções</span>
+          {(form.transporteId || form.observacoes.trim() || form.inativo) && <small>Com valores</small>}
+        </button>
+        <div className="fac-customers-form-grid" hidden={!moreOptionsOpen} id="fac-commercial-customer-more-options">
+          <FacSelect label="Transporte" onChange={(value) => onChangeForm({ ...form, transporteId: value ?? "" })} options={catalogOptions(catalogos.transportes)} value={form.transporteId} />
+          <label className="fac-customers-textarea">
+            <span>Observacoes</span>
+            <textarea maxLength={300} onChange={(event) => onChangeForm({ ...form, observacoes: event.target.value })} value={form.observacoes} />
+          </label>
+          <label className="fac-customers-check">
+            <input checked={!form.inativo} onChange={(event) => onChangeForm({ ...form, inativo: !event.target.checked })} type="checkbox" />
+            <span>Cliente ativo</span>
+          </label>
+        </div>
+      </section>
 
       {inlineFooter && <CustomerFormFooter onCloseEditor={onCloseEditor} saving={saving} />}
     </form>

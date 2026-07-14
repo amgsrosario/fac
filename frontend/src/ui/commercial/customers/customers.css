@@ -217,6 +217,41 @@
   padding: var(--fac-space-4);
 }
 
+.fac-customers-more-options {
+  min-width: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-md);
+  padding: var(--fac-space-4);
+}
+
+.fac-customers-more-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  color: var(--fac-petrol);
+  background: transparent;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fac-customers-more-trigger small {
+  color: var(--fac-gold);
+  font-size: var(--fac-font-size-xs);
+}
+
+.fac-customers-more-trigger:focus-visible {
+  border-radius: var(--fac-radius-sm);
+  outline: 3px solid rgba(186, 150, 60, 0.24);
+  outline-offset: var(--fac-space-2);
+}
+
+.fac-customers-more-options .fac-customers-form-grid {
+  margin-top: var(--fac-space-4);
+}
+
 .fac-customers-form-section legend {
   padding: 0 var(--fac-space-2);
   color: var(--fac-petrol);
