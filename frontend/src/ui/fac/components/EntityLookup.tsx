@@ -286,24 +286,31 @@ export function EntityLookupDialog<T extends object>({
   }
 
   const footer = (
-    <div className="fac-lookup-footer">
+    <div className="fac-entity-lookup-footer">
       <Button className="fac-button fac-button-ghost" label="Cancelar" onClick={onHide} type="button" />
       <Button className="fac-button fac-button-primary" disabled={!selected} icon="pi pi-check" label="Selecionar" onClick={() => confirmSelection()} type="button" />
     </div>
   );
+  const appendTarget = typeof document === "undefined" ? undefined : document.body;
 
   return (
     <Dialog
-      className="fac-lookup-dialog"
+      appendTo={appendTarget}
+      blockScroll
+      className="fac-entity-lookup-dialog"
+      contentClassName="fac-entity-lookup-content"
+      draggable={false}
       footer={footer}
       header={title}
+      maskClassName="fac-entity-lookup-mask"
       onHide={onHide}
-      visible={visible}
       modal
-      style={{ width: "min(980px, calc(100vw - 32px))" }}
+      resizable={false}
+      style={{ width: "min(1100px, 92vw)" }}
+      visible={visible}
     >
-      <div className="fac-lookup-toolbar">
-        <span className="p-input-icon-left fac-lookup-search">
+      <div className="fac-entity-lookup-toolbar">
+        <span className="p-input-icon-left fac-entity-lookup-search">
           <i className="pi pi-search" aria-hidden="true" />
           <InputText onChange={(event) => setGlobalFilter(event.target.value)} placeholder="Pesquisar" ref={searchRef} title={SEARCH_HELP} value={globalFilter} />
         </span>
@@ -311,7 +318,7 @@ export function EntityLookupDialog<T extends object>({
           <i className="pi pi-info-circle" aria-hidden="true" />
         </span>
         <MultiSelect
-          className="fac-lookup-columns"
+          className="fac-entity-lookup-columns"
           display="chip"
           onChange={(event) => changeColumns(event.value)}
           optionDisabled={(option) => requiredFields.includes(option.value)}
@@ -322,8 +329,9 @@ export function EntityLookupDialog<T extends object>({
           value={visibleFields}
         />
       </div>
+      <div className="fac-entity-lookup-table">
       <DataTable
-        className="fac-lookup-table"
+        className="fac-entity-lookup-datatable"
         dataKey={dataKey}
         emptyMessage={emptyMessage}
         filterDisplay="row"
@@ -344,6 +352,7 @@ export function EntityLookupDialog<T extends object>({
         selectionMode="single"
         sortMode="multiple"
         tabIndex={0}
+        tableStyle={{ minWidth: "760px" }}
         value={filteredValue}
       >
         {visibleColumns.map((column) => (
@@ -353,7 +362,7 @@ export function EntityLookupDialog<T extends object>({
             filter={column.filterable}
             filterElement={() => (
               <InputText
-                className="fac-lookup-column-filter"
+                className="fac-entity-lookup-column-filter"
                 onChange={(event) => setColumnFilters((current) => ({ ...current, [column.field]: event.target.value }))}
                 placeholder={column.header}
                 title={SEARCH_HELP}
@@ -368,6 +377,7 @@ export function EntityLookupDialog<T extends object>({
           />
         ))}
       </DataTable>
+      </div>
     </Dialog>
   );
 }
