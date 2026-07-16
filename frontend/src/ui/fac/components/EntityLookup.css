@@ -114,8 +114,9 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-width: 0;
-  max-width: 92vw;
-  max-height: min(760px, calc(100vh - 2rem));
+  max-width: 94vw;
+  max-height: 88vh;
+  height: min(760px, 88vh);
   border: 1px solid var(--fac-border);
   border-radius: var(--fac-radius-md, 10px);
   background: var(--fac-surface);
@@ -143,6 +144,7 @@
   justify-content: space-between;
   gap: var(--fac-space-3, 0.75rem);
   border-bottom: 1px solid var(--fac-border);
+  min-height: 3.8rem;
   padding: var(--fac-space-4, 1rem) var(--fac-space-5, 1.25rem);
   background: var(--fac-sidebar);
   color: var(--fac-petrol);
@@ -167,7 +169,7 @@
 .fac-entity-lookup-dialog [data-pc-section="content"] {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--fac-space-3, 0.75rem);
+  gap: var(--fac-space-4, 1rem);
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -176,64 +178,165 @@
 
 .fac-entity-lookup-toolbar {
   display: grid;
-  grid-template-columns: minmax(18rem, 1fr) auto minmax(16rem, 0.45fr);
+  grid-template-columns: minmax(20rem, 1fr) auto;
   gap: var(--fac-space-3, 0.75rem);
   align-items: center;
   min-width: 0;
 }
 
-.fac-entity-lookup-search,
-.fac-entity-lookup-help,
-.fac-lookup-help,
-.fac-entity-lookup-search .p-inputtext,
-.fac-entity-lookup-columns {
+.fac-entity-lookup-search {
+  position: relative;
+  display: block;
   min-width: 0;
   width: 100%;
 }
 
-.fac-entity-lookup-help,
-.fac-lookup-help {
+.fac-entity-lookup-search .p-inputtext {
+  width: 100%;
+  min-height: 2.55rem;
+  padding-left: 2.35rem;
+  padding-right: 2.35rem;
+  border-color: var(--fac-border);
+  border-radius: var(--fac-radius-sm, 8px);
+  background: var(--fac-surface);
+  color: var(--fac-text);
+}
+
+.fac-entity-lookup-search .pi-search {
+  left: 0.8rem;
   color: var(--fac-text-muted);
+}
+
+.fac-entity-lookup-clear {
+  position: absolute;
+  top: 50%;
+  right: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border: 0;
+  border-radius: var(--fac-radius-sm, 8px);
+  background: transparent;
+  color: var(--fac-text-muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.fac-entity-lookup-clear:hover {
+  background: var(--fac-client-soft, #eef5f2);
+  color: var(--fac-petrol);
+}
+
+.fac-entity-lookup-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--fac-space-2, 0.5rem);
+  min-width: 0;
+}
+
+.fac-entity-lookup-toolbar-actions .fac-button {
+  min-height: 2.55rem;
+  white-space: nowrap;
+}
+
+.fac-entity-lookup-toolbar-actions .fac-button.active {
+  border-color: var(--fac-petrol);
+  color: var(--fac-petrol);
+  box-shadow: inset 0 0 0 1px var(--fac-petrol);
+}
+
+.fac-entity-lookup-icon-button {
+  width: 2.55rem;
+  min-width: 2.55rem;
+  padding-right: 0;
+  padding-left: 0;
 }
 
 .fac-entity-lookup-column-filter.p-inputtext {
   width: 100%;
-  min-width: 7rem;
+  min-width: 6rem;
+  height: 2rem;
+  border-radius: var(--fac-radius-sm, 8px);
+  font-size: 0.86rem;
 }
 
 .fac-entity-lookup-table {
+  display: grid;
   width: 100%;
   min-width: 0;
-  min-height: 0;
+  min-height: min(520px, calc(88vh - 15rem));
   overflow: auto;
   border: 1px solid var(--fac-border);
   border-radius: var(--fac-radius-sm, 8px);
+  background: var(--fac-surface);
 }
 
 .fac-entity-lookup-datatable,
+.fac-entity-lookup-datatable.p-datatable,
 .fac-entity-lookup-datatable .p-datatable-wrapper {
   min-width: 0;
   width: 100%;
 }
 
+.fac-entity-lookup-datatable.p-datatable,
 .fac-entity-lookup-datatable .p-datatable-wrapper {
+  height: 100%;
+}
+
+.fac-entity-lookup-datatable .p-datatable-wrapper {
+  max-height: 520px;
   overflow: auto;
 }
 
 .fac-entity-lookup-datatable .p-datatable-thead > tr > th {
+  height: 2.75rem;
+  padding: 0.7rem 0.85rem;
   background: var(--fac-sidebar);
   color: var(--fac-text);
   font-weight: 700;
-  vertical-align: top;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.fac-entity-lookup-datatable .p-datatable-thead > tr:nth-child(2) > th {
+  height: 2.55rem;
+  padding: 0.4rem 0.65rem;
+  background: var(--fac-surface);
+}
+
+.fac-entity-lookup-datatable .p-sortable-column-icon,
+.fac-entity-lookup-datatable .p-column-title {
+  vertical-align: middle;
+}
+
+.fac-entity-lookup-datatable .p-sortable-column-icon {
+  margin-left: 0.35rem;
+  color: var(--fac-text-muted);
+}
+
+.fac-entity-lookup-datatable .p-datatable-tbody > tr > td {
+  max-width: 22rem;
+  padding: 0.68rem 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .fac-entity-lookup-datatable .p-datatable-tbody > tr {
   cursor: pointer;
 }
 
-.fac-entity-lookup-datatable .p-datatable-tbody > tr.p-highlight,
 .fac-entity-lookup-datatable .p-datatable-tbody > tr:hover {
   background: var(--fac-client-soft, #eef5f2);
+}
+
+.fac-entity-lookup-datatable .p-datatable-tbody > tr.p-highlight {
+  background: var(--fac-client-soft, #eef5f2);
+  box-shadow: inset 3px 0 0 var(--fac-petrol);
 }
 
 .fac-entity-lookup-dialog .p-dialog-footer,
@@ -251,6 +354,118 @@
   max-width: 100%;
 }
 
+.fac-entity-lookup-help-panel.p-overlaypanel,
+.fac-entity-lookup-column-panel.p-overlaypanel {
+  max-width: min(22rem, calc(100vw - 2rem));
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm, 8px);
+  color: var(--fac-text);
+  box-shadow: var(--fac-shadow-lg, 0 18px 42px rgba(15, 23, 42, 0.18));
+}
+
+.fac-entity-lookup-help-panel .p-overlaypanel-content,
+.fac-entity-lookup-column-panel .p-overlaypanel-content {
+  padding: var(--fac-space-4, 1rem);
+}
+
+.fac-entity-lookup-panel-title {
+  margin-bottom: var(--fac-space-3, 0.75rem);
+  color: var(--fac-petrol);
+  font-size: 0.85rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.fac-entity-lookup-help-panel dl {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.fac-entity-lookup-help-panel dl > div {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.fac-entity-lookup-help-panel dt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: var(--fac-radius-sm, 8px);
+  background: var(--fac-client-soft, #eef5f2);
+  color: var(--fac-petrol);
+  font-weight: 800;
+}
+
+.fac-entity-lookup-help-panel dd {
+  margin: 0;
+  color: var(--fac-text);
+}
+
+.fac-entity-lookup-panel-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: var(--fac-space-3, 0.75rem);
+  padding-top: var(--fac-space-3, 0.75rem);
+  border-top: 1px solid var(--fac-border);
+}
+
+.fac-entity-lookup-panel-examples span {
+  flex-basis: 100%;
+  color: var(--fac-text-muted);
+  font-size: 0.82rem;
+}
+
+.fac-entity-lookup-panel-examples code {
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm, 8px);
+  padding: 0.2rem 0.4rem;
+  background: var(--fac-surface-muted, #f7faf9);
+}
+
+.fac-entity-lookup-column-list {
+  display: grid;
+  gap: 0.25rem;
+  max-height: 17rem;
+  overflow: auto;
+}
+
+.fac-entity-lookup-column-list label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.35rem;
+  border-radius: var(--fac-radius-sm, 8px);
+  cursor: pointer;
+}
+
+.fac-entity-lookup-column-list label:hover {
+  background: var(--fac-client-soft, #eef5f2);
+}
+
+.fac-entity-lookup-column-list input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--fac-petrol);
+}
+
+.fac-entity-lookup-panel-reset {
+  width: 100%;
+  margin-top: var(--fac-space-3, 0.75rem);
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm, 8px);
+  padding: 0.55rem 0.75rem;
+  background: var(--fac-surface);
+  color: var(--fac-petrol);
+  font-weight: 700;
+  cursor: pointer;
+}
+
 @media (max-width: 720px) {
   .fac-entity-lookup-mask {
     align-items: stretch;
@@ -259,13 +474,31 @@
 
   .fac-entity-lookup-dialog.p-dialog,
   .fac-entity-lookup-dialog {
-    width: 100% !important;
-    max-width: 100%;
+    width: 96vw !important;
+    max-width: 96vw;
     max-height: calc(100vh - 1rem);
   }
 
   .fac-entity-lookup-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .fac-entity-lookup-toolbar-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .fac-entity-lookup-toolbar-actions .fac-button:not(.fac-entity-lookup-icon-button) {
+    flex: 1 1 8rem;
+  }
+
+  .fac-entity-lookup-table {
+    min-height: 0;
+  }
+
+  .fac-entity-lookup-datatable .p-datatable-wrapper {
+    max-height: calc(100vh - 24rem);
+    min-height: 12rem;
   }
 
   .fac-entity-lookup-footer {

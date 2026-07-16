@@ -1,10 +1,10 @@
-import { KeyboardEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { KeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable, DataTableSelectionSingleChangeEvent } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
-import { MultiSelect } from "primereact/multiselect";
+import { OverlayPanel } from "primereact/overlaypanel";
 import "./EntityLookup.css";
 
 export type EntityLookupColumn<T extends object> = {
@@ -59,6 +59,13 @@ type EntityLookupFieldProps<T extends object> = Omit<EntityLookupDialogProps<T>,
 };
 
 const SEARCH_HELP = "^ começa por · * contém · = igual a · ! não contém · $ termina em";
+const SEARCH_OPERATORS = [
+  ["^", "começa por"],
+  ["*", "contém"],
+  ["=", "igual a"],
+  ["!", "não contém"],
+  ["$", "termina em"]
+] as const;
 
 export function EntityLookupField<T extends object>({
   clearable = true,
@@ -256,12 +263,17 @@ export function EntityLookupDialog<T extends object>({
   const [globalFilter, setGlobalFilter] = useState("");
   const [visibleFields, setVisibleFields] = useState<string[]>(() => readVisibleFields(preferenceKey, defaultVisibleFields, columns));
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [filtersVisible, setFiltersVisible] = useState(false);
   const visibleColumns = columns.filter((column) => visibleFields.includes(column.field));
+  const activeFilterCount = Object.values(columnFilters).filter((value) => value.trim()).length;
   const filteredValue = useMemo(
     () => value.filter((row) => matchEntityQuery(row, globalFilter, searchFields) && visibleColumns.every((column) => matchColumnFilter(row, column, columnFilters[column.field]))),
     [columnFilters, globalFilter, searchFields, value, visibleColumns]
   );
   const searchRef = useRef<HTMLInputElement>(null);
+  const helpPanelRef = useRef<OverlayPanel>(null);
+  const columnsPanelRef = useRef<OverlayPanel>(null);
+  const searchPlaceholder = useMemo(() => searchPlaceholderFromColumns(columns), [columns]);
 
   useEffect(() => {
     if (!visible) return;
@@ -279,6 +291,30 @@ export function EntityLookupDialog<T extends object>({
     const required = requiredFields.filter((field) => !nextFields.includes(field));
     const merged = Array.from(new Set([...required, ...nextFields]));
     setVisibleFields(merged.length > 0 ? merged : defaultVisibleFields);
+  }
+
+  function toggleColumn(field: string, checked: boolean) {
+    if (!checked && requiredFields.includes(field)) return;
+    const nextFields = checked ? [...visibleFields, field] : visibleFields.filter((current) => current !== field);
+    changeColumns(nextFields);
+  }
+
+  function resetColumns() {
+    setVisibleFields(defaultVisibleFields);
+  }
+
+  function clearColumnFilters() {
+    setColumnFilters({});
+  }
+
+  function toggleHelpPanel(event: ReactMouseEvent<HTMLButtonElement>) {
+    helpPanelRef.current?.toggle(event);
+    columnsPanelRef.current?.hide();
+  }
+
+  function toggleColumnsPanel(event: ReactMouseEvent<HTMLButtonElement>) {
+    columnsPanelRef.current?.toggle(event);
+    helpPanelRef.current?.hide();
   }
 
   function confirmSelection(row = selected) {
@@ -306,35 +342,63 @@ export function EntityLookupDialog<T extends object>({
       onHide={onHide}
       modal
       resizable={false}
-      style={{ width: "min(1100px, 92vw)" }}
+      style={{ width: "min(1180px, 94vw)" }}
       visible={visible}
     >
       <div className="fac-entity-lookup-toolbar">
         <span className="p-input-icon-left fac-entity-lookup-search">
           <i className="pi pi-search" aria-hidden="true" />
-          <InputText onChange={(event) => setGlobalFilter(event.target.value)} placeholder="Pesquisar" ref={searchRef} title={SEARCH_HELP} value={globalFilter} />
+          <InputText onChange={(event) => setGlobalFilter(event.target.value)} placeholder={searchPlaceholder} ref={searchRef} title={SEARCH_HELP} value={globalFilter} />
+          {globalFilter && (
+            <button aria-label="Limpar pesquisa" className="fac-entity-lookup-clear" onClick={() => setGlobalFilter("")} type="button">
+              <i className="pi pi-times" aria-hidden="true" />
+            </button>
+          )}
         </span>
-        <span className="fac-lookup-help" title={`${SEARCH_HELP}\nExemplos: ^fin · nif:=516281950 · descricao:*mensal`}>
-          <i className="pi pi-info-circle" aria-hidden="true" />
-        </span>
-        <MultiSelect
-          className="fac-entity-lookup-columns"
-          display="chip"
-          onChange={(event) => changeColumns(event.value)}
-          optionDisabled={(option) => requiredFields.includes(option.value)}
-          optionLabel="label"
-          optionValue="value"
-          options={columns.map((column) => ({ label: column.header, value: column.field }))}
-          placeholder="Colunas"
-          value={visibleFields}
-        />
+        <div className="fac-entity-lookup-toolbar-actions">
+          <Button className={filtersVisible ? "fac-button fac-button-secondary active" : "fac-button fac-button-secondary"} icon="pi pi-filter" label={activeFilterCount ? `Filtros (${activeFilterCount})` : "Filtros"} onClick={() => setFiltersVisible((current) => !current)} type="button" />
+          {activeFilterCount > 0 && <Button aria-label="Limpar filtros" className="fac-button fac-button-ghost fac-entity-lookup-icon-button" icon="pi pi-filter-slash" onClick={clearColumnFilters} type="button" />}
+          <Button className="fac-button fac-button-secondary" icon="pi pi-table" label="Colunas" onClick={toggleColumnsPanel} type="button" />
+          <Button aria-label="Ajuda da pesquisa" className="fac-button fac-button-ghost fac-entity-lookup-icon-button" icon="pi pi-question-circle" onClick={toggleHelpPanel} type="button" />
+        </div>
       </div>
+      <OverlayPanel appendTo={appendTarget} className="fac-entity-lookup-help-panel" ref={helpPanelRef}>
+        <div className="fac-entity-lookup-panel-title">Operadores de pesquisa</div>
+        <dl>
+          {SEARCH_OPERATORS.map(([operator, label]) => (
+            <div key={operator}><dt>{operator}</dt><dd>{label}</dd></div>
+          ))}
+        </dl>
+        <div className="fac-entity-lookup-panel-examples">
+          <span>Exemplos</span>
+          <code>^fin</code>
+          <code>nif:=516281950</code>
+          <code>descricao:*mensal</code>
+        </div>
+      </OverlayPanel>
+      <OverlayPanel appendTo={appendTarget} className="fac-entity-lookup-column-panel" ref={columnsPanelRef}>
+        <div className="fac-entity-lookup-panel-title">Colunas visiveis</div>
+        <div className="fac-entity-lookup-column-list">
+          {columns.map((column) => {
+            const field = String(column.field);
+            const checked = visibleFields.includes(field);
+            const disabled = requiredFields.includes(field);
+            return (
+              <label key={field}>
+                <input checked={checked} disabled={disabled} onChange={(event) => toggleColumn(field, event.target.checked)} type="checkbox" />
+                <span>{column.header}</span>
+              </label>
+            );
+          })}
+        </div>
+        <button className="fac-entity-lookup-panel-reset" onClick={resetColumns} type="button">Restaurar predefinicao</button>
+      </OverlayPanel>
       <div className="fac-entity-lookup-table">
       <DataTable
-        className="fac-entity-lookup-datatable"
+        className={filtersVisible ? "fac-entity-lookup-datatable filters-visible" : "fac-entity-lookup-datatable"}
         dataKey={dataKey}
         emptyMessage={emptyMessage}
-        filterDisplay="row"
+        filterDisplay={filtersVisible ? "row" : undefined}
         loading={loading}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
@@ -347,19 +411,19 @@ export function EntityLookupDialog<T extends object>({
         onSelectionChange={(event: DataTableSelectionSingleChangeEvent<T[]>) => setSelected((event.value as T | null) ?? null)}
         removableSort
         scrollable
-        scrollHeight="420px"
+        scrollHeight="520px"
         selection={selected}
         selectionMode="single"
         sortMode="multiple"
         tabIndex={0}
-        tableStyle={{ minWidth: "760px" }}
+        tableStyle={{ minWidth: "780px" }}
         value={filteredValue}
       >
         {visibleColumns.map((column) => (
           <Column
             body={column.body ? (row) => column.body?.(row as T) : undefined}
             field={column.field}
-            filter={column.filterable}
+            filter={filtersVisible && column.filterable}
             filterElement={() => (
               <InputText
                 className="fac-entity-lookup-column-filter"
@@ -380,6 +444,16 @@ export function EntityLookupDialog<T extends object>({
       </div>
     </Dialog>
   );
+}
+
+function searchPlaceholderFromColumns<T extends object>(columns: EntityLookupColumn<T>[]) {
+  const labels = columns
+    .filter((column) => column.globalSearch || column.defaultVisible)
+    .slice(0, 4)
+    .map((column) => column.header.toLowerCase());
+  if (labels.length === 0) return "Pesquisar";
+  if (labels.length === 1) return `Pesquisar por ${labels[0]}`;
+  return `Pesquisar por ${labels.slice(0, -1).join(", ")} ou ${labels[labels.length - 1]}`;
 }
 
 function readVisibleFields<T extends object>(preferenceKey: string | undefined, fallback: string[], columns: EntityLookupColumn<T>[]) {
