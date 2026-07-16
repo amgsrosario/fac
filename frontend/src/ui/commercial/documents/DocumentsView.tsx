@@ -4,7 +4,9 @@ import { FilterMatchMode } from "primereact/api";
 import { apiFetch, AuthSession } from "../../../api";
 import {
   DesktopShell,
-  EntitySearchSelect,
+  EntityLookupColumn,
+  EntityLookupField,
+  EntityLookupSearchField,
   FacButton,
   FacDataTable,
   FacDataTableColumn,
@@ -25,7 +27,10 @@ import "./documents.css";
 
 type Page<T> = {
   content: T[];
+  number?: number;
+  size?: number;
   totalElements: number;
+  totalPages?: number;
 };
 
 type EstadoDocumento = "RASCUNHO" | "EMITIDO" | "ANULADO";
@@ -129,6 +134,13 @@ type Cliente = {
   nome: string;
   nif: string;
   inativo: boolean;
+  localidade?: string | null;
+  tel?: string | null;
+  tm?: string | null;
+  email?: string | null;
+  morada?: string | null;
+  codPostalId?: string | null;
+  paisId?: string | null;
   moedaId?: string | null;
   rivaId?: string | null;
   mPagamentoId?: string | null;
@@ -138,11 +150,18 @@ type Cliente = {
 
 type Artigo = {
   codigo: string;
+  abreviatura?: string | null;
+  codigoIdentificacao?: string | null;
   descricao: string;
   unidade: string;
+  familiaId?: number | null;
+  peso?: string | number | null;
+  ivaCompraId?: string | null;
   pvp: number;
   ivaVendaId: string;
   inativo: boolean;
+  retencao?: boolean;
+  observacoes?: string | null;
 };
 
 type CatalogoString = {
@@ -282,12 +301,12 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
     setLoading(true);
     setError(null);
     try {
-      const [docsPage, tiposPage, seriesPage, clientesPage, artigosPage, armazensPage, moedasPage, regimesPage, modosPage, prazosPage, transportesPage, tiposIvaPage] = await Promise.all([
+      const [docsPage, tiposPage, seriesPage, clientes, artigos, armazensPage, moedasPage, regimesPage, modosPage, prazosPage, transportesPage, tiposIvaPage] = await Promise.all([
         fetchPage<DocumentoComercial>("/api/documentos-comerciais?size=300&sort=dataEmissao,desc&sort=id,desc"),
         fetchPage<TipoDocumento>("/api/tipos-documento?size=100&sort=id,asc"),
         fetchPage<Serie>("/api/series?size=100&sort=tipoDocumento.id,asc&sort=serie,asc"),
-        fetchPage<Cliente>("/api/clientes?size=300&sort=nome,asc"),
-        fetchPage<Artigo>("/api/artigos?size=300&sort=descricao,asc"),
+        fetchAllPages<Cliente>("/api/clientes", "nome,asc"),
+        fetchAllPages<Artigo>("/api/artigos", "descricao,asc"),
         fetchPage<Armazem>("/api/armazens?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
@@ -299,9 +318,9 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       const commercialTypes = tiposPage.content.filter((tipo) => tipo.areaGestao === 2);
       setDocumentos(docsPage.content);
       setCatalogos({
-        artigos: artigosPage.content.filter((artigo) => !artigo.inativo),
+        artigos: artigos.filter((artigo) => !artigo.inativo),
         armazens: armazensPage.content,
-        clientes: clientesPage.content,
+        clientes,
         moedas: moedasPage.content,
         regimesIva: regimesPage.content,
         series: seriesPage.content,
@@ -807,6 +826,7 @@ function DocumentEditorDialog(props: Parameters<typeof DocumentsContent>[0]) {
 function DocumentFormFields({ catalogos, editorMessage, form, inlineFooter = false, onChangeForm, onCloseEditor, onSave, saving }: Parameters<typeof DocumentsContent>[0] & { inlineFooter?: boolean }) {
   const series = catalogos.series.filter((serie) => serie.tipoDocumentoId === form.tipoDocumentoId);
   const selectedArticle = catalogos.artigos.find((artigo) => artigo.codigo === form.artigoId);
+  const selectedCliente = catalogos.clientes.find((cliente) => String(cliente.id) === form.clienteId) ?? null;
   return (
     <form className="fac-documents-form" onSubmit={onSave}>
       {editorMessage && <FacMessage tone="error" title="Validacao">{editorMessage}</FacMessage>}
@@ -816,7 +836,24 @@ function DocumentFormFields({ catalogos, editorMessage, form, inlineFooter = fal
           <FacSelect label="Tipo" onChange={(value) => onChangeForm({ ...form, tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={form.tipoDocumentoId} />
           <FacSelect label="Serie" onChange={(value) => onChangeForm({ ...form, serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={form.serie} />
           <FacInputText label="Data" onChange={(event) => onChangeForm({ ...form, dataEmissao: event.target.value })} required type="date" value={form.dataEmissao} />
-          <EntitySearchSelect label="Cliente" onChange={(value) => onChangeForm(applyClientDefaults({ ...form, clienteId: value ?? "" }, catalogos))} options={clienteOptions(catalogos.clientes)} value={form.clienteId} />
+          <EntityLookupField<Cliente>
+            clearable={false}
+            columns={clienteLookupColumns}
+            dataKey="id"
+            emptyMessage="Sem clientes para selecionar."
+            label="Cliente"
+            loading={catalogos.clientes.length === 0}
+            optionLabel={clienteLookupLabel}
+            optionMeta={(cliente) => [cliente.nif && `NIF ${cliente.nif}`, cliente.localidade].filter(Boolean).join(" · ")}
+            onSelect={(cliente) => onChangeForm(applyClientDefaults({ ...form, clienteId: String(cliente.id) }, catalogos))}
+            placeholder="Selecionar cliente"
+            preferenceKey="fac.lookup.documentos.clientes"
+            searchFields={clienteSearchFields}
+            selection={selectedCliente}
+            title="Selecionar cliente"
+            value={catalogos.clientes.filter((cliente) => !cliente.inativo)}
+            valueLabel={selectedCliente ? clienteLookupLabel(selectedCliente) : undefined}
+          />
           <FacSelect label="Armazem carga" onChange={(value) => onChangeForm({ ...form, armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={form.armazemCargaId} />
           <FacSelect label="Moeda" onChange={(value) => onChangeForm({ ...form, moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={form.moedaId} />
         </div>
@@ -824,7 +861,24 @@ function DocumentFormFields({ catalogos, editorMessage, form, inlineFooter = fal
       <section className="fac-documents-form-section">
         <h3>Primeira linha</h3>
         <div className="fac-documents-form-grid">
-          <EntitySearchSelect label="Artigo" onChange={(value) => onChangeForm(applyArticleDefaults({ ...form, artigoId: value ?? "" }, catalogos))} options={artigoOptions(catalogos.artigos, catalogos.tiposIva)} value={form.artigoId} />
+          <EntityLookupField<Artigo>
+            clearable={false}
+            columns={artigoLookupColumns(catalogos.tiposIva)}
+            dataKey="codigo"
+            emptyMessage="Sem artigos para selecionar."
+            label="Artigo"
+            loading={catalogos.artigos.length === 0}
+            optionLabel={artigoLookupLabel}
+            optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, `${formatNumber(artigo.pvp)} EUR`].filter(Boolean).join(" · ")}
+            onSelect={(artigo) => onChangeForm(applyArticleDefaults({ ...form, artigoId: artigo.codigo }, catalogos))}
+            placeholder="Selecionar artigo"
+            preferenceKey="fac.lookup.documentos.artigos"
+            searchFields={artigoSearchFields(catalogos.tiposIva)}
+            selection={selectedArticle ?? null}
+            title="Selecionar artigo"
+            value={catalogos.artigos.filter((artigo) => !artigo.inativo)}
+            valueLabel={selectedArticle ? artigoLookupLabel(selectedArticle) : undefined}
+          />
           <FacInputText label="Descricao" maxLength={80} onChange={(event) => onChangeForm({ ...form, descricao: event.target.value })} value={form.descricao || selectedArticle?.descricao || ""} />
           <FacInputText label="Quantidade" min="0.000001" onChange={(event) => onChangeForm({ ...form, quantidade: event.target.value })} required step="0.000001" type="number" value={form.quantidade} />
           <FacInputText label="Preco unitario" min="0" onChange={(event) => onChangeForm({ ...form, precoUnitario: event.target.value })} required step="0.000001" type="number" value={form.precoUnitario} />
@@ -903,10 +957,82 @@ function DocumentStateFilter({ onChange, value }: { onChange: (value: unknown) =
   );
 }
 
+const clienteLookupColumns: EntityLookupColumn<Cliente>[] = [
+  { defaultVisible: true, field: "nome", filterable: true, globalSearch: true, header: "Nome", required: true, sortable: true },
+  { defaultVisible: true, field: "nif", filterable: true, globalSearch: true, header: "NIF", sortable: true, width: "9rem" },
+  { defaultVisible: true, field: "localidade", filterable: true, globalSearch: true, header: "Localidade", sortable: true },
+  { body: (cliente) => cliente.tm || cliente.tel || "-", defaultVisible: true, field: "tel", globalSearch: true, header: "Telefone", sortable: true, width: "9rem" },
+  { field: "id", header: "ID", sortable: true, width: "6rem" },
+  { field: "email", globalSearch: true, header: "Email", sortable: true },
+  { field: "paisId", header: "Pais", sortable: true, width: "7rem" },
+  { field: "codPostalId", header: "Codigo postal", sortable: true, width: "9rem" },
+  { body: (cliente) => cliente.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
+];
+
+const clienteSearchFields: EntityLookupSearchField<Cliente>[] = [
+  { fields: ["nome"], key: "nome" },
+  { fields: ["nif"], key: "nif" },
+  { fields: ["localidade"], key: "localidade" },
+  { fields: ["email"], key: "email" },
+  { aliases: ["telefone", "telemovel", "telemóvel"], fields: ["tel", "tm"], key: "telefone" },
+  { fields: ["id"], key: "id" }
+];
+
+function artigoLookupColumns(tiposIva: TipoTaxaIva[]): EntityLookupColumn<Artigo>[] {
+  return [
+    { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Codigo", required: true, sortable: true, width: "8rem" },
+    { defaultVisible: true, field: "descricao", filterable: true, globalSearch: true, header: "Descricao", sortable: true },
+    { body: (artigo) => artigo.familiaId ?? "-", defaultVisible: true, field: "familiaId", filterable: true, globalSearch: true, header: "Familia", sortable: true, width: "8rem" },
+    { defaultVisible: true, field: "unidade", filterable: true, globalSearch: true, header: "Unidade", sortable: true, width: "7rem" },
+    { body: (artigo) => formatNumber(artigo.pvp), defaultVisible: true, field: "pvp", header: "PVP", sortable: true, width: "8rem" },
+    { body: (artigo) => ivaLookupLabel(artigo.ivaVendaId, tiposIva), defaultVisible: true, field: "ivaVendaId", filterable: true, header: "IVA venda", sortable: true, width: "8rem" },
+    { body: (artigo) => artigo.retencao ? "Sim" : "Nao", field: "retencao", header: "Retencao", sortable: true, width: "8rem" },
+    { body: (artigo) => artigo.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" },
+    { field: "observacoes", header: "Observacoes", sortable: true }
+  ];
+}
+
+function artigoSearchFields(tiposIva: TipoTaxaIva[]): EntityLookupSearchField<Artigo>[] {
+  return [
+    { aliases: ["id"], fields: ["codigo"], key: "codigo" },
+    { fields: ["descricao"], key: "descricao" },
+    { fields: ["familiaId"], key: "familia" },
+    { fields: ["unidade"], key: "unidade" },
+    { fields: ["pvp"], key: "pvp" },
+    { getValue: (artigo) => ivaLookupLabel(artigo.ivaVendaId, tiposIva), key: "iva" }
+  ];
+}
+
+function clienteLookupLabel(cliente: Cliente) {
+  return `${cliente.nome}${cliente.nif ? ` - NIF ${cliente.nif}` : ""}`;
+}
+
+function artigoLookupLabel(artigo: Artigo) {
+  return `${artigo.codigo} - ${artigo.descricao}`;
+}
+
+function ivaLookupLabel(ivaId: string, tiposIva: TipoTaxaIva[]) {
+  const iva = tiposIva.find((item) => item.id === ivaId);
+  return iva ? ivaCompactLabel(iva) : ivaId;
+}
+
 async function fetchPage<T>(url: string): Promise<Page<T>> {
   const response = await apiFetch(url);
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();
+}
+
+async function fetchAllPages<T>(path: string, sort: string, pageSize = 500): Promise<T[]> {
+  const rows: T[] = [];
+  for (let pageNumber = 0; ; pageNumber += 1) {
+    const page = await fetchPage<T>(`${path}?page=${pageNumber}&size=${pageSize}&sort=${sort}`);
+    rows.push(...page.content);
+    if (page.totalPages !== undefined) {
+      if (pageNumber + 1 >= page.totalPages) return rows;
+    } else if (page.content.length < pageSize) {
+      return rows;
+    }
+  }
 }
 
 async function requestJson<T>(url: string, body?: unknown, method: "GET" | "POST" = "GET"): Promise<T> {
@@ -974,29 +1100,6 @@ function applyArticleDefaults(form: DocumentForm, catalogos: Catalogos) {
     precoUnitario: String(artigo.pvp),
     tipoTaxaIvaId: artigo.ivaVendaId
   };
-}
-
-function clienteOptions(clientes: Cliente[]) {
-  return clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({
-    compactLabel: cliente.nome,
-    label: cliente.nome,
-    meta: cliente.id ? `Cliente ${cliente.id}` : undefined,
-    secondary: `NIF ${cliente.nif}`,
-    value: String(cliente.id)
-  }));
-}
-
-function artigoOptions(artigos: Artigo[], tiposIva: TipoTaxaIva[]) {
-  return artigos.map((artigo) => {
-    const iva = tiposIva.find((item) => item.id === artigo.ivaVendaId);
-    return {
-      compactLabel: artigo.codigo,
-      label: `${artigo.codigo} - ${artigo.descricao}`,
-      meta: `${formatNumber(artigo.pvp)} EUR - IVA ${iva ? ivaCompactLabel(iva) : artigo.ivaVendaId}`,
-      secondary: artigo.unidade,
-      value: artigo.codigo
-    };
-  });
 }
 
 function ivaCompactLabel(iva: TipoTaxaIva) {

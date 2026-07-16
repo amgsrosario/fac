@@ -2,10 +2,10 @@ import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 import { InputNumber, InputNumberValueChangeEvent } from "primereact/inputnumber";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, AuthSession } from "../../../api";
-import { DesktopShell, EntitySearchSelect, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useFacToast } from "../../fac";
+import { DesktopShell, EntityLookupColumn, EntityLookupField, EntityLookupSearchField, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useFacToast } from "../../fac";
 import { CommercialSidebar } from "../shared";
 
-type Page<T> = { content: T[] };
+type Page<T> = { content: T[]; totalPages?: number };
 type EstadoDocumento = "RASCUNHO" | "EMITIDO" | "ANULADO";
 type TipoLinha = "COMERCIAL" | "TEXTO";
 type Step = "header" | "lines";
@@ -68,8 +68,8 @@ type DocumentoImpressao = {
 
 type TipoDocumento = { id: string; descricao: string; areaGestao: number };
 type Serie = { serie: string; tipoDocumentoId: string; nome: string };
-type Cliente = { id: number; nome: string; nif: string; inativo: boolean; moedaId?: string | null; rivaId?: string | null; mPagamentoId?: string | null; pPagamentoId?: string | null; transporteId?: string | null };
-type Artigo = { codigo: string; descricao: string; unidade: string; pvp: number; ivaVendaId: string; inativo: boolean };
+type Cliente = { id: number; nome: string; nif: string; inativo: boolean; localidade?: string | null; tel?: string | null; tm?: string | null; email?: string | null; morada?: string | null; codPostalId?: string | null; paisId?: string | null; moedaId?: string | null; rivaId?: string | null; mPagamentoId?: string | null; pPagamentoId?: string | null; transporteId?: string | null };
+type Artigo = { codigo: string; abreviatura?: string | null; codigoIdentificacao?: string | null; descricao: string; unidade: string; familiaId?: number | null; peso?: string | number | null; ivaCompraId?: string | null; pvp: number; ivaVendaId: string; inativo: boolean; retencao?: boolean; observacoes?: string | null };
 type CatalogoString = { id: string; nome: string };
 type CatalogoNumero = { id: number; nome: string };
 type TipoTaxaIva = { id: string; descricao: string; inativo: boolean };
@@ -701,13 +701,32 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
 function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, readOnly }: { catalogos: Catalogos; header: HeaderState; onChooseClient: (clienteId: string | null) => void; onContinue: () => void; onUpdate: (patch: Partial<HeaderState>) => void; readOnly: boolean }) {
   const series = catalogos.series.filter((serie) => serie.tipoDocumentoId === header.tipoDocumentoId);
+  const selectedCliente = catalogos.clientes.find((cliente) => String(cliente.id) === header.clienteId) ?? null;
   return (
     <section className="fac-draft-header-phase">
       <div className="fac-draft-form-grid">
         <FacSelect disabled={readOnly} label="Tipo" onChange={(value) => onUpdate({ tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={header.tipoDocumentoId} />
         <FacSelect disabled={readOnly} label="Serie" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
         <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
-        <EntitySearchSelect disabled={readOnly} label="Cliente" onChange={onChooseClient} options={clienteOptions(catalogos.clientes)} value={header.clienteId} />
+        <EntityLookupField<Cliente>
+          clearable={false}
+          columns={clienteLookupColumns}
+          dataKey="id"
+          disabled={readOnly}
+          emptyMessage="Sem clientes para selecionar."
+          label="Cliente"
+          loading={catalogos.clientes.length === 0}
+          optionLabel={clienteLookupLabel}
+          optionMeta={(cliente) => [cliente.nif && `NIF ${cliente.nif}`, cliente.localidade].filter(Boolean).join(" · ")}
+          onSelect={(cliente) => onChooseClient(String(cliente.id))}
+          placeholder="Selecionar cliente"
+          preferenceKey="fac.lookup.draft.clientes"
+          searchFields={clienteSearchFields}
+          selection={selectedCliente}
+          title="Selecionar cliente"
+          value={catalogos.clientes.filter((cliente) => !cliente.inativo)}
+          valueLabel={selectedCliente ? clienteLookupLabel(selectedCliente) : undefined}
+        />
         <FacSelect disabled={readOnly} label="Armazem de carga" onChange={(value) => onUpdate({ armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={header.armazemCargaId} />
         <FacSelect disabled={readOnly} label="Moeda" onChange={(value) => onUpdate({ moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={header.moedaId} />
         <FacSelect disabled={readOnly} label="Regime IVA" onChange={(value) => onUpdate({ rivaId: value ?? "" })} options={catalogos.regimesIva.map((regime) => ({ label: regime.nome, value: regime.id }))} value={header.rivaId} />
@@ -787,6 +806,7 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
   const selected = props.selectedLineUid === line.uid || active;
   const disabled = props.readOnly && !active;
   const update = (patch: Partial<EditorLine>) => active ? props.onUpdateActiveLine(patch) : props.onUpdateLine(line.uid, patch);
+  const selectedArticle = catalogos.artigos.find((artigo) => artigo.codigo === line.artigoId) ?? null;
   return (
     <tr className={`${selected ? "selected" : ""} ${isText ? "text-line" : ""} ${active ? "active-line" : ""}`} onFocus={() => !active && props.onSelectLine(line.uid)} onMouseDown={() => !active && props.onSelectLine(line.uid)}>
       <td>{index + 1}</td>
@@ -805,7 +825,27 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
         </>
       ) : (
         <>
-          <td><EntitySearchSelect className="fac-draft-cell-select" disabled={disabled} onChange={(value) => active ? props.onChooseActiveArticle(value) : props.onChooseArticle(line.uid, value)} options={artigoOptions(catalogos.artigos, catalogos.tiposIva)} placeholder="Artigo" value={line.artigoId} /></td>
+          <td>
+            <EntityLookupField<Artigo>
+              clearable
+              columns={artigoLookupColumns(catalogos.tiposIva)}
+              dataKey="codigo"
+              disabled={disabled}
+              emptyMessage="Sem artigos para selecionar."
+              loading={catalogos.artigos.length === 0}
+              optionLabel={artigoLookupLabel}
+              optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Familia ${artigo.familiaId}` : null, money(Number(artigo.pvp))].filter(Boolean).join(" · ")}
+              onClear={() => active ? props.onChooseActiveArticle(null) : props.onChooseArticle(line.uid, null)}
+              onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo.codigo) : props.onChooseArticle(line.uid, artigo.codigo)}
+              placeholder="Artigo"
+              preferenceKey="fac.lookup.draft.artigos"
+              searchFields={artigoSearchFields(catalogos.tiposIva)}
+              selection={selectedArticle}
+              title="Selecionar artigo"
+              value={catalogos.artigos.filter((artigo) => !artigo.inativo)}
+              valueLabel={selectedArticle ? selectedArticle.codigo : undefined}
+            />
+          </td>
           <td><input className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} maxLength={80} onChange={(event) => update({ descricao: event.target.value })} value={line.descricao} /></td>
           <td><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ quantidade: value })} value={line.quantidade} /></td>
           <td><input className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} onChange={(event) => update({ unidade: event.target.value })} value={line.unidade} /></td>
@@ -859,27 +899,63 @@ function decimalValue(value: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function clienteOptions(clientes: Cliente[]) {
-  return clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({
-    compactLabel: cliente.nome,
-    label: cliente.nome,
-    meta: cliente.id ? `Cliente ${cliente.id}` : undefined,
-    secondary: `NIF ${cliente.nif}`,
-    value: String(cliente.id)
-  }));
+const clienteLookupColumns: EntityLookupColumn<Cliente>[] = [
+  { defaultVisible: true, field: "nome", filterable: true, globalSearch: true, header: "Nome", required: true, sortable: true },
+  { defaultVisible: true, field: "nif", filterable: true, globalSearch: true, header: "NIF", sortable: true, width: "9rem" },
+  { defaultVisible: true, field: "localidade", filterable: true, globalSearch: true, header: "Localidade", sortable: true },
+  { body: (cliente) => cliente.tm || cliente.tel || "-", defaultVisible: true, field: "tel", globalSearch: true, header: "Telefone", sortable: true, width: "9rem" },
+  { field: "id", header: "ID", sortable: true, width: "6rem" },
+  { field: "email", globalSearch: true, header: "Email", sortable: true },
+  { field: "paisId", header: "Pais", sortable: true, width: "7rem" },
+  { field: "codPostalId", header: "Codigo postal", sortable: true, width: "9rem" },
+  { body: (cliente) => cliente.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
+];
+
+const clienteSearchFields: EntityLookupSearchField<Cliente>[] = [
+  { fields: ["nome"], key: "nome" },
+  { fields: ["nif"], key: "nif" },
+  { fields: ["localidade"], key: "localidade" },
+  { fields: ["email"], key: "email" },
+  { aliases: ["telefone", "telemovel", "telemóvel"], fields: ["tel", "tm"], key: "telefone" },
+  { fields: ["id"], key: "id" }
+];
+
+function artigoLookupColumns(tiposIva: TipoTaxaIva[]): EntityLookupColumn<Artigo>[] {
+  return [
+    { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Codigo", required: true, sortable: true, width: "8rem" },
+    { defaultVisible: true, field: "descricao", filterable: true, globalSearch: true, header: "Descricao", sortable: true },
+    { body: (artigo) => artigo.familiaId ?? "-", defaultVisible: true, field: "familiaId", filterable: true, globalSearch: true, header: "Familia", sortable: true, width: "8rem" },
+    { defaultVisible: true, field: "unidade", filterable: true, globalSearch: true, header: "Unidade", sortable: true, width: "7rem" },
+    { body: (artigo) => money(Number(artigo.pvp)), defaultVisible: true, field: "pvp", header: "PVP", sortable: true, width: "8rem" },
+    { body: (artigo) => ivaLookupLabel(artigo.ivaVendaId, tiposIva), defaultVisible: true, field: "ivaVendaId", filterable: true, header: "IVA venda", sortable: true, width: "8rem" },
+    { body: (artigo) => artigo.retencao ? "Sim" : "Nao", field: "retencao", header: "Retencao", sortable: true, width: "8rem" },
+    { body: (artigo) => artigo.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" },
+    { field: "observacoes", header: "Observacoes", sortable: true }
+  ];
 }
 
-function artigoOptions(artigos: Artigo[], tiposIva: TipoTaxaIva[]) {
-  return artigos.map((artigo) => {
-    const iva = tiposIva.find((item) => item.id === artigo.ivaVendaId);
-    return {
-      compactLabel: artigo.codigo,
-      label: `${artigo.codigo} - ${artigo.descricao}`,
-      meta: `${money(Number(artigo.pvp))} - IVA ${iva ? ivaCompactLabel(iva) : artigo.ivaVendaId}`,
-      secondary: artigo.unidade,
-      value: artigo.codigo
-    };
-  });
+function artigoSearchFields(tiposIva: TipoTaxaIva[]): EntityLookupSearchField<Artigo>[] {
+  return [
+    { aliases: ["id"], fields: ["codigo"], key: "codigo" },
+    { fields: ["descricao"], key: "descricao" },
+    { fields: ["familiaId"], key: "familia" },
+    { fields: ["unidade"], key: "unidade" },
+    { fields: ["pvp"], key: "pvp" },
+    { getValue: (artigo) => ivaLookupLabel(artigo.ivaVendaId, tiposIva), key: "iva" }
+  ];
+}
+
+function clienteLookupLabel(cliente: Cliente) {
+  return `${cliente.nome}${cliente.nif ? ` - NIF ${cliente.nif}` : ""}`;
+}
+
+function artigoLookupLabel(artigo: Artigo) {
+  return `${artigo.codigo} - ${artigo.descricao}`;
+}
+
+function ivaLookupLabel(ivaId: string, tiposIva: TipoTaxaIva[]) {
+  const iva = tiposIva.find((item) => item.id === ivaId);
+  return iva ? ivaCompactLabel(iva) : ivaId;
 }
 
 function ivaCompactLabel(iva: TipoTaxaIva) {
@@ -890,11 +966,11 @@ function ivaCompactLabel(iva: TipoTaxaIva) {
 }
 
 async function loadCatalogos(): Promise<Catalogos> {
-  const [tiposPage, seriesPage, clientesPage, artigosPage, armazensPage, moedasPage, regimesPage, modosPage, prazosPage, transportesPage, tiposIvaPage] = await Promise.all([
+  const [tiposPage, seriesPage, clientes, artigos, armazensPage, moedasPage, regimesPage, modosPage, prazosPage, transportesPage, tiposIvaPage] = await Promise.all([
     fetchPage<TipoDocumento>("/api/tipos-documento?size=100&sort=id,asc"),
     fetchPage<Serie>("/api/series?size=100&sort=tipoDocumento.id,asc&sort=serie,asc"),
-    fetchPage<Cliente>("/api/clientes?size=300&sort=nome,asc"),
-    fetchPage<Artigo>("/api/artigos?size=300&sort=descricao,asc"),
+    fetchAllPages<Cliente>("/api/clientes", "nome,asc"),
+    fetchAllPages<Artigo>("/api/artigos", "descricao,asc"),
     fetchPage<Armazem>("/api/armazens?size=100&sort=nome,asc"),
     fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
     fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
@@ -904,9 +980,9 @@ async function loadCatalogos(): Promise<Catalogos> {
     fetchPage<TipoTaxaIva>("/api/tipos-taxa-iva?size=100&sort=descricao,asc")
   ]);
   return {
-    artigos: artigosPage.content.filter((artigo) => !artigo.inativo),
+    artigos: artigos.filter((artigo) => !artigo.inativo),
     armazens: armazensPage.content,
-    clientes: clientesPage.content,
+    clientes,
     moedas: moedasPage.content,
     regimesIva: regimesPage.content,
     series: seriesPage.content,
@@ -922,6 +998,19 @@ async function fetchPage<T>(url: string): Promise<Page<T>> {
   const response = await apiFetch(url);
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();
+}
+
+async function fetchAllPages<T>(path: string, sort: string, pageSize = 500): Promise<T[]> {
+  const rows: T[] = [];
+  for (let pageNumber = 0; ; pageNumber += 1) {
+    const page = await fetchPage<T>(`${path}?page=${pageNumber}&size=${pageSize}&sort=${sort}`);
+    rows.push(...page.content);
+    if (page.totalPages !== undefined) {
+      if (pageNumber + 1 >= page.totalPages) return rows;
+    } else if (page.content.length < pageSize) {
+      return rows;
+    }
+  }
 }
 
 async function requestJson<T>(url: string, body?: unknown, method: "GET" | "POST" | "PUT" = "GET"): Promise<T> {
