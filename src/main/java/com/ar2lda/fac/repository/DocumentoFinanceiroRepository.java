@@ -3,6 +3,8 @@ package com.ar2lda.fac.repository;
 import com.ar2lda.fac.model.DocumentoFinanceiro;
 import com.ar2lda.fac.repository.projection.ExtratoAnteriorProjection;
 import com.ar2lda.fac.repository.projection.ExtratoMovimentoProjection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +15,20 @@ import java.util.List;
 public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFinanceiro, Long> {
 
     boolean existsByTipoDocumentoIdAndSerie(String tipoDocumentoId, String serie);
+
+    @Query("""
+            select d
+            from DocumentoFinanceiro d
+            where d.dataEmissao >= :dataInicial
+              and d.dataEmissao <= :dataFinal
+              and (:clienteId is null or d.cliente.id = :clienteId)
+            """)
+    Page<DocumentoFinanceiro> findAnaliticos(
+            @Param("dataInicial") LocalDate dataInicial,
+            @Param("dataFinal") LocalDate dataFinal,
+            @Param("clienteId") Long clienteId,
+            Pageable pageable
+    );
 
     @Query("""
             select max(d.dataEmissao)

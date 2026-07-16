@@ -263,6 +263,55 @@ class DocumentoComercialControllerTests {
                 .getHeader("Location");
     }
 
+    private Cliente criarClienteTeste(String nome, String nif) {
+        CodPostal codPostal = codPostalRepository.findById("3750-004").orElseThrow();
+        Pais pais = paisRepository.findById("PT").orElseThrow();
+        Moeda moeda = moedaRepository.findById("EUR").orElseThrow();
+        RIva riva = rIvaRepository.findById("CON").orElseThrow();
+        Transporte transporte = transporteRepository.findById("DCT").orElseThrow();
+
+        Cliente novoCliente = new Cliente();
+        novoCliente.setNome(nome);
+        novoCliente.setMorada("Rua " + nome);
+        novoCliente.setLocalidade("Agueda");
+        novoCliente.setCodPostal(codPostal);
+        novoCliente.setPais(pais);
+        novoCliente.setNif(nif);
+        novoCliente.setMoeda(moeda);
+        novoCliente.setEmail(nif + "@fac.test");
+        novoCliente.setRiva(riva);
+        novoCliente.setMPagamento(mPagamento);
+        novoCliente.setPPagamento(pPagamento);
+        novoCliente.setTransporte(transporte);
+        return clienteRepository.save(novoCliente);
+    }
+
+    private String criarDocumentoComPrimeiraLinha(Cliente clienteDocumento, String dataEmissao) throws Exception {
+        return mockMvc.perform(post("/documentos-comerciais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "documento": {
+                                    "tipoDocumentoId": "DCT",
+                                    "serie": "A",
+                                    "dataEmissao": "%s",
+                                    "clienteId": %d,
+                                    "armazemCargaId": "%s",
+                                    "pPagamentoId": "P30"
+                                  },
+                                  "linha": {
+                                    "artigoId": "ARTLINHA",
+                                    "quantidade": 1,
+                                    "precoUnitario": 10
+                                  }
+                                }
+                                """.formatted(dataEmissao, clienteDocumento.getId(), armazem.getId())))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
+    }
+
     private Long documentoId(String documentoLocation) {
         return Long.valueOf(documentoLocation.substring(documentoLocation.lastIndexOf('/') + 1));
     }
@@ -297,6 +346,135 @@ class DocumentoComercialControllerTests {
         List<com.ar2lda.fac.model.LinhaDocumentoComercial> linhas =
                 linhaDocumentoComercialRepository.findByDocumentoComercialIdOrderByNumeroLinha(documentoId(documentoLocation));
         return linhas.get(linhas.size() - 1).getId();
+    }
+
+    @Test
+    void listagensAnaliticasExcluemRascunhosEMantemValoresOficiais() throws Exception {
+        criarDocumentoComPrimeiraLinha();
+        String emitidoLocation = criarDocumentoComPrimeiraLinha();
+
+        mockMvc.perform(post(emitidoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"emissorId\":\"EMISSOR\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].documento.estado").value("EMITIDO"))
+                .andExpect(jsonPath("$.content[0].documento.valorIvaTotal").value(2.3))
+                .andExpect(jsonPath("$.content[0].documento.valorTotal").value(12.3))
+                .andExpect(jsonPath("$.content[0].valorLiquido").value(10.0));
+    }
+
+    @Test
+    void listagemDetalheComercialFiltraClienteEArtigoSemMostrarLinhasDeRascunho() throws Exception {
+        criarDocumentoComPrimeiraLinha();
+        String emitidoLocation = criarDocumentoComPrimeiraLinha();
+        adicionarLinhaTexto(emitidoLocation, "Nota sem artigo");
+
+        mockMvc.perform(post(emitidoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"emissorId\":\"EMISSOR\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("clienteId", String.valueOf(cliente.getId()))
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("clienteId", String.valueOf(cliente.getId()))
+                        .param("artigoId", "ARTLINHA")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].linha.artigoId").value("ARTLINHA"));
+    }
+
+    @Test
+    void listagensAnaliticasIncluemAnuladosEEndpointOperacionalMantemRascunhos() throws Exception {
+        String rascunhoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-05");
+        String emitidoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-06");
+        String anuladoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-07");
+
+        mockMvc.perform(post(emitidoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"emissorId\":\"EMISSOR\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post(anuladoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"emissorId\":\"EMISSOR\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post(anuladoLocation + "/anular")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Documento anulado para listagem\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[*].documento.estado",
+                        org.hamcrest.Matchers.containsInAnyOrder("EMITIDO", "ANULADO")));
+
+        mockMvc.perform(get("/documentos-comerciais")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].estado",
+                        org.hamcrest.Matchers.hasItem("RASCUNHO")))
+                .andExpect(jsonPath("$.content[*].id",
+                        org.hamcrest.Matchers.hasItem(documentoId(rascunhoLocation).intValue())));
+    }
+
+    @Test
+    void listagensAnaliticasFiltramClienteEIntervaloDeDatas() throws Exception {
+        Cliente outroCliente = criarClienteTeste("Cliente Alternativo", "509654322");
+        String documentoClienteBase = criarDocumentoComPrimeiraLinha(cliente, "2026-06-06");
+        String documentoOutroCliente = criarDocumentoComPrimeiraLinha(outroCliente, "2026-06-07");
+        String documentoForaDoIntervalo = criarDocumentoComPrimeiraLinha(cliente, "2026-07-01");
+
+        for (String location : List.of(documentoClienteBase, documentoOutroCliente, documentoForaDoIntervalo)) {
+            mockMvc.perform(post(location + "/emitir")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"emissorId\":\"EMISSOR\"}"))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-06-01")
+                        .param("dataFinal", "2026-06-30")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-06-01")
+                        .param("dataFinal", "2026-06-30")
+                        .param("clienteId", String.valueOf(cliente.getId()))
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].documento.clienteId").value(cliente.getId()));
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-07-01")
+                        .param("dataFinal", "2026-07-31")
+                        .param("clienteId", String.valueOf(cliente.getId()))
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].documento.id").value(documentoId(documentoForaDoIntervalo)));
     }
 
     @Test

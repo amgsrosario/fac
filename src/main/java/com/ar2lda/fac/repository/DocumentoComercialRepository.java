@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import jakarta.persistence.LockModeType;
 
@@ -20,6 +22,21 @@ public interface DocumentoComercialRepository extends JpaRepository<DocumentoCom
     java.util.Optional<DocumentoComercial> findByIdForUpdate(@Param("id") Long id);
 
     boolean existsByTipoDocumentoIdAndSerie(String tipoDocumentoId, String serie);
+
+    @Query("""
+            select d
+            from DocumentoComercial d
+            where d.estado <> com.ar2lda.fac.model.EstadoDocumentoComercial.RASCUNHO
+              and d.dataEmissao >= :dataInicial
+              and d.dataEmissao <= :dataFinal
+              and (:clienteId is null or d.cliente.id = :clienteId)
+            """)
+    Page<DocumentoComercial> findAnaliticos(
+            @Param("dataInicial") LocalDate dataInicial,
+            @Param("dataFinal") LocalDate dataFinal,
+            @Param("clienteId") Long clienteId,
+            Pageable pageable
+    );
 
     @Query("""
             select max(d.dataEmissao)

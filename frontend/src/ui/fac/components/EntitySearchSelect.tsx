@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Dropdown, DropdownChangeEvent } from "primereact/dropdown";
+import "./EntitySearchSelect.css";
 
 export type EntitySearchOption = {
   label: string;
@@ -16,6 +17,8 @@ type EntitySearchSelectProps = {
   label?: string;
   loading?: boolean;
   onChange: (value: string | null) => void;
+  onFilter?: (query: string) => void;
+  onShow?: () => void;
   openOnMount?: boolean;
   options: EntitySearchOption[];
   placeholder?: string;
@@ -29,6 +32,8 @@ export function EntitySearchSelect({
   label,
   loading = false,
   onChange,
+  onFilter,
+  onShow,
   openOnMount = false,
   options,
   placeholder = "Pesquisar",
@@ -62,6 +67,8 @@ export function EntitySearchSelect({
       )}
       loading={loading}
       onChange={(event: DropdownChangeEvent) => onChange(event.value ?? null)}
+      onFilter={(event: { filter: string }) => onFilter?.(event.filter)}
+      onShow={onShow}
       optionLabel="label"
       optionValue="value"
       options={options}
