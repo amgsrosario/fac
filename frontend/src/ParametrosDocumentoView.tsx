@@ -49,7 +49,7 @@ export default function ParametrosDocumentoView() {
         armazemCargaId: parametros.armazemCargaId != null ? String(parametros.armazemCargaId) : ""
       } : emptyForm);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar os parametros de documentos.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível carregar os parâmetros de documentos.");
     } finally {
       setLoading(false);
     }
@@ -74,9 +74,9 @@ export default function ParametrosDocumentoView() {
       });
       if (!response.ok) throw new Error(await responseError(response));
       setExists(true);
-      setMessage("Parametros dos documentos comerciais guardados.");
+      setMessage("Parâmetros dos documentos comerciais guardados.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel guardar os parametros.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível guardar os parâmetros.");
     } finally {
       setLoading(false);
     }
@@ -96,19 +96,19 @@ export default function ParametrosDocumentoView() {
       <div className="fac-form-grid">
         <Field label="Tipo de documento">
           <select onChange={(event) => setForm((current) => ({ ...current, tipoDocumentoId: event.target.value, serie: "" }))} value={form.tipoDocumentoId}>
-            <option value="">Nao sugerir</option>
+            <option value="">Não sugerir</option>
             {tipos.map((tipo) => <option key={tipo.id} value={tipo.id}>{tipo.id} - {tipo.descricao}</option>)}
           </select>
         </Field>
-        <Field label="Serie">
+        <Field label="Série">
           <select disabled={!form.tipoDocumentoId} onChange={(event) => setForm((current) => ({ ...current, serie: event.target.value }))} value={form.serie}>
-            <option value="">Nao sugerir</option>
+            <option value="">Não sugerir</option>
             {availableSeries.map((serie) => <option key={`${serie.tipoDocumentoId}-${serie.serie}`} value={serie.serie}>{serie.serie} - {serie.nome}</option>)}
           </select>
         </Field>
-        <Field label="Armazem de carga">
+        <Field label="Armazém de carga">
           <select onChange={(event) => setForm((current) => ({ ...current, armazemCargaId: event.target.value }))} value={form.armazemCargaId}>
-            <option value="">Nao sugerir</option>
+            <option value="">Não sugerir</option>
             {armazens.map((armazem) => <option key={armazem.id} value={armazem.id}>{armazem.id} - {armazem.nome}</option>)}
           </select>
         </Field>

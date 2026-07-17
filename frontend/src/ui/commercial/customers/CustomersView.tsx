@@ -180,7 +180,7 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
       });
       setSelectedId((current) => current ?? clientesPage.content[0]?.id ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar os clientes.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar os clientes.");
     } finally {
       setLoading(false);
     }
@@ -266,7 +266,7 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
       showToast({ detail: `Cliente ${form.nome.trim()} guardado.`, severity: "success", summary: "Guardado" });
       if (isMobile) setMobileScreen("detail");
     } catch (err) {
-      setEditorMessage(err instanceof Error ? err.message : "Nao foi possivel guardar o cliente.");
+      setEditorMessage(err instanceof Error ? err.message : "Não foi possível guardar o cliente.");
       scrollCustomerFormTop();
     } finally {
       setSaving(false);
@@ -358,9 +358,9 @@ function CustomersContent(props: {
     <>
       <CustomersHeader {...props} />
       <CustomersToolbar {...props} />
-      {props.notice && <FacMessage tone="success" title="Operacao concluida">{props.notice}</FacMessage>}
+      {props.notice && <FacMessage tone="success" title="Operação concluída">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
-      <section aria-label="Catalogo de clientes" className="fac-customers-layout">
+      <section aria-label="Catálogo de clientes" className="fac-customers-layout">
         <article className="fac-customers-panel fac-customers-list-panel">
           <CustomersList {...props} />
         </article>
@@ -404,7 +404,7 @@ function MobileCustomersContent(props: Parameters<typeof CustomersContent>[0]) {
     <>
       <CustomersHeader {...props} compact />
       <CustomersToolbar {...props} />
-      {props.notice && <FacMessage tone="success" title="Operacao concluida">{props.notice}</FacMessage>}
+      {props.notice && <FacMessage tone="success" title="Operação concluída">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
       <CustomersList {...props} />
     </>
@@ -464,14 +464,14 @@ function CustomersToolbar({ deviceClass, onSearch, onStateFilter, search, stateF
 
 function CustomersList({ deviceClass, filtered, loading, onSelect, search, selected, clientes, stateFilter }: Parameters<typeof CustomersContent>[0]) {
   if (loading) return <FacLoadingState description="A carregar clientes." />;
-  if (clientes.length === 0) return <FacEmptyState description="Ainda nao existem clientes." />;
+  if (clientes.length === 0) return <FacEmptyState description="Ainda não existem clientes." />;
   if (filtered.length === 0) return <FacEmptyState description="Sem resultados para a pesquisa e filtros atuais." />;
 
   const isMobile = deviceClass === "mobile";
   if (!isMobile) {
     const tableValue = clientes.filter((cliente) => stateFilter === "all" || (stateFilter === "active" && !cliente.inativo) || (stateFilter === "inactive" && cliente.inativo));
     const columns: FacDataTableColumn<Cliente>[] = [
-      { dataType: "numeric", field: "id", filter: true, filterPlaceholder: "Codigo", header: "Codigo", sortable: true, style: { width: "6rem" } },
+      { dataType: "numeric", field: "id", filter: true, filterPlaceholder: "Código", header: "Código", sortable: true, style: { width: "6rem" } },
       { field: "nome", filter: true, filterPlaceholder: "Nome", header: "Nome", sortable: true },
       { field: "nif", filter: true, filterPlaceholder: "NIF", header: "NIF", sortable: true, style: { width: "8rem" } },
       { field: "localidade", filter: true, filterPlaceholder: "Localidade", header: "Localidade", sortable: true, style: { width: "9rem" } },
@@ -514,7 +514,7 @@ function CustomersList({ deviceClass, filtered, loading, onSelect, search, selec
         <table className="fac-customers-table">
           <thead>
             <tr>
-              <th>Codigo</th>
+              <th>Código</th>
               <th>Nome</th>
               <th>NIF</th>
               <th>Localidade</th>
@@ -572,21 +572,21 @@ function CustomerDetail({ canManage, catalogos, onEdit, selected }: Parameters<t
         <StateBadge inactive={selected.inativo} />
       </div>
       <dl>
-        <div><dt>Codigo</dt><dd>{selected.id}</dd></div>
+        <div><dt>Código</dt><dd>{selected.id}</dd></div>
         <div><dt>NIF</dt><dd>{selected.nif || "-"}</dd></div>
         <div><dt>Morada</dt><dd>{addressLine(selected)}</dd></div>
-        <div><dt>Codigo postal</dt><dd>{selected.codPostalId || "-"}</dd></div>
+        <div><dt>Código postal</dt><dd>{selected.codPostalId || "-"}</dd></div>
         <div><dt>Localidade</dt><dd>{selected.localidade || "-"}</dd></div>
-        <div><dt>Pais</dt><dd>{catalogName(catalogos.paises, selected.paisId)}</dd></div>
+        <div><dt>País</dt><dd>{catalogName(catalogos.paises, selected.paisId)}</dd></div>
         <div><dt>Email</dt><dd>{selected.email || "-"}</dd></div>
         <div><dt>Telefone</dt><dd>{selected.tel || selected.tm || "-"}</dd></div>
-        <div><dt>Condicao</dt><dd>{catalogName(catalogos.prazosPagamento, selected.pPagamentoId)}</dd></div>
+        <div><dt>Condição</dt><dd>{catalogName(catalogos.prazosPagamento, selected.pPagamentoId)}</dd></div>
         <div><dt>Moeda</dt><dd>{catalogName(catalogos.moedas, selected.moedaId)}</dd></div>
-        <div><dt>Cliente ativo</dt><dd>{selected.inativo ? "Nao" : "Sim"}</dd></div>
+        <div><dt>Cliente ativo</dt><dd>{selected.inativo ? "Não" : "Sim"}</dd></div>
       </dl>
       {canManage
         ? <FacButton icon="pi pi-pencil" label="Editar cliente" onClick={() => onEdit(selected)} variant="primary" />
-        : <FacMessage title="Consulta">Sem permissao para criar ou editar clientes.</FacMessage>}
+        : <FacMessage title="Consulta">Sem permissão para criar ou editar clientes.</FacMessage>}
     </section>
   );
 }
@@ -616,10 +616,10 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
 
   return (
     <form className="fac-customers-form" id={formId} onSubmit={onSave}>
-      {editorMessage && <FacMessage tone="error" title="Validacao">{editorMessage}</FacMessage>}
+      {editorMessage && <FacMessage tone="error" title="Validação">{editorMessage}</FacMessage>}
 
-      <FormSection title="Identificacao">
-        {editorMode === "edit" && <FacInputText disabled label="Codigo" value={selected ? String(selected.id) : ""} />}
+      <FormSection title="Identificação">
+        {editorMode === "edit" && <FacInputText disabled label="Código" value={selected ? String(selected.id) : ""} />}
         <FacInputText label="Nome" maxLength={80} onChange={(event) => onChangeForm({ ...form, nome: event.target.value })} required value={form.nome} />
         <FacInputText label="NIF" maxLength={9} onChange={(event) => onChangeForm({ ...form, nif: event.target.value })} required value={form.nif} />
         <FacSelect label="Regime de IVA" onChange={(value) => onChangeForm({ ...form, rivaId: value ?? "" })} options={catalogOptions(catalogos.regimesIva)} value={form.rivaId} />
@@ -628,25 +628,25 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
       <FormSection title="Contactos">
         <FacInputText label="Email" maxLength={120} onChange={(event) => onChangeForm({ ...form, email: event.target.value })} required type="email" value={form.email} />
         <FacInputText label="Telefone" maxLength={20} onChange={(event) => onChangeForm({ ...form, tel: event.target.value })} value={form.tel} />
-        <FacInputText label="Telemovel" maxLength={20} onChange={(event) => onChangeForm({ ...form, tm: event.target.value })} value={form.tm} />
+        <FacInputText label="Telemóvel" maxLength={20} onChange={(event) => onChangeForm({ ...form, tm: event.target.value })} value={form.tm} />
       </FormSection>
 
       <FormSection title="Morada">
         <FacInputText label="Morada" maxLength={60} onChange={(event) => onChangeForm({ ...form, morada: event.target.value })} required value={form.morada} />
         <FacInputText label="Morada complementar" maxLength={60} onChange={(event) => onChangeForm({ ...form, morada1: event.target.value })} value={form.morada1} />
-        <FacSelect label="Codigo postal" onChange={(value) => onChangeForm({ ...form, codPostalId: value ?? "" })} options={catalogOptions(catalogos.codPostais)} value={form.codPostalId} />
+        <FacSelect label="Código postal" onChange={(value) => onChangeForm({ ...form, codPostalId: value ?? "" })} options={catalogOptions(catalogos.codPostais)} value={form.codPostalId} />
         <FacInputText label="Localidade" maxLength={50} onChange={(event) => onChangeForm({ ...form, localidade: event.target.value })} value={form.localidade} />
-        <FacSelect label="Pais" onChange={(value) => onChangeForm({ ...form, paisId: value ?? "" })} options={catalogOptions(catalogos.paises)} value={form.paisId} />
+        <FacSelect label="País" onChange={(value) => onChangeForm({ ...form, paisId: value ?? "" })} options={catalogOptions(catalogos.paises)} value={form.paisId} />
       </FormSection>
 
-      <FormSection title="Condicoes comerciais e financeiras">
+      <FormSection title="Condições comerciais e financeiras">
         <FacSelect label="Moeda" onChange={(value) => onChangeForm({ ...form, moedaId: value ?? "" })} options={catalogOptions(catalogos.moedas)} value={form.moedaId} />
         <FacSelect label="Modo de pagamento" onChange={(value) => onChangeForm({ ...form, mPagamentoId: value ?? "" })} options={catalogOptions(catalogos.modosPagamento)} value={form.mPagamentoId} />
         <FacSelect label="Prazo de pagamento" onChange={(value) => onChangeForm({ ...form, pPagamentoId: value ?? "" })} options={catalogOptions(catalogos.prazosPagamento)} value={form.pPagamentoId} />
         <FacInputText label="IBAN" maxLength={34} onChange={(event) => onChangeForm({ ...form, iban: event.target.value })} value={form.iban} />
         <label className="fac-customers-check">
           <input checked={form.retencao} onChange={(event) => onChangeForm({ ...form, retencao: event.target.checked })} type="checkbox" />
-          <span>Sujeito a retencao</span>
+          <span>Sujeito a retenção</span>
         </label>
       </FormSection>
 
@@ -664,7 +664,7 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
         <div className="fac-customers-form-grid" hidden={!moreOptionsOpen} id="fac-commercial-customer-more-options">
           <FacSelect label="Transporte" onChange={(value) => onChangeForm({ ...form, transporteId: value ?? "" })} options={catalogOptions(catalogos.transportes)} value={form.transporteId} />
           <label className="fac-customers-textarea">
-            <span>Observacoes</span>
+            <span>Observações</span>
             <textarea maxLength={300} onChange={(event) => onChangeForm({ ...form, observacoes: event.target.value })} value={form.observacoes} />
           </label>
           <label className="fac-customers-check">
@@ -714,10 +714,10 @@ function LegacyCommercialSidebar({ active, currentUser, onLogout }: { active: "a
           <small>Comercial</small>
         </div>
       </div>
-      <nav aria-label="Navegacao comercial">
+      <nav aria-label="Navegação comercial">
         <a className={active === "articles" ? "active" : ""} href="/artigos">
           <strong>Artigos</strong>
-          <small>Catalogo</small>
+          <small>Catálogo</small>
         </a>
         <a className={active === "customers" ? "active" : ""} href="/clientes">
           <strong>Clientes</strong>
@@ -791,15 +791,15 @@ async function responseError(response: Response) {
 }
 
 function validate(form: ClienteForm) {
-  if (!form.nome.trim()) return "O nome e obrigatorio.";
+  if (!form.nome.trim()) return "O nome é obrigatório.";
   if (form.nif.trim().length !== 9) return "O NIF deve ter 9 caracteres.";
   if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) return "Indica um email valido.";
   if (form.email1.trim() && !/^\S+@\S+\.\S+$/.test(form.email1.trim())) return "Indica um segundo email valido.";
   if (!form.morada.trim()) return "A morada e obrigatoria.";
-  if (!form.codPostalId.trim()) return "O codigo postal e obrigatorio.";
-  if (!form.paisId) return "O pais e obrigatorio.";
+  if (!form.codPostalId.trim()) return "O código postal é obrigatório.";
+  if (!form.paisId) return "O país é obrigatório.";
   if (!form.moedaId) return "A moeda e obrigatoria.";
-  if (!form.transporteId) return "O transporte e obrigatorio.";
+  if (!form.transporteId) return "O transporte é obrigatório.";
   return null;
 }
 

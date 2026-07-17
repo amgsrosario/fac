@@ -12,7 +12,7 @@ const DOCUMENTO_COLUMNS: ConfigurableColumn[] = [
   { key: "documento", label: "Documento", visible: true },
   { key: "cliente", label: "Cliente", visible: true },
   { key: "nif", label: "NIF", visible: false },
-  { key: "emissao", label: "Emissao", visible: true },
+  { key: "emissao", label: "Emissão", visible: true },
   { key: "vencimento", label: "Vencimento", visible: false },
   { key: "moeda", label: "Moeda", visible: false },
   { key: "bruto", label: "Bruto", visible: false },
@@ -214,7 +214,7 @@ export default function DocumentosView() {
       setDocumentos(page.content);
       setSelectedId((current) => current ?? page.content[0]?.id ?? null);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar documentos.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível carregar documentos.");
     } finally {
       setLoading(false);
     }
@@ -227,7 +227,7 @@ export default function DocumentosView() {
       setLinhas(await fetchJson<LinhaDocumento[]>(`/api/documentos-comerciais/${documentoId}/linhas`));
     } catch (error) {
       setLinhas([]);
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar as linhas.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível carregar as linhas.");
     } finally {
       setLinesLoading(false);
     }
@@ -244,7 +244,7 @@ export default function DocumentosView() {
       setLineForm(emptyLineForm);
       setLineEditorOpen(true);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar os artigos.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível carregar os artigos.");
     }
   }
 
@@ -272,7 +272,7 @@ export default function DocumentosView() {
       setLineEditorOpen(false);
       setNotice("Linha adicionada e totais do documento recalculados.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel adicionar a linha.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível adicionar a linha.");
     } finally {
       setLinesLoading(false);
     }
@@ -288,7 +288,7 @@ export default function DocumentosView() {
       await refreshSelectedDocument(selected.id);
       setNotice("Linha removida e totais do documento recalculados.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel remover a linha.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível remover a linha.");
     } finally {
       setLinesLoading(false);
     }
@@ -313,7 +313,7 @@ export default function DocumentosView() {
       setDiagnostico(diagnosticoAtual);
       setEmissionOpen(true);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel preparar a emissao.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível preparar a emissão.");
     } finally {
       setLoading(false);
     }
@@ -321,7 +321,7 @@ export default function DocumentosView() {
 
   async function emitDocument() {
     if (!selected || !diagnostico?.podeEmitir) return;
-    if (!window.confirm(`Emitir definitivamente ${diagnostico.referencia}? Depois de emitido, o documento fica imutavel.`)) return;
+    if (!window.confirm(`Emitir definitivamente ${diagnostico.referencia}? Depois de emitido, o documento fica imutável.`)) return;
     setLoading(true);
     setMessage(null);
     try {
@@ -333,9 +333,9 @@ export default function DocumentosView() {
       setLineEditorOpen(false);
       setNotice(diagnosticoEmitido.pendente.existe
         ? `Documento ${reference(emitted)} emitido. Pendente ${diagnosticoEmitido.pendente.id} criado com ${money(diagnosticoEmitido.pendente.valorPendente ?? 0)} ${emitted.moedaId}.`
-        : `Documento ${reference(emitted)} emitido sem pendente por ser de liquidacao imediata.`);
+        : `Documento ${reference(emitted)} emitido sem pendente por ser de liquidação imediata.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel emitir o documento.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível emitir o documento.");
     } finally {
       setLoading(false);
     }
@@ -352,7 +352,7 @@ export default function DocumentosView() {
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       setDocumentos((current) => current.map((item) => item.id === id ? { ...item, impresso: true } : item));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel gerar o PDF.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível gerar o PDF.");
     } finally {
       setLoading(false);
     }
@@ -365,7 +365,7 @@ export default function DocumentosView() {
       setMessage("O motivo deve ter entre 5 e 500 caracteres.");
       return;
     }
-    if (!window.confirm(`Confirmar a anulacao definitiva de ${reference(selected)}?`)) return;
+    if (!window.confirm(`Confirmar a anulação definitiva de ${reference(selected)}?`)) return;
     setLoading(true);
     setMessage(null);
     setNotice(null);
@@ -376,7 +376,7 @@ export default function DocumentosView() {
       setAnnulReason("");
       setNotice(`${reference(annulled)} anulado.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel anular o documento.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível anular o documento.");
     } finally {
       setLoading(false);
     }
@@ -396,7 +396,7 @@ export default function DocumentosView() {
       setDeleteOpen(false);
       setNotice("Rascunho eliminado com sucesso.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel eliminar o rascunho.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível eliminar o rascunho.");
     } finally {
       setLoading(false);
     }
@@ -455,7 +455,7 @@ export default function DocumentosView() {
       setLineEditorOpen(true);
       setNotice(`Documento ${created.tipoDocumentoId} iniciado com a primeira linha. Podes continuar a introduzir linhas.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel criar o documento com a primeira linha.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível criar o documento com a primeira linha.");
     } finally {
       setLoading(false);
     }
@@ -504,26 +504,26 @@ export default function DocumentosView() {
               {tiposDocumento.map((tipo) => <option key={tipo.id} value={tipo.id}>{tipo.id} - {tipo.descricao}</option>)}
             </select>
           </Field>
-          <Field label="Serie">
+          <Field label="Série">
             <select disabled={!draftForm.tipoDocumentoId} onChange={(event) => changeDraft("serie", event.target.value)} value={draftForm.serie}>
               <option value="">Selecionar</option>
               {availableSeries.map((serie) => <option key={`${serie.tipoDocumentoId}-${serie.serie}`} value={serie.serie}>{serie.serie} - {serie.nome}</option>)}
             </select>
           </Field>
-          <Field label="Data de emissao"><input onChange={(event) => changeDraft("dataEmissao", event.target.value)} type="date" value={draftForm.dataEmissao} /></Field>
+          <Field label="Data de emissão"><input onChange={(event) => changeDraft("dataEmissao", event.target.value)} type="date" value={draftForm.dataEmissao} /></Field>
           <Field label="Cliente">
             <select ref={newDocumentClientRef} onChange={(event) => changeDraft("clienteId", event.target.value)} value={draftForm.clienteId}>
               <option value="">Selecionar</option>
               {clientes.map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.nome} - {cliente.nif}</option>)}
             </select>
           </Field>
-          <Field label="Armazem de carga">
+          <Field label="Armazém de carga">
             <select onChange={(event) => changeDraft("armazemCargaId", event.target.value)} value={draftForm.armazemCargaId}>
               <option value="">Selecionar</option>
               {armazens.map((armazem) => <option key={armazem.id} value={armazem.id}>{armazem.id} - {armazem.nome}</option>)}
             </select>
           </Field>
-          <Field label="Observacoes"><textarea maxLength={250} onChange={(event) => changeDraft("observacoes", event.target.value)} value={draftForm.observacoes} /></Field>
+          <Field label="Observações"><textarea maxLength={250} onChange={(event) => changeDraft("observacoes", event.target.value)} value={draftForm.observacoes} /></Field>
         </div>
 
         <div className="fac-panel-header">
@@ -537,9 +537,9 @@ export default function DocumentosView() {
               {artigos.map((artigo) => <option key={artigo.codigo} value={artigo.codigo}>{artigo.codigo} - {artigo.descricao}</option>)}
             </select>
           </Field>
-          <Field label="Descricao"><input maxLength={80} onChange={(event) => setLineForm((current) => ({ ...current, descricao: event.target.value }))} placeholder="Usa a descricao do artigo" value={lineForm.descricao} /></Field>
+          <Field label="Descrição"><input maxLength={80} onChange={(event) => setLineForm((current) => ({ ...current, descricao: event.target.value }))} placeholder="Usa a descrição do artigo" value={lineForm.descricao} /></Field>
           <Field label="Quantidade"><input min="0.000001" onChange={(event) => setLineForm((current) => ({ ...current, quantidade: event.target.value }))} step="0.000001" type="number" value={lineForm.quantidade} /></Field>
-          <Field label="Preco unitario"><input min="0" onChange={(event) => setLineForm((current) => ({ ...current, precoUnitario: event.target.value }))} step="0.000001" type="number" value={lineForm.precoUnitario} /></Field>
+          <Field label="Preço unitário"><input min="0" onChange={(event) => setLineForm((current) => ({ ...current, precoUnitario: event.target.value }))} step="0.000001" type="number" value={lineForm.precoUnitario} /></Field>
           <Field label="Tipo de desconto">
             <select onChange={(event) => setLineForm((current) => ({ ...current, tipoDesconto: event.target.value as LineForm["tipoDesconto"] }))} value={lineForm.tipoDesconto}>
               <option value="PERCENTAGEM">Percentagem</option><option value="VALOR">Valor</option>
@@ -549,7 +549,7 @@ export default function DocumentosView() {
         </div>
 
         <div className="fac-form-footer">
-          <span className="fac-muted">O documento fica em rascunho, sem numero definitivo, mas nunca sem linhas.</span>
+          <span className="fac-muted">O documento fica em rascunho, sem número definitivo, mas nunca sem linhas.</span>
           <button className="fac-primary-button" disabled={loading} onClick={createDraft} type="button">{loading ? "A criar..." : "Criar documento e guardar primeira linha"}</button>
         </div>
       </section>
@@ -564,8 +564,8 @@ export default function DocumentosView() {
       <section className="fac-hero">
         <div>
           <p className="fac-eyebrow">Documentos comerciais</p>
-          <h2>Consulta operacional por documento</h2>
-          <p>Pesquisa, seleciona e abre documentos comerciais para consulta ou edicao de rascunhos.</p>
+          <h2>Consulta de documentos</h2>
+          <p>Pesquisa, seleciona e abre documentos comerciais para consulta ou edição de rascunhos.</p>
         </div>
         <div className="fac-hero-card">
           <span>Documentos carregados</span>
@@ -612,11 +612,11 @@ export default function DocumentosView() {
             <div><dt>Cliente</dt><dd>{selected?.clienteNome ?? "-"}</dd></div>
             <div><dt>NIF</dt><dd>{selected?.clienteNif ?? "-"}</dd></div>
             <div><dt>Estado</dt><dd>{selected ? documentState(selected) : "-"}</dd></div>
-            <div><dt>Emissao</dt><dd>{selected ? datePt(selected.dataEmissao) : "-"}</dd></div>
+            <div><dt>Emissão</dt><dd>{selected ? datePt(selected.dataEmissao) : "-"}</dd></div>
             <div><dt>Vencimento</dt><dd>{selected?.dataVencimento ? datePt(selected.dataVencimento) : "-"}</dd></div>
             <div><dt>Total</dt><dd>{selected ? `${money(selected.valorTotal)} ${selected.moedaId}` : "-"}</dd></div>
-            <div><dt>Liquidado</dt><dd>{selected?.liquidado ? "Sim" : "Nao"}</dd></div>
-            {selected?.estado === "ANULADO" && <><div><dt>Motivo da anulacao</dt><dd>{selected.motivoAnulacao ?? "-"}</dd></div><div><dt>Anulado em</dt><dd>{selected.dataHoraAnulacao ? new Date(selected.dataHoraAnulacao).toLocaleString("pt-PT") : "-"}</dd></div><div><dt>Anulado por</dt><dd>{selected.anuladoPorNome ?? selected.anuladoPorUtilizadorId ?? "-"}</dd></div></>}
+            <div><dt>Liquidado</dt><dd>{selected?.liquidado ? "Sim" : "Não"}</dd></div>
+            {selected?.estado === "ANULADO" && <><div><dt>Motivo da anulação</dt><dd>{selected.motivoAnulacao ?? "-"}</dd></div><div><dt>Anulado em</dt><dd>{selected.dataHoraAnulacao ? new Date(selected.dataHoraAnulacao).toLocaleString("pt-PT") : "-"}</dd></div><div><dt>Anulado por</dt><dd>{selected.anuladoPorNome ?? selected.anuladoPorUtilizadorId ?? "-"}</dd></div></>}
           </dl>
           {selected && !selectedIsDraft && <button className="fac-primary-button" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Consultar documento</button>}
           {selectedIsDraft && canEdit && <button className="fac-primary-button" disabled={loading} onClick={() => selected && navigate(`/documentos/${selected.id}`)} type="button">Editar rascunho</button>}
@@ -627,32 +627,32 @@ export default function DocumentosView() {
         </aside>
       </section>
 
-      {annulOpen && selected && <div className="fac-dialog-backdrop" role="presentation"><div aria-labelledby="annul-title" aria-modal="true" className="fac-dialog" role="dialog"><h2 id="annul-title">Anular {reference(selected)}</h2><p>O documento e os dados fiscais originais serao preservados. Esta operacao e definitiva.</p><label className="fac-field"><span>Motivo da anulacao</span><textarea autoFocus maxLength={500} onChange={(event) => setAnnulReason(event.target.value)} value={annulReason} /></label><small>{annulReason.trim().length}/500 (minimo 5)</small><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => setAnnulOpen(false)} type="button">Cancelar</button><button className="fac-link-danger" disabled={loading || annulReason.trim().length < 5} onClick={annulDocument} type="button">{loading ? "A anular..." : "Confirmar anulacao"}</button></div></div></div>}
+      {annulOpen && selected && <div className="fac-dialog-backdrop" role="presentation"><div aria-labelledby="annul-title" aria-modal="true" className="fac-dialog" role="dialog"><h2 id="annul-title">Anular {reference(selected)}</h2><p>O documento e os dados fiscais originais serão preservados. Esta operação é definitiva.</p><label className="fac-field"><span>Motivo da anulação</span><textarea autoFocus maxLength={500} onChange={(event) => setAnnulReason(event.target.value)} value={annulReason} /></label><small>{annulReason.trim().length}/500 (mínimo 5)</small><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => setAnnulOpen(false)} type="button">Cancelar</button><button className="fac-link-danger" disabled={loading || annulReason.trim().length < 5} onClick={annulDocument} type="button">{loading ? "A anular..." : "Confirmar anulação"}</button></div></div></div>}
 
-      {deleteOpen && selectedIsDraft && selected && <div className="fac-dialog-backdrop" role="presentation"><div aria-labelledby="delete-title" aria-modal="true" className="fac-dialog" role="dialog"><h2 id="delete-title">Eliminar {reference(selected)}?</h2><p>O rascunho e todas as respetivas linhas serao eliminados. Esta acao nao pode ser revertida.</p><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => setDeleteOpen(false)} type="button">Cancelar</button><button className="fac-link-danger" disabled={loading} onClick={deleteDraft} type="button">{loading ? "A eliminar..." : "Eliminar rascunho"}</button></div></div></div>}
+      {deleteOpen && selectedIsDraft && selected && <div className="fac-dialog-backdrop" role="presentation"><div aria-labelledby="delete-title" aria-modal="true" className="fac-dialog" role="dialog"><h2 id="delete-title">Eliminar {reference(selected)}?</h2><p>O rascunho e todas as respetivas linhas serão eliminados. Esta ação não pode ser revertida.</p><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => setDeleteOpen(false)} type="button">Cancelar</button><button className="fac-link-danger" disabled={loading} onClick={deleteDraft} type="button">{loading ? "A eliminar..." : "Eliminar rascunho"}</button></div></div></div>}
 
       {emissionOpen && selectedIsDraft && diagnostico && (
         <section className="fac-panel fac-section-panel fac-emission-panel" ref={emissionPanelRef}>
           <div className="fac-panel-header">
-            <div><p className="fac-eyebrow">Emissao definitiva</p><h2>{diagnostico.referencia}</h2></div>
+            <div><p className="fac-eyebrow">Emissão definitiva</p><h2>{diagnostico.referencia}</h2></div>
             <button className="fac-ghost-button" onClick={() => setEmissionOpen(false)} type="button">Fechar conferencia</button>
           </div>
 
           <div className="fac-emission-summary">
-            <div><span>Total do cabecalho</span><strong>{money(diagnostico.totais.cabecalhoValorTotal)} {selected.moedaId}</strong></div>
+            <div><span>Total do cabeçalho</span><strong>{money(diagnostico.totais.cabecalhoValorTotal)} {selected.moedaId}</strong></div>
             <div><span>Total calculado pelas linhas</span><strong>{money(diagnostico.totais.linhasValorTotal)} {selected.moedaId}</strong></div>
-            <div><span>Coerencia dos totais</span><strong>{diagnostico.totais.coerente ? "Confirmada" : "Com diferencas"}</strong></div>
+            <div><span>Coerência dos totais</span><strong>{diagnostico.totais.coerente ? "Confirmada" : "Com diferenças"}</strong></div>
           </div>
 
-          {diagnostico.bloqueios.length > 0 && <div className="fac-check-list danger"><strong>Emissao bloqueada</strong>{diagnostico.bloqueios.map((item) => <p key={item}>{item}</p>)}</div>}
+          {diagnostico.bloqueios.length > 0 && <div className="fac-check-list danger"><strong>Emissão bloqueada</strong>{diagnostico.bloqueios.map((item) => <p key={item}>{item}</p>)}</div>}
           {diagnostico.alertas.length > 0 && <div className="fac-check-list warning"><strong>Alertas</strong>{diagnostico.alertas.map((item) => <p key={item}>{item}</p>)}</div>}
-          {diagnostico.podeEmitir && diagnostico.alertas.length === 0 && <p className="fac-check-ok">O backend confirmou que o documento esta coerente e pode ser emitido.</p>}
+          {diagnostico.podeEmitir && diagnostico.alertas.length === 0 && <p className="fac-check-ok">O documento está coerente e pode ser emitido.</p>}
 
           <div className="fac-form-footer">
             <span className="fac-muted">Emissor: {getAuthSession()?.nome}</span>
             <button className="fac-gold-button" disabled={loading || !diagnostico.podeEmitir} onClick={emitDocument} type="button">Emitir documento</button>
           </div>
-          <p className="fac-muted">A emissao atribui o numero definitivo, avanca o numerador da serie e torna o documento imutavel.</p>
+          <p className="fac-muted">A emissão atribui o número definitivo, avança o numerador da série e torna o documento imutável.</p>
         </section>
       )}
 
@@ -682,7 +682,7 @@ async function requestJson<T>(url: string, method: "POST" | "PUT", body: unknown
 async function responseError(response: Response) {
   try {
     const payload = await response.json();
-    const prefix = response.status === 403 ? "Sem permissao: " : response.status === 409 ? "Conflito: " : response.status === 400 ? "Validacao: " : "";
+    const prefix = response.status === 403 ? "Sem permissão: " : response.status === 409 ? "Conflito: " : response.status === 400 ? "Validação: " : "";
     return prefix + (payload.message || payload.error || `Erro HTTP ${response.status}`);
   } catch {
     return `Erro HTTP ${response.status}`;
@@ -714,8 +714,8 @@ function documentoColumnValue(documento: DocumentoComercial, key: string) {
     case "iva": return money(documento.valorIvaTotal);
     case "total": return `${money(documento.valorTotal)} ${documento.moedaId}`;
     case "estado": return <span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documentState(documento)}</span>;
-    case "impresso": return documento.impresso ? "Sim" : "Nao";
-    case "liquidado": return documento.liquidado ? "Sim" : "Nao";
+    case "impresso": return documento.impresso ? "Sim" : "Não";
+    case "liquidado": return documento.liquidado ? "Sim" : "Não";
     default: return "-";
   }
 }
@@ -739,19 +739,19 @@ function decimal(value: number) {
 
 function validateDraft(form: DraftForm) {
   if (!form.tipoDocumentoId) return "Seleciona o tipo de documento.";
-  if (!form.serie) return "Seleciona a serie.";
-  if (!form.dataEmissao) return "A data de emissao e obrigatoria.";
+  if (!form.serie) return "Seleciona a série.";
+  if (!form.dataEmissao) return "A data de emissão é obrigatória.";
   if (!form.clienteId) return "Seleciona o cliente.";
-  if (!form.armazemCargaId) return "Seleciona o armazem de carga.";
+  if (!form.armazemCargaId) return "Seleciona o armazém de carga.";
   return null;
 }
 
 function validateLine(form: LineForm) {
   if (!form.artigoId) return "Seleciona o artigo.";
   if (!form.quantidade || Number(form.quantidade) <= 0) return "A quantidade deve ser superior a zero.";
-  if (form.precoUnitario === "" || Number(form.precoUnitario) < 0) return "O preco unitario nao pode ser negativo.";
-  if (form.desconto === "" || Number(form.desconto) < 0) return "O desconto nao pode ser negativo.";
-  if (form.tipoDesconto === "PERCENTAGEM" && Number(form.desconto) > 100) return "O desconto percentual nao pode exceder 100%.";
+  if (form.precoUnitario === "" || Number(form.precoUnitario) < 0) return "O preço unitário não pode ser negativo.";
+  if (form.desconto === "" || Number(form.desconto) < 0) return "O desconto não pode ser negativo.";
+  if (form.tipoDesconto === "PERCENTAGEM" && Number(form.desconto) > 100) return "O desconto percentual não pode exceder 100%.";
   return null;
 }
 

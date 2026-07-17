@@ -181,7 +181,7 @@ export function EntityLookupField<T extends object>({
           title={SEARCH_HELP}
           value={query}
         />
-        <button aria-label="Ajuda da pesquisa" className="fac-lookup-icon" disabled={disabled} title={`${SEARCH_HELP}\nExemplos: ^fin · nif:=516281950 · descricao:*mensal`} type="button">
+        <button aria-label="Ajuda da pesquisa" className="fac-lookup-icon" disabled={disabled} title={`${SEARCH_HELP}\nExemplos: ^fin · NIF:=516281950 · descrição:*mensal`} type="button">
           <i className="pi pi-info-circle" aria-hidden="true" />
         </button>
         <button aria-label="Pesquisa avançada" className="fac-lookup-icon" disabled={disabled} onClick={openDialog} title="Pesquisa avançada" type="button">
@@ -372,12 +372,12 @@ export function EntityLookupDialog<T extends object>({
         <div className="fac-entity-lookup-panel-examples">
           <span>Exemplos</span>
           <code>^fin</code>
-          <code>nif:=516281950</code>
-          <code>descricao:*mensal</code>
+          <code>NIF:=516281950</code>
+          <code>descrição:*mensal</code>
         </div>
       </OverlayPanel>
       <OverlayPanel appendTo={appendTarget} className="fac-entity-lookup-column-panel" ref={columnsPanelRef}>
-        <div className="fac-entity-lookup-panel-title">Colunas visiveis</div>
+        <div className="fac-entity-lookup-panel-title">Colunas visíveis</div>
         <div className="fac-entity-lookup-column-list">
           {columns.map((column) => {
             const field = String(column.field);
@@ -391,7 +391,7 @@ export function EntityLookupDialog<T extends object>({
             );
           })}
         </div>
-        <button className="fac-entity-lookup-panel-reset" onClick={resetColumns} type="button">Restaurar predefinicao</button>
+        <button className="fac-entity-lookup-panel-reset" onClick={resetColumns} type="button">Restaurar predefinição</button>
       </OverlayPanel>
       <div className="fac-entity-lookup-table">
       <DataTable

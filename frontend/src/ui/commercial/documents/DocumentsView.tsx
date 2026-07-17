@@ -332,7 +332,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       });
       setSelectedId((current) => current ?? docsPage.content[0]?.id ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar documentos.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar documentos.");
     } finally {
       setLoading(false);
     }
@@ -345,7 +345,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       setLinhas([]);
       setDiagnostico(diag);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar detalhe do documento.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar detalhe do documento.");
       setLinhas([]);
       setDiagnostico(null);
     } finally {
@@ -430,7 +430,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       showToast({ detail: "Documento guardado como rascunho.", severity: "success", summary: "Documento" });
       if (isMobile) setMobileScreen("detail");
     } catch (err) {
-      setEditorMessage(err instanceof Error ? err.message : "Nao foi possivel guardar o documento.");
+      setEditorMessage(err instanceof Error ? err.message : "Não foi possível guardar o documento.");
     } finally {
       setSaving(false);
     }
@@ -443,7 +443,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       const updated = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, { emissorId: currentUser.codigo }, "POST");
       await refreshAfterAction(updated.id, "Documento emitido.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel emitir o documento.");
+      setError(err instanceof Error ? err.message : "Não foi possível emitir o documento.");
     } finally {
       setSaving(false);
     }
@@ -452,7 +452,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   async function anular() {
     if (!selected || saving) return;
     if (motivoAnulacao.trim().length < 5) {
-      setError("Indica um motivo de anulacao com pelo menos 5 caracteres.");
+      setError("Indica um motivo de anulação com pelo menos 5 caracteres.");
       return;
     }
     setSaving(true);
@@ -462,7 +462,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       setMotivoAnulacao("");
       await refreshAfterAction(updated.id, "Documento anulado.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel anular o documento.");
+      setError(err instanceof Error ? err.message : "Não foi possível anular o documento.");
     } finally {
       setSaving(false);
     }
@@ -484,7 +484,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       showToast({ detail: "Rascunho eliminado com sucesso.", severity: "success", summary: "Documentos" });
       if (isMobile) setMobileScreen("list");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel eliminar o rascunho.");
+      setError(err instanceof Error ? err.message : "Não foi possível eliminar o rascunho.");
     } finally {
       setSaving(false);
     }
@@ -498,7 +498,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       const blob = await response.blob();
       window.open(URL.createObjectURL(blob), "_blank", "noopener,noreferrer");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel abrir o PDF.");
+      setError(err instanceof Error ? err.message : "Não foi possível abrir o PDF.");
     }
   }
 
@@ -630,7 +630,7 @@ function DocumentsContent(props: {
     <>
       <DocumentsHeader {...props} />
       <DocumentsToolbar {...props} />
-      {props.notice && <FacMessage tone="success" title="Operacao concluida">{props.notice}</FacMessage>}
+      {props.notice && <FacMessage tone="success" title="Operação concluída">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
       <section aria-label="Documentos comerciais" className="fac-documents-layout">
         <article className="fac-documents-panel fac-documents-list-panel">
@@ -671,7 +671,7 @@ function MobileDocumentsContent(props: Parameters<typeof DocumentsContent>[0]) {
     <>
       <DocumentsHeader {...props} compact />
       <DocumentsToolbar {...props} />
-      {props.notice && <FacMessage tone="success" title="Operacao concluida">{props.notice}</FacMessage>}
+      {props.notice && <FacMessage tone="success" title="Operação concluída">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
       <DocumentsList {...props} />
     </>
@@ -694,7 +694,7 @@ function DocumentsHeader({ activeCount, canCreate, compact = false, documentos, 
 function DocumentsToolbar({ deviceClass, onSearch, onStateFilter, search, stateFilter }: Parameters<typeof DocumentsContent>[0]) {
   return (
     <section className="fac-documents-toolbar" aria-label="Pesquisa e filtros">
-      <FacInputText aria-label="Pesquisar documentos" onChange={(event) => onSearch(event.target.value)} placeholder={deviceClass === "mobile" ? "Pesquisar documentos" : "Pesquisar por numero, cliente, NIF, serie ou estado"} type="search" value={search} />
+      <FacInputText aria-label="Pesquisar documentos" onChange={(event) => onSearch(event.target.value)} placeholder={deviceClass === "mobile" ? "Pesquisar documentos" : "Pesquisar por número, cliente, NIF, série ou estado"} type="search" value={search} />
       <FacSelect
         onChange={(value) => onStateFilter((value as StateFilter) ?? "all")}
         options={[
@@ -711,7 +711,7 @@ function DocumentsToolbar({ deviceClass, onSearch, onStateFilter, search, stateF
 
 function DocumentsList({ deviceClass, documentos, filtered, loading, onSelect, search, selected, stateFilter }: Parameters<typeof DocumentsContent>[0]) {
   if (loading) return <FacLoadingState description="A carregar documentos." />;
-  if (documentos.length === 0) return <FacEmptyState description="Ainda nao existem documentos comerciais." />;
+  if (documentos.length === 0) return <FacEmptyState description="Ainda não existem documentos comerciais." />;
   if (filtered.length === 0) return <FacEmptyState description="Sem resultados para a pesquisa e filtros atuais." />;
 
   if (deviceClass !== "mobile") {
@@ -781,14 +781,14 @@ function DocumentDetail(props: Parameters<typeof DocumentsContent>[0]) {
       </div>
       <dl className="fac-documents-definition">
         <div><dt>Tipo</dt><dd>{selected.tipoDocumentoDescricao ?? selected.tipoDocumentoId}</dd></div>
-        <div><dt>Serie</dt><dd>{selected.serieDescricao ?? selected.serie}</dd></div>
+        <div><dt>Série</dt><dd>{selected.serieDescricao ?? selected.serie}</dd></div>
         <div><dt>Data</dt><dd>{date(selected.dataEmissao)}</dd></div>
         <div><dt>Cliente</dt><dd>{selected.clienteNome}</dd></div>
         <div><dt>NIF</dt><dd>{selected.clienteNif}</dd></div>
         <div><dt>Moeda</dt><dd>{selected.moedaCodigo ?? selected.moedaId ?? "-"}</dd></div>
         {selected.atcud && <div><dt>ATCUD</dt><dd>{selected.atcud}</dd></div>}
         {selected.temQrFiscal && <div><dt>QR fiscal</dt><dd>Disponivel</dd></div>}
-        {selected.motivoAnulacao && <div><dt>Motivo anulacao</dt><dd>{selected.motivoAnulacao}</dd></div>}
+        {selected.motivoAnulacao && <div><dt>Motivo da anulação</dt><dd>{selected.motivoAnulacao}</dd></div>}
       </dl>
       <DocumentTotals documento={selected} />
       {diagnostico?.bloqueios?.length ? <FacMessage title="Bloqueios" tone="warning">{diagnostico.bloqueios.join(" ")}</FacMessage> : null}
@@ -829,12 +829,12 @@ function DocumentFormFields({ catalogos, editorMessage, form, inlineFooter = fal
   const selectedCliente = catalogos.clientes.find((cliente) => String(cliente.id) === form.clienteId) ?? null;
   return (
     <form className="fac-documents-form" onSubmit={onSave}>
-      {editorMessage && <FacMessage tone="error" title="Validacao">{editorMessage}</FacMessage>}
+      {editorMessage && <FacMessage tone="error" title="Validação">{editorMessage}</FacMessage>}
       <section className="fac-documents-form-section">
-        <h3>Cabecalho</h3>
+        <h3>Cabeçalho</h3>
         <div className="fac-documents-form-grid">
           <FacSelect label="Tipo" onChange={(value) => onChangeForm({ ...form, tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={form.tipoDocumentoId} />
-          <FacSelect label="Serie" onChange={(value) => onChangeForm({ ...form, serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={form.serie} />
+          <FacSelect label="Série" onChange={(value) => onChangeForm({ ...form, serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={form.serie} />
           <FacInputText label="Data" onChange={(event) => onChangeForm({ ...form, dataEmissao: event.target.value })} required type="date" value={form.dataEmissao} />
           <EntityLookupField<Cliente>
             clearable={false}
@@ -854,7 +854,7 @@ function DocumentFormFields({ catalogos, editorMessage, form, inlineFooter = fal
             value={catalogos.clientes.filter((cliente) => !cliente.inativo)}
             valueLabel={selectedCliente ? clienteLookupLabel(selectedCliente) : undefined}
           />
-          <FacSelect label="Armazem carga" onChange={(value) => onChangeForm({ ...form, armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={form.armazemCargaId} />
+          <FacSelect label="Armazém carga" onChange={(value) => onChangeForm({ ...form, armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={form.armazemCargaId} />
           <FacSelect label="Moeda" onChange={(value) => onChangeForm({ ...form, moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={form.moedaId} />
         </div>
       </section>
@@ -879,14 +879,14 @@ function DocumentFormFields({ catalogos, editorMessage, form, inlineFooter = fal
             value={catalogos.artigos.filter((artigo) => !artigo.inativo)}
             valueLabel={selectedArticle ? artigoLookupLabel(selectedArticle) : undefined}
           />
-          <FacInputText label="Descricao" maxLength={80} onChange={(event) => onChangeForm({ ...form, descricao: event.target.value })} value={form.descricao || selectedArticle?.descricao || ""} />
+          <FacInputText label="Descrição" maxLength={80} onChange={(event) => onChangeForm({ ...form, descricao: event.target.value })} value={form.descricao || selectedArticle?.descricao || ""} />
           <FacInputText label="Quantidade" min="0.000001" onChange={(event) => onChangeForm({ ...form, quantidade: event.target.value })} required step="0.000001" type="number" value={form.quantidade} />
-          <FacInputText label="Preco unitario" min="0" onChange={(event) => onChangeForm({ ...form, precoUnitario: event.target.value })} required step="0.000001" type="number" value={form.precoUnitario} />
+          <FacInputText label="Preço unitário" min="0" onChange={(event) => onChangeForm({ ...form, precoUnitario: event.target.value })} required step="0.000001" type="number" value={form.precoUnitario} />
           <FacSelect label="IVA" onChange={(value) => onChangeForm({ ...form, tipoTaxaIvaId: value ?? "" })} options={catalogos.tiposIva.map((iva) => ({ label: ivaCompactLabel(iva), value: iva.id }))} value={form.tipoTaxaIvaId} />
           <FacInputText label="Desconto" min="0" onChange={(event) => onChangeForm({ ...form, desconto: event.target.value })} step="0.000001" type="number" value={form.desconto} />
         </div>
       </section>
-      <label className="fac-documents-textarea"><span>Observacoes</span><textarea maxLength={250} onChange={(event) => onChangeForm({ ...form, observacoes: event.target.value })} value={form.observacoes} /></label>
+      <label className="fac-documents-textarea"><span>Observações</span><textarea maxLength={250} onChange={(event) => onChangeForm({ ...form, observacoes: event.target.value })} value={form.observacoes} /></label>
       {inlineFooter && <DocumentFormFooter onCloseEditor={onCloseEditor} saving={saving} />}
       {!inlineFooter && <DocumentFormFooter onCloseEditor={onCloseEditor} saving={saving} />}
     </form>
@@ -911,7 +911,7 @@ function VoidDialog(props: Parameters<typeof DocumentsContent>[0]) {
       onHide={props.onCloseAnular}
       visible={props.voidOpen}
     >
-      <FacMessage tone="warning" title="Anulacao fiscal">A anulacao preserva o documento e a auditoria. Nao elimina fisicamente o registo.</FacMessage>
+      <FacMessage tone="warning" title="Anulação fiscal">A anulação preserva o documento e a auditoria. Não elimina fisicamente o registo.</FacMessage>
       <label className="fac-documents-textarea"><span>Motivo</span><textarea maxLength={500} minLength={5} onChange={(event) => props.onChangeMotivo(event.target.value)} value={props.motivoAnulacao} /></label>
     </FacDialog>
   );
@@ -926,7 +926,7 @@ function DeleteDraftDialog(props: Parameters<typeof DocumentsContent>[0]) {
       onHide={props.onCloseDelete}
       visible={props.deleteOpen}
     >
-      <p>O documento e todas as respetivas linhas serao eliminados. Esta acao nao pode ser revertida.</p>
+      <p>O documento e todas as respetivas linhas serão eliminados. Esta ação não pode ser revertida.</p>
     </FacDialog>
   );
 }
@@ -964,9 +964,9 @@ const clienteLookupColumns: EntityLookupColumn<Cliente>[] = [
   { body: (cliente) => cliente.tm || cliente.tel || "-", defaultVisible: true, field: "tel", globalSearch: true, header: "Telefone", sortable: true, width: "9rem" },
   { field: "id", header: "ID", sortable: true, width: "6rem" },
   { field: "email", globalSearch: true, header: "Email", sortable: true },
-  { field: "paisId", header: "Pais", sortable: true, width: "7rem" },
-  { field: "codPostalId", header: "Codigo postal", sortable: true, width: "9rem" },
-  { body: (cliente) => cliente.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
+  { field: "paisId", header: "País", sortable: true, width: "7rem" },
+  { field: "codPostalId", header: "Código postal", sortable: true, width: "9rem" },
+  { body: (cliente) => cliente.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
 ];
 
 const clienteSearchFields: EntityLookupSearchField<Cliente>[] = [
@@ -980,15 +980,15 @@ const clienteSearchFields: EntityLookupSearchField<Cliente>[] = [
 
 function artigoLookupColumns(tiposIva: TipoTaxaIva[]): EntityLookupColumn<Artigo>[] {
   return [
-    { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Codigo", required: true, sortable: true, width: "8rem" },
-    { defaultVisible: true, field: "descricao", filterable: true, globalSearch: true, header: "Descricao", sortable: true },
-    { body: (artigo) => artigo.familiaId ?? "-", defaultVisible: true, field: "familiaId", filterable: true, globalSearch: true, header: "Familia", sortable: true, width: "8rem" },
+    { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Código", required: true, sortable: true, width: "8rem" },
+    { defaultVisible: true, field: "descricao", filterable: true, globalSearch: true, header: "Descrição", sortable: true },
+    { body: (artigo) => artigo.familiaId ?? "-", defaultVisible: true, field: "familiaId", filterable: true, globalSearch: true, header: "Família", sortable: true, width: "8rem" },
     { defaultVisible: true, field: "unidade", filterable: true, globalSearch: true, header: "Unidade", sortable: true, width: "7rem" },
     { body: (artigo) => formatNumber(artigo.pvp), defaultVisible: true, field: "pvp", header: "PVP", sortable: true, width: "8rem" },
     { body: (artigo) => ivaLookupLabel(artigo.ivaVendaId, tiposIva), defaultVisible: true, field: "ivaVendaId", filterable: true, header: "IVA venda", sortable: true, width: "8rem" },
-    { body: (artigo) => artigo.retencao ? "Sim" : "Nao", field: "retencao", header: "Retencao", sortable: true, width: "8rem" },
-    { body: (artigo) => artigo.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" },
-    { field: "observacoes", header: "Observacoes", sortable: true }
+    { body: (artigo) => artigo.retencao ? "Sim" : "Não", field: "retencao", header: "Retenção", sortable: true, width: "8rem" },
+    { body: (artigo) => artigo.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" },
+    { field: "observacoes", header: "Observações", sortable: true }
   ];
 }
 
@@ -1111,14 +1111,14 @@ function ivaCompactLabel(iva: TipoTaxaIva) {
 
 function validateForm(form: DocumentForm) {
   if (!form.tipoDocumentoId) return "Seleciona o tipo de documento.";
-  if (!form.serie) return "Seleciona a serie.";
-  if (!form.dataEmissao) return "Indica a data de emissao.";
+  if (!form.serie) return "Seleciona a série.";
+  if (!form.dataEmissao) return "Indica a data de emissão.";
   if (!form.clienteId) return "Seleciona o cliente.";
-  if (!form.armazemCargaId) return "Seleciona o armazem de carga.";
+  if (!form.armazemCargaId) return "Seleciona o armazém de carga.";
   if (!form.artigoId) return "Seleciona o artigo.";
   if (Number(form.quantidade) <= 0) return "A quantidade deve ser maior que zero.";
-  if (Number(form.precoUnitario) < 0) return "O preco nao pode ser negativo.";
-  if (Number(form.desconto || 0) < 0) return "O desconto nao pode ser negativo.";
+  if (Number(form.precoUnitario) < 0) return "O preço não pode ser negativo.";
+  if (Number(form.desconto || 0) < 0) return "O desconto não pode ser negativo.";
   return null;
 }
 

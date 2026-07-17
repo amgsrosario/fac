@@ -82,7 +82,7 @@ export default function EmpresaAdminView() {
       setEmpresa({ ...emptyEmpresa, ...saved });
       setMessage("Dados da empresa guardados.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel guardar a empresa.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível guardar a empresa.");
     } finally {
       setSaving(false);
     }
@@ -101,7 +101,7 @@ export default function EmpresaAdminView() {
       setLogoVersion((value) => value + 1);
       setMessage("Logotipo atualizado.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel atualizar o logotipo.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível atualizar o logotipo.");
     }
   }
 
@@ -114,7 +114,7 @@ export default function EmpresaAdminView() {
       setLogoVersion((value) => value + 1);
       setMessage("Logotipo removido.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel remover o logotipo.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível remover o logotipo.");
     }
   }
 
@@ -122,8 +122,8 @@ export default function EmpresaAdminView() {
     <section className="fac-panel">
       <div className="fac-panel-header">
         <div>
-          <p className="fac-eyebrow">Empresa proprietaria</p>
-          <h2>Identificacao da entidade emissora</h2>
+          <p className="fac-eyebrow">Empresa proprietária</p>
+          <h2>Identificação da entidade emissora</h2>
         </div>
         <span className="fac-muted">{loading ? "A carregar..." : empresa.atualizadoPor ? `Atualizada por ${empresa.atualizadoPor}` : "Ficha unica"}</span>
       </div>
@@ -139,22 +139,22 @@ export default function EmpresaAdminView() {
         <Field label="Website"><input disabled={loading} value={empresa.web ?? ""} onChange={(e) => change("web", e.target.value)} /></Field>
         <Field label="Morada"><input disabled={loading} value={empresa.morada ?? ""} onChange={(e) => change("morada", e.target.value)} /></Field>
         <Field label="Morada adicional"><input disabled={loading} value={empresa.morada1 ?? ""} onChange={(e) => change("morada1", e.target.value)} /></Field>
-        <Field label="Codigo postal"><input disabled={loading} value={empresa.codPostalId ?? ""} onChange={(e) => change("codPostalId", e.target.value)} /></Field>
+        <Field label="Código postal"><input disabled={loading} value={empresa.codPostalId ?? ""} onChange={(e) => change("codPostalId", e.target.value)} /></Field>
         <Field label="Localidade"><input disabled={loading} value={empresa.localidade ?? ""} onChange={(e) => change("localidade", e.target.value)} /></Field>
-        <Field label="Pais"><input disabled={loading} value={empresa.paisId ?? ""} onChange={(e) => change("paisId", e.target.value)} /></Field>
+        <Field label="País"><input disabled={loading} value={empresa.paisId ?? ""} onChange={(e) => change("paisId", e.target.value)} /></Field>
         <Field label="Freguesia"><input disabled={loading} value={empresa.freguesiaId ?? ""} onChange={(e) => change("freguesiaId", e.target.value)} /></Field>
         <Field label="Capital social"><input disabled={loading} type="number" step="0.01" value={empresa.capitalSocial ?? 0} onChange={(e) => change("capitalSocial", Number(e.target.value))} /></Field>
         <Field label="Matricula registo comercial"><input disabled={loading} value={empresa.matriculaRegistoComercial ?? ""} onChange={(e) => change("matriculaRegistoComercial", e.target.value)} /></Field>
         <Field label="CAE"><input disabled={loading} value={empresa.cae ?? ""} onChange={(e) => change("cae", e.target.value)} /></Field>
-        <Field label="Descricao CAE"><input disabled={loading} value={empresa.descricaoCae ?? ""} onChange={(e) => change("descricaoCae", e.target.value)} /></Field>
+        <Field label="Descrição CAE"><input disabled={loading} value={empresa.descricaoCae ?? ""} onChange={(e) => change("descricaoCae", e.target.value)} /></Field>
         <Field label="IBAN"><input disabled={loading} value={empresa.iban ?? ""} onChange={(e) => change("iban", e.target.value)} /></Field>
         <Field label="BIC/SWIFT"><input disabled={loading} value={empresa.bicSwift ?? ""} onChange={(e) => change("bicSwift", e.target.value)} /></Field>
       </div>
 
       <div className="fac-form-grid">
-        <Field label="Observacoes legais"><textarea disabled={loading} rows={3} value={empresa.observacoesLegais ?? ""} onChange={(e) => change("observacoesLegais", e.target.value)} /></Field>
-        <Field label="Texto de rodape"><textarea disabled={loading} rows={3} value={empresa.textoRodape ?? ""} onChange={(e) => change("textoRodape", e.target.value)} /></Field>
-        <Field label="Observacoes comerciais por defeito"><textarea disabled={loading} rows={3} value={empresa.observacoesComerciaisDefault ?? ""} onChange={(e) => change("observacoesComerciaisDefault", e.target.value)} /></Field>
+        <Field label="Observações legais"><textarea disabled={loading} rows={3} value={empresa.observacoesLegais ?? ""} onChange={(e) => change("observacoesLegais", e.target.value)} /></Field>
+        <Field label="Texto de rodapé"><textarea disabled={loading} rows={3} value={empresa.textoRodape ?? ""} onChange={(e) => change("textoRodape", e.target.value)} /></Field>
+        <Field label="Observações comerciais por defeito"><textarea disabled={loading} rows={3} value={empresa.observacoesComerciaisDefault ?? ""} onChange={(e) => change("observacoesComerciaisDefault", e.target.value)} /></Field>
       </div>
 
       <div className="fac-panel fac-compact-panel">

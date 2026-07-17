@@ -231,7 +231,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
           requestJson<DocumentoImpressao>(`/api/documentos-comerciais/${documentId}/impressao`)
         ]);
         if (doc.estado !== "RASCUNHO") {
-          setNotice("Documento aberto em modo consulta. A edicao fica bloqueada fora de RASCUNHO.");
+          setNotice("Documento aberto em modo consulta. A edição fica bloqueada fora de RASCUNHO.");
         }
         const mappedHeader = headerFromDocument(doc);
         const mappedLines = realLines
@@ -262,7 +262,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setDirty(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar o editor de rascunho.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar o editor de rascunho.");
     } finally {
       setLoading(false);
     }
@@ -323,7 +323,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     if (!canEditCurrent) return false;
     const line = { ...activeLine, tipoLinha };
     if (!isLineFilled(line)) {
-      setNotice("A linha ativa continua local e nao foi adicionada.");
+      setNotice("A linha ativa continua local e não foi adicionada.");
       return false;
     }
     const validation = validateLine(line);
@@ -458,7 +458,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${currentId}`, headerPayload(header), "PUT");
       }
 
-      if (!currentId) throw new Error("Nao foi possivel obter o identificador do documento.");
+      if (!currentId) throw new Error("Não foi possível obter o identificador do documento.");
 
       for (const lineId of removedLineIds) {
         await requestNoContent(`/api/documentos-comerciais/${currentId}/linhas/${lineId}`, "DELETE");
@@ -502,7 +502,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       showToast({ detail: "Rascunho guardado.", severity: "success", summary: "Documentos" });
       if (!documentId) navigate(`/documentos/${currentId}`, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel guardar o rascunho. As alteracoes locais foram mantidas.");
+      setError(err instanceof Error ? err.message : "Não foi possível guardar o rascunho. As alterações locais foram mantidas.");
     } finally {
       setSaving(false);
     }
@@ -532,7 +532,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${documento.id}/emitir`, { emissorId: currentUser.codigo }, "POST");
       await refreshAfterStateChange(emitted.id, "Documento emitido.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel emitir o documento.");
+      setError(err instanceof Error ? err.message : "Não foi possível emitir o documento.");
     } finally {
       setSaving(false);
     }
@@ -541,7 +541,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   async function voidDocument() {
     if (!documento || saving || !canVoid) return;
     if (motivoAnulacao.trim().length < 5) {
-      setError("Indica um motivo de anulacao com pelo menos 5 caracteres.");
+      setError("Indica um motivo de anulação com pelo menos 5 caracteres.");
       return;
     }
     setSaving(true);
@@ -552,7 +552,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       setMotivoAnulacao("");
       await refreshAfterStateChange(voided.id, "Documento anulado.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel anular o documento.");
+      setError(err instanceof Error ? err.message : "Não foi possível anular o documento.");
     } finally {
       setSaving(false);
     }
@@ -568,7 +568,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       showToast({ detail: "Rascunho eliminado com sucesso.", severity: "success", summary: "Documentos" });
       navigate("/documentos", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel eliminar o rascunho.");
+      setError(err instanceof Error ? err.message : "Não foi possível eliminar o rascunho.");
     } finally {
       setSaving(false);
     }
@@ -600,7 +600,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       const blob = await response.blob();
       window.open(URL.createObjectURL(blob), "_blank", "noopener,noreferrer");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel abrir o PDF.");
+      setError(err instanceof Error ? err.message : "Não foi possível abrir o PDF.");
     }
   }
 
@@ -629,7 +629,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       ) : (
         <>
           <nav className="fac-draft-steps" aria-label="Fases do rascunho">
-            <button className={step === "header" ? "active" : ""} onClick={() => setStep("header")} type="button">1. Cabecalho e condicoes</button>
+            <button className={step === "header" ? "active" : ""} onClick={() => setStep("header")} type="button">1. Cabeçalho e condições</button>
             <button className={step === "lines" ? "active" : ""} onClick={() => setStep("lines")} type="button">2. Linhas e totais</button>
           </nav>
           {step === "header" ? (
@@ -664,9 +664,9 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         <div className="fac-draft-void-panel" role="dialog" aria-modal="true" aria-label="Anular documento">
           <div>
             <strong>Anular documento</strong>
-            <span>A anulacao preserva o documento e a auditoria.</span>
+            <span>A anulação preserva o documento e a auditoria.</span>
           </div>
-          <textarea maxLength={500} minLength={5} onChange={(event) => setMotivoAnulacao(event.target.value)} placeholder="Motivo da anulacao" value={motivoAnulacao} />
+          <textarea maxLength={500} minLength={5} onChange={(event) => setMotivoAnulacao(event.target.value)} placeholder="Motivo da anulação" value={motivoAnulacao} />
           <div className="fac-draft-actions">
             <FacButton label="Cancelar" onClick={() => setAnularOpen(false)} variant="ghost" />
             <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={voidDocument} variant="destructive" />
@@ -677,7 +677,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         <div className="fac-draft-void-panel" role="dialog" aria-modal="true" aria-label="Eliminar rascunho">
           <div>
             <strong>Eliminar rascunho?</strong>
-            <span>O documento e todas as respetivas linhas serao eliminados. Esta acao nao pode ser revertida.</span>
+            <span>O documento e todas as respetivas linhas serão eliminados. Esta ação não pode ser revertida.</span>
           </div>
           <div className="fac-draft-actions">
             <FacButton label="Cancelar" onClick={() => setDeleteOpen(false)} variant="ghost" />
@@ -706,7 +706,7 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
     <section className="fac-draft-header-phase">
       <div className="fac-draft-form-grid">
         <FacSelect disabled={readOnly} label="Tipo" onChange={(value) => onUpdate({ tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={header.tipoDocumentoId} />
-        <FacSelect disabled={readOnly} label="Serie" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
+        <FacSelect disabled={readOnly} label="Série" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
         <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
         <EntityLookupField<Cliente>
           clearable={false}
@@ -727,13 +727,13 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
           value={catalogos.clientes.filter((cliente) => !cliente.inativo)}
           valueLabel={selectedCliente ? clienteLookupLabel(selectedCliente) : undefined}
         />
-        <FacSelect disabled={readOnly} label="Armazem de carga" onChange={(value) => onUpdate({ armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={header.armazemCargaId} />
+        <FacSelect disabled={readOnly} label="Armazém de carga" onChange={(value) => onUpdate({ armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={header.armazemCargaId} />
         <FacSelect disabled={readOnly} label="Moeda" onChange={(value) => onUpdate({ moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={header.moedaId} />
         <FacSelect disabled={readOnly} label="Regime IVA" onChange={(value) => onUpdate({ rivaId: value ?? "" })} options={catalogos.regimesIva.map((regime) => ({ label: regime.nome, value: regime.id }))} value={header.rivaId} />
         <FacSelect disabled={readOnly} label="Modo de pagamento" onChange={(value) => onUpdate({ mPagamentoId: value ?? "" })} options={catalogos.modosPagamento.map((modo) => ({ label: modo.nome, value: String(modo.id) }))} value={header.mPagamentoId} />
         <FacSelect disabled={readOnly} label="Prazo" onChange={(value) => onUpdate({ pPagamentoId: value ?? "" })} options={catalogos.prazosPagamento.map((prazo) => ({ label: prazo.nome, value: prazo.id }))} value={header.pPagamentoId} />
         <FacSelect disabled={readOnly} label="Transporte" onChange={(value) => onUpdate({ transporteId: value ?? "" })} options={catalogos.transportes.map((transporte) => ({ label: transporte.nome, value: String(transporte.id) }))} value={header.transporteId} />
-        <label className="fac-draft-textarea"><span>Observacoes</span><textarea disabled={readOnly} maxLength={250} onChange={(event) => onUpdate({ observacoes: event.target.value })} value={header.observacoes} /></label>
+        <label className="fac-draft-textarea"><span>Observações</span><textarea disabled={readOnly} maxLength={250} onChange={(event) => onUpdate({ observacoes: event.target.value })} value={header.observacoes} /></label>
       </div>
       <div className="fac-draft-phase-actions">
         <FacButton icon="pi pi-arrow-right" label="Continuar para linhas" onClick={onContinue} variant="primary" />
@@ -781,7 +781,7 @@ function DraftLines(props: {
             <col className="fac-draft-col-total" />
             <col className="fac-draft-col-actions" />
           </colgroup>
-          <thead><tr><th>#</th><th>Tipo</th><th>Artigo</th><th>Descricao</th><th>Qtd.</th><th>Un.</th><th>Preco</th><th>Desc.</th><th>IVA</th><th>Total</th><th></th></tr></thead>
+          <thead><tr><th>#</th><th>Tipo</th><th>Artigo</th><th>Descrição</th><th>Qtd.</th><th>Un.</th><th>Preço</th><th>Desc.</th><th>IVA</th><th>Total</th><th></th></tr></thead>
           <tbody>
             {props.lines.map((line, index) => (
               <DraftLineRow index={index} key={line.uid} line={line} {...props} />
@@ -834,7 +834,7 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
               emptyMessage="Sem artigos para selecionar."
               loading={catalogos.artigos.length === 0}
               optionLabel={artigoLookupLabel}
-              optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Familia ${artigo.familiaId}` : null, money(Number(artigo.pvp))].filter(Boolean).join(" · ")}
+              optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, money(Number(artigo.pvp))].filter(Boolean).join(" · ")}
               onClear={() => active ? props.onChooseActiveArticle(null) : props.onChooseArticle(line.uid, null)}
               onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo.codigo) : props.onChooseArticle(line.uid, artigo.codigo)}
               placeholder="Artigo"
@@ -906,9 +906,9 @@ const clienteLookupColumns: EntityLookupColumn<Cliente>[] = [
   { body: (cliente) => cliente.tm || cliente.tel || "-", defaultVisible: true, field: "tel", globalSearch: true, header: "Telefone", sortable: true, width: "9rem" },
   { field: "id", header: "ID", sortable: true, width: "6rem" },
   { field: "email", globalSearch: true, header: "Email", sortable: true },
-  { field: "paisId", header: "Pais", sortable: true, width: "7rem" },
-  { field: "codPostalId", header: "Codigo postal", sortable: true, width: "9rem" },
-  { body: (cliente) => cliente.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
+  { field: "paisId", header: "País", sortable: true, width: "7rem" },
+  { field: "codPostalId", header: "Código postal", sortable: true, width: "9rem" },
+  { body: (cliente) => cliente.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
 ];
 
 const clienteSearchFields: EntityLookupSearchField<Cliente>[] = [
@@ -922,15 +922,15 @@ const clienteSearchFields: EntityLookupSearchField<Cliente>[] = [
 
 function artigoLookupColumns(tiposIva: TipoTaxaIva[]): EntityLookupColumn<Artigo>[] {
   return [
-    { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Codigo", required: true, sortable: true, width: "8rem" },
-    { defaultVisible: true, field: "descricao", filterable: true, globalSearch: true, header: "Descricao", sortable: true },
-    { body: (artigo) => artigo.familiaId ?? "-", defaultVisible: true, field: "familiaId", filterable: true, globalSearch: true, header: "Familia", sortable: true, width: "8rem" },
+    { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Código", required: true, sortable: true, width: "8rem" },
+    { defaultVisible: true, field: "descricao", filterable: true, globalSearch: true, header: "Descrição", sortable: true },
+    { body: (artigo) => artigo.familiaId ?? "-", defaultVisible: true, field: "familiaId", filterable: true, globalSearch: true, header: "Família", sortable: true, width: "8rem" },
     { defaultVisible: true, field: "unidade", filterable: true, globalSearch: true, header: "Unidade", sortable: true, width: "7rem" },
     { body: (artigo) => money(Number(artigo.pvp)), defaultVisible: true, field: "pvp", header: "PVP", sortable: true, width: "8rem" },
     { body: (artigo) => ivaLookupLabel(artigo.ivaVendaId, tiposIva), defaultVisible: true, field: "ivaVendaId", filterable: true, header: "IVA venda", sortable: true, width: "8rem" },
-    { body: (artigo) => artigo.retencao ? "Sim" : "Nao", field: "retencao", header: "Retencao", sortable: true, width: "8rem" },
-    { body: (artigo) => artigo.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" },
-    { field: "observacoes", header: "Observacoes", sortable: true }
+    { body: (artigo) => artigo.retencao ? "Sim" : "Não", field: "retencao", header: "Retenção", sortable: true, width: "8rem" },
+    { body: (artigo) => artigo.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" },
+    { field: "observacoes", header: "Observações", sortable: true }
   ];
 }
 
@@ -1122,10 +1122,10 @@ function lineUpdatePayload(line: EditorLine) {
 
 function validateHeader(header: HeaderState) {
   if (!header.tipoDocumentoId) return "Seleciona o tipo de documento.";
-  if (!header.serie) return "Seleciona a serie.";
-  if (!header.dataEmissao) return "Indica a data de emissao.";
+  if (!header.serie) return "Seleciona a série.";
+  if (!header.dataEmissao) return "Indica a data de emissão.";
   if (!header.clienteId) return "Seleciona o cliente.";
-  if (!header.armazemCargaId) return "Seleciona o armazem de carga.";
+  if (!header.armazemCargaId) return "Seleciona o armazém de carga.";
   return null;
 }
 
@@ -1136,13 +1136,13 @@ function validateHasCommercialLine(lines: EditorLine[]) {
 }
 
 function validateLine(line: EditorLine) {
-  if (line.tipoLinha === "TEXTO") return line.descricao.trim() ? null : "A linha de texto precisa de descricao.";
+  if (line.tipoLinha === "TEXTO") return line.descricao.trim() ? null : "A linha de texto precisa de descrição.";
   if (isEmptyCommercialLine(line)) return null;
   if (!line.artigoId) return "Cada linha comercial precisa de artigo.";
-  if (!line.descricao.trim()) return "Cada linha comercial precisa de descricao.";
+  if (!line.descricao.trim()) return "Cada linha comercial precisa de descrição.";
   if (Number(line.quantidade) <= 0) return "A quantidade deve ser maior que zero.";
-  if (Number(line.precoUnitario) < 0) return "O preco nao pode ser negativo.";
-  if (Number(line.desconto || 0) < 0) return "O desconto nao pode ser negativo.";
+  if (Number(line.precoUnitario) < 0) return "O preço não pode ser negativo.";
+  if (Number(line.desconto || 0) < 0) return "O desconto não pode ser negativo.";
   return null;
 }
 
@@ -1218,7 +1218,7 @@ function headerKey(header: HeaderState) {
 function assertOrder(lines: EditorLine[], expectedIds: number[]) {
   const actual = lines.map((line) => line.id);
   if (expectedIds.length && expectedIds.some((id, index) => actual[index] !== id)) {
-    throw new Error("O rascunho foi gravado, mas a ordem devolvida pelo servidor nao coincide com a ordem editada.");
+    throw new Error("O rascunho foi gravado, mas a ordem devolvida pelo servidor não coincide com a ordem editada.");
   }
 }
 

@@ -55,26 +55,26 @@ type ExtratoCliente = {
 };
 
 const SOURCES: { key?: SourceKey; label: string; description: string }[] = [
-  { key: "comerciais", label: "Documentos comerciais", description: "Uma linha por cabecalho comercial" },
-  { key: "linhasComerciais", label: "Detalhe dos documentos comerciais", description: "Cabecalho e detalhe de artigos" },
+  { key: "comerciais", label: "Documentos comerciais", description: "Uma linha por cabeçalho comercial" },
+  { key: "linhasComerciais", label: "Detalhe dos documentos comerciais", description: "Cabeçalho e detalhe de artigos" },
   { key: "financeiros", label: "Documentos financeiros", description: "Uma linha por recebimento" },
   { key: "linhasFinanceiras", label: "Detalhe dos documentos financeiros", description: "Documentos liquidados por recebimento" },
-  { key: "relacaoComercial", label: "Movimentos comerciais", description: "Cabecalho e linhas na mesma consulta" },
-  { key: "relacaoFinanceira", label: "Movimentos financeiros", description: "Recebimento e liquidacoes na mesma consulta" },
-  { key: "extratoCliente", label: "Extrato historico de cliente", description: "Faturas, recibos e saldo acumulado" }
+  { key: "relacaoComercial", label: "Movimentos comerciais", description: "Cabeçalho e linhas na mesma consulta" },
+  { key: "relacaoFinanceira", label: "Movimentos financeiros", description: "Recebimento e liquidações na mesma consulta" },
+  { key: "extratoCliente", label: "Extrato histórico de cliente", description: "Faturas, recibos e saldo acumulado" }
 ];
 
 const COLUMNS: Record<SourceKey, ConfigurableColumn[]> = {
   comerciais: [
     c("emissao", "Data", true), c("documento", "Documento", true), c("cliente", "Cliente", true), c("nif", "NIF"),
     c("estado", "Estado", true), c("liquido", "Valor líquido", true), c("iva", "IVA", true), c("total", "Total", true),
-    c("vencimento", "Vencimento"), c("moeda", "Moeda"), c("bruto", "Bruto"), c("desconto", "Desconto"), c("retencao", "Retencao"),
+    c("vencimento", "Vencimento"), c("moeda", "Moeda"), c("bruto", "Bruto"), c("desconto", "Desconto"), c("retencao", "Retenção"),
     c("impresso", "Impresso"), c("liquidado", "Liquidado"), c("emissor", "Emissor")
   ],
   linhasComerciais: [
-    c("documento", "Documento", true), c("emissao", "Emissao"), c("cliente", "Cliente", true), c("nif", "NIF"),
-    c("linha", "Linha", true), c("artigo", "Artigo", true), c("descricao", "Descricao", true), c("quantidade", "Quantidade", true),
-    c("preco", "Preco unitario", true), c("bruto", "Bruto"), c("desconto", "Desconto"), c("liquido", "Valor linha", true),
+    c("documento", "Documento", true), c("emissao", "Emissão"), c("cliente", "Cliente", true), c("nif", "NIF"),
+    c("linha", "Linha", true), c("artigo", "Artigo", true), c("descricao", "Descrição", true), c("quantidade", "Quantidade", true),
+    c("preco", "Preço unitário", true), c("bruto", "Bruto"), c("desconto", "Desconto"), c("liquido", "Valor linha", true),
     c("tipoIva", "Tipo IVA"), c("taxaIva", "Taxa IVA"), c("peso", "Peso"), c("moeda", "Moeda")
   ],
   financeiros: [
@@ -84,29 +84,29 @@ const COLUMNS: Record<SourceKey, ConfigurableColumn[]> = {
   ],
   linhasFinanceiras: [
     c("recibo", "Recebimento", true), c("cliente", "Cliente"), c("dataRecibo", "Data recebimento"),
-    c("documento", "Documento liquidado", true), c("emissao", "Emissao"), c("vencimento", "Vencimento"),
+    c("documento", "Documento liquidado", true), c("emissao", "Emissão"), c("vencimento", "Vencimento"),
     c("valorDocumento", "Valor documento"), c("pendenteAntes", "Pendente antes", true), c("liquidado", "Valor liquidado", true),
     c("desconto", "Desconto"), c("recebido", "Recebido", true), c("novoPendente", "Novo pendente", true), c("moeda", "Moeda")
   ],
   relacaoComercial: [
-    c("documento", "Documento", true), c("estado", "Estado", true), c("emissao", "Emissao", true),
+    c("documento", "Documento", true), c("estado", "Estado", true), c("emissao", "Emissão", true),
     c("vencimento", "Vencimento"), c("cliente", "Cliente", true), c("nif", "NIF"), c("moeda", "Moeda"),
     c("totalDocumento", "Total documento", true), c("liquidadoDocumento", "Liquidado"), c("linha", "Linha", true),
-    c("artigo", "Artigo", true), c("descricao", "Descricao", true), c("quantidade", "Quantidade", true),
-    c("preco", "Preco unitario", true), c("brutoLinha", "Bruto linha"), c("descontoLinha", "Desconto linha"),
+    c("artigo", "Artigo", true), c("descricao", "Descrição", true), c("quantidade", "Quantidade", true),
+    c("preco", "Preço unitário", true), c("brutoLinha", "Bruto linha"), c("descontoLinha", "Desconto linha"),
     c("valorLinha", "Valor linha", true), c("tipoIva", "Tipo IVA"), c("taxaIva", "Taxa IVA"), c("peso", "Peso")
   ],
   relacaoFinanceira: [
     c("recibo", "Recebimento", true), c("estado", "Estado", true), c("dataRecibo", "Data recebimento", true),
     c("cliente", "Cliente", true), c("modo", "Modo pagamento"), c("totalRecebido", "Total recebido", true),
-    c("documento", "Documento liquidado", true), c("emissao", "Emissao"), c("vencimento", "Vencimento"),
+    c("documento", "Documento liquidado", true), c("emissao", "Emissão"), c("vencimento", "Vencimento"),
     c("valorDocumento", "Valor documento"), c("pendenteAntes", "Pendente antes", true),
     c("valorLiquidado", "Valor liquidado", true), c("descontoLinha", "Desconto"),
     c("recebidoLinha", "Recebido", true), c("novoPendente", "Novo pendente", true), c("moeda", "Moeda")
   ],
   extratoCliente: [
-    c("data", "Data", true), c("documento", "Documento", true), c("descricao", "Descricao", true),
-    c("vencimento", "Vencimento"), c("debito", "Debito", true), c("credito", "Credito", true),
+    c("data", "Data", true), c("documento", "Documento", true), c("descricao", "Descrição", true),
+    c("vencimento", "Vencimento"), c("debito", "Débito", true), c("credito", "Crédito", true),
     c("saldo", "Saldo", true), c("moeda", "Moeda", true)
   ]
 };
@@ -186,7 +186,7 @@ export default function ListagensView() {
       return;
     }
     if (dataInicial > dataFinal) {
-      setMessage("A data inicial nao pode ser posterior a data final.");
+      setMessage("A data inicial não pode ser posterior à data final.");
       clearSourceRows(target);
       return;
     }
@@ -213,7 +213,7 @@ export default function ListagensView() {
         setLinhasFinanceiras(page.content.map((item) => ({ ...item.linha, documento: item.documento })));
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar a listagem.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível carregar a listagem.");
     } finally {
       setLoading(false);
     }
@@ -227,7 +227,7 @@ export default function ListagensView() {
       return;
     }
     if (extratoDataInicial > extratoDataFinal) {
-      setMessage("A data inicial nao pode ser posterior a data final.");
+      setMessage("A data inicial não pode ser posterior à data final.");
       return;
     }
     setLoading(true);
@@ -235,7 +235,7 @@ export default function ListagensView() {
       const params = extratoParams(extratoClienteIds, extratoDataInicial, extratoDataFinal);
       setExtratos(await fetchJson<ExtratoCliente[]>(`/api/extratos/clientes?${params}`));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar o extrato.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível carregar o extrato.");
     } finally {
       setLoading(false);
     }
@@ -248,7 +248,7 @@ export default function ListagensView() {
       return;
     }
     if (extratoDataInicial > extratoDataFinal) {
-      setMessage("A data inicial nao pode ser posterior a data final.");
+      setMessage("A data inicial não pode ser posterior à data final.");
       return;
     }
     const setExporting = format === "pdf" ? setExportingPdf : setExportingExcel;
@@ -267,7 +267,7 @@ export default function ListagensView() {
       link.remove();
       URL.revokeObjectURL(url);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel exportar o extrato.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível exportar o extrato.");
     } finally {
       setExporting(false);
     }
@@ -313,7 +313,7 @@ export default function ListagensView() {
 
   return <>
     <section className="fac-hero">
-      <div><p className="fac-eyebrow">Listagens</p><h2>Consulta transversal dos dados do FAC</h2><p>Escolhe uma fonte, define as colunas necessarias e consulta cabecalhos ou linhas sem interferir com a operacao diaria.</p></div>
+      <div><p className="fac-eyebrow">Listagens</p><h2>Consulta transversal dos dados do FAC</h2><p>Escolhe uma fonte, define as colunas necessárias e consulta cabeçalhos ou linhas sem interferir com a operação diária.</p></div>
       <div className="fac-hero-card"><span>Fonte atual</span><strong>{SOURCES.find((item) => item.key === source)?.label}</strong><small>{loading ? "A carregar..." : source === "extratoCliente" ? extratos ? `${extratos.reduce((total, extrato) => total + extrato.moedas.reduce((subtotal, moeda) => subtotal + moeda.movimentos.length, 0), 0)} movimentos` : "A aguardar consulta" : `${rows.length} registos`}</small></div>
     </section>
 
@@ -322,10 +322,10 @@ export default function ListagensView() {
     </section>
 
     <section className="fac-panel fac-section-panel">
-      <div className="fac-panel-header"><div><p className="fac-eyebrow">{SOURCES.find((item) => item.key === source)?.label}</p><h2>Dados disponiveis</h2></div><div className="fac-inline-actions">{source !== "extratoCliente" && <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar nesta listagem" type="search" value={search}/>}<button className="fac-ghost-button" onClick={() => setColumnsOpen((current) => !current)} type="button">Colunas ({configured.visibleColumns.length})</button><button className="fac-soft-button" disabled={loading} onClick={() => source === "extratoCliente" ? consultarExtrato() : loadSource(source)} type="button">Atualizar</button></div></div>
+      <div className="fac-panel-header"><div><p className="fac-eyebrow">{SOURCES.find((item) => item.key === source)?.label}</p><h2>Dados disponíveis</h2></div><div className="fac-inline-actions">{source !== "extratoCliente" && <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar nesta listagem" type="search" value={search}/>}<button className="fac-ghost-button" onClick={() => setColumnsOpen((current) => !current)} type="button">Colunas ({configured.visibleColumns.length})</button><button className="fac-soft-button" disabled={loading} onClick={() => source === "extratoCliente" ? consultarExtrato() : loadSource(source)} type="button">Atualizar</button></div></div>
       {message && <p className="fac-message">{message}</p>}
       {source !== "extratoCliente" && <ListingFilters artigos={artigos} clientes={mergeSelectedCliente(clientes, selectedCliente)} dataFinal={dataFinal} dataInicial={dataInicial} onArtigo={changeArtigo} onCliente={changeCliente} onDataFinal={setDataFinal} onDataInicial={setDataInicial} selectedArtigo={selectedArtigo ?? artigos.find((artigo) => artigo.codigo === artigoId) ?? null} selectedCliente={selectedCliente} showArtigo={source === "linhasComerciais"} />}
-      {source === "extratoCliente" && <p className="fac-muted">Extrato oficial calculado pelo backend. Os documentos anulados nao integram os movimentos contabilisticos e cada moeda e apresentada separadamente.</p>}
+      {source === "extratoCliente" && <p className="fac-muted">Extrato calculado a partir dos documentos emitidos. Os documentos anulados não integram os movimentos contabilísticos e cada moeda é apresentada separadamente.</p>}
       {source === "extratoCliente" && <div className="fac-extrato-filters">
         <div className="fac-filter-field"><span>Clientes</span><MultiSelectFilter allLabel="Todos os clientes" options={clientesExtrato.map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}` }))} selectedValues={extratoClienteIds} onChange={(values) => { setExtratoClienteIds(values); setExtratos(null); }}/></div>
         <label><span>Data inicial</span><input onChange={(event) => setExtratoDataInicial(event.target.value)} type="date" value={extratoDataInicial}/></label>
@@ -400,7 +400,7 @@ function ListingFilters({
         emptyMessage="Sem artigos para selecionar."
         label="Artigo"
         optionLabel={artigoLookupLabel}
-        optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Familia ${artigo.familiaId}` : null, artigo.pvp !== undefined ? money(artigo.pvp) : null].filter(Boolean).join(" · ")}
+        optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, artigo.pvp !== undefined ? money(artigo.pvp) : null].filter(Boolean).join(" · ")}
         onClear={() => onArtigo(null)}
         onSelect={onArtigo}
         placeholder="Todos os artigos"
@@ -424,7 +424,7 @@ function ExtratoTable({ extratos, loading, columns }: { extratos: ExtratoCliente
     {extratos.map((extrato) => <section className="fac-extrato-cliente-result" key={extrato.clienteId}>
     <header className="fac-extrato-header">
       <div><span>Cliente {extrato.clienteId}</span><strong>{extrato.clienteNome}</strong><small>NIF {extrato.clienteNif || "-"}</small></div>
-      <div><span>Periodo</span><strong>{datePt(extrato.dataInicial)} a {datePt(extrato.dataFinal)}</strong><small>Gerado em {dateTimePt(extrato.geradoEm)}</small></div>
+      <div><span>Período</span><strong>{datePt(extrato.dataInicial)} a {datePt(extrato.dataFinal)}</strong><small>Gerado em {dateTimePt(extrato.geradoEm)}</small></div>
     </header>
     {extrato.moedas.map((moeda) => <section className="fac-extrato-moeda" key={moeda.moedaId}>
       <div className="fac-extrato-moeda-title"><strong>{moeda.moedaId}</strong><span>{moeda.movimentos.length} movimentos no periodo</span></div>
@@ -432,7 +432,7 @@ function ExtratoTable({ extratos, loading, columns }: { extratos: ExtratoCliente
         <ExtratoTotalRow className="fac-extrato-anterior" label="Anterior" moeda={moeda.moedaId} totals={moeda.anterior} columns={columns}/>
         {moeda.movimentos.map((movimento) => <tr key={`${movimento.origem}-${movimento.id}`}>{columns.map((column) => <td key={column.key}>{extratoMovementCell(movimento, moeda.moedaId, column.key)}</td>)}</tr>)}
         {moeda.movimentos.length === 0 && <tr><td className="fac-extrato-empty" colSpan={columns.length}>Sem movimentos no periodo selecionado.</td></tr>}
-        <ExtratoTotalRow className="fac-extrato-periodo" label="Total do periodo" moeda={moeda.moedaId} totals={moeda.totalPeriodo} columns={columns}/>
+        <ExtratoTotalRow className="fac-extrato-periodo" label="Total do período" moeda={moeda.moedaId} totals={moeda.totalPeriodo} columns={columns}/>
         <ExtratoTotalRow className="fac-extrato-total" label="Total final" moeda={moeda.moedaId} totals={moeda.totalFinal} columns={columns}/>
       </tbody></table></div>
     </section>)}
@@ -484,9 +484,9 @@ const clienteLookupColumns: EntityLookupColumn<ClienteOption>[] = [
   { body: (cliente) => cliente.tm || cliente.tel || "-", defaultVisible: true, field: "tel", globalSearch: true, header: "Telefone", sortable: true, width: "9rem" },
   { field: "id", header: "ID", sortable: true, width: "6rem" },
   { field: "email", globalSearch: true, header: "Email", sortable: true },
-  { field: "paisId", header: "Pais", sortable: true, width: "7rem" },
-  { field: "codPostalId", header: "Codigo postal", sortable: true, width: "9rem" },
-  { body: (cliente) => cliente.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
+  { field: "paisId", header: "País", sortable: true, width: "7rem" },
+  { field: "codPostalId", header: "Código postal", sortable: true, width: "9rem" },
+  { body: (cliente) => cliente.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
 ];
 
 const clienteSearchFields: EntityLookupSearchField<ClienteOption>[] = [
@@ -499,15 +499,15 @@ const clienteSearchFields: EntityLookupSearchField<ClienteOption>[] = [
 ];
 
 const artigoLookupColumns: EntityLookupColumn<ArtigoOption>[] = [
-  { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Codigo", required: true, sortable: true, width: "8rem" },
-  { defaultVisible: true, field: "descricao", filterable: true, globalSearch: true, header: "Descricao", sortable: true },
-  { body: (artigo) => artigo.familiaId ?? "-", defaultVisible: true, field: "familiaId", filterable: true, globalSearch: true, header: "Familia", sortable: true, width: "8rem" },
+  { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Código", required: true, sortable: true, width: "8rem" },
+  { defaultVisible: true, field: "descricao", filterable: true, globalSearch: true, header: "Descrição", sortable: true },
+  { body: (artigo) => artigo.familiaId ?? "-", defaultVisible: true, field: "familiaId", filterable: true, globalSearch: true, header: "Família", sortable: true, width: "8rem" },
   { defaultVisible: true, field: "unidade", filterable: true, globalSearch: true, header: "Unidade", sortable: true, width: "7rem" },
   { body: (artigo) => money(artigo.pvp ?? 0), defaultVisible: true, field: "pvp", header: "PVP", sortable: true, width: "8rem" },
   { defaultVisible: true, field: "ivaVendaId", filterable: true, header: "IVA venda", sortable: true, width: "8rem" },
-  { body: (artigo) => artigo.retencao ? "Sim" : "Nao", field: "retencao", header: "Retencao", sortable: true, width: "8rem" },
-  { body: (artigo) => artigo.inativo ? "Sim" : "Nao", field: "inativo", header: "Inativo", sortable: true, width: "7rem" },
-  { field: "observacoes", header: "Observacoes", sortable: true }
+  { body: (artigo) => artigo.retencao ? "Sim" : "Não", field: "retencao", header: "Retenção", sortable: true, width: "8rem" },
+  { body: (artigo) => artigo.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" },
+  { field: "observacoes", header: "Observações", sortable: true }
 ];
 
 const artigoSearchFields: EntityLookupSearchField<ArtigoOption>[] = [
@@ -530,7 +530,7 @@ function artigoLookupLabel(artigo: ArtigoOption) {
 function money(value: number) { return Number(value || 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function moneyCell(value: number, moeda?: string) { return <span className="fac-money">{money(value)}{moeda ? ` ${moeda}` : ""}</span>; }
 function decimal(value: number) { return Number(value || 0).toLocaleString("pt-PT", { maximumFractionDigits: 6 }); }
-function yesNo(value: boolean) { return value ? "Sim" : "Nao"; }
+function yesNo(value: boolean) { return value ? "Sim" : "Não"; }
 function statusComercial(d: DocumentoComercial) { return d.anulado ? "ANULADO" : d.estado; }
 
 function cellValue(source: SourceKey, raw: unknown, key: string) {

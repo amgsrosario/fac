@@ -96,7 +96,7 @@ export default function AdminUtilizadoresView() {
       clear();
       await reload(params, setUsers, setTotal);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel guardar o utilizador.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível guardar o utilizador.");
     }
   }
 
@@ -107,7 +107,7 @@ export default function AdminUtilizadoresView() {
       await reload(params, setUsers, setTotal);
       setMessage(user.ativo ? "Utilizador desativado." : "Utilizador reativado.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel alterar o estado.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível alterar o estado.");
     }
   }
 
@@ -125,7 +125,7 @@ export default function AdminUtilizadoresView() {
       setNewPassword("");
       setMessage("Password redefinida.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel redefinir a password.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível redefinir a password.");
     }
   }
 
@@ -133,7 +133,7 @@ export default function AdminUtilizadoresView() {
     <section className="fac-panel">
       <div className="fac-panel-header">
         <div>
-          <p className="fac-eyebrow">Administracao</p>
+          <p className="fac-eyebrow">Administração</p>
           <h2>Utilizadores e perfis funcionais</h2>
         </div>
         <span className="fac-muted">{loading ? "A carregar..." : `${total} utilizador(es)`}</span>
@@ -160,7 +160,7 @@ export default function AdminUtilizadoresView() {
         <div className="fac-table-wrapper">
           <table className="fac-table">
             <thead>
-              <tr><th>Codigo</th><th>Nome</th><th>Perfil</th><th>Estado</th><th>Acoes</th></tr>
+              <tr><th>Código</th><th>Nome</th><th>Perfil</th><th>Estado</th><th>Ações</th></tr>
             </thead>
             <tbody>
               {users.map((user) => (
@@ -186,7 +186,7 @@ export default function AdminUtilizadoresView() {
             <div><p className="fac-eyebrow">{editing ? "Editar" : "Novo"}</p><h3>{editing ? editing.codigo : "Utilizador"}</h3></div>
             {editing && <button onClick={clear} type="button">Novo</button>}
           </div>
-          <Field label="Codigo">
+          <Field label="Código">
             <input disabled={Boolean(editing)} value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value })} />
           </Field>
           <Field label="Nome">
@@ -206,7 +206,7 @@ export default function AdminUtilizadoresView() {
             <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
           </Field>}
           <div className="fac-form-footer">
-            <span className="fac-muted">O codigo e imutavel depois da criacao.</span>
+            <span className="fac-muted">O código é imutável depois da criação.</span>
             <button className="fac-primary-button" onClick={save} type="button">{editing ? "Guardar" : "Criar"}</button>
           </div>
         </div>
@@ -223,7 +223,7 @@ export default function AdminUtilizadoresView() {
           </Field>
         </div>
         <div className="fac-form-footer">
-          <span className="fac-muted">Tokens JWT ja emitidos nao sao revogados por este reset.</span>
+          <span className="fac-muted">Tokens JWT já emitidos não são revogados por este reset.</span>
           <button className="fac-primary-button" onClick={resetPassword} type="button">Redefinir password</button>
         </div>
       </div>}

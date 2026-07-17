@@ -26,11 +26,11 @@ export function FacLoadingState({ description = "A carregar dados." }: { descrip
   return <FacState description={description} title="A carregar" tone="loading" />;
 }
 
-export function FacErrorState({ description = "Nao foi possivel concluir a operacao." }: { description?: string }) {
+export function FacErrorState({ description = "Não foi possível concluir a operação." }: { description?: string }) {
   return <FacState description={description} title="Erro" tone="error" />;
 }
 
-export function FacEmptyState({ description = "Nao existem dados para apresentar." }: { description?: string }) {
+export function FacEmptyState({ description = "Não existem dados para apresentar." }: { description?: string }) {
   return <FacState description={description} title="Sem dados" />;
 }
 

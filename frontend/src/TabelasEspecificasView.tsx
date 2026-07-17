@@ -32,46 +32,46 @@ const field = (key: string, label: string, options: Partial<Field> = {}): Field 
 const configs: Record<TableKey, Config> = {
   "tipos-documento": {
     key: "tipos-documento", label: "Tipos de documento", endpoint: "/api/tipos-documento",
-    fields: [field("id", "Codigo", { required: true, maxLength: 3, createOnly: true }), field("descricao", "Descricao", { required: true, maxLength: 50 }), field("codigoFiscal", "Codigo fiscal", { type: "select", maxLength: 2, options: "codigosFiscais" }), field("modeloEmissao1", "Modelo de emissao 1", { maxLength: 25 }), field("modeloEmissao2", "Modelo de emissao 2", { maxLength: 25 }), field("modeloEmissao3", "Modelo de emissao 3", { maxLength: 25 }), field("modeloEmissao4", "Modelo de emissao 4", { maxLength: 25 }), field("areaGestao", "Area de gestao", { type: "select", required: true, options: "areasGestao" }), field("entidade", "Entidade", { type: "select", required: true, options: "entidadesDocumento" }), field("sinalContabilistico", "Sinal contabilistico", { type: "select", required: true, options: "sinais" }), field("liquidacaoImediata", "Liquidacao imediata", { type: "checkbox" })],
-    columns: [{ key: "id", label: "Codigo" }, { key: "codigoFiscal", label: "Fiscal" }, { key: "descricao", label: "Descricao" }, { key: "areaGestao", label: "Area" }, { key: "liquidacaoImediata", label: "Liquidacao imediata" }],
+    fields: [field("id", "Código", { required: true, maxLength: 3, createOnly: true }), field("descricao", "Descrição", { required: true, maxLength: 50 }), field("codigoFiscal", "Código fiscal", { type: "select", maxLength: 2, options: "codigosFiscais" }), field("modeloEmissao1", "Modelo de emissão 1", { maxLength: 25 }), field("modeloEmissao2", "Modelo de emissão 2", { maxLength: 25 }), field("modeloEmissao3", "Modelo de emissão 3", { maxLength: 25 }), field("modeloEmissao4", "Modelo de emissão 4", { maxLength: 25 }), field("areaGestao", "Área de gestão", { type: "select", required: true, options: "areasGestao" }), field("entidade", "Entidade", { type: "select", required: true, options: "entidadesDocumento" }), field("sinalContabilistico", "Sinal contabilístico", { type: "select", required: true, options: "sinais" }), field("liquidacaoImediata", "Liquidação imediata", { type: "checkbox" })],
+    columns: [{ key: "id", label: "Código" }, { key: "codigoFiscal", label: "Fiscal" }, { key: "descricao", label: "Descrição" }, { key: "areaGestao", label: "Área" }, { key: "liquidacaoImediata", label: "Liquidação imediata" }],
     rowId: (row) => String(row.id), itemUrl: (row) => `/api/tipos-documento/${encodeURIComponent(String(row.id))}`
   },
   series: {
-    key: "series", label: "Series", endpoint: "/api/series",
-    fields: [field("tipoDocumentoId", "Tipo de documento", { type: "select", required: true, createOnly: true, options: "tiposDocumento" }), field("serie", "Serie", { required: true, maxLength: 10, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 50 }), field("codigoAt", "Codigo AT", { maxLength: 100 }), field("dataCodigoAt", "Data do codigo AT", { type: "date" })],
-    columns: [{ key: "tipoDocumentoId", label: "Documento" }, { key: "serie", label: "Serie" }, { key: "nome", label: "Nome" }, { key: "numerador", label: "Numerador" }],
+    key: "series", label: "Séries", endpoint: "/api/series",
+    fields: [field("tipoDocumentoId", "Tipo de documento", { type: "select", required: true, createOnly: true, options: "tiposDocumento" }), field("serie", "Série", { required: true, maxLength: 10, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 50 }), field("codigoAt", "Código AT", { maxLength: 100 }), field("dataCodigoAt", "Data do código AT", { type: "date" })],
+    columns: [{ key: "tipoDocumentoId", label: "Documento" }, { key: "serie", label: "Série" }, { key: "nome", label: "Nome" }, { key: "numerador", label: "Numerador" }],
     rowId: (row) => `${row.tipoDocumentoId}-${row.serie}`, itemUrl: (row) => `/api/series/${encodeURIComponent(String(row.tipoDocumentoId))}/${encodeURIComponent(String(row.serie))}`
   },
   riva: {
     key: "riva", label: "Regimes de IVA", endpoint: "/api/riva",
-    fields: [field("id", "Codigo", { required: true, maxLength: 3, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 30 })],
-    columns: [{ key: "id", label: "Codigo" }, { key: "nome", label: "Nome" }, { key: "taxas", label: "Taxas" }],
+    fields: [field("id", "Código", { required: true, maxLength: 3, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 30 })],
+    columns: [{ key: "id", label: "Código" }, { key: "nome", label: "Nome" }, { key: "taxas", label: "Taxas" }],
     rowId: (row) => String(row.id), itemUrl: (row) => `/api/riva/${encodeURIComponent(String(row.id))}`
   },
   codpostal: {
-    key: "codpostal", label: "Codigos postais", endpoint: "/api/codpostal",
-    fields: [field("id", "Codigo postal", { required: true, maxLength: 20, createOnly: true }), field("nome", "Localidade", { required: true, maxLength: 50 })],
-    columns: [{ key: "id", label: "Codigo" }, { key: "nome", label: "Localidade" }],
+    key: "codpostal", label: "Códigos postais", endpoint: "/api/codpostal",
+    fields: [field("id", "Código postal", { required: true, maxLength: 20, createOnly: true }), field("nome", "Localidade", { required: true, maxLength: 50 })],
+    columns: [{ key: "id", label: "Código" }, { key: "nome", label: "Localidade" }],
     rowId: (row) => String(row.id), itemUrl: (row) => `/api/codpostal/${encodeURIComponent(String(row.id))}`
   },
   freguesias: {
     key: "freguesias", label: "Freguesias", endpoint: "/api/freguesias",
-    fields: [field("codigo", "Codigo", { required: true, maxLength: 6, createOnly: true }), field("codigoDistrito", "Codigo distrito", { required: true, maxLength: 2, createOnly: true }), field("codigoConcelho", "Codigo concelho", { required: true, maxLength: 2, createOnly: true }), field("codigoFreguesia", "Codigo freguesia", { required: true, maxLength: 2, createOnly: true }), field("concelho", "Concelho", { required: true, maxLength: 50 }), field("nome", "Freguesia", { required: true, maxLength: 80 }), field("extinta", "Extinta", { type: "checkbox" })],
-    columns: [{ key: "codigo", label: "Codigo" }, { key: "concelho", label: "Concelho" }, { key: "nome", label: "Freguesia" }, { key: "extinta", label: "Estado" }],
+    fields: [field("codigo", "Código", { required: true, maxLength: 6, createOnly: true }), field("codigoDistrito", "Código distrito", { required: true, maxLength: 2, createOnly: true }), field("codigoConcelho", "Código concelho", { required: true, maxLength: 2, createOnly: true }), field("codigoFreguesia", "Código freguesia", { required: true, maxLength: 2, createOnly: true }), field("concelho", "Concelho", { required: true, maxLength: 50 }), field("nome", "Freguesia", { required: true, maxLength: 80 }), field("extinta", "Extinta", { type: "checkbox" })],
+    columns: [{ key: "codigo", label: "Código" }, { key: "concelho", label: "Concelho" }, { key: "nome", label: "Freguesia" }, { key: "extinta", label: "Estado" }],
     rowId: (row) => String(row.codigo), itemUrl: (row) => `/api/freguesias/${encodeURIComponent(String(row.codigo))}`
   },
   armazens: {
-    key: "armazens", label: "Armazens", endpoint: "/api/armazens",
-    fields: [field("id", "Codigo", { required: true, maxLength: 3, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 100 }), field("morada", "Morada", { required: true, maxLength: 60 }), field("morada1", "Morada complementar", { maxLength: 60 }), field("codPostalId", "Codigo postal", { type: "select", required: true, options: "codigosPostais" }), field("localidade", "Localidade", { required: true, maxLength: 50 }), field("paisId", "Pais", { type: "select", required: true, options: "paises" }), field("freguesiaId", "Freguesia", { type: "select", options: "freguesias" })],
-    columns: [{ key: "id", label: "Codigo" }, { key: "nome", label: "Nome" }, { key: "localidade", label: "Localidade" }, { key: "paisId", label: "Pais" }],
+    key: "armazens", label: "Armazéns", endpoint: "/api/armazens",
+    fields: [field("id", "Código", { required: true, maxLength: 3, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 100 }), field("morada", "Morada", { required: true, maxLength: 60 }), field("morada1", "Morada complementar", { maxLength: 60 }), field("codPostalId", "Código postal", { type: "select", required: true, options: "codigosPostais" }), field("localidade", "Localidade", { required: true, maxLength: 50 }), field("paisId", "País", { type: "select", required: true, options: "paises" }), field("freguesiaId", "Freguesia", { type: "select", options: "freguesias" })],
+    columns: [{ key: "id", label: "Código" }, { key: "nome", label: "Nome" }, { key: "localidade", label: "Localidade" }, { key: "paisId", label: "País" }],
     rowId: (row) => String(row.id), itemUrl: (row) => `/api/armazens/${encodeURIComponent(String(row.id))}`
   }
 };
 
 export const specificTables: { key: TableKey; label: string; group: string }[] = [
-  { key: "tipos-documento", label: "Tipos de documento", group: "Documentos" }, { key: "series", label: "Series", group: "Documentos" },
-  { key: "riva", label: "Regimes de IVA", group: "Fiscalidade" }, { key: "codpostal", label: "Codigos postais", group: "Localizacao" },
-  { key: "freguesias", label: "Freguesias", group: "Localizacao" }, { key: "armazens", label: "Armazens", group: "Sistema" }
+  { key: "tipos-documento", label: "Tipos de documento", group: "Documentos" }, { key: "series", label: "Séries", group: "Documentos" },
+  { key: "riva", label: "Regimes de IVA", group: "Fiscalidade" }, { key: "codpostal", label: "Códigos postais", group: "Localização" },
+  { key: "freguesias", label: "Freguesias", group: "Localização" }, { key: "armazens", label: "Armazéns", group: "Sistema" }
 ];
 
 export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey: TableKey; onBack: () => void }) {
@@ -80,10 +80,10 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
   const [values, setValues] = useState<Values>({});
   const [editing, setEditing] = useState<Row | null>(null);
   const [options, setOptions] = useState<Record<string, Option[]>>({
-    sinais: [{ value: "1", label: "1 - Debito" }, { value: "2", label: "2 - Credito" }],
+    sinais: [{ value: "1", label: "1 - Débito" }, { value: "2", label: "2 - Crédito" }],
     areasGestao: [
-      { value: "1", label: "1 - Documento comercial (area 1)" },
-      { value: "2", label: "2 - Documento comercial / faturacao" },
+      { value: "1", label: "1 - Documento comercial (área 1)" },
+      { value: "2", label: "2 - Documento comercial / faturação" },
       { value: "3", label: "3 - Documento financeiro / tesouraria" }
     ],
     entidadesDocumento: [{ value: "1", label: "1 - Cliente" }],
@@ -91,26 +91,26 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
       { value: "FT", label: "FT - Fatura" },
       { value: "FS", label: "FS - Fatura simplificada" },
       { value: "FR", label: "FR - Fatura-recibo" },
-      { value: "ND", label: "ND - Nota de debito" },
-      { value: "NC", label: "NC - Nota de credito" },
+      { value: "ND", label: "ND - Nota de débito" },
+      { value: "NC", label: "NC - Nota de crédito" },
       { value: "VD", label: "VD - Venda a dinheiro" },
-      { value: "TV", label: "TV - Talao de venda" },
-      { value: "TD", label: "TD - Talao de devolucao" },
-      { value: "AA", label: "AA - Alienacao de ativos" },
-      { value: "DA", label: "DA - Devolucao de ativos" },
-      { value: "RP", label: "RP - Recibo de premio" },
+      { value: "TV", label: "TV - Talão de venda" },
+      { value: "TD", label: "TD - Talão de devolução" },
+      { value: "AA", label: "AA - Alienação de ativos" },
+      { value: "DA", label: "DA - Devolução de ativos" },
+      { value: "RP", label: "RP - Recibo de prémio" },
       { value: "RE", label: "RE - Estorno ou recibo de estorno" },
-      { value: "CS", label: "CS - Imputacao a co-seguradoras" },
-      { value: "LD", label: "LD - Imputacao a co-seguradora lider" },
+      { value: "CS", label: "CS - Imputação a co-seguradoras" },
+      { value: "LD", label: "LD - Imputação a co-seguradora líder" },
       { value: "RA", label: "RA - Resseguro aceite" },
       { value: "CM", label: "CM - Consulta de mesa" },
-      { value: "CC", label: "CC - Credito de consignacao" },
-      { value: "FC", label: "FC - Fatura de consignacao" },
+      { value: "CC", label: "CC - Crédito de consignação" },
+      { value: "FC", label: "FC - Fatura de consignação" },
       { value: "GR", label: "GR - Guia de remessa" },
       { value: "GT", label: "GT - Guia de transporte" },
-      { value: "GA", label: "GA - Guia de movimentacao de ativos proprios" },
-      { value: "GC", label: "GC - Guia de consignacao" },
-      { value: "GD", label: "GD - Guia ou nota de devolucao" },
+      { value: "GA", label: "GA - Guia de movimentação de ativos próprios" },
+      { value: "GC", label: "GC - Guia de consignação" },
+      { value: "GD", label: "GD - Guia ou nota de devolução" },
       { value: "RC", label: "RC - Recibo" },
       { value: "RG", label: "RG - Outros recibos emitidos" }
     ]
@@ -165,7 +165,7 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
   async function save() {
     for (const item of config.fields) {
       if (item.required && !(editing && (item.createOnly || item.optionalOnUpdate)) && String(values[item.key] ?? "").trim() === "") {
-        setFeedback({ kind: "error", text: `${item.label} e obrigatorio.` }); return;
+        setFeedback({ kind: "error", text: `${item.label} é obrigatório.` }); return;
       }
     }
     const taxas = Object.entries(rates).filter(([, value]) => value !== "").map(([tipoTaxaIvaId, valor]) => ({ tipoTaxaIvaId, valor: Number(valor) }));
@@ -181,13 +181,13 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
   }
 
   async function remove(row: Row) {
-    if (!window.confirm(`Eliminar ${config.label}: ${config.rowId(row)}?\n\nSe estiver em utilizacao, o FAC recusara a operacao.`)) return;
+    if (!window.confirm(`Eliminar ${config.label}: ${config.rowId(row)}?\n\nSe estiver em utilização, o FAC recusará a operação.`)) return;
     setLoading(true); setFeedback(null);
     try {
       const response = await apiFetch(config.itemUrl(row), { method: "DELETE" });
       if (!response.ok) throw new Error(await responseError(response));
       await load(); setFeedback({ kind: "success", text: "Registo eliminado com sucesso." });
-    } catch (error) { setFeedback({ kind: "error", text: `O registo nao foi eliminado e permanece na tabela. ${errorMessage(error)}` }); setLoading(false); }
+    } catch (error) { setFeedback({ kind: "error", text: `O registo não foi eliminado e permanece na tabela. ${errorMessage(error)}` }); setLoading(false); }
   }
 
   const rateOptions = useMemo(() => options.tiposTaxa ?? [], [options]);
@@ -199,8 +199,8 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
       {isRiva && <div className="fac-rate-grid"><p className="fac-muted">Taxas do regime</p>{rateOptions.map((option) => <label className="fac-field" key={option.value}><span>{option.label}</span><input min="0" onChange={(event) => setRates((current) => ({ ...current, [option.value]: event.target.value }))} step="0.01" type="number" value={rates[option.value] ?? ""}/></label>)}</div>}
       <div className="fac-form-footer"><span className="fac-muted">{editing ? `A editar ${config.rowId(editing)}` : "Novo registo"}</span><button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar"}</button></div>
     </div>
-    <p className="fac-muted">A eliminacao so e aceite para registos nunca utilizados.</p>
-    <table className="fac-table"><thead><tr>{config.columns.map((column) => <th key={column.key}>{column.label}</th>)}<th>Acoes</th></tr></thead><tbody>{rows.map((row) => <tr key={config.rowId(row)}>{config.columns.map((column) => <td key={column.key}>{display(column.key, row[column.key])}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => edit(row)} type="button">Editar</button><button className="fac-link-danger" disabled={loading} onClick={() => remove(row)} type="button">Eliminar</button></div></td></tr>)}{!loading && rows.length === 0 && <tr><td colSpan={config.columns.length + 1}>Sem registos.</td></tr>}</tbody></table>
+    <p className="fac-muted">A eliminação só é aceite para registos nunca utilizados.</p>
+    <table className="fac-table"><thead><tr>{config.columns.map((column) => <th key={column.key}>{column.label}</th>)}<th>Ações</th></tr></thead><tbody>{rows.map((row) => <tr key={config.rowId(row)}>{config.columns.map((column) => <td key={column.key}>{display(column.key, row[column.key])}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => edit(row)} type="button">Editar</button><button className="fac-link-danger" disabled={loading} onClick={() => remove(row)} type="button">Eliminar</button></div></td></tr>)}{!loading && rows.length === 0 && <tr><td colSpan={config.columns.length + 1}>Sem registos.</td></tr>}</tbody></table>
   </section>;
 }
 
@@ -209,8 +209,8 @@ function EditorField({ field: item, value, editing, options, onChange }: { field
   return <label className="fac-field"><span>{item.label}{item.optionalOnUpdate && editing ? " (deixar vazio para manter)" : ""}</span>{item.type === "select" ? <select disabled={editing && item.createOnly} onChange={(event) => onChange(event.target.value)} value={String(value ?? "")}><option value="">Selecionar</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : <input disabled={editing && item.createOnly} maxLength={item.maxLength} min={item.type === "number" ? 0 : undefined} onChange={(event) => onChange(event.target.value)} step={item.type === "number" ? "1" : undefined} type={item.type ?? "text"} value={String(value ?? "")}/>}</label>;
 }
 
-function display(key: string, value: unknown) { if (key === "taxas" && Array.isArray(value)) return value.map((taxa: Row) => `${taxa.tipoTaxaIvaId}: ${taxa.valor}%`).join(" | "); if (typeof value === "boolean") return key === "inativo" || key === "extinta" ? (value ? "Inativo" : "Ativo") : value ? "Sim" : "Nao"; return value == null || value === "" ? "-" : String(value); }
+function display(key: string, value: unknown) { if (key === "taxas" && Array.isArray(value)) return value.map((taxa: Row) => `${taxa.tipoTaxaIvaId}: ${taxa.valor}%`).join(" | "); if (typeof value === "boolean") return key === "inativo" || key === "extinta" ? (value ? "Inativo" : "Ativo") : value ? "Sim" : "Não"; return value == null || value === "" ? "-" : String(value); }
 function blankToNull(value: string) { const trimmed = value.trim(); return trimmed || null; }
 async function get<T>(url: string): Promise<T> { const response = await apiFetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
 async function responseError(response: Response) { try { const payload = await response.json(); return payload.message || payload.error || `Erro HTTP ${response.status}`; } catch { return `Erro HTTP ${response.status}`; } }
-function errorMessage(error: unknown) { return error instanceof Error ? error.message : "Nao foi possivel concluir a operacao."; }
+function errorMessage(error: unknown) { return error instanceof Error ? error.message : "Não foi possível concluir a operação."; }

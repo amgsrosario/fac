@@ -118,13 +118,13 @@ type ClienteColumn = {
 
 const CLIENT_COLUMNS_STORAGE = "fac.clientes.colunas";
 const DEFAULT_CLIENT_COLUMNS: ClienteColumn[] = [
-  { key: "id", label: "Codigo", visible: true },
+  { key: "id", label: "Código", visible: true },
   { key: "nome", label: "Nome", visible: true },
   { key: "nif", label: "NIF", visible: true },
   { key: "email", label: "Email", visible: true },
   { key: "tel", label: "Telefone", visible: false },
   { key: "localidade", label: "Localidade", visible: false },
-  { key: "paisId", label: "Pais", visible: false },
+  { key: "paisId", label: "País", visible: false },
   { key: "moedaId", label: "Moeda", visible: false },
   { key: "rivaId", label: "Regime IVA", visible: false },
   { key: "estado", label: "Estado", visible: true }
@@ -212,17 +212,17 @@ type MenuItem = { label: ViewKey; hint: string };
 type MenuGroup = { title: string; items: MenuItem[] };
 
 const menuGroups: MenuGroup[] = [
-  { title: "Dashboard", items: [{ label: "Dashboard", hint: "Visao geral" }] },
-  { title: "Vendas", items: [{ label: "Documentos", hint: "Faturacao" }] },
+  { title: "Visão geral", items: [{ label: "Dashboard", hint: "Visão geral" }] },
+  { title: "Vendas", items: [{ label: "Documentos", hint: "Faturação" }] },
   {
     title: "Dados comerciais",
     items: [
       { label: "Clientes", hint: "Conta corrente" },
-      { label: "Artigos", hint: "Catalogo" }
+      { label: "Artigos", hint: "Catálogo" }
     ]
   },
   { title: "Tesouraria", items: [{ label: "Tesouraria", hint: "Recebimentos" }] },
-  { title: "Analise", items: [{ label: "Listagens", hint: "Consulta e analise" }] }
+  { title: "Análise", items: [{ label: "Listagens", hint: "Consulta e análise" }] }
 ];
 
 const adminMenuItems: MenuItem[] = [
@@ -232,6 +232,13 @@ const adminMenuItems: MenuItem[] = [
 ];
 
 const navigationItems: MenuItem[] = [...menuGroups.flatMap((group) => group.items), ...adminMenuItems];
+
+function menuLabel(label: ViewKey) {
+  if (label === "Dashboard") return "Visão geral";
+  if (label === "Configuracao") return "Configuração";
+  if (label === "ImportExport") return "Importar/Exportar";
+  return label;
+}
 
 const emptyClienteForm: ClienteForm = {
   nome: "",
@@ -311,7 +318,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       ]);
       setDashboardData({ comerciais, pendentes, financeiros });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar dados.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar dados.");
     } finally {
       setLoading(false);
     }
@@ -326,7 +333,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       const firstClienteId = page.content[0]?.id ?? null;
       setSelectedClienteId((current) => current ?? firstClienteId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar clientes.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar clientes.");
     } finally {
       setClientesLoading(false);
     }
@@ -339,7 +346,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       const diagnostico = await fetchJson<ContaCorrenteDiagnostico>(`/api/pendentes/conta-corrente/clientes/${clienteId}/diagnostico`);
       setContaCorrente(diagnostico);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar a conta corrente.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar a conta corrente.");
       setContaCorrente(null);
     } finally {
       setClientesLoading(false);
@@ -376,7 +383,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     try {
       await loadClienteCatalogos();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar os catalogos de cliente.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar os catálogos de cliente.");
     } finally {
       setClientesLoading(false);
     }
@@ -395,7 +402,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       setClienteForm(clienteToForm(cliente));
       setClienteEditorOpen(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel abrir o cliente para edicao.");
+      setError(err instanceof Error ? err.message : "Não foi possível abrir o cliente para edição.");
     } finally {
       setClientesLoading(false);
     }
@@ -419,8 +426,8 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       setEditorMessage("Matriz 0 aplicada aos campos configurados.");
     } catch (err) {
       setEditorMessage(err instanceof Error && err.message.includes("404")
-        ? "A Matriz 0 ainda nao foi configurada."
-        : "Nao foi possivel aplicar a Matriz 0.");
+        ? "A Matriz 0 ainda não foi configurada."
+        : "Não foi possível aplicar a Matriz 0.");
     } finally {
       setClientesLoading(false);
     }
@@ -443,9 +450,9 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       setSelectedClienteId(created.id);
       setClienteEditorOpen(false);
       setClienteForm(emptyClienteForm);
-      setClienteNotice(`Cliente ${created.nome} criado com o codigo ${created.id}.`);
+      setClienteNotice(`Cliente ${created.nome} criado com o código ${created.id}.`);
     } catch (err) {
-      setEditorMessage(err instanceof Error ? err.message : "Nao foi possivel criar o cliente.");
+      setEditorMessage(err instanceof Error ? err.message : "Não foi possível criar o cliente.");
     } finally {
       setClientesLoading(false);
     }
@@ -470,7 +477,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       setEditingClienteId(null);
       setClienteNotice(`Cliente ${clienteForm.nome.trim()} atualizado.`);
     } catch (err) {
-      setEditorMessage(err instanceof Error ? err.message : "Nao foi possivel atualizar o cliente.");
+      setEditorMessage(err instanceof Error ? err.message : "Não foi possível atualizar o cliente.");
     } finally {
       setClientesLoading(false);
     }
@@ -485,7 +492,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       setParametrosClienteExists(parametros != null);
       setParametrosClienteForm(parametros ? parametrosToForm(parametros) : emptyParametrosClienteForm);
     } catch (err) {
-      setConfigMessage(err instanceof Error ? err.message : "Nao foi possivel carregar a Matriz 0.");
+      setConfigMessage(err instanceof Error ? err.message : "Não foi possível carregar a Matriz 0.");
     } finally {
       setConfigLoading(false);
     }
@@ -502,9 +509,9 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         await sendJson<ParametrosCliente>("/api/parametros-cliente", payload);
         setParametrosClienteExists(true);
       }
-      setConfigMessage("Matriz 0 guardada. Sera aplicada apenas quando pedida no novo cliente.");
+      setConfigMessage("Matriz 0 guardada. Será aplicada apenas quando pedida no novo cliente.");
     } catch (err) {
-      setConfigMessage(err instanceof Error ? err.message : "Nao foi possivel guardar a Matriz 0.");
+      setConfigMessage(err instanceof Error ? err.message : "Não foi possível guardar a Matriz 0.");
     } finally {
       setConfigLoading(false);
     }
@@ -651,11 +658,11 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
           <div className="fac-brand-mark">FAC</div>
           <div>
             <strong>FAC</strong>
-            <span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Demo Partner Edition" : "Aplicacao de faturacao"}</span>
+            <span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Ambiente de demonstração" : "Gestão comercial e faturação"}</span>
           </div>
         </div>
 
-        <nav className="fac-menu" aria-label="Navegacao principal">
+        <nav className="fac-menu" aria-label="Navegação principal">
           {visibleMenuGroups.map((group) => (
             <section className="fac-menu-section" key={group.title}>
               <p>{group.title}</p>
@@ -666,7 +673,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
                   onClick={() => selectView(item.label)}
                   type="button"
                 >
-                  <span>{item.label === "ImportExport" ? "Importar/Exportar" : item.label}</span>
+                  <span>{menuLabel(item.label)}</span>
                   <small>{item.hint}</small>
                 </button>
               ))}
@@ -678,7 +685,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       <section className="fac-workspace">
         <header className="fac-topbar">
           <div>
-            <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "FAC Demo Partner Edition · Ambiente de demonstração" : "FAC · Aplicação de faturação"}</p>
+            <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "FAC · Ambiente de demonstração" : "FAC · Gestão comercial e faturação"}</p>
             <h1>{viewTitle(shellView)}</h1>
           </div>
           <div className="fac-topbar-actions">
@@ -706,7 +713,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
                         role="menuitem"
                         type="button"
                       >
-                        <span>{item.label === "ImportExport" ? "Importar/Exportar" : item.label}</span>
+                        <span>{menuLabel(item.label)}</span>
                         <small>{item.hint}</small>
                       </button>
                     ))}
@@ -718,7 +725,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             <input
               onChange={(event) => setClienteSearch(event.target.value)}
               disabled={shellView === "Configuracao" || shellView === "Listagens"}
-              placeholder={shellView === "Clientes" ? "Pesquisar cliente, NIF ou email" : shellView === "Configuracao" ? "Configuracao da aplicacao" : shellView === "Listagens" ? "Pesquisa disponivel dentro da listagem" : "Pesquisar documento, cliente ou artigo"}
+              placeholder={shellView === "Clientes" ? "Pesquisar cliente, NIF ou email" : shellView === "Configuracao" ? "Configuração da aplicação" : shellView === "Listagens" ? "Pesquisa disponível dentro da listagem" : "Pesquisar documento, cliente ou artigo"}
               type="search"
               value={shellView === "Clientes" ? clienteSearch : ""}
             />
@@ -805,15 +812,15 @@ function DashboardView({
       <section className="fac-hero">
         <div>
           <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Alentejo Sabores, Lda. · Demonstração" : "Ambiente de trabalho"}</p>
-          <h2>Faturar, receber e conferir num único percurso</h2>
+          <h2>Visão geral da atividade</h2>
           <p>
-            A interface utiliza dados reais do backend e apresenta o circuito operacional do FAC.
+            Acompanha documentos, clientes e recebimentos num único espaço de trabalho.
           </p>
         </div>
         <div className="fac-hero-card">
-          <span>Estado do backend</span>
-          <strong>{loading ? "A carregar..." : error ? "Com erro" : "Ligado"}</strong>
-          <small>{error ?? "Serviços operacionais disponíveis"}</small>
+          <span>Estado do sistema</span>
+          <strong>{loading ? "A carregar..." : error ? "Com erro" : "Operacional"}</strong>
+          <small>{error ?? "Serviços disponíveis"}</small>
         </div>
       </section>
 
@@ -829,16 +836,16 @@ function DashboardView({
       <section className="fac-panel fac-dashboard-actions">
         <div className="fac-panel-header">
           <div>
-            <p className="fac-eyebrow">Operacao diaria</p>
+            <p className="fac-eyebrow">Operação diária</p>
             <h2>Continuar o trabalho</h2>
           </div>
-          <span className="fac-muted">As consultas detalhadas estao concentradas em Listagens.</span>
+          <span className="fac-muted">Consulta a informação detalhada na área Listagens.</span>
         </div>
 
         <div className="fac-dashboard-action-grid">
           <button onClick={() => onNavigate("Documentos")} type="button">
             <strong>Documentos</strong>
-            <span>Criar e acompanhar faturacao</span>
+            <span>Criar e acompanhar faturação</span>
           </button>
           <button onClick={() => onNavigate("Tesouraria")} type="button">
             <strong>Tesouraria</strong>
@@ -944,8 +951,7 @@ function ClientesView({
           <p className="fac-eyebrow">Clientes</p>
           <h2>Consulta simples com conta corrente integrada</h2>
           <p>
-            Este e o primeiro ecran real apos o dashboard: lista clientes do backend e mostra a
-            respetiva conta corrente sem criar ainda formularios complexos.
+            Consulta clientes e acompanha a respetiva conta corrente num único local.
           </p>
         </div>
         <div className="fac-hero-card">
@@ -989,7 +995,7 @@ function ClientesView({
 
           {columnEditorOpen && <div className="fac-column-editor">
             <div className="fac-column-editor-header">
-              <div><strong>Colunas da listagem</strong><span>Marca os campos visiveis e define a respetiva ordem.</span></div>
+              <div><strong>Colunas da listagem</strong><span>Marca os campos visíveis e define a respetiva ordem.</span></div>
               <button className="fac-ghost-button" onClick={() => setColumns(DEFAULT_CLIENT_COLUMNS)} type="button">Repor base</button>
             </div>
             <div className="fac-column-list">
@@ -1032,12 +1038,12 @@ function ClientesView({
           <p className="fac-eyebrow">Ficha resumida</p>
           <h2>{selectedCliente?.nome ?? "Sem cliente"}</h2>
           <dl>
-            <div><dt>Codigo</dt><dd>{selectedCliente?.id ?? "-"}</dd></div>
+            <div><dt>Código</dt><dd>{selectedCliente?.id ?? "-"}</dd></div>
             <div><dt>NIF</dt><dd>{selectedCliente?.nif ?? "-"}</dd></div>
             <div><dt>Morada</dt><dd>{selectedCliente?.morada ?? "-"}</dd></div>
             <div><dt>Localidade</dt><dd>{selectedCliente?.localidade ?? "-"}</dd></div>
-            <div><dt>Codigo postal</dt><dd>{selectedCliente?.codPostalId ?? "-"}</dd></div>
-            <div><dt>Pais</dt><dd>{selectedCliente?.paisId ?? "-"}</dd></div>
+            <div><dt>Código postal</dt><dd>{selectedCliente?.codPostalId ?? "-"}</dd></div>
+            <div><dt>País</dt><dd>{selectedCliente?.paisId ?? "-"}</dd></div>
             <div><dt>Moeda</dt><dd>{selectedCliente?.moedaId ?? "-"}</dd></div>
             <div><dt>Regime IVA</dt><dd>{selectedCliente?.rivaId ?? "-"}</dd></div>
           </dl>
@@ -1072,7 +1078,7 @@ function ClientesView({
           {editorMessage && <p className="fac-editor-message">{editorMessage}</p>}
 
           <div className="fac-client-form-sections">
-            <FormSection title="Identificacao">
+            <FormSection title="Identificação">
               <Field label="Nome"><input maxLength={80} onChange={(event) => changeField("nome", event.target.value)} value={form.nome} /></Field>
               <Field label="NIF"><input maxLength={9} onChange={(event) => changeField("nif", event.target.value)} value={form.nif} /></Field>
               <Field label="Regime de IVA">
@@ -1086,15 +1092,15 @@ function ClientesView({
             <FormSection title="Contactos">
               <Field label="Email"><input maxLength={120} onChange={(event) => changeField("email", event.target.value)} type="email" value={form.email} /></Field>
               <Field label="Telefone"><input maxLength={20} onChange={(event) => changeField("tel", event.target.value)} value={form.tel} /></Field>
-              <Field label="Telemovel"><input maxLength={20} onChange={(event) => changeField("tm", event.target.value)} value={form.tm} /></Field>
+              <Field label="Telemóvel"><input maxLength={20} onChange={(event) => changeField("tm", event.target.value)} value={form.tm} /></Field>
             </FormSection>
 
             <FormSection title="Morada">
               <Field label="Morada"><input maxLength={60} onChange={(event) => changeField("morada", event.target.value)} value={form.morada} /></Field>
               <Field label="Morada complementar"><input maxLength={60} onChange={(event) => changeField("morada1", event.target.value)} value={form.morada1} /></Field>
-              <Field label="Codigo postal"><input onChange={(event) => changeField("codPostalId", event.target.value)} value={form.codPostalId} /></Field>
+              <Field label="Código postal"><input onChange={(event) => changeField("codPostalId", event.target.value)} value={form.codPostalId} /></Field>
               <Field label="Localidade"><input maxLength={50} onChange={(event) => changeField("localidade", event.target.value)} value={form.localidade} /></Field>
-              <Field label="Pais">
+              <Field label="País">
                 <select onChange={(event) => changeField("paisId", event.target.value)} value={form.paisId}>
                   <option value="">Sem valor</option>
                   {catalogos?.paises.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
@@ -1102,7 +1108,7 @@ function ClientesView({
               </Field>
             </FormSection>
 
-            <FormSection title="Condicoes comerciais e financeiras">
+            <FormSection title="Condições comerciais e financeiras">
               <Field label="Moeda">
                 <select onChange={(event) => changeField("moedaId", event.target.value)} value={form.moedaId}>
                   <option value="">Sem valor</option>
@@ -1124,7 +1130,7 @@ function ClientesView({
               <Field label="IBAN"><input maxLength={34} onChange={(event) => changeField("iban", event.target.value)} value={form.iban} /></Field>
               <label className="fac-check-field">
                 <input checked={form.retencao} onChange={(event) => changeField("retencao", event.target.checked)} type="checkbox" />
-                <span>Cliente sujeito a retencao</span>
+                <span>Cliente sujeito a retenção</span>
               </label>
             </FormSection>
 
@@ -1146,7 +1152,7 @@ function ClientesView({
                     {catalogos?.transportes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
                   </select>
                 </Field>
-                <Field label="Observacoes"><textarea maxLength={300} onChange={(event) => changeField("observacoes", event.target.value)} value={form.observacoes} /></Field>
+                <Field label="Observações"><textarea maxLength={300} onChange={(event) => changeField("observacoes", event.target.value)} value={form.observacoes} /></Field>
                 <label className="fac-check-field">
                   <input checked={form.inativo} onChange={(event) => changeField("inativo", event.target.checked)} type="checkbox" />
                   <span>Cliente inativo</span>
@@ -1260,22 +1266,22 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
     <>
       <section className="fac-hero">
         <div>
-          <p className="fac-eyebrow">Configuracao</p>
+          <p className="fac-eyebrow">Configuração</p>
           <h2>Base de funcionamento do FAC</h2>
-          <p>Dados da empresa, valores sugeridos e tabelas de apoio, separados das operacoes diarias.</p>
+          <p>Dados da empresa, valores sugeridos e tabelas de apoio, separados das operações diárias.</p>
         </div>
         <div className="fac-hero-card">
           <span>Area atual</span>
-          <strong>{area === "EMPRESA" ? "Empresa" : area === "UTILIZADORES" ? "Utilizadores" : area === "PARAMETROS" ? "Parametros" : "Tabelas"}</strong>
-          <small>Configuracao simples, explicita e centralizada</small>
+          <strong>{area === "EMPRESA" ? "Empresa" : area === "UTILIZADORES" ? "Utilizadores" : area === "PARAMETROS" ? "Parâmetros" : "Tabelas"}</strong>
+          <small>Configuração simples, explícita e centralizada</small>
         </div>
       </section>
 
-      <nav aria-label="Areas de configuracao" className="fac-config-nav">
-        <button className={area === "EMPRESA" ? "active" : ""} onClick={() => setArea("EMPRESA")} type="button"><strong>Empresa</strong><span>Identificacao e dados fiscais</span></button>
-        <button className={area === "UTILIZADORES" ? "active" : ""} onClick={() => setArea("UTILIZADORES")} type="button"><strong>Utilizadores</strong><span>Perfis, estado e password</span></button>
-        <button className={area === "PARAMETROS" ? "active" : ""} onClick={() => setArea("PARAMETROS")} type="button"><strong>Parametros</strong><span>Valores sugeridos da aplicacao</span></button>
-        <button className={area === "TABELAS" ? "active" : ""} onClick={() => setArea("TABELAS")} type="button"><strong>Tabelas</strong><span>Catalogos de apoio</span></button>
+      <nav aria-label="Áreas de configuração" className="fac-config-nav">
+        <button className={area === "EMPRESA" ? "active" : ""} onClick={() => setArea("EMPRESA")} type="button"><strong>Empresa</strong><span>Identificação e dados fiscais</span></button>
+        <button className={area === "UTILIZADORES" ? "active" : ""} onClick={() => setArea("UTILIZADORES")} type="button"><strong>Utilizadores</strong><span>Perfis, estado e palavra-passe</span></button>
+        <button className={area === "PARAMETROS" ? "active" : ""} onClick={() => setArea("PARAMETROS")} type="button"><strong>Parâmetros</strong><span>Valores sugeridos da aplicação</span></button>
+        <button className={area === "TABELAS" ? "active" : ""} onClick={() => setArea("TABELAS")} type="button"><strong>Tabelas</strong><span>Catálogos de apoio</span></button>
       </nav>
 
       {area === "EMPRESA" && <EmpresaAdminView />}
@@ -1295,46 +1301,46 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
         {message && <p className="fac-editor-message">{message}</p>}
 
         <div className="fac-form-grid">
-          <Field label="Pais">
+          <Field label="País">
             <select onChange={(event) => changeField("paisId", event.target.value)} value={form.paisId}>
-              <option value="">Nao sugerir</option>
+              <option value="">Não sugerir</option>
               {catalogos?.paises.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
             </select>
           </Field>
           <Field label="Moeda">
             <select onChange={(event) => changeField("moedaId", event.target.value)} value={form.moedaId}>
-              <option value="">Nao sugerir</option>
+              <option value="">Não sugerir</option>
               {catalogos?.moedas.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
             </select>
           </Field>
           <Field label="Regime de IVA">
             <select onChange={(event) => changeField("rivaId", event.target.value)} value={form.rivaId}>
-              <option value="">Nao sugerir</option>
+              <option value="">Não sugerir</option>
               {catalogos?.regimesIva.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
             </select>
           </Field>
           <Field label="Modo de pagamento">
             <select onChange={(event) => changeField("mPagamentoId", event.target.value)} value={form.mPagamentoId}>
-              <option value="">Nao sugerir</option>
+              <option value="">Não sugerir</option>
               {catalogos?.modosPagamento.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
             </select>
           </Field>
           <Field label="Prazo de pagamento">
             <select onChange={(event) => changeField("pPagamentoId", event.target.value)} value={form.pPagamentoId}>
-              <option value="">Nao sugerir</option>
+              <option value="">Não sugerir</option>
               {catalogos?.prazosPagamento.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
             </select>
           </Field>
           <Field label="Transporte">
             <select onChange={(event) => changeField("transporteId", event.target.value)} value={form.transporteId}>
-              <option value="">Nao sugerir</option>
+              <option value="">Não sugerir</option>
               {catalogos?.transportes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
             </select>
           </Field>
           <Field label="Retencao">
             <select onChange={(event) => changeField("retencao", event.target.value as ParametrosClienteForm["retencao"])} value={form.retencao}>
-              <option value="">Nao sugerir</option>
-              <option value="false">Nao</option>
+              <option value="">Não sugerir</option>
+              <option value="false">Não</option>
               <option value="true">Sim</option>
             </select>
           </Field>
@@ -1426,14 +1432,14 @@ async function responseError(response: Response) {
 }
 
 function validateClienteForm(form: ClienteForm) {
-  if (!form.nome.trim()) return "O nome e obrigatorio.";
+  if (!form.nome.trim()) return "O nome é obrigatório.";
   if (!/^\d{9}$/.test(form.nif.trim())) return "O NIF deve ter exatamente 9 algarismos.";
   if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) return "Indica um email valido.";
-  if (!form.morada.trim()) return "A morada e obrigatoria.";
-  if (!form.codPostalId.trim()) return "O codigo postal e obrigatorio.";
-  if (!form.paisId) return "O pais e obrigatorio.";
+  if (!form.morada.trim()) return "A morada é obrigatória.";
+  if (!form.codPostalId.trim()) return "O código postal é obrigatório.";
+  if (!form.paisId) return "O país é obrigatório.";
   if (!form.moedaId) return "A moeda e obrigatoria.";
-  if (!form.transporteId) return "O transporte e obrigatorio.";
+  if (!form.transporteId) return "O transporte é obrigatório.";
   return null;
 }
 
@@ -1463,11 +1469,11 @@ function parametrosClientePayload(form: ParametrosClienteForm) {
 
 function viewTitle(view: ViewKey) {
   if (view === "Clientes") return "Clientes e conta corrente";
-  if (view === "Listagens") return "Listagens e analise operacional";
-  if (view === "ImportExport") return "Importacao e exportacao de dados mestres";
+  if (view === "Listagens") return "Listagens e análise";
+  if (view === "ImportExport") return "Importação e exportação de dados mestres";
   if (view === "Auditoria") return "Auditoria fiscal";
-  if (view === "Configuracao") return "Configuracao simples e explicita";
-  return "Faturacao simples, clara e operacional";
+  if (view === "Configuracao") return "Configuração simples e explícita";
+  return "Visão geral";
 }
 
 function clienteToForm(cliente: Cliente): ClienteForm {

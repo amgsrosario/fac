@@ -63,7 +63,7 @@ export default function ImportExportView() {
       setValidation(await response.json());
     } catch (error) {
       setValidation(null);
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel validar o ficheiro.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível validar o ficheiro.");
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export default function ImportExportView() {
       setResult(await response.json());
       setValidation(null);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel confirmar a importacao.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível confirmar a importação.");
     } finally {
       setLoading(false);
     }
@@ -94,9 +94,9 @@ export default function ImportExportView() {
       const response = await apiFetch(`/api/importacoes/${tipo}/${validation.id}`, { method: "DELETE" });
       if (!response.ok) throw new Error(await responseError(response));
       setValidation(null);
-      setMessage("Importacao cancelada.");
+      setMessage("Importação cancelada.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel cancelar a importacao.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível cancelar a importação.");
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ export default function ImportExportView() {
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel descarregar o ficheiro.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível descarregar o ficheiro.");
     }
   }
 
@@ -127,7 +127,7 @@ export default function ImportExportView() {
       <section className="fac-hero">
         <div>
           <p className="fac-eyebrow">Dados mestres</p>
-          <h2>Importacao e exportacao controlada</h2>
+          <h2>Importação e exportação controlada</h2>
           <p>Valida ficheiros antes de gravar, confirma apenas o que e seguro e exporta clientes ou artigos.</p>
         </div>
         <div className="fac-hero-card">
@@ -142,7 +142,7 @@ export default function ImportExportView() {
       <section className="fac-panel">
         <div className="fac-panel-header">
           <div><p className="fac-eyebrow">Ficheiro</p><h2>Validar antes de importar</h2></div>
-          <span className="fac-muted">{canImport ? "Importacao disponivel" : "Sem permissao de importacao"}</span>
+          <span className="fac-muted">{canImport ? "Importação disponível" : "Sem permissão de importação"}</span>
         </div>
         <div className="fac-form-grid">
           <Field label="Tipo">
@@ -234,7 +234,7 @@ function Issues({ title, issues }: { title: string; issues: Issue[] }) {
     <div className="fac-table-wrapper">
       <h3>{title}</h3>
       <table className="fac-table">
-        <thead><tr><th>Linha</th><th>Coluna</th><th>Codigo</th><th>Mensagem</th><th>Valor</th></tr></thead>
+        <thead><tr><th>Linha</th><th>Coluna</th><th>Código</th><th>Mensagem</th><th>Valor</th></tr></thead>
         <tbody>{issues.slice(0, 50).map((issue, index) => (
           <tr key={`${issue.linha}-${issue.codigo}-${index}`}>
             <td>{issue.linha}</td><td>{issue.coluna}</td><td>{issue.codigo}</td><td>{issue.mensagem}</td><td>{issue.valor}</td>

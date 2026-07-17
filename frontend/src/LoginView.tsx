@@ -40,8 +40,8 @@ export default function LoginView({ onAuthenticated }: Props) {
       onAuthenticated(session);
     } catch (error) {
       const detail = error instanceof TypeError
-        ? `Nao foi possivel contactar a API de autenticacao em ${LOGIN_URL}. Confirma se o backend e o proxy do Vite estao ativos.`
-        : error instanceof Error ? error.message : "Nao foi possivel iniciar sessao.";
+        ? "Não foi possível contactar o serviço de autenticação. Confirma se a aplicação está disponível."
+        : error instanceof Error ? error.message : "Não foi possível iniciar sessão.";
       setMessage(detail);
     } finally {
       setLoading(false);
@@ -55,8 +55,8 @@ export default function LoginView({ onAuthenticated }: Props) {
   }
 
   return <main className="fac-login-shell"><section className="fac-login-card">
-    <div className="fac-login-brand"><div className="fac-brand-mark">FAC</div><div><strong>FAC</strong><span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Demo Partner Edition" : "Faturação simples e operacional"}</span></div></div>
-    <div className="fac-login-intro"><p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Alentejo Sabores, Lda. · Demonstração" : "Entrada segura"}</p><h1>Bem-vindo ao FAC</h1><p>Identifica-te para aceder aos clientes, documentos e recebimentos.</p></div>
+    <div className="fac-login-brand"><div className="fac-brand-mark">FAC</div><div><strong>FAC</strong><span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Ambiente de demonstração" : "Gestão comercial e faturação"}</span></div></div>
+    <div className="fac-login-intro"><p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Ambiente de demonstração" : "Entrada segura"}</p><h1>Bem-vindo ao FAC</h1><p>Identifica-te para aceder aos clientes, documentos e recebimentos.</p></div>
     {message && <p className="fac-message" role="alert">{message}</p>}
     <form action="" className="fac-login-form" noValidate onSubmit={login}>
       <label className="fac-field"><span>Utilizador ou email</span><input autoComplete="username" autoFocus onChange={(event) => setUsername(event.target.value)} value={username} /></label>

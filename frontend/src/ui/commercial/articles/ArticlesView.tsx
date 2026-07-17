@@ -147,7 +147,7 @@ export default function ArticlesView({
       setTiposIva(tiposIvaPage.content);
       setSelectedCodigo((current) => current ?? artigosPage.content[0]?.codigo ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar os artigos.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar os artigos.");
     } finally {
       setLoading(false);
     }
@@ -233,7 +233,7 @@ export default function ArticlesView({
       showToast({ detail: `Artigo ${form.codigo} guardado.`, severity: "success", summary: "Guardado" });
       if (isMobile) setMobileScreen("detail");
     } catch (err) {
-      setEditorMessage(err instanceof Error ? err.message : "Nao foi possivel guardar o artigo.");
+      setEditorMessage(err instanceof Error ? err.message : "Não foi possível guardar o artigo.");
     } finally {
       setSaving(false);
     }
@@ -340,10 +340,10 @@ function ServicesContent(props: {
     <>
       <ServicesHeader {...props} />
       <ServicesToolbar {...props} />
-      {props.notice && <FacMessage tone="success" title="Operacao concluida">{props.notice}</FacMessage>}
+      {props.notice && <FacMessage tone="success" title="Operação concluída">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
       <section
-        aria-label="Catalogo de artigos"
+        aria-label="Catálogo de artigos"
         className="fac-services-layout"
         data-advanced-article-fields={advancedArticleFieldsEnabled ? "on" : "off"}
         data-product-profile={DEFAULT_PRODUCT_PROFILE}
@@ -391,7 +391,7 @@ function MobileServicesContent(props: Parameters<typeof ServicesContent>[0]) {
     <>
       <ServicesHeader {...props} compact />
       <ServicesToolbar {...props} />
-      {props.notice && <FacMessage tone="success" title="Operacao concluida">{props.notice}</FacMessage>}
+      {props.notice && <FacMessage tone="success" title="Operação concluída">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
       <ServicesList {...props} />
     </>
@@ -411,8 +411,8 @@ function ServicesHeader({
       action={canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo artigo"} onClick={onNew} variant="primary" />}
       className="fac-services-header"
       compact={compact}
-      eyebrow="Catalogo"
-      subtitle="Gerir produtos e servicos utilizados nos documentos."
+      eyebrow="Catálogo"
+      subtitle="Gerir produtos e serviços utilizados nos documentos."
       summary={
         <div className="fac-module-summary" aria-label="Resumo de artigos">
           <span>{loading ? "A carregar" : `${services.length} artigos`}</span>
@@ -431,7 +431,7 @@ function ServicesToolbar({
   search,
   stateFilter
 }: Parameters<typeof ServicesContent>[0]) {
-  const placeholder = deviceClass === "mobile" ? "Pesquisar artigos" : "Pesquisar por codigo, descricao ou identificacao";
+  const placeholder = deviceClass === "mobile" ? "Pesquisar artigos" : "Pesquisar por código, descrição ou identificação";
 
   return (
     <section className="fac-services-toolbar" aria-label="Pesquisa e filtros">
@@ -466,14 +466,14 @@ function ServicesList({
   stateFilter
 }: Parameters<typeof ServicesContent>[0]) {
   if (loading) return <FacLoadingState description="A carregar artigos." />;
-  if (services.length === 0) return <FacEmptyState description="Ainda nao existem artigos no catalogo." />;
+  if (services.length === 0) return <FacEmptyState description="Ainda não existem artigos no catálogo." />;
   if (filtered.length === 0) return <FacEmptyState description="Sem resultados para a pesquisa e filtros atuais." />;
 
   if (deviceClass !== "mobile") {
     const tableValue = services.filter((service) => stateFilter === "all" || (stateFilter === "active" && !service.inativo) || (stateFilter === "inactive" && service.inativo));
     const columns: FacDataTableColumn<Artigo>[] = [
-      { field: "codigo", filter: true, filterPlaceholder: "Codigo", header: "Codigo", sortable: true, style: { width: "8rem" } },
-      { field: "descricao", filter: true, filterPlaceholder: "Descricao", header: "Descricao", sortable: true },
+      { field: "codigo", filter: true, filterPlaceholder: "Código", header: "Código", sortable: true, style: { width: "8rem" } },
+      { field: "descricao", filter: true, filterPlaceholder: "Descrição", header: "Descrição", sortable: true },
       {
         field: "unidade",
         filter: true,
@@ -531,8 +531,8 @@ function ServicesList({
         <table className="fac-services-table">
           <thead>
             <tr>
-              <th>Codigo</th>
-              <th>Descricao</th>
+              <th>Código</th>
+              <th>Descrição</th>
               <th>Unidade</th>
               <th>PVP</th>
               <th>IVA</th>
@@ -594,11 +594,11 @@ function ServiceDetail({
         <StateBadge inactive={selected.inativo} />
       </div>
       <dl>
-        <div><dt>Codigo</dt><dd>{selected.codigo}</dd></div>
+        <div><dt>Código</dt><dd>{selected.codigo}</dd></div>
         <div><dt>Unidade</dt><dd>{selected.unidade}</dd></div>
-        <div><dt>Preco sem IVA</dt><dd>{money(selected.pvp)} EUR</dd></div>
+        <div><dt>Preço sem IVA</dt><dd>{money(selected.pvp)} EUR</dd></div>
         <div><dt>Taxa de IVA</dt><dd>{selectedIva}</dd></div>
-        <div><dt>Artigo ativo</dt><dd>{selected.inativo ? "Nao" : "Sim"}</dd></div>
+        <div><dt>Artigo ativo</dt><dd>{selected.inativo ? "Não" : "Sim"}</dd></div>
       </dl>
       {canManage
         ? <FacButton icon="pi pi-pencil" label="Editar artigo" onClick={() => onEdit(selected)} variant="primary" />
@@ -657,19 +657,19 @@ function ServiceFormFields({
 
   return (
     <form className="fac-services-form" onSubmit={onSave}>
-      {editorMessage && <FacMessage tone="error" title="Validacao">{editorMessage}</FacMessage>}
+      {editorMessage && <FacMessage tone="error" title="Validação">{editorMessage}</FacMessage>}
       <div className="fac-services-form-sections">
-        <FormSection title="Identificacao">
+        <FormSection title="Identificação">
           <FacInputText
             disabled={editorMode === "edit"}
-            label="Codigo"
+            label="Código"
             maxLength={50}
             onChange={(event) => onChangeForm({ ...form, codigo: normalizeCode(event.target.value) })}
             required
             value={form.codigo}
           />
           <FacInputText
-            label="Descricao"
+            label="Descrição"
             maxLength={80}
             onChange={(event) => onChangeForm({ ...form, descricao: event.target.value })}
             required
@@ -683,9 +683,9 @@ function ServiceFormFields({
           />
         </FormSection>
 
-        <FormSection title="Preco e fiscalidade">
+        <FormSection title="Preço e fiscalidade">
           <FacInputText
-            label="Preco sem IVA"
+            label="Preço sem IVA"
             min="0"
             onChange={(event) => onChangeForm({ ...form, pvp: event.target.value })}
             required
@@ -714,18 +714,18 @@ function ServiceFormFields({
           </button>
           <div className="fac-services-form-grid" hidden={!moreOptionsOpen} id="fac-service-more-options">
             <FacSelect
-              label="Familia"
+              label="Família"
               onChange={(value) => onChangeForm({ ...form, familiaId: value ?? "" })}
               options={familiaOptions}
               value={form.familiaId}
             />
             <label className="fac-services-textarea">
-              <span>Observacoes</span>
+              <span>Observações</span>
               <textarea maxLength={250} onChange={(event) => onChangeForm({ ...form, observacoes: event.target.value })} value={form.observacoes} />
             </label>
             <label className="fac-services-check">
               <input checked={form.retencao} onChange={(event) => onChangeForm({ ...form, retencao: event.target.checked })} type="checkbox" />
-              <span>Sujeito a retencao</span>
+              <span>Sujeito a retenção</span>
             </label>
             <label className="fac-services-check">
               <input
@@ -764,10 +764,10 @@ function LegacyCommercialSidebar({
           <small>Comercial</small>
         </div>
       </div>
-      <nav aria-label="Navegacao comercial">
+      <nav aria-label="Navegação comercial">
         <a className={active === "articles" ? "active" : ""} href="/artigos">
           <strong>Artigos</strong>
-          <small>Catalogo</small>
+          <small>Catálogo</small>
         </a>
         <a className={active === "customers" ? "active" : ""} href="/clientes">
           <strong>Clientes</strong>
@@ -852,13 +852,13 @@ async function responseError(response: Response) {
 }
 
 function validate(form: ServiceForm, editing: boolean, defaults: HiddenDefaults) {
-  if (!editing && !/^[A-Z0-9]{1,50}$/.test(form.codigo)) return "O codigo deve conter apenas letras maiusculas e numeros.";
-  if (!form.descricao.trim()) return "A descricao e obrigatoria.";
-  if (!form.familiaId) return "A familia e obrigatoria.";
-  if (!form.unidade.trim()) return "A unidade e obrigatoria.";
-  if (!form.ivaVendaId) return "A taxa de IVA e obrigatoria.";
-  if (!defaults.ivaCompraId) return "Nao existe uma taxa de IVA segura nos catalogos atuais.";
-  if (form.pvp === "" || Number(form.pvp) < 0) return "O preco deve ser igual ou superior a zero.";
+  if (!editing && !/^[A-Z0-9]{1,50}$/.test(form.codigo)) return "O código deve conter apenas letras maiúsculas e números.";
+  if (!form.descricao.trim()) return "A descrição é obrigatória.";
+  if (!form.familiaId) return "A família é obrigatória.";
+  if (!form.unidade.trim()) return "A unidade é obrigatória.";
+  if (!form.ivaVendaId) return "A taxa de IVA é obrigatória.";
+  if (!defaults.ivaCompraId) return "Não existe uma taxa de IVA segura nos catálogos atuais.";
+  if (form.pvp === "" || Number(form.pvp) < 0) return "O preço deve ser igual ou superior a zero.";
   return null;
 }
 

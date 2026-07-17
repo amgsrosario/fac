@@ -10,9 +10,9 @@ export type CommercialNavItem = {
 };
 
 export const defaultCommercialNavItems: CommercialNavItem[] = [
-  { description: "Faturacao", group: "Vendas", href: "/documentos", id: "documents", label: "Documentos" },
+  { description: "Faturação", group: "Vendas", href: "/documentos", id: "documents", label: "Documentos" },
   { description: "Entidades", group: "Dados comerciais", href: "/clientes", id: "customers", label: "Clientes" },
-  { description: "Catalogo", group: "Dados comerciais", href: "/artigos", id: "articles", label: "Artigos" }
+  { description: "Catálogo", group: "Dados comerciais", href: "/artigos", id: "articles", label: "Artigos" }
 ];
 
 export function CommercialSidebar({
@@ -45,7 +45,7 @@ export function CommercialSidebar({
           <small>Comercial</small>
         </div>
       </div>
-      <nav aria-label="Navegacao comercial">
+      <nav aria-label="Navegação comercial">
         {groupedItems.map((group) => (
           <section className="fac-commercial-nav-section" key={group.title}>
             <p>{group.title}</p>

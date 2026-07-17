@@ -67,16 +67,16 @@ const emptyForm: ArtigoForm = {
 };
 
 const ARTIGO_COLUMNS: ConfigurableColumn[] = [
-  { key: "codigo", label: "Codigo", visible: true },
-  { key: "descricao", label: "Descricao", visible: true },
+  { key: "codigo", label: "Código", visible: true },
+  { key: "descricao", label: "Descrição", visible: true },
   { key: "abreviatura", label: "Abreviatura", visible: false },
-  { key: "codigoIdentificacao", label: "Identificacao", visible: false },
-  { key: "familia", label: "Familia", visible: false },
+  { key: "codigoIdentificacao", label: "Identificação", visible: false },
+  { key: "familia", label: "Família", visible: false },
   { key: "unidade", label: "Unidade", visible: true },
   { key: "ivaVenda", label: "IVA venda", visible: false },
   { key: "pvp", label: "PVP", visible: true },
   { key: "peso", label: "Peso", visible: false },
-  { key: "retencao", label: "Retencao", visible: false },
+  { key: "retencao", label: "Retenção", visible: false },
   { key: "estado", label: "Estado", visible: true }
 ];
 
@@ -120,7 +120,7 @@ export default function ArtigosView() {
       setTiposIva(tiposIvaPage.content);
       setSelectedCodigo((current) => current ?? artigosPage.content[0]?.codigo ?? null);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel carregar artigos.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível carregar artigos.");
     } finally {
       setLoading(false);
     }
@@ -167,7 +167,7 @@ export default function ArtigosView() {
       setEditingCodigo(null);
       setNotice(`Artigo ${codigo} ${editingCodigo ? "atualizado" : "criado"}.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel guardar o artigo.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível guardar o artigo.");
     } finally {
       setLoading(false);
     }
@@ -204,15 +204,15 @@ export default function ArtigosView() {
         {message && <p className="fac-message">{message}</p>}
 
         <div className="fac-article-form-sections">
-          <FormSection title="Identificacao">
-            <Field label="Codigo">
+          <FormSection title="Identificação">
+            <Field label="Código">
               <input disabled={editingCodigo != null} maxLength={50} onChange={(event) => change("codigo", normalizeCode(event.target.value))} value={form.codigo} />
             </Field>
-            <Field label="Descricao"><input maxLength={80} onChange={(event) => change("descricao", event.target.value)} value={form.descricao} /></Field>
+            <Field label="Descrição"><input maxLength={80} onChange={(event) => change("descricao", event.target.value)} value={form.descricao} /></Field>
             <Field label="Unidade"><input maxLength={3} onChange={(event) => change("unidade", event.target.value.toUpperCase())} value={form.unidade} /></Field>
           </FormSection>
 
-          <FormSection title="Preco e fiscalidade">
+          <FormSection title="Preço e fiscalidade">
             <Field label="PVP"><input min="0" onChange={(event) => change("pvp", event.target.value)} step="0.000001" type="number" value={form.pvp} /></Field>
             <Field label="IVA na venda">
               <select onChange={(event) => change("ivaVendaId", event.target.value)} value={form.ivaVendaId}>
@@ -234,21 +234,21 @@ export default function ArtigosView() {
               {(form.familiaId || form.observacoes.trim() || form.retencao || form.inativo) && <small>Com valores</small>}
             </button>
             <div className="fac-form-grid" hidden={!moreOptionsOpen} id="fac-article-more-options">
-              <Field label="Familia">
+              <Field label="Família">
                 <select onChange={(event) => change("familiaId", event.target.value)} value={form.familiaId}>
                   <option value="">Selecionar</option>
                   {familias.map((familia) => <option key={familia.id} value={familia.id}>{familia.descricao}</option>)}
                 </select>
               </Field>
-              <Field label="Observacoes"><textarea maxLength={250} onChange={(event) => change("observacoes", event.target.value)} value={form.observacoes} /></Field>
-              <label className="fac-check-field"><input checked={form.retencao} onChange={(event) => change("retencao", event.target.checked)} type="checkbox" /><span>Sujeito a retencao</span></label>
+              <Field label="Observações"><textarea maxLength={250} onChange={(event) => change("observacoes", event.target.value)} value={form.observacoes} /></Field>
+              <label className="fac-check-field"><input checked={form.retencao} onChange={(event) => change("retencao", event.target.checked)} type="checkbox" /><span>Sujeito a retenção</span></label>
               <label className="fac-check-field"><input checked={form.inativo} onChange={(event) => change("inativo", event.target.checked)} type="checkbox" /><span>Artigo inativo</span></label>
             </div>
           </section>
         </div>
 
         <div className="fac-form-footer">
-          <span className="fac-muted">O codigo e definitivo depois de criar o artigo.</span>
+          <span className="fac-muted">O código é definitivo depois de criar o artigo.</span>
           <button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar artigo"}</button>
         </div>
       </section>
@@ -262,18 +262,18 @@ export default function ArtigosView() {
       <section className="fac-hero">
         <div>
           <p className="fac-eyebrow">Artigos</p>
-          <h2>Catalogo comercial simples e operacional</h2>
+          <h2>Catálogo de artigos</h2>
           <p>Consulta, cria e edita apenas os dados necessários para usar artigos nas linhas dos documentos.</p>
         </div>
         <div className="fac-hero-card">
-          <span>Catalogo</span>
+          <span>Catálogo</span>
           <strong>{loading ? "A carregar..." : `${artigos.length} artigos`}</strong>
           <small>{artigos.filter((artigo) => artigo.inativo).length} inativos</small>
         </div>
       </section>
 
       <section className="fac-list-toolbar">
-        <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar codigo, descricao ou identificacao" type="search" value={search} />
+        <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código, descrição ou identificação" type="search" value={search} />
         <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button>{canManage && <button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button>}</div>
       </section>
 
@@ -297,12 +297,12 @@ export default function ArtigosView() {
           <p className="fac-eyebrow">Ficha comercial</p>
           <h2>{selected?.codigo ?? "Sem artigo"}</h2>
           <dl>
-            <div><dt>Descricao</dt><dd>{selected?.descricao ?? "-"}</dd></div>
-            <div><dt>Familia</dt><dd>{familiaNome}</dd></div>
+            <div><dt>Descrição</dt><dd>{selected?.descricao ?? "-"}</dd></div>
+            <div><dt>Família</dt><dd>{familiaNome}</dd></div>
             <div><dt>Unidade</dt><dd>{selected?.unidade ?? "-"}</dd></div>
             <div><dt>IVA venda</dt><dd>{selected?.ivaVendaId ?? "-"}</dd></div>
             <div><dt>PVP</dt><dd>{selected ? money(selected.pvp) : "-"}</dd></div>
-            <div><dt>Retencao</dt><dd>{selected?.retencao ? "Sim" : "Nao"}</dd></div>
+            <div><dt>Retenção</dt><dd>{selected?.retencao ? "Sim" : "Não"}</dd></div>
           </dl>
           {canManage && <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openEdit(selected)} type="button">Editar artigo</button>}
         </aside>
@@ -322,7 +322,7 @@ function artigoColumnValue(artigo: Artigo, key: string, familias: Familia[]) {
     case "ivaVenda": return artigo.ivaVendaId;
     case "pvp": return money(artigo.pvp);
     case "peso": return artigo.peso ?? 0;
-    case "retencao": return artigo.retencao ? "Sim" : "Nao";
+    case "retencao": return artigo.retencao ? "Sim" : "Não";
     case "estado": return <span className="fac-status">{artigo.inativo ? "Inativo" : "Ativo"}</span>;
     default: return "-";
   }
@@ -362,13 +362,13 @@ async function responseError(response: Response) {
 }
 
 function validate(form: ArtigoForm, editing: boolean) {
-  if (!editing && !/^[A-Z0-9]{1,50}$/.test(form.codigo)) return "O codigo deve conter apenas letras maiusculas e numeros.";
-  if (!form.descricao.trim()) return "A descricao e obrigatoria.";
-  if (!form.unidade.trim()) return "A unidade e obrigatoria.";
-  if (!form.familiaId) return "A familia e obrigatoria.";
-  if (!form.ivaVendaId) return "O IVA na venda e obrigatorio.";
+  if (!editing && !/^[A-Z0-9]{1,50}$/.test(form.codigo)) return "O código deve conter apenas letras maiúsculas e números.";
+  if (!form.descricao.trim()) return "A descrição é obrigatória.";
+  if (!form.unidade.trim()) return "A unidade é obrigatória.";
+  if (!form.familiaId) return "A família é obrigatória.";
+  if (!form.ivaVendaId) return "O IVA na venda é obrigatório.";
   if (form.pvp === "" || Number(form.pvp) < 0) return "O PVP deve ser igual ou superior a zero.";
-  if (form.peso !== "" && Number(form.peso) < 0) return "O peso nao pode ser negativo.";
+  if (form.peso !== "" && Number(form.peso) < 0) return "O peso não pode ser negativo.";
   return null;
 }
 
