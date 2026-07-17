@@ -661,14 +661,14 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         </div>
       </header>
       {error && <FacMessage tone="error" title="Erro">{error}</FacMessage>}
-      {notice && <FacMessage tone="success" title="Estado">{notice}</FacMessage>}
+      {notice && <div className="fac-draft-message success" role="status"><span aria-hidden="true">✓</span><span>{notice}</span></div>}
       {loading ? (
         <div className="fac-draft-loading">A carregar rascunho.</div>
       ) : (
         <>
           <nav className="fac-draft-steps" aria-label="Fases do rascunho">
-            <button className={step === "header" ? "active" : ""} onClick={() => setStep("header")} type="button">1. Cabeçalho e condições</button>
-            <button className={step === "lines" ? "active" : ""} onClick={() => setStep("lines")} type="button">2. Linhas e totais</button>
+            <button className={step === "header" ? "active" : ""} onClick={() => setStep("header")} type="button">Cabeçalho e condições</button>
+            <button className={step === "lines" ? "active" : ""} onClick={() => setStep("lines")} type="button">Linhas e totais</button>
           </nav>
           {step === "header" ? (
             <DraftHeader catalogos={catalogos} header={header} onChooseClient={chooseClient} onContinue={() => {

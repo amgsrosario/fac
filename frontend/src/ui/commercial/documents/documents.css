@@ -275,8 +275,9 @@
 
 .fac-draft-editor {
   display: grid;
-  gap: 0.75rem;
-  min-height: calc(100vh - 2rem);
+  align-content: start;
+  gap: 0.45rem;
+  min-height: auto;
 }
 
 .fac-draft-appbar {
@@ -285,15 +286,20 @@
   border: 1px solid var(--fac-border);
   border-radius: 8px;
   display: flex;
-  min-height: 52px;
+  flex-wrap: wrap;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  min-height: 56px;
+  padding: 0.35rem 0.55rem;
+  row-gap: 0.35rem;
 }
 
 .fac-draft-title {
-  align-items: baseline;
+  align-items: center;
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .fac-draft-title span,
@@ -305,7 +311,9 @@
 .fac-draft-status {
   border: 1px solid var(--fac-border);
   border-radius: 999px;
-  padding: 0.15rem 0.45rem;
+  font-size: 0.78rem;
+  line-height: 1;
+  padding: 0.18rem 0.45rem;
 }
 
 .fac-draft-status.emitido {
@@ -322,26 +330,74 @@
 .fac-draft-row-actions {
   align-items: center;
   display: flex;
+  gap: 0.35rem;
+}
+
+.fac-draft-actions {
+  flex: 1 1 32rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.fac-draft-actions .fac-button {
+  font-size: 0.78rem;
+  min-height: 2rem;
+  min-width: auto;
+  padding: 0.25rem 0.45rem;
+}
+
+.fac-draft-actions .fac-button .p-button-label {
+  line-height: 1.1;
+}
+
+.fac-draft-message {
+  align-items: center;
+  border: 1px solid var(--fac-border);
+  border-radius: 6px;
+  display: flex;
+  gap: 0.45rem;
+  min-height: 38px;
+  padding: 0.35rem 0.65rem;
+}
+
+.fac-draft-message.success {
+  background: var(--fac-success-soft);
+  color: var(--fac-success);
+}
+
+.fac-draft-editor > .fac-ui-message {
+  align-items: center;
+  display: flex;
   gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.4rem 0.65rem;
 }
 
 .fac-draft-steps {
+  align-items: center;
+  background: var(--fac-surface);
+  border: 1px solid var(--fac-border);
+  border-radius: 8px;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.25rem;
+  min-height: 42px;
+  padding: 0.25rem;
 }
 
 .fac-draft-steps button {
-  background: var(--fac-surface);
-  border: 1px solid var(--fac-border);
-  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
   color: var(--fac-text);
   cursor: pointer;
-  padding: 0.55rem 0.75rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
 }
 
 .fac-draft-steps button.active {
+  background: var(--fac-client-soft);
   border-color: var(--fac-accent);
-  box-shadow: 0 0 0 1px var(--fac-accent);
+  box-shadow: none;
 }
 
 .fac-draft-header-phase,
@@ -351,8 +407,8 @@
   border: 1px solid var(--fac-border);
   border-radius: 8px;
   display: grid;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.5rem;
+  padding: 0.55rem;
 }
 
 .fac-draft-diagnostics {
@@ -604,8 +660,38 @@
   .fac-draft-appbar,
   .fac-draft-actions,
   .fac-draft-steps {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .fac-draft-appbar {
+    align-items: flex-start;
+  }
+
+  .fac-draft-title,
+  .fac-draft-actions {
+    width: 100%;
+  }
+
+  .fac-draft-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+  }
+
+  .fac-draft-actions .fac-button,
+  .fac-draft-dirty {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .fac-draft-steps {
+    overflow-x: auto;
+  }
+
+  .fac-draft-steps button {
+    white-space: nowrap;
   }
 
   .fac-draft-lines-phase {
