@@ -10,6 +10,7 @@ import AuditoriaView from "./AuditoriaView";
 import EmpresaAdminView from "./EmpresaAdminView";
 import AdminUtilizadoresView from "./AdminUtilizadoresView";
 import ImportExportView from "./ImportExportView";
+import { GlobalSearch } from "./GlobalSearch";
 import { apiFetch, AuthSession } from "./api";
 
 type Page<T> = {
@@ -552,6 +553,15 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   }, [selectedClienteId]);
 
   useEffect(() => {
+    if (shellView !== "Clientes" || !clientes?.content.length) return;
+    const clienteId = Number(new URLSearchParams(location.search).get("cliente"));
+    if (!Number.isFinite(clienteId)) return;
+    if (clientes.content.some((cliente) => cliente.id === clienteId)) {
+      setSelectedClienteId(clienteId);
+    }
+  }, [clientes, location.search, shellView]);
+
+  useEffect(() => {
     if (shellView === "Configuracao") {
       loadParametrosCliente();
     }
@@ -722,7 +732,8 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
               </div>
             )}
             <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.papel} · {currentUser.codigo}</small></div>
-            <input
+            <GlobalSearch />
+            <input hidden
               onChange={(event) => setClienteSearch(event.target.value)}
               disabled={shellView === "Configuracao" || shellView === "Listagens"}
               placeholder={shellView === "Clientes" ? "Pesquisar cliente, NIF ou email" : shellView === "Configuracao" ? "Configuração da aplicação" : shellView === "Listagens" ? "Pesquisa disponível dentro da listagem" : "Pesquisar documento, cliente ou artigo"}

@@ -1,6 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FilterMatchMode } from "primereact/api";
+import { GlobalSearch } from "../../../GlobalSearch";
 import { apiFetch, AuthSession } from "../../../api";
 import {
   DesktopShell,
@@ -681,7 +682,12 @@ function MobileDocumentsContent(props: Parameters<typeof DocumentsContent>[0]) {
 function DocumentsHeader({ activeCount, canCreate, compact = false, documentos, loading, onNew }: Parameters<typeof DocumentsContent>[0] & { compact?: boolean }) {
   return (
     <ModuleHeader
-      action={canCreate && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo documento"} onClick={onNew} variant="primary" />}
+      action={
+        <>
+          <GlobalSearch className="fac-commercial-global-search" />
+          {canCreate && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo documento"} onClick={onNew} variant="primary" />}
+        </>
+      }
       compact={compact}
       eyebrow="Documentos"
       subtitle="Consultar e preparar documentos comerciais."

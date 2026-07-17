@@ -162,7 +162,7 @@ textarea {
   gap: 10px;
 }
 
-.fac-topbar-actions input {
+.fac-topbar-actions > input {
   width: 340px;
   border: 1px solid var(--fac-border);
   border-radius: 16px;
@@ -172,7 +172,7 @@ textarea {
   outline: none;
 }
 
-.fac-topbar-actions button,
+.fac-topbar-actions > button,
 .fac-primary-button,
 .fac-soft-button,
 .fac-ghost-button {
@@ -181,7 +181,7 @@ textarea {
   cursor: pointer;
 }
 
-.fac-topbar-actions button,
+.fac-topbar-actions > button,
 .fac-primary-button {
   border: 1px solid var(--fac-petrol);
   color: #fff;
@@ -1602,7 +1602,7 @@ button:disabled {
     display: grid;
   }
 
-  .fac-topbar-actions input {
+  .fac-topbar-actions > input {
     width: 100%;
   }
 }

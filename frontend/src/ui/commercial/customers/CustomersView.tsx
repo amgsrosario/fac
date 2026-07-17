@@ -1,5 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { FilterMatchMode } from "primereact/api";
+import { useLocation } from "react-router-dom";
+import { GlobalSearch } from "../../../GlobalSearch";
 import { apiFetch, AuthSession } from "../../../api";
 import {
   DesktopShell,
@@ -124,6 +126,7 @@ const emptyForm: ClienteForm = {
 };
 
 export default function CustomersView({ currentUser, onLogout }: { currentUser: AuthSession; onLogout: () => void }) {
+  const location = useLocation();
   const canManage = currentUser.permissoes?.includes("MESTRES_GERIR") ?? false;
   const { deviceClass, isMobile } = useDeviceClass();
   const { showToast } = useFacToast();
@@ -153,6 +156,16 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (clientes.length === 0) return;
+    const clienteId = Number(new URLSearchParams(location.search).get("cliente"));
+    if (!Number.isFinite(clienteId)) return;
+    if (clientes.some((cliente) => cliente.id === clienteId)) {
+      setSelectedId(clienteId);
+      setMobileScreen("detail");
+    }
+  }, [clientes, location.search]);
 
   async function loadData() {
     setLoading(true);
@@ -421,7 +434,12 @@ function CustomersHeader({
 }: Parameters<typeof CustomersContent>[0] & { compact?: boolean }) {
   return (
     <ModuleHeader
-      action={canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo cliente"} onClick={onNew} variant="primary" />}
+      action={
+        <>
+          <GlobalSearch className="fac-commercial-global-search" />
+          {canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo cliente"} onClick={onNew} variant="primary" />}
+        </>
+      }
       className="fac-customers-header"
       compact={compact}
       eyebrow="Clientes"

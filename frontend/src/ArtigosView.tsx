@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { apiFetch, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 
@@ -81,6 +82,7 @@ const ARTIGO_COLUMNS: ConfigurableColumn[] = [
 ];
 
 export default function ArtigosView() {
+  const location = useLocation();
   const canManage = hasPermission("MESTRES_GERIR");
   const [artigos, setArtigos] = useState<Artigo[]>([]);
   const [familias, setFamilias] = useState<Familia[]>([]);
@@ -100,6 +102,16 @@ export default function ArtigosView() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (artigos.length === 0) return;
+    const artigoId = new URLSearchParams(location.search).get("artigo");
+    if (!artigoId) return;
+    const decoded = decodeURIComponent(artigoId);
+    if (artigos.some((artigo) => artigo.codigo === decoded)) {
+      setSelectedCodigo(decoded);
+    }
+  }, [artigos, location.search]);
 
   useEffect(() => {
     if (!editorOpen) return;

@@ -1,5 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { FilterMatchMode } from "primereact/api";
+import { useLocation } from "react-router-dom";
+import { GlobalSearch } from "../../../GlobalSearch";
 import { apiFetch, AuthSession } from "../../../api";
 import {
   DEFAULT_PRODUCT_PROFILE,
@@ -110,6 +112,7 @@ export default function ArticlesView({
   currentUser: AuthSession;
   onLogout: () => void;
 }) {
+  const location = useLocation();
   const canManage = currentUser.permissoes?.includes("MESTRES_GERIR") ?? false;
   const { deviceClass, isMobile } = useDeviceClass();
   const { showToast } = useFacToast();
@@ -132,6 +135,17 @@ export default function ArticlesView({
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (services.length === 0) return;
+    const artigoId = new URLSearchParams(location.search).get("artigo");
+    if (!artigoId) return;
+    const decoded = decodeURIComponent(artigoId);
+    if (services.some((service) => service.codigo === decoded)) {
+      setSelectedCodigo(decoded);
+      setMobileScreen("detail");
+    }
+  }, [location.search, services]);
 
   async function loadData() {
     setLoading(true);
@@ -408,7 +422,12 @@ function ServicesHeader({
 }: Parameters<typeof ServicesContent>[0] & { compact?: boolean }) {
   return (
     <ModuleHeader
-      action={canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo artigo"} onClick={onNew} variant="primary" />}
+      action={
+        <>
+          <GlobalSearch className="fac-commercial-global-search" />
+          {canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo artigo"} onClick={onNew} variant="primary" />}
+        </>
+      }
       className="fac-services-header"
       compact={compact}
       eyebrow="Catálogo"
