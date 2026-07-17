@@ -733,13 +733,6 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             )}
             <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.papel} · {currentUser.codigo}</small></div>
             <GlobalSearch />
-            <input hidden
-              onChange={(event) => setClienteSearch(event.target.value)}
-              disabled={shellView === "Configuracao" || shellView === "Listagens"}
-              placeholder={shellView === "Clientes" ? "Pesquisar cliente, NIF ou email" : shellView === "Configuracao" ? "Configuração da aplicação" : shellView === "Listagens" ? "Pesquisa disponível dentro da listagem" : "Pesquisar documento, cliente ou artigo"}
-              type="search"
-              value={shellView === "Clientes" ? clienteSearch : ""}
-            />
             {shellView !== "Listagens" && <button onClick={refreshActiveView} type="button">Atualizar</button>}
             <button className="fac-ghost-button" onClick={onLogout} type="button">Sair</button>
           </div>

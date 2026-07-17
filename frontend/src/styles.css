@@ -137,6 +137,7 @@ textarea {
   gap: 20px;
   align-items: center;
   margin-bottom: 22px;
+  min-width: 0;
 }
 
 .fac-eyebrow {
@@ -159,7 +160,8 @@ textarea {
 .fac-topbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
+  min-width: 0;
 }
 
 .fac-topbar-actions > input {
@@ -179,6 +181,11 @@ textarea {
   border-radius: 16px;
   padding: 12px 15px;
   cursor: pointer;
+}
+
+.fac-topbar-actions > button {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .fac-topbar-actions > button,
@@ -329,14 +336,24 @@ button:disabled {
 }
 
 .fac-current-user {
-  min-width: 120px;
-  padding: 0 6px;
+  flex: 0 0 auto;
+  min-width: max-content;
+  max-width: 240px;
+  padding: 0 4px 0 0;
   text-align: right;
+}
+
+.fac-current-user span,
+.fac-current-user small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fac-admin-access {
   position: relative;
   flex: 0 0 auto;
+  margin-right: -2px;
 }
 
 .fac-topbar-actions .fac-admin-trigger {
@@ -1599,10 +1616,19 @@ button:disabled {
   }
 
   .fac-topbar-actions {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .fac-topbar-actions > input {
+    width: 100%;
+  }
+
+  .fac-topbar-actions .fac-global-search {
+    flex: 1 0 100%;
+    max-width: none;
+    order: 10;
     width: 100%;
   }
 }
