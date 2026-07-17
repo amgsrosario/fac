@@ -44,18 +44,39 @@
 }
 
 .fac-services-toolbar {
-  display: grid;
-  grid-template-columns: minmax(18rem, 1fr) minmax(12rem, 0.28fr);
+  display: flex;
+  justify-content: space-between;
   gap: var(--fac-space-2);
   align-items: center;
   margin-bottom: var(--fac-space-3);
 }
 
-.fac-services-layout {
+.fac-services-toolbar .fac-input-text {
+  flex: 1 1 24rem;
+}
+
+.fac-services-toolbar .fac-select {
+  flex: 0 0 12rem;
+}
+
+.fac-services-toolbar .fac-button {
+  flex: 0 0 auto;
+}
+
+.fac-services-header-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.3fr);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
   gap: var(--fac-space-3);
   align-items: start;
+  margin-bottom: var(--fac-space-3);
+}
+
+.fac-services-header-grid .fac-module-header {
+  margin-bottom: 0;
+}
+
+.fac-services-layout {
+  display: block;
 }
 
 .fac-services-panel {
@@ -126,7 +147,7 @@
 
 .fac-services-detail {
   display: grid;
-  gap: var(--fac-space-3);
+  gap: var(--fac-space-2);
 }
 
 .fac-services-detail-title {
@@ -142,16 +163,21 @@
 
 .fac-services-detail dl {
   display: grid;
-  gap: var(--fac-space-1);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--fac-space-3);
   margin: 0;
 }
 
 .fac-services-detail dl div {
   display: flex;
   justify-content: space-between;
-  gap: var(--fac-space-3);
+  gap: var(--fac-space-2);
   border-bottom: 1px solid var(--fac-border);
-  padding: var(--fac-space-2) 0;
+  padding: var(--fac-space-1) 0;
+}
+
+.fac-services-detail-panel {
+  display: none;
 }
 
 .fac-services-detail dt {
@@ -377,19 +403,22 @@
 }
 
 @media (max-width: 1023px) {
-  .fac-services-layout {
+  .fac-services-header-grid {
     grid-template-columns: 1fr;
   }
 
   .fac-services-toolbar {
-    grid-template-columns: minmax(0, 1fr) minmax(11rem, 0.32fr);
+    flex-wrap: wrap;
+  }
+
+  .fac-services-toolbar .fac-input-text {
+    flex-basis: 100%;
   }
 }
 
 @media (max-width: 767px) {
   .fac-services-header,
   .fac-services-header-actions,
-  .fac-services-toolbar,
   .fac-services-form-grid {
     grid-template-columns: 1fr;
   }
@@ -408,6 +437,18 @@
     min-width: 0;
   }
 
+  .fac-services-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fac-services-toolbar .fac-input-text,
+  .fac-services-toolbar .fac-select,
+  .fac-services-toolbar .fac-button {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
   .fac-services-table {
     display: none;
   }
@@ -422,9 +463,14 @@
     background: transparent;
   }
 
+  .fac-services-detail dl,
   .fac-services-detail dl div {
     display: grid;
     gap: var(--fac-space-1);
+  }
+
+  .fac-services-detail dl {
+    grid-template-columns: 1fr;
   }
 
   .fac-services-detail dd {

@@ -352,7 +352,12 @@ function ServicesContent(props: {
 
   return (
     <>
-      <ServicesHeader {...props} />
+      <section className="fac-services-header-grid">
+        <ServicesHeader {...props} />
+        <article className="fac-services-panel fac-services-detail-top">
+          <ServiceDetail {...props} />
+        </article>
+      </section>
       <ServicesToolbar {...props} />
       {props.notice && <FacMessage tone="success" title="Operação concluída">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
@@ -425,7 +430,6 @@ function ServicesHeader({
       action={
         <>
           <GlobalSearch className="fac-commercial-global-search" />
-          {canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo artigo"} onClick={onNew} variant="primary" />}
         </>
       }
       className="fac-services-header"
@@ -444,7 +448,9 @@ function ServicesHeader({
 }
 
 function ServicesToolbar({
+  canManage,
   deviceClass,
+  onNew,
   onSearch,
   onStateFilter,
   search,
@@ -470,6 +476,7 @@ function ServicesToolbar({
         ]}
         value={stateFilter}
       />
+      {canManage && <FacButton icon="pi pi-plus" label={deviceClass === "mobile" ? "Novo" : "Novo artigo"} onClick={onNew} variant="primary" />}
     </section>
   );
 }

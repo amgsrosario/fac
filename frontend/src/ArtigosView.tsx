@@ -271,7 +271,8 @@ export default function ArtigosView() {
     <>
       {notice && <p className="fac-editor-message">{notice}</p>}
       {message && <p className="fac-message">{message}</p>}
-      <section className="fac-hero">
+      <section className="fac-articles-header-grid">
+        <section className="fac-hero fac-articles-hero">
         <div>
           <p className="fac-eyebrow">Artigos</p>
           <h2>Catálogo de artigos</h2>
@@ -284,13 +285,29 @@ export default function ArtigosView() {
         </div>
       </section>
 
-      <section className="fac-list-toolbar">
+      <aside className="fac-panel fac-detail fac-articles-detail-top">
+        <p className="fac-eyebrow">Ficha comercial</p>
+        <h2>{selected?.codigo ?? "Sem artigo"}</h2>
+        <dl>
+          <div><dt>Descrição</dt><dd>{selected?.descricao ?? "-"}</dd></div>
+          <div><dt>Família</dt><dd>{familiaNome}</dd></div>
+          <div><dt>Unidade</dt><dd>{selected?.unidade ?? "-"}</dd></div>
+          <div><dt>IVA venda</dt><dd>{selected?.ivaVendaId ?? "-"}</dd></div>
+          <div><dt>PVP</dt><dd>{selected ? money(selected.pvp) : "-"}</dd></div>
+          <div><dt>Retenção</dt><dd>{selected?.retencao ? "Sim" : "Não"}</dd></div>
+        </dl>
+        {!selected && <p className="fac-muted">Selecione um artigo para consultar os respetivos dados.</p>}
+        {canManage && <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openEdit(selected)} type="button">Editar artigo</button>}
+        </aside>
+      </section>
+
+      <section className="fac-list-toolbar fac-articles-toolbar">
         <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código, descrição ou identificação" type="search" value={search} />
         <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button>{canManage && <button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button>}</div>
       </section>
 
-      <section className="fac-content-grid">
-        <article className="fac-panel fac-panel-main">
+      <section className="fac-content-grid fac-articles-content-grid">
+        <article className="fac-panel fac-panel-main fac-articles-table-panel">
           <ColumnSelector columns={artigoColumns.columns} open={columnEditorOpen} onMove={artigoColumns.moveColumn} onReset={artigoColumns.resetColumns} onToggle={artigoColumns.toggleColumn} />
           <table className="fac-table">
             <thead><tr>{artigoColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead>
@@ -305,7 +322,7 @@ export default function ArtigosView() {
           </table>
         </article>
 
-        <aside className="fac-panel fac-detail">
+        <aside className="fac-panel fac-detail fac-articles-detail-card">
           <p className="fac-eyebrow">Ficha comercial</p>
           <h2>{selected?.codigo ?? "Sem artigo"}</h2>
           <dl>

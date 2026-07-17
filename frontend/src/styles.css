@@ -471,6 +471,50 @@ button:disabled {
   align-items: start;
 }
 
+.fac-articles-header-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.fac-articles-hero {
+  margin: 0;
+}
+
+.fac-articles-detail-top {
+  align-self: start;
+}
+
+.fac-articles-detail-top dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+  margin: 12px 0;
+}
+
+.fac-articles-detail-top dl div {
+  padding: 8px 0;
+}
+
+.fac-articles-detail-top h2 {
+  margin-top: 0;
+}
+
+.fac-articles-content-grid {
+  display: block;
+}
+
+.fac-articles-table-panel {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.fac-articles-detail-card {
+  display: none;
+}
+
 .fac-dashboard-actions {
   margin-bottom: 18px;
 }
@@ -1580,7 +1624,8 @@ button:disabled {
 @media (max-width: 980px) {
   .fac-shell,
   .fac-hero,
-  .fac-content-grid {
+  .fac-content-grid,
+  .fac-articles-header-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1613,6 +1658,10 @@ button:disabled {
   .fac-list-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .fac-articles-detail-top dl {
+    grid-template-columns: 1fr;
   }
 
   .fac-topbar-actions {
