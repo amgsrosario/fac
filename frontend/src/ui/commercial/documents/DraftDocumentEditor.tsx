@@ -1,4 +1,4 @@
-import { KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { InputNumber, InputNumberValueChangeEvent } from "primereact/inputnumber";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, AuthSession } from "../../../api";
@@ -119,6 +119,11 @@ type EditorLine = {
   dirty: boolean;
 };
 
+type PendingLineCommitResult =
+  | { status: "empty"; lines: EditorLine[] }
+  | { status: "committed"; line: EditorLine; lines: EditorLine[] }
+  | { status: "invalid"; message: string };
+
 type Totals = { subtotal: number; discount: number; vat: number; total: number };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -162,6 +167,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const [header, setHeader] = useState<HeaderState>(emptyHeader);
   const [lines, setLines] = useState<EditorLine[]>([]);
   const [activeLine, setActiveLine] = useState<EditorLine>(() => emptyLine("COMERCIAL"));
+  const [activeArticleQuery, setActiveArticleQuery] = useState("");
   const [removedLineIds, setRemovedLineIds] = useState<number[]>([]);
   const [selectedLineUid, setSelectedLineUid] = useState<string | null>(null);
   const [originalHeaderKey, setOriginalHeaderKey] = useState("");
@@ -169,6 +175,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
@@ -246,6 +253,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setDiagnostico(diag);
         setImpressao(printModel);
         setActiveLine(emptyLine("COMERCIAL"));
+        setActiveArticleQuery("");
         setRemovedLineIds([]);
         setDirty(false);
       } else {
@@ -258,6 +266,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setDiagnostico(null);
         setImpressao(null);
         setActiveLine(emptyLine("COMERCIAL"));
+        setActiveArticleQuery("");
         setRemovedLineIds([]);
         setDirty(false);
       }
@@ -307,6 +316,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     };
     if (draft) {
       setActiveLine((current) => ({ ...current, ...patch }));
+      setActiveArticleQuery("");
       setDirty(true);
       return;
     }
@@ -315,29 +325,50 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   function setActivePatch(patch: Partial<EditorLine>) {
     if (!canEditCurrent) return;
+    if (patch.tipoLinha === "TEXTO") setActiveArticleQuery("");
     setActiveLine((current) => ({ ...current, ...patch }));
     setDirty(true);
   }
 
-  function commitActiveLine(tipoLinha = activeLine.tipoLinha) {
-    if (!canEditCurrent) return false;
+  function updateActiveArticleQuery(query: string) {
+    setActiveArticleQuery(query);
+    if (query.trim()) setDirty(true);
+  }
+
+  function preparePendingLine(tipoLinha = activeLine.tipoLinha, baseLines = lines): PendingLineCommitResult {
     const line = { ...activeLine, tipoLinha };
+    if (line.tipoLinha === "COMERCIAL" && activeArticleQuery.trim() && !line.artigoId) {
+      return { status: "invalid", message: "Conclua ou limpe a linha em edição antes de guardar o rascunho." };
+    }
     if (!isLineFilled(line)) {
-      setNotice("A linha ativa continua local e não foi adicionada.");
-      return false;
+      return { status: "empty", lines: resequenceLines(baseLines) };
     }
     const validation = validateLine(line);
     if (validation) {
-      setError(validation);
-      return false;
+      return { status: "invalid", message: validation };
     }
     const committed = { ...line, uid: crypto.randomUUID(), dirty: true };
-    setLines((current) => resequenceLines([...current, committed]));
+    return { status: "committed", line: committed, lines: resequenceLines([...baseLines, committed]) };
+  }
+
+  function commitPendingLine(tipoLinha = activeLine.tipoLinha): PendingLineCommitResult {
+    if (!canEditCurrent) return { status: "invalid", message: "Não é possível editar este rascunho." };
+    const result = preparePendingLine(tipoLinha);
+    if (result.status === "empty") {
+      setNotice("A linha ativa continua local e não foi adicionada.");
+      return result;
+    }
+    if (result.status === "invalid") {
+      setError(result.message);
+      return result;
+    }
+    setLines(result.lines);
     setActiveLine(emptyLine(tipoLinha === "TEXTO" ? "TEXTO" : "COMERCIAL"));
-    setSelectedLineUid(committed.uid);
+    setActiveArticleQuery("");
+    setSelectedLineUid(result.line.uid);
     setDirty(true);
     setNotice("Linha adicionada localmente.");
-    return true;
+    return result;
   }
 
   function addBlankLine(tipoLinha: TipoLinha, afterUid?: string) {
@@ -406,7 +437,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     }
     if (event.ctrlKey && event.key === "Enter") {
       event.preventDefault();
-      commitActiveLine("TEXTO");
+      commitPendingLine("TEXTO");
       return;
     }
     if (event.key === "Enter") {
@@ -414,7 +445,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       if (target.matches("textarea")) return;
       if (target.hasAttribute("data-active-line") || target.closest("[data-active-line]")) {
         event.preventDefault();
-        commitActiveLine("COMERCIAL");
+        commitPendingLine("COMERCIAL");
       }
     }
   }
@@ -425,17 +456,22 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   }
 
   async function saveDraft() {
-    if (saving || !canEditCurrent) return;
+    if (savingRef.current || saving || !canEditCurrent) return;
     setError(null);
     setNotice(null);
-    const draftLines = isLineFilled(activeLine) ? resequenceLines([...lines, { ...activeLine, uid: crypto.randomUUID(), dirty: true }]) : lines;
-    const localLines = resequenceLines(draftLines.filter((line) => !isEmptyCommercialLine(line)));
+    const pendingLine = preparePendingLine();
+    if (pendingLine.status === "invalid") {
+      setError(pendingLine.message || "Conclua ou limpe a linha em edição antes de guardar o rascunho.");
+      return;
+    }
+    const localLines = resequenceLines(pendingLine.lines.filter((line) => !isEmptyCommercialLine(line)));
     const validation = validateHeader(header) ?? validateHasCommercialLine(localLines) ?? localLines.map(validateLine).find(Boolean) ?? null;
     if (validation) {
       setError(validation);
       return;
     }
 
+    savingRef.current = true;
     setSaving(true);
     try {
       let currentId = documentId;
@@ -493,6 +529,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       setHeader(nextHeader);
       setLines(resequenceLines(freshEditorLines.map((line) => ({ ...line, dirty: false }))));
       setActiveLine(emptyLine("COMERCIAL"));
+      setActiveArticleQuery("");
       setRemovedLineIds([]);
       setOriginalHeaderKey(headerKey(nextHeader));
       setOriginalOrderKey(orderKey(freshEditorLines));
@@ -504,6 +541,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível guardar o rascunho. As alterações locais foram mantidas.");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -644,9 +682,10 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
               catalogos={catalogos}
               lines={lines}
               onAddBlankLine={addBlankLine}
+              onActiveArticleQueryChange={updateActiveArticleQuery}
               onChooseActiveArticle={(value) => chooseArticle(activeLine.uid, value, true)}
               onChooseArticle={chooseArticle}
-              onCommitActiveLine={commitActiveLine}
+              onCommitActiveLine={commitPendingLine}
               onDuplicateLine={duplicateLine}
               onMoveLine={moveLine}
               onRemoveLine={removeLine}
@@ -747,9 +786,10 @@ function DraftLines(props: {
   catalogos: Catalogos;
   lines: EditorLine[];
   onAddBlankLine: (tipoLinha: TipoLinha, afterUid?: string) => void;
+  onActiveArticleQueryChange: (query: string) => void;
   onChooseActiveArticle: (articleId: string | null) => void;
   onChooseArticle: (uid: string, articleId: string | null) => void;
-  onCommitActiveLine: (tipoLinha?: TipoLinha) => boolean;
+  onCommitActiveLine: (tipoLinha?: TipoLinha) => PendingLineCommitResult;
   onDuplicateLine: (uid: string) => void;
   onMoveLine: (uid: string, direction: -1 | 1) => void;
   onRemoveLine: (uid: string) => void;
@@ -836,6 +876,7 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
               optionLabel={artigoLookupLabel}
               optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, money(Number(artigo.pvp))].filter(Boolean).join(" · ")}
               onClear={() => active ? props.onChooseActiveArticle(null) : props.onChooseArticle(line.uid, null)}
+              onQueryChange={active ? props.onActiveArticleQueryChange : undefined}
               onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo.codigo) : props.onChooseArticle(line.uid, artigo.codigo)}
               placeholder="Artigo"
               preferenceKey="fac.lookup.draft.artigos"

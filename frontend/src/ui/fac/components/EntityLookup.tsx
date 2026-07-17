@@ -51,6 +51,7 @@ type EntityLookupFieldProps<T extends object> = Omit<EntityLookupDialogProps<T>,
   optionLabel: (row: T) => ReactNode;
   optionMeta?: (row: T) => ReactNode;
   onClear?: () => void;
+  onQueryChange?: (query: string) => void;
   onSelect: (row: T) => void;
   placeholder: string;
   selection?: T | null;
@@ -72,6 +73,7 @@ export function EntityLookupField<T extends object>({
   disabled = false,
   label,
   onClear,
+  onQueryChange,
   optionLabel,
   optionMeta,
   placeholder,
@@ -120,6 +122,7 @@ export function EntityLookupField<T extends object>({
   function selectRow(row: T) {
     dialogProps.onSelect(row);
     setQuery("");
+    onQueryChange?.("");
     setSuggestionsOpen(false);
   }
 
@@ -130,6 +133,7 @@ export function EntityLookupField<T extends object>({
 
   function clearSelection() {
     setQuery("");
+    onQueryChange?.("");
     setSuggestionsOpen(false);
     onClear?.();
     window.setTimeout(() => inputRef.current?.focus(), 0);
@@ -170,9 +174,11 @@ export function EntityLookupField<T extends object>({
           className="fac-lookup-input"
           disabled={disabled}
           onChange={(event) => {
-            setQuery(event.target.value);
+            const nextQuery = event.target.value;
+            setQuery(nextQuery);
+            onQueryChange?.(nextQuery);
             setActiveIndex(0);
-            setSuggestionsOpen(Boolean(event.target.value.trim()));
+            setSuggestionsOpen(Boolean(nextQuery.trim()));
           }}
           onFocus={() => query.trim() && setSuggestionsOpen(true)}
           onKeyDown={handleKeyDown}
