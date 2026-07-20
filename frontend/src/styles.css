@@ -483,6 +483,11 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.fac-documents-header-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 350px);
+  align-items: stretch;
+}
+
 .fac-articles-hero,
 .fac-clients-hero,
 .fac-documents-hero {
@@ -524,6 +529,11 @@ button:disabled {
   align-self: start;
   height: auto;
   min-height: 0;
+}
+
+.fac-documents-detail-top {
+  align-self: stretch;
+  height: 100%;
 }
 
 .fac-articles-detail-top dl,
@@ -1084,33 +1094,38 @@ button:disabled {
 }
 
 .fac-detail.fac-documents-detail-top dl {
-  gap: 10px 14px;
-  margin: 12px 0;
+  grid-template-columns: 1fr;
+  gap: 9px;
+  margin: 16px 0;
 }
 
 .fac-detail.fac-documents-detail-top dl div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(82px, max-content) minmax(0, 1fr);
+  align-items: start;
+  column-gap: 12px;
   min-width: 0;
   border-bottom: 0;
   padding: 0;
 }
 
 .fac-detail.fac-documents-detail-top dt {
-  flex: 0 0 auto;
   font-size: 12px;
+  line-height: 1.35;
 }
 
 .fac-detail.fac-documents-detail-top dd {
-  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: right;
+  text-align: left;
   font-size: 13px;
+  line-height: 1.35;
+}
+
+.fac-detail.fac-documents-detail-top dl div:first-child dd {
+  white-space: normal;
 }
 
 .fac-detail.fac-documents-detail-top button {
