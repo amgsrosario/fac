@@ -208,6 +208,9 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const canEmitCurrent = Boolean(documento && isDraft && canEmit && !dirty && (diagnostico?.podeEmitir ?? false));
   const canVoidCurrent = Boolean(documento && documento.estado === "EMITIDO" && canVoid && (diagnostico?.podeAnular ?? false));
   const canOpenPdfCurrent = Boolean(documento && documento.estado !== "RASCUNHO" && canPdf);
+  const showEmitAction = Boolean(documento && isDraft && canEmit);
+  const showSaveDraftAction = Boolean(isDraft && canEditCurrent && (!documento || dirty));
+  const saveDraftLabel = saving ? "A guardar..." : documento ? "Guardar alterações" : "Guardar rascunho";
   const totals = useMemo(() => calculateTotals(lines, catalogos), [catalogos, lines]);
   const sidebar = embedded ? null : <CommercialSidebar active="documents" currentUser={currentUser} onLogout={() => confirmLeave(dirty) && onLogout()} />;
 
@@ -465,6 +468,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   async function saveDraft() {
     if (savingRef.current || saving || !canEditCurrent) return;
+    const isNewDraft = !documento;
     setError(null);
     setNotice(null);
     const pendingLine = preparePendingLine();
@@ -543,8 +547,9 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       setOriginalOrderKey(orderKey(freshEditorLines));
       await refreshDocumentMeta(currentId);
       setDirty(false);
-      setNotice("Rascunho guardado.");
-      showToast({ detail: "Rascunho guardado.", severity: "success", summary: "Documentos" });
+      const savedMessage = isNewDraft ? "Rascunho guardado." : "Alterações guardadas.";
+      setNotice(savedMessage);
+      showToast({ detail: savedMessage, severity: "success", summary: "Documentos" });
       if (!documentId) navigate(`/documentos/${currentId}`, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível guardar o rascunho. As alterações locais foram mantidas.");
@@ -666,8 +671,8 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
           {documento && documento.estado === "RASCUNHO" && canDeleteDraft && <FacButton disabled={saving || loading} icon="pi pi-trash" label="Eliminar rascunho" onClick={() => setDeleteOpen(true)} variant="destructive" />}
           {canOpenPdfCurrent && <FacButton disabled={saving} icon="pi pi-file-pdf" label="PDF" onClick={openPdf} variant="secondary" />}
           {canVoidCurrent && <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={() => setAnularOpen(true)} variant="destructive" />}
-          {canEmit && isDraft && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label="Conferir e emitir" onClick={emitDocument} variant="secondary" />}
-          {isDraft && <FacButton disabled={saving || loading || !canEditCurrent} icon="pi pi-save" label={saving ? "A guardar..." : "Guardar rascunho"} onClick={saveDraft} variant="primary" />}
+          {showEmitAction && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label="Conferir e emitir" onClick={emitDocument} variant={dirty ? "secondary" : "primary"} />}
+          {showSaveDraftAction && <FacButton disabled={saving || loading || !canEditCurrent} icon="pi pi-save" label={saveDraftLabel} onClick={saveDraft} variant="primary" />}
         </div>
       </header>
       {error && <FacMessage tone="error" title="Erro">{error}</FacMessage>}

@@ -687,15 +687,19 @@
   }
 
   .fac-draft-actions {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: flex-start;
-    overflow-x: auto;
+    overflow-x: visible;
     padding-bottom: 0.1rem;
   }
 
-  .fac-draft-actions .fac-button,
+  .fac-draft-actions .fac-button {
+    flex: 1 1 10rem;
+    min-width: min(10rem, 100%);
+  }
+
   .fac-draft-dirty {
-    flex: 0 0 auto;
+    flex: 1 1 100%;
     white-space: nowrap;
   }
 
