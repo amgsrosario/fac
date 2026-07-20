@@ -155,7 +155,7 @@ const emptyLine = (tipoLinha: TipoLinha = "COMERCIAL"): EditorLine => ({
   tipoDesconto: "VALOR",
   desconto: "0",
   tipoTaxaIvaId: "",
-  dirty: true
+  dirty: false
 });
 
 export default function DraftDocumentEditor({ currentUser, embedded = false, onLogout }: { currentUser: AuthSession; embedded?: boolean; onLogout: () => void }) {
@@ -284,6 +284,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   function updateHeader(patch: Partial<HeaderState>) {
     if (!canEditCurrent) return;
+    if (!hasHeaderPatchChanges(header, patch)) return;
     setHeader((current) => {
       const next = { ...current, ...patch };
       setDirty(true);
@@ -305,6 +306,8 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   function updateLine(uid: string, patch: Partial<EditorLine>) {
     if (!canEditCurrent) return;
+    const target = lines.find((line) => line.uid === uid);
+    if (!target || !hasLinePatchChanges(target, patch)) return;
     setLines((current) => current.map((line) => line.uid === uid ? { ...line, ...patch, dirty: true } : line));
     setDirty(true);
   }
@@ -330,12 +333,14 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   function setActivePatch(patch: Partial<EditorLine>) {
     if (!canEditCurrent) return;
+    if (!hasLinePatchChanges(activeLine, patch)) return;
     if (patch.tipoLinha === "TEXTO") setActiveArticleQuery("");
     setActiveLine((current) => ({ ...current, ...patch }));
     setDirty(true);
   }
 
   function updateActiveArticleQuery(query: string) {
+    if (query === activeArticleQuery) return;
     setActiveArticleQuery(query);
     if (query.trim()) setDirty(true);
   }
@@ -501,7 +506,6 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         const createdLines = await requestJson<LinhaDocumento[]>(`/api/documentos-comerciais/${currentId}/linhas`);
         const createdFirst = createdLines[0];
         persistedLines = persistedLines.map((line) => line.uid === firstCommercial.uid ? { ...line, id: createdFirst.id } : line);
-        setDocumento(created);
       } else if (headerKey(header) !== originalHeaderKey) {
         await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${currentId}`, headerPayload(header), "PUT");
       }
@@ -530,13 +534,16 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         await requestJson<LinhaDocumento[]>(`/api/documentos-comerciais/${currentId}/linhas/ordem`, { linhaIds: orderIds }, "PUT");
       }
 
-      const [freshDoc, freshLines] = await Promise.all([
+      const [freshDoc, freshLines, freshDiag, freshPrintModel] = await Promise.all([
         requestJson<DocumentoComercial>(`/api/documentos-comerciais/${currentId}`),
-        requestJson<LinhaDocumento[]>(`/api/documentos-comerciais/${currentId}/linhas`)
+        requestJson<LinhaDocumento[]>(`/api/documentos-comerciais/${currentId}/linhas`),
+        requestJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${currentId}/diagnostico`),
+        requestJson<DocumentoImpressao>(`/api/documentos-comerciais/${currentId}/impressao`)
       ]);
       const freshEditorLines = freshLines.slice().sort((left, right) => left.numeroLinha - right.numeroLinha).map(lineFromDto);
       assertOrder(freshEditorLines, orderIds);
       const nextHeader = headerFromDocument(freshDoc);
+      setDirty(false);
       setDocumento(freshDoc);
       setHeader(nextHeader);
       setLines(resequenceLines(freshEditorLines.map((line) => ({ ...line, dirty: false }))));
@@ -545,8 +552,8 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       setRemovedLineIds([]);
       setOriginalHeaderKey(headerKey(nextHeader));
       setOriginalOrderKey(orderKey(freshEditorLines));
-      await refreshDocumentMeta(currentId);
-      setDirty(false);
+      setDiagnostico(freshDiag);
+      setImpressao(freshPrintModel);
       const savedMessage = isNewDraft ? "Rascunho guardado." : "Alterações guardadas.";
       setNotice(savedMessage);
       showToast({ detail: savedMessage, severity: "success", summary: "Documentos" });
@@ -1269,6 +1276,21 @@ function orderKey(lines: EditorLine[]) {
 
 function headerKey(header: HeaderState) {
   return JSON.stringify(header);
+}
+
+function hasHeaderPatchChanges(header: HeaderState, patch: Partial<HeaderState>) {
+  return Object.entries(patch).some(([key, nextValue]) => header[key as keyof HeaderState] !== nextValue);
+}
+
+function hasLinePatchChanges(line: EditorLine, patch: Partial<EditorLine>) {
+  return Object.entries(patch).some(([key, nextValue]) => {
+    const field = key as keyof EditorLine;
+    const currentValue = line[field];
+    if (field === "quantidade" || field === "precoUnitario" || field === "desconto") {
+      return decimalValue(String(currentValue ?? "")) !== decimalValue(String(nextValue ?? ""));
+    }
+    return currentValue !== nextValue;
+  });
 }
 
 function assertOrder(lines: EditorLine[], expectedIds: number[]) {
