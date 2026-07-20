@@ -16,7 +16,7 @@ type Pendente = {
   dataVencimento: string;
   moedaId: string;
 };
-type Cliente = { id: number; nome: string; nif: string; inativo: boolean };
+type Cliente = { id: number; nome: string; nif: string; inativo: boolean; moedaId?: string | null; mPagamentoId?: string | null; pPagamentoId?: string | null };
 type TipoDocumento = { id: string; descricao: string; areaGestao: number };
 type Serie = { serie: string; tipoDocumentoId: string; nome: string };
 type MPagamento = { id: string; nome: string };
@@ -149,9 +149,20 @@ export default function PendentesView() {
   }
 
   function selectClient(clienteId: string) {
+    const cliente = clientes.find((item) => item.id === Number(clienteId));
     const moedas = openPendentesForClient(pendentes, Number(clienteId)).map((item) => item.moedaId);
     const moedasUnicas = [...new Set(moedas)];
-    setForm((current) => ({ ...current, clienteId, moedaId: moedasUnicas.length === 1 ? moedasUnicas[0] : "", valorRecebido: "" }));
+    const moedaCliente = cliente?.moedaId ?? "";
+    const moedaId = moedaCliente && moedasUnicas.includes(moedaCliente)
+      ? moedaCliente
+      : moedasUnicas.length === 1 ? moedasUnicas[0] : "";
+    setForm((current) => ({
+      ...current,
+      clienteId,
+      moedaId,
+      mPagamentoId: validPaymentMode(modos, cliente?.mPagamentoId),
+      valorRecebido: ""
+    }));
     setAllocations({});
     setManualReceiptValue(false);
     requestAnimationFrame(() => {
@@ -408,6 +419,7 @@ export default function PendentesView() {
 
 function emptyReceiptForm(): ReceiptForm { return { clienteId: "", moedaId: "", tipoDocumentoId: "", serie: "", dataEmissao: todayIso(), valorRecebido: "", mPagamentoId: "", emissorId: getAuthSession()?.codigo ?? "", observacoes: "" }; }
 function openPendentesForClient(pendentes: Pendente[], clienteId: number) { return clienteId ? pendentes.filter((item) => item.clienteId === clienteId && Number(item.valorPendente) > 0) : []; }
+function validPaymentMode(modos: MPagamento[], mPagamentoId?: string | null) { return mPagamentoId && modos.some((modo) => modo.id === mPagamentoId) ? mPagamentoId : ""; }
 function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations) { if (!form.clienteId) return "Seleciona o cliente."; if (!form.moedaId) return "Seleciona a moeda."; if (!form.tipoDocumentoId) return "Seleciona o tipo de documento financeiro."; if (!form.serie) return "Seleciona a série."; if (!form.dataEmissao) return "A data de emissão é obrigatória."; if (!form.mPagamentoId) return "Confirma o modo de pagamento."; const target = round6(Number(form.valorRecebido)); if (!Number.isFinite(target) || target <= 0) return "O valor recebido deve ser positivo."; const total = round6(sum(pendentes.map((item) => Number(allocations[item.id] || 0)))); if (total <= 0) return "Distribui o recebimento por pelo menos um pendente."; if (round6(target - total) !== 0) return "O valor recebido e a distribuição pelos pendentes não coincidem."; return null; }
 function estado(item: Pendente) { if (Number(item.valorPendente) <= 0) return "LIQUIDADO"; if (item.dataVencimento < todayIso()) return "VENCIDO"; if (Number(item.valorPendente) < Number(item.valorDocumento)) return "PARCIAL"; return "ABERTO"; }
 function referencia(item: Pendente) { return `${item.tipoDocumentoId} ${item.serieDocumento}/${item.numeroDocumento}`; }
