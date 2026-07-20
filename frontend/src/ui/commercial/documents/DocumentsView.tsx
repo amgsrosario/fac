@@ -629,7 +629,12 @@ function DocumentsContent(props: {
 
   return (
     <>
-      <DocumentsHeader {...props} />
+      <section className="fac-documents-header-grid">
+        <DocumentsHeader {...props} />
+        <article className="fac-documents-detail fac-documents-detail-top">
+          <DocumentDetail {...props} />
+        </article>
+      </section>
       <DocumentsToolbar {...props} />
       {props.notice && <FacMessage tone="success" title="Operação concluída">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
@@ -679,13 +684,12 @@ function MobileDocumentsContent(props: Parameters<typeof DocumentsContent>[0]) {
   );
 }
 
-function DocumentsHeader({ activeCount, canCreate, compact = false, documentos, loading, onNew }: Parameters<typeof DocumentsContent>[0] & { compact?: boolean }) {
+function DocumentsHeader({ activeCount, compact = false, documentos, loading }: Parameters<typeof DocumentsContent>[0] & { compact?: boolean }) {
   return (
     <ModuleHeader
       action={
         <>
           <GlobalSearch className="fac-commercial-global-search" />
-          {canCreate && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo documento"} onClick={onNew} variant="primary" />}
         </>
       }
       compact={compact}
@@ -697,7 +701,7 @@ function DocumentsHeader({ activeCount, canCreate, compact = false, documentos, 
   );
 }
 
-function DocumentsToolbar({ deviceClass, onSearch, onStateFilter, search, stateFilter }: Parameters<typeof DocumentsContent>[0]) {
+function DocumentsToolbar({ canCreate, deviceClass, onNew, onSearch, onStateFilter, search, stateFilter }: Parameters<typeof DocumentsContent>[0]) {
   return (
     <section className="fac-documents-toolbar" aria-label="Pesquisa e filtros">
       <FacInputText aria-label="Pesquisar documentos" onChange={(event) => onSearch(event.target.value)} placeholder={deviceClass === "mobile" ? "Pesquisar documentos" : "Pesquisar por número, cliente, NIF, série ou estado"} type="search" value={search} />
@@ -711,6 +715,7 @@ function DocumentsToolbar({ deviceClass, onSearch, onStateFilter, search, stateF
         ]}
         value={stateFilter}
       />
+      {canCreate && <FacButton icon="pi pi-plus" label={deviceClass === "mobile" ? "Novo" : "Novo documento"} onClick={onNew} type="button" variant="primary" />}
     </section>
   );
 }

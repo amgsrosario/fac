@@ -43,17 +43,22 @@
 
 .fac-customers-toolbar {
   display: grid;
-  grid-template-columns: minmax(18rem, 1fr) minmax(12rem, 0.28fr);
+  grid-template-columns: minmax(18rem, 1fr) minmax(12rem, 0.28fr) auto;
   gap: var(--fac-space-2);
   align-items: center;
   margin-bottom: var(--fac-space-3);
 }
 
-.fac-customers-layout {
+.fac-customers-header-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(19rem, 0.31fr);
+  grid-template-columns: minmax(0, 1fr) minmax(21rem, 0.34fr);
   gap: var(--fac-space-3);
   align-items: start;
+  margin-bottom: var(--fac-space-3);
+}
+
+.fac-customers-layout {
+  display: block;
 }
 
 .fac-customers-panel {
@@ -74,6 +79,11 @@
 
 .fac-customers-table-wrap {
   min-width: 0;
+  overflow-x: auto;
+}
+
+.fac-customers-list-panel {
+  overflow-x: auto;
 }
 
 .fac-customers-table {
@@ -130,6 +140,14 @@
 .fac-customers-detail {
   display: grid;
   gap: var(--fac-space-3);
+}
+
+.fac-customers-detail-panel {
+  display: none;
+}
+
+.fac-customers-detail-top {
+  align-self: start;
 }
 
 .fac-customers-detail-title {
@@ -374,12 +392,12 @@
 }
 
 @media (max-width: 1023px) {
-  .fac-customers-layout {
+  .fac-customers-header-grid {
     grid-template-columns: 1fr;
   }
 
   .fac-customers-toolbar {
-    grid-template-columns: minmax(0, 1fr) minmax(11rem, 0.32fr);
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 0.32fr) auto;
   }
 }
 

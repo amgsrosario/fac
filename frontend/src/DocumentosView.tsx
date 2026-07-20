@@ -561,7 +561,8 @@ export default function DocumentosView() {
       {notice && <p className="fac-editor-message">{notice}</p>}
       {message && <p className="fac-message">{message}</p>}
 
-      <section className="fac-hero">
+      <section className="fac-documents-header-grid">
+        <section className="fac-hero fac-documents-hero">
         <div>
           <p className="fac-eyebrow">Documentos comerciais</p>
           <h2>Consulta de documentos</h2>
@@ -572,6 +573,28 @@ export default function DocumentosView() {
           <strong>{loading ? "A carregar..." : documentos.length}</strong>
           <small>{emitted} emitidos, {drafts} rascunhos, {annulled} anulados</small>
         </div>
+        </section>
+
+        <aside className="fac-panel fac-detail fac-documents-detail-top">
+          <p className="fac-eyebrow">Documento selecionado</p>
+          <h2>{selected ? reference(selected) : "Sem documento"}</h2>
+          <dl>
+            <div><dt>Cliente</dt><dd>{selected?.clienteNome ?? "-"}</dd></div>
+            <div><dt>NIF</dt><dd>{selected?.clienteNif ?? "-"}</dd></div>
+            <div><dt>Estado</dt><dd>{selected ? documentState(selected) : "-"}</dd></div>
+            <div><dt>Emissão</dt><dd>{selected ? datePt(selected.dataEmissao) : "-"}</dd></div>
+            <div><dt>Vencimento</dt><dd>{selected?.dataVencimento ? datePt(selected.dataVencimento) : "-"}</dd></div>
+            <div><dt>Total</dt><dd>{selected ? `${money(selected.valorTotal)} ${selected.moedaId}` : "-"}</dd></div>
+            <div><dt>Liquidado</dt><dd>{selected?.liquidado ? "Sim" : "Não"}</dd></div>
+            {selected?.estado === "ANULADO" && <><div><dt>Motivo da anulação</dt><dd>{selected.motivoAnulacao ?? "-"}</dd></div><div><dt>Anulado em</dt><dd>{selected.dataHoraAnulacao ? new Date(selected.dataHoraAnulacao).toLocaleString("pt-PT") : "-"}</dd></div><div><dt>Anulado por</dt><dd>{selected.anuladoPorNome ?? selected.anuladoPorUtilizadorId ?? "-"}</dd></div></>}
+          </dl>
+          {selected && !selectedIsDraft && <button className="fac-primary-button" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Consultar documento</button>}
+          {selectedIsDraft && canEdit && <button className="fac-primary-button" disabled={loading} onClick={() => selected && navigate(`/documentos/${selected.id}`)} type="button">Editar rascunho</button>}
+          {selectedIsDraft && canEmit && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
+          {selectedIsDraft && canDeleteDraft && <button className="fac-link-danger" disabled={loading} onClick={() => setDeleteOpen(true)} type="button">Eliminar rascunho</button>}
+          {(selected?.estado === "EMITIDO" || selected?.estado === "ANULADO") && canPdf && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
+          {selected?.estado === "EMITIDO" && canAnnul && <button className="fac-link-danger" disabled={loading} onClick={() => { setAnnulReason(""); setAnnulOpen(true); }} type="button">Anular documento</button>}
+        </aside>
       </section>
 
       <section className="fac-metrics" aria-label="Indicadores de documentos">
@@ -589,8 +612,8 @@ export default function DocumentosView() {
         </div>
       </section>
 
-      <section className="fac-content-grid">
-        <article className="fac-panel fac-panel-main">
+      <section className="fac-content-grid fac-documents-content-grid">
+        <article className="fac-panel fac-panel-main fac-documents-table-panel">
           <ColumnSelector columns={documentoColumns.columns} open={columnEditorOpen} onMove={documentoColumns.moveColumn} onReset={documentoColumns.resetColumns} onToggle={documentoColumns.toggleColumn} />
           <table className="fac-table">
             <thead><tr>{documentoColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead>
@@ -605,7 +628,7 @@ export default function DocumentosView() {
           </table>
         </article>
 
-        <aside className="fac-panel fac-detail">
+        <aside className="fac-panel fac-detail fac-documents-detail-card">
           <p className="fac-eyebrow">Documento selecionado</p>
           <h2>{selected ? reference(selected) : "Sem documento"}</h2>
           <dl>

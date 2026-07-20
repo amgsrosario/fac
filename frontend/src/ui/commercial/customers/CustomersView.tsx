@@ -369,7 +369,12 @@ function CustomersContent(props: {
 
   return (
     <>
-      <CustomersHeader {...props} />
+      <section className="fac-customers-header-grid">
+        <CustomersHeader {...props} />
+        <article className="fac-customers-panel fac-customers-detail-top">
+          <CustomerDetail {...props} />
+        </article>
+      </section>
       <CustomersToolbar {...props} />
       {props.notice && <FacMessage tone="success" title="Operação concluída">{props.notice}</FacMessage>}
       {props.error && <FacMessage tone="error" title="Erro">{props.error}</FacMessage>}
@@ -426,18 +431,15 @@ function MobileCustomersContent(props: Parameters<typeof CustomersContent>[0]) {
 
 function CustomersHeader({
   activeCount,
-  canManage,
   clientes,
   compact = false,
-  loading,
-  onNew
+  loading
 }: Parameters<typeof CustomersContent>[0] & { compact?: boolean }) {
   return (
     <ModuleHeader
       action={
         <>
           <GlobalSearch className="fac-commercial-global-search" />
-          {canManage && <FacButton icon="pi pi-plus" label={compact ? "Novo" : "Novo cliente"} onClick={onNew} variant="primary" />}
         </>
       }
       className="fac-customers-header"
@@ -455,7 +457,7 @@ function CustomersHeader({
   );
 }
 
-function CustomersToolbar({ deviceClass, onSearch, onStateFilter, search, stateFilter }: Parameters<typeof CustomersContent>[0]) {
+function CustomersToolbar({ canManage, deviceClass, onNew, onSearch, onStateFilter, search, stateFilter }: Parameters<typeof CustomersContent>[0]) {
   const placeholder = deviceClass === "mobile" ? "Pesquisar clientes" : "Pesquisar por codigo, nome, NIF ou email";
 
   return (
@@ -476,6 +478,7 @@ function CustomersToolbar({ deviceClass, onSearch, onStateFilter, search, stateF
         ]}
         value={stateFilter}
       />
+      {canManage && <FacButton icon="pi pi-plus" label={deviceClass === "mobile" ? "Novo" : "Novo cliente"} onClick={onNew} type="button" variant="primary" />}
     </section>
   );
 }

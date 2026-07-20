@@ -950,7 +950,8 @@ function ClientesView({
   return (
     <>
       {notice && !editorOpen && <p className="fac-editor-message">{notice}</p>}
-      <section className={`fac-hero ${editorOpen ? "fac-hidden" : ""}`}>
+      <section className={`fac-clients-header-grid ${editorOpen ? "fac-hidden" : ""}`}>
+        <section className="fac-hero fac-clients-hero">
         <div>
           <p className="fac-eyebrow">Clientes</p>
           <h2>Consulta simples com conta corrente integrada</h2>
@@ -963,6 +964,30 @@ function ClientesView({
           <strong>{selectedCliente?.nome ?? (loading ? "A carregar..." : "Sem cliente")}</strong>
           <small>{selectedCliente ? `NIF ${selectedCliente.nif}` : "Escolhe um cliente na lista"}</small>
         </div>
+        </section>
+
+        <aside className="fac-panel fac-detail fac-clients-detail-top">
+          <p className="fac-eyebrow">Ficha resumida</p>
+          <h2>{selectedCliente?.nome ?? "Sem cliente"}</h2>
+          <dl>
+            <div><dt>CÃ³digo</dt><dd>{selectedCliente?.id ?? "-"}</dd></div>
+            <div><dt>NIF</dt><dd>{selectedCliente?.nif ?? "-"}</dd></div>
+            <div><dt>Morada</dt><dd>{selectedCliente?.morada ?? "-"}</dd></div>
+            <div><dt>Localidade</dt><dd>{selectedCliente?.localidade ?? "-"}</dd></div>
+            <div><dt>CÃ³digo postal</dt><dd>{selectedCliente?.codPostalId ?? "-"}</dd></div>
+            <div><dt>PaÃ­s</dt><dd>{selectedCliente?.paisId ?? "-"}</dd></div>
+            <div><dt>Moeda</dt><dd>{selectedCliente?.moedaId ?? "-"}</dd></div>
+            <div><dt>Regime IVA</dt><dd>{selectedCliente?.rivaId ?? "-"}</dd></div>
+          </dl>
+          {canManage && <button
+            className="fac-primary-button"
+            disabled={!selectedCliente || loading}
+            onClick={() => selectedCliente && onEditCliente(selectedCliente.id)}
+            type="button"
+          >
+            Editar cliente
+          </button>}
+        </aside>
       </section>
 
       <section className={`fac-metrics ${editorOpen ? "fac-hidden" : ""}`} aria-label="Indicadores de cliente">
@@ -984,8 +1009,8 @@ function ClientesView({
         </article>
       </section>
 
-      <section className={`fac-content-grid ${editorOpen ? "fac-hidden" : ""}`}>
-        <article className="fac-panel fac-panel-main">
+      <section className={`fac-content-grid fac-clients-content-grid ${editorOpen ? "fac-hidden" : ""}`}>
+        <article className="fac-panel fac-panel-main fac-clients-table-panel">
           <div className="fac-panel-header">
             <div>
               <p className="fac-eyebrow">Consulta</p>
@@ -1038,7 +1063,7 @@ function ClientesView({
           </table>
         </article>
 
-        <aside className="fac-panel fac-detail">
+        <aside className="fac-panel fac-detail fac-clients-detail-card">
           <p className="fac-eyebrow">Ficha resumida</p>
           <h2>{selectedCliente?.nome ?? "Sem cliente"}</h2>
           <dl>

@@ -471,7 +471,9 @@ button:disabled {
   align-items: start;
 }
 
-.fac-articles-header-grid {
+.fac-articles-header-grid,
+.fac-clients-header-grid,
+.fac-documents-header-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
   gap: 18px;
@@ -479,39 +481,55 @@ button:disabled {
   margin-bottom: 18px;
 }
 
-.fac-articles-hero {
+.fac-articles-hero,
+.fac-clients-hero,
+.fac-documents-hero {
   margin: 0;
 }
 
-.fac-articles-detail-top {
+.fac-articles-detail-top,
+.fac-clients-detail-top,
+.fac-documents-detail-top {
   align-self: start;
 }
 
-.fac-articles-detail-top dl {
+.fac-articles-detail-top dl,
+.fac-clients-detail-top dl,
+.fac-documents-detail-top dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 14px;
   margin: 12px 0;
 }
 
-.fac-articles-detail-top dl div {
+.fac-articles-detail-top dl div,
+.fac-clients-detail-top dl div,
+.fac-documents-detail-top dl div {
   padding: 8px 0;
 }
 
-.fac-articles-detail-top h2 {
+.fac-articles-detail-top h2,
+.fac-clients-detail-top h2,
+.fac-documents-detail-top h2 {
   margin-top: 0;
 }
 
-.fac-articles-content-grid {
+.fac-articles-content-grid,
+.fac-clients-content-grid,
+.fac-documents-content-grid {
   display: block;
 }
 
-.fac-articles-table-panel {
+.fac-articles-table-panel,
+.fac-clients-table-panel,
+.fac-documents-table-panel {
   min-width: 0;
   overflow-x: auto;
 }
 
-.fac-articles-detail-card {
+.fac-articles-detail-card,
+.fac-clients-detail-card,
+.fac-documents-detail-card {
   display: none;
 }
 
@@ -1034,6 +1052,7 @@ button:disabled {
 
 .fac-section-panel {
   margin-top: 18px;
+  overflow-x: auto;
 }
 
 .fac-muted {
@@ -1621,12 +1640,19 @@ button:disabled {
   font-size: 0.82rem;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1100px) {
   .fac-shell,
   .fac-hero,
   .fac-content-grid,
-  .fac-articles-header-grid {
-    grid-template-columns: 1fr;
+  .fac-articles-header-grid,
+  .fac-clients-header-grid,
+  .fac-documents-header-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fac-sidebar,
+  .fac-workspace {
+    min-width: 0;
   }
 
   .fac-sidebar {
@@ -1660,7 +1686,9 @@ button:disabled {
     flex-direction: column;
   }
 
-  .fac-articles-detail-top dl {
+  .fac-articles-detail-top dl,
+  .fac-clients-detail-top dl,
+  .fac-documents-detail-top dl {
     grid-template-columns: 1fr;
   }
 
