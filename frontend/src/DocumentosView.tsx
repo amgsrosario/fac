@@ -604,7 +604,7 @@ export default function DocumentosView() {
       <section className="fac-list-toolbar">
         <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar documento, cliente, NIF ou estado" type="search" value={search} />
         <div className="fac-inline-actions">
-          <button className="fac-soft-button" disabled={loading} onClick={loadDocumentos} type="button">Atualizar</button>
+          <button className="fac-soft-button" disabled={loading} onClick={loadDocumentos} type="button">Atualizar lista</button>
           <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({documentoColumns.visibleColumns.length})</button>{canCreate && <button className="fac-primary-button" disabled={loading} onClick={openDraftEditor} type="button">Novo documento</button>}</div>
         </div>
       </section>

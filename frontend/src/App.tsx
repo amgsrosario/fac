@@ -733,7 +733,6 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             )}
             <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.papel} · {currentUser.codigo}</small></div>
             <GlobalSearch />
-            {shellView !== "Listagens" && <button onClick={refreshActiveView} type="button">Atualizar</button>}
             <button className="fac-ghost-button" onClick={onLogout} type="button">Sair</button>
           </div>
         </header>
