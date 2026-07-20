@@ -951,20 +951,36 @@ function ClientesView({
     <>
       {notice && !editorOpen && <p className="fac-editor-message">{notice}</p>}
       <section className={`fac-clients-header-grid ${editorOpen ? "fac-hidden" : ""}`}>
-        <section className="fac-hero fac-clients-hero">
-        <div>
-          <p className="fac-eyebrow">Clientes</p>
-          <h2>Consulta simples com conta corrente integrada</h2>
-          <p>
-            Consulta clientes e acompanha a respetiva conta corrente num único local.
-          </p>
+        <div className="fac-clients-header-main">
+          <section className="fac-hero fac-clients-hero">
+            <div>
+              <p className="fac-eyebrow">Clientes</p>
+              <h2>Consulta simples com conta corrente integrada</h2>
+              <p>
+                Consulta clientes e acompanha a respetiva conta corrente num único local.
+              </p>
+            </div>
+          </section>
+
+          <section className="fac-metrics fac-header-metrics" aria-label="Indicadores de cliente">
+            <article className="fac-metric client">
+              <span>Saldo pendente</span>
+              <strong>{contaResumo ? `${money(contaResumo.valorPendente)} ${contaResumo.moedaId}` : "-"}</strong>
+            </article>
+            <article className="fac-metric document">
+              <span>Documentos</span>
+              <strong>{contaResumo?.documentos ?? 0}</strong>
+            </article>
+            <article className="fac-metric treasury">
+              <span>Recebido ativo</span>
+              <strong>{contaResumo ? `${money(contaResumo.valorRecebidoAtivo)} ${contaResumo.moedaId}` : "-"}</strong>
+            </article>
+            <article className="fac-metric product">
+              <span>Vencidos</span>
+              <strong>{contaResumo?.vencidos ?? 0}</strong>
+            </article>
+          </section>
         </div>
-        <div className="fac-hero-card">
-          <span>Cliente selecionado</span>
-          <strong>{selectedCliente?.nome ?? (loading ? "A carregar..." : "Sem cliente")}</strong>
-          <small>{selectedCliente ? `NIF ${selectedCliente.nif}` : "Escolhe um cliente na lista"}</small>
-        </div>
-        </section>
 
         <aside className="fac-panel fac-detail fac-clients-detail-top">
           <p className="fac-eyebrow">Ficha resumida</p>
@@ -988,25 +1004,6 @@ function ClientesView({
             Editar cliente
           </button>}
         </aside>
-      </section>
-
-      <section className={`fac-metrics ${editorOpen ? "fac-hidden" : ""}`} aria-label="Indicadores de cliente">
-        <article className="fac-metric client">
-          <span>Saldo pendente</span>
-          <strong>{contaResumo ? `${money(contaResumo.valorPendente)} ${contaResumo.moedaId}` : "-"}</strong>
-        </article>
-        <article className="fac-metric document">
-          <span>Documentos</span>
-          <strong>{contaResumo?.documentos ?? 0}</strong>
-        </article>
-        <article className="fac-metric treasury">
-          <span>Recebido ativo</span>
-          <strong>{contaResumo ? `${money(contaResumo.valorRecebidoAtivo)} ${contaResumo.moedaId}` : "-"}</strong>
-        </article>
-        <article className="fac-metric product">
-          <span>Vencidos</span>
-          <strong>{contaResumo?.vencidos ?? 0}</strong>
-        </article>
       </section>
 
       <section className={`fac-content-grid fac-clients-content-grid ${editorOpen ? "fac-hidden" : ""}`}>

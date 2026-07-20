@@ -562,18 +562,22 @@ export default function DocumentosView() {
       {message && <p className="fac-message">{message}</p>}
 
       <section className="fac-documents-header-grid">
-        <section className="fac-hero fac-documents-hero">
-        <div>
-          <p className="fac-eyebrow">Documentos comerciais</p>
-          <h2>Consulta de documentos</h2>
-          <p>Pesquisa, seleciona e abre documentos comerciais para consulta ou edição de rascunhos.</p>
+        <div className="fac-documents-header-main">
+          <section className="fac-hero fac-documents-hero">
+            <div>
+              <p className="fac-eyebrow">Documentos comerciais</p>
+              <h2>Consulta de documentos</h2>
+              <p>Pesquisa, seleciona e abre documentos comerciais para consulta ou edição de rascunhos.</p>
+            </div>
+          </section>
+
+          <section className="fac-metrics fac-header-metrics" aria-label="Indicadores de documentos">
+            <article className="fac-metric document"><span>Emitidos ativos</span><strong>{emitted}</strong></article>
+            <article className="fac-metric product"><span>Rascunhos</span><strong>{drafts}</strong></article>
+            <article className="fac-metric treasury"><span>Anulados</span><strong>{annulled}</strong></article>
+            <article className="fac-metric client"><span>Total carregado</span><strong>{documentos.length}</strong></article>
+          </section>
         </div>
-        <div className="fac-hero-card">
-          <span>Documentos carregados</span>
-          <strong>{loading ? "A carregar..." : documentos.length}</strong>
-          <small>{emitted} emitidos, {drafts} rascunhos, {annulled} anulados</small>
-        </div>
-        </section>
 
         <aside className="fac-panel fac-detail fac-documents-detail-top">
           <p className="fac-eyebrow">Documento selecionado</p>
@@ -595,13 +599,6 @@ export default function DocumentosView() {
           {(selected?.estado === "EMITIDO" || selected?.estado === "ANULADO") && canPdf && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
           {selected?.estado === "EMITIDO" && canAnnul && <button className="fac-link-danger" disabled={loading} onClick={() => { setAnnulReason(""); setAnnulOpen(true); }} type="button">Anular documento</button>}
         </aside>
-      </section>
-
-      <section className="fac-metrics" aria-label="Indicadores de documentos">
-        <article className="fac-metric document"><span>Emitidos ativos</span><strong>{emitted}</strong></article>
-        <article className="fac-metric product"><span>Rascunhos</span><strong>{drafts}</strong></article>
-        <article className="fac-metric treasury"><span>Anulados</span><strong>{annulled}</strong></article>
-        <article className="fac-metric client"><span>Total carregado</span><strong>{documentos.length}</strong></article>
       </section>
 
       <section className="fac-list-toolbar">

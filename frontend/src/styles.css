@@ -159,7 +159,9 @@ textarea {
 
 .fac-topbar-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 9px;
   min-width: 0;
 }
@@ -485,6 +487,35 @@ button:disabled {
 .fac-clients-hero,
 .fac-documents-hero {
   margin: 0;
+}
+
+.fac-clients-header-main,
+.fac-documents-header-main {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.fac-clients-header-main .fac-hero,
+.fac-documents-header-main .fac-hero {
+  display: block;
+}
+
+.fac-header-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.fac-header-metrics .fac-metric {
+  min-width: 0;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.fac-header-metrics .fac-metric strong {
+  overflow-wrap: anywhere;
+  font-size: 18px;
 }
 
 .fac-articles-detail-top,
@@ -1731,6 +1762,10 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .fac-header-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .fac-topbar-actions {
     display: flex;
     flex-wrap: wrap;
@@ -1746,5 +1781,11 @@ button:disabled {
     max-width: none;
     order: 10;
     width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .fac-header-metrics {
+    grid-template-columns: 1fr;
   }
 }
