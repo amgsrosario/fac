@@ -75,6 +75,7 @@ type CatalogoString = { id: string; nome: string };
 type CatalogoNumero = { id: number; nome: string };
 type TipoTaxaIva = { id: string; descricao: string; inativo: boolean };
 type Armazem = { id: string; nome: string };
+type ParametrosDocumentoComercial = { tipoDocumentoId?: string | null; serie?: string | null; armazemCargaId?: string | null };
 
 type Catalogos = {
   artigos: Artigo[];
@@ -262,7 +263,8 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setRemovedLineIds([]);
         setDirty(false);
       } else {
-        const nextHeader = initialiseHeader(loadedCatalogos);
+        const parametros = await fetchOptional<ParametrosDocumentoComercial>("/api/parametros-documento-comercial");
+        const { header: nextHeader, warnings } = initialiseHeader(loadedCatalogos, parametros);
         setDocumento(null);
         setHeader(nextHeader);
         setLines([]);
@@ -270,6 +272,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setOriginalOrderKey("");
         setDiagnostico(null);
         setImpressao(null);
+        setNotice(warnings.length > 0 ? warnings.join(" ") : null);
         setActiveLine(emptyLine("COMERCIAL"));
         setActiveArticleQuery("");
         setRemovedLineIds([]);
@@ -1082,6 +1085,13 @@ async function requestJson<T>(url: string, body?: unknown, method: "GET" | "POST
   return response.status === 204 ? (undefined as T) : response.json();
 }
 
+async function fetchOptional<T>(url: string): Promise<T | null> {
+  const response = await apiFetch(url);
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(await responseError(response));
+  return response.json();
+}
+
 async function requestNoContent(url: string, method: "DELETE" | "PUT", body?: unknown) {
   const response = await apiFetch(url, { method, headers: body === undefined ? undefined : { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
   if (!response.ok) throw new Error(await responseError(response));
@@ -1096,16 +1106,27 @@ async function responseError(response: Response) {
   }
 }
 
-function initialiseHeader(catalogos: Catalogos): HeaderState {
-  const tipoDocumentoId = catalogos.tiposDocumento[0]?.id ?? "";
-  return {
+function initialiseHeader(catalogos: Catalogos, parametros: ParametrosDocumentoComercial | null): { header: HeaderState; warnings: string[] } {
+  const warnings: string[] = [];
+  const tipoDocumentoId = validTipoDocumentoId(catalogos, parametros?.tipoDocumentoId);
+  const serie = tipoDocumentoId ? validSerie(catalogos, tipoDocumentoId, parametros?.serie) : "";
+  if (parametros?.tipoDocumentoId && (!tipoDocumentoId || !serie)) {
+    warnings.push("Os valores base de tipo/série já não são válidos e não foram aplicados.");
+  }
+  const armazemConfigurado = parametros?.armazemCargaId && catalogos.armazens.some((armazem) => String(armazem.id) === String(parametros.armazemCargaId))
+    ? String(parametros.armazemCargaId)
+    : "";
+  if (parametros?.armazemCargaId && !armazemConfigurado) {
+    warnings.push("O armazém base já não existe; foi aplicado o primeiro armazém disponível.");
+  }
+  return { header: {
     ...emptyHeader,
     tipoDocumentoId,
-    serie: firstSerie(catalogos.series, tipoDocumentoId),
-    armazemCargaId: catalogos.armazens[0] ? String(catalogos.armazens[0].id) : "",
-    moedaId: catalogos.moedas[0]?.id ?? "",
-    rivaId: catalogos.regimesIva[0]?.id ?? ""
-  };
+    serie,
+    armazemCargaId: armazemConfigurado || (catalogos.armazens[0] ? String(catalogos.armazens[0].id) : ""),
+    moedaId: preferredCatalogId(catalogos.moedas, "EUR"),
+    rivaId: preferredCatalogId(catalogos.regimesIva, "CON")
+  }, warnings };
 }
 
 function headerFromDocument(documento: DocumentoComercial): HeaderState {
@@ -1300,8 +1321,22 @@ function assertOrder(lines: EditorLine[], expectedIds: number[]) {
   }
 }
 
+function validTipoDocumentoId(catalogos: Catalogos, tipoDocumentoId?: string | null) {
+  if (!tipoDocumentoId) return "";
+  return catalogos.tiposDocumento.some((tipo) => tipo.id === tipoDocumentoId) ? tipoDocumentoId : "";
+}
+
+function validSerie(catalogos: Catalogos, tipoDocumentoId: string, serie?: string | null) {
+  if (!serie) return "";
+  return catalogos.series.some((item) => item.tipoDocumentoId === tipoDocumentoId && item.serie === serie) ? serie : "";
+}
+
 function firstSerie(series: Serie[], tipoDocumentoId: string) {
   return series.find((serie) => serie.tipoDocumentoId === tipoDocumentoId)?.serie ?? "";
+}
+
+function preferredCatalogId(items: CatalogoString[], preferredId: string) {
+  return items.some((item) => item.id === preferredId) ? preferredId : items[0]?.id ?? "";
 }
 
 function nullable(value: string) {
