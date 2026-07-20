@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 import { currentYearDateRange } from "./dateFilters";
@@ -6,7 +7,7 @@ import { MultiSelectFilter } from "./MultiSelectFilter";
 import { EntityLookupColumn, EntityLookupField, EntityLookupSearchField } from "./ui/fac/components";
 
 type Page<T> = { content: T[]; totalElements: number; totalPages?: number };
-type SourceKey = "comerciais" | "linhasComerciais" | "financeiros" | "linhasFinanceiras" | "relacaoComercial" | "relacaoFinanceira" | "extratoCliente";
+type SourceKey = "pendentes" | "comerciais" | "linhasComerciais" | "financeiros" | "linhasFinanceiras" | "relacaoComercial" | "relacaoFinanceira" | "extratoCliente";
 
 type DocumentoComercial = {
   id: number; tipoDocumentoId: string; serie: string; numeroDocumento: number | null; estado: string;
@@ -53,8 +54,17 @@ type ExtratoCliente = {
   clienteId: number; clienteNome: string; clienteNif: string; dataInicial: string; dataFinal: string;
   geradoEm: string; moedas: ExtratoMoeda[];
 };
+type PendenteListagem = {
+  documentoId: number; documento: string; data: string; vencimento: string; clienteId: number;
+  clienteCodigo: string; clienteNome: string; moedaId: string; total: number; recebido: number; pendente: number;
+};
+type PendentesResponse = {
+  linhas: PendenteListagem[];
+  totais: { total: number; recebido: number; pendente: number };
+};
 
 const SOURCES: { key?: SourceKey; label: string; description: string }[] = [
+  { key: "pendentes", label: "Pendentes", description: "Documentos por receber" },
   { key: "comerciais", label: "Documentos comerciais", description: "Uma linha por cabeçalho comercial" },
   { key: "linhasComerciais", label: "Detalhe dos documentos comerciais", description: "Cabeçalho e detalhe de artigos" },
   { key: "financeiros", label: "Documentos financeiros", description: "Uma linha por recebimento" },
@@ -65,6 +75,11 @@ const SOURCES: { key?: SourceKey; label: string; description: string }[] = [
 ];
 
 const COLUMNS: Record<SourceKey, ConfigurableColumn[]> = {
+  pendentes: [
+    c("cliente", "Cliente", true), c("documento", "Documento", true), c("data", "Data", true),
+    c("vencimento", "Vencimento", true), c("total", "Total", true), c("recebido", "Recebido", true),
+    c("pendente", "Pendente", true)
+  ],
   comerciais: [
     c("emissao", "Data", true), c("documento", "Documento", true), c("cliente", "Cliente", true), c("nif", "NIF"),
     c("estado", "Estado", true), c("liquido", "Valor líquido", true), c("iva", "IVA", true), c("total", "Total", true),
@@ -112,8 +127,13 @@ const COLUMNS: Record<SourceKey, ConfigurableColumn[]> = {
 };
 
 export default function ListagensView() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const defaultPeriod = currentYearDateRange();
-  const [source, setSource] = useState<SourceKey>("comerciais");
+  const [source, setSource] = useState<SourceKey>(() => location.pathname.includes("/listagens/pendentes") ? "pendentes" : "comerciais");
+  const [pendentes, setPendentes] = useState<PendenteListagem[]>([]);
+  const [pendentesTotais, setPendentesTotais] = useState<PendentesResponse["totais"]>({ total: 0, recebido: 0, pendente: 0 });
+  const [pendentesClienteIds, setPendentesClienteIds] = useState<number[]>([]);
   const [comerciais, setComerciais] = useState<DocumentoComercial[]>([]);
   const [financeiros, setFinanceiros] = useState<DocumentoFinanceiro[]>([]);
   const [linhasComerciais, setLinhasComerciais] = useState<LinhaComercialListagem[]>([]);
@@ -144,7 +164,7 @@ export default function ListagensView() {
     if (source !== "extratoCliente") {
       loadSource(source);
     }
-  }, [source, dataInicial, dataFinal, clienteId, artigoId]);
+  }, [source, dataInicial, dataFinal, clienteId, artigoId, pendentesClienteIds]);
 
   async function loadFilterOptions() {
     try {
@@ -181,11 +201,11 @@ export default function ListagensView() {
   }
 
   async function loadSource(target: SourceKey) {
-    if (!dataInicial || !dataFinal) {
+    if (target !== "pendentes" && (!dataInicial || !dataFinal)) {
       setMessage("Indica a data inicial e a data final.");
       return;
     }
-    if (dataInicial > dataFinal) {
+    if (target !== "pendentes" && dataInicial > dataFinal) {
       setMessage("A data inicial não pode ser posterior à data final.");
       clearSourceRows(target);
       return;
@@ -196,6 +216,13 @@ export default function ListagensView() {
     try {
       if (target === "extratoCliente" && clientesExtrato.length === 0) {
         setClientesExtrato((await fetchPage<ClienteOption>("/api/clientes?size=500&sort=nome,asc")).content);
+      }
+      if (target === "pendentes") {
+        const params = new URLSearchParams();
+        pendentesClienteIds.forEach((id) => params.append("clienteIds", String(id)));
+        const response = await fetchJson<PendentesResponse>(`/api/listagens/pendentes${params.toString() ? `?${params}` : ""}`);
+        setPendentes(response.linhas);
+        setPendentesTotais(response.totais);
       }
       if (target === "comerciais") {
         const page = await fetchPage<DocumentoComercialResponse>(`${listagemUrl("/api/listagens/documentos-comerciais")}&sort=dataEmissao,desc&sort=id,desc`);
@@ -274,6 +301,10 @@ export default function ListagensView() {
   }
 
   function clearSourceRows(target: SourceKey) {
+    if (target === "pendentes") {
+      setPendentes([]);
+      setPendentesTotais({ total: 0, recebido: 0, pendente: 0 });
+    }
     if (target === "comerciais") setComerciais([]);
     if (target === "financeiros") setFinanceiros([]);
     if (target === "linhasComerciais" || target === "relacaoComercial") setLinhasComerciais([]);
@@ -302,6 +333,7 @@ export default function ListagensView() {
 
   const rows = useMemo(() => {
     const base: unknown[] = source === "extratoCliente" ? []
+      : source === "pendentes" ? pendentes
       : source === "comerciais" ? comerciais
       : source === "linhasComerciais" || source === "relacaoComercial" ? linhasComerciais
       : source === "financeiros" ? financeiros
@@ -309,7 +341,7 @@ export default function ListagensView() {
     const term = search.trim().toLowerCase();
     if (!term) return base;
     return base.filter((row) => searchText(source, row).includes(term));
-  }, [source, comerciais, linhasComerciais, financeiros, linhasFinanceiras, search]);
+  }, [source, pendentes, comerciais, linhasComerciais, financeiros, linhasFinanceiras, search]);
 
   return <>
     <section className="fac-hero">
@@ -324,7 +356,9 @@ export default function ListagensView() {
     <section className="fac-panel fac-section-panel">
       <div className="fac-panel-header"><div><p className="fac-eyebrow">{SOURCES.find((item) => item.key === source)?.label}</p><h2>Dados disponíveis</h2></div><div className="fac-inline-actions">{source !== "extratoCliente" && <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar nesta listagem" type="search" value={search}/>}<button className="fac-ghost-button" onClick={() => setColumnsOpen((current) => !current)} type="button">Colunas ({configured.visibleColumns.length})</button><button className="fac-soft-button" disabled={loading} onClick={() => source === "extratoCliente" ? consultarExtrato() : loadSource(source)} type="button">Atualizar</button></div></div>
       {message && <p className="fac-message">{message}</p>}
-      {source !== "extratoCliente" && <ListingFilters artigos={artigos} clientes={mergeSelectedCliente(clientes, selectedCliente)} dataFinal={dataFinal} dataInicial={dataInicial} onArtigo={changeArtigo} onCliente={changeCliente} onDataFinal={setDataFinal} onDataInicial={setDataInicial} selectedArtigo={selectedArtigo ?? artigos.find((artigo) => artigo.codigo === artigoId) ?? null} selectedCliente={selectedCliente} showArtigo={source === "linhasComerciais"} />}
+      {source === "pendentes" && <PendentesFilters clientes={clientes} selectedValues={pendentesClienteIds} onChange={setPendentesClienteIds}/>}
+      {source === "pendentes" && <PendentesTotals totais={pendentesTotais}/>}
+      {source !== "extratoCliente" && source !== "pendentes" && <ListingFilters artigos={artigos} clientes={mergeSelectedCliente(clientes, selectedCliente)} dataFinal={dataFinal} dataInicial={dataInicial} onArtigo={changeArtigo} onCliente={changeCliente} onDataFinal={setDataFinal} onDataInicial={setDataInicial} selectedArtigo={selectedArtigo ?? artigos.find((artigo) => artigo.codigo === artigoId) ?? null} selectedCliente={selectedCliente} showArtigo={source === "linhasComerciais"} />}
       {source === "extratoCliente" && <p className="fac-muted">Extrato calculado a partir dos documentos emitidos. Os documentos anulados não integram os movimentos contabilísticos e cada moeda é apresentada separadamente.</p>}
       {source === "extratoCliente" && <div className="fac-extrato-filters">
         <div className="fac-filter-field"><span>Clientes</span><MultiSelectFilter allLabel="Todos os clientes" options={clientesExtrato.map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}` }))} selectedValues={extratoClienteIds} onChange={(values) => { setExtratoClienteIds(values); setExtratos(null); }}/></div>
@@ -339,11 +373,34 @@ export default function ListagensView() {
       {source === "extratoCliente" && <ExtratoTable extratos={extratos} loading={loading} columns={configured.visibleColumns}/>}
       {source !== "extratoCliente" &&
       <div className="fac-table-scroll"><table className="fac-table"><thead><tr>{configured.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>
-        {rows.map((row, index) => <tr key={rowKey(source, row, index)}>{configured.visibleColumns.map((column) => <td key={column.key}>{cellValue(source, row, column.key)}</td>)}</tr>)}
-        {!loading && rows.length === 0 && <tr><td colSpan={configured.visibleColumns.length}>Sem registos para mostrar.</td></tr>}
+        {rows.map((row, index) => <tr key={rowKey(source, row, index)}>{configured.visibleColumns.map((column) => <td key={column.key}>{cellValue(source, row, column.key, navigate)}</td>)}</tr>)}
+        {!loading && rows.length === 0 && <tr><td colSpan={configured.visibleColumns.length}>{source === "pendentes" ? (pendentesClienteIds.length > 0 ? "Nao existem documentos pendentes para os clientes selecionados." : "Nao existem documentos pendentes.") : "Sem registos para mostrar."}</td></tr>}
       </tbody></table></div>}
     </section>
   </>;
+}
+
+function PendentesFilters({ clientes, selectedValues, onChange }: { clientes: ClienteOption[]; selectedValues: number[]; onChange: (values: number[]) => void }) {
+  const selected = clientes.filter((cliente) => selectedValues.includes(cliente.id));
+  return <div className="fac-pendentes-filters">
+    <div className="fac-filter-field">
+      <span>Clientes</span>
+      <MultiSelectFilter allLabel="Todos os clientes" options={clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}${cliente.nif ? ` - NIF ${cliente.nif}` : ""}` }))} selectedValues={selectedValues} onChange={onChange}/>
+    </div>
+    {selected.length > 0 && <div className="fac-selected-chips" aria-label="Clientes selecionados">
+      <span>Clientes selecionados: {selected.length}</span>
+      {selected.map((cliente) => <button key={cliente.id} onClick={() => onChange(selectedValues.filter((id) => id !== cliente.id))} type="button">{cliente.nome} x</button>)}
+      <button className="fac-ghost-button" onClick={() => onChange([])} type="button">Limpar</button>
+    </div>}
+  </div>;
+}
+
+function PendentesTotals({ totais }: { totais: PendentesResponse["totais"] }) {
+  return <div className="fac-pendentes-totals">
+    <div><span>Total faturado</span><strong>{money(totais.total)}</strong></div>
+    <div><span>Total recebido</span><strong>{money(totais.recebido)}</strong></div>
+    <div className="highlight"><span>Total pendente</span><strong>{money(totais.pendente)}</strong></div>
+  </div>;
 }
 
 function ListingFilters({
@@ -533,7 +590,20 @@ function decimal(value: number) { return Number(value || 0).toLocaleString("pt-P
 function yesNo(value: boolean) { return value ? "Sim" : "Não"; }
 function statusComercial(d: DocumentoComercial) { return d.anulado ? "ANULADO" : d.estado; }
 
-function cellValue(source: SourceKey, raw: unknown, key: string) {
+function cellValue(source: SourceKey, raw: unknown, key: string, navigate?: (path: string) => void) {
+  if (source === "pendentes") {
+    const p = raw as PendenteListagem;
+    const values: Record<string, React.ReactNode> = {
+      cliente: <span><strong>{p.clienteNome}</strong><small className="fac-cell-note">NIF {p.clienteCodigo || "-"}</small></span>,
+      documento: <button className="fac-link-button" onClick={() => navigate?.(`/documentos/${p.documentoId}`)} type="button">{p.documento}</button>,
+      data: datePt(p.data),
+      vencimento: datePt(p.vencimento),
+      total: moneyCell(p.total, p.moedaId),
+      recebido: moneyCell(p.recebido, p.moedaId),
+      pendente: <strong>{moneyCell(p.pendente, p.moedaId)}</strong>
+    };
+    return values[key] ?? "-";
+  }
   if (source === "comerciais") {
     const d = raw as DocumentoComercial;
     const values: Record<string, React.ReactNode> = { documento: reference(d.tipoDocumentoId, d.serie, d.numeroDocumento), cliente: d.clienteNome, nif: d.clienteNif, emissao: datePt(d.dataEmissao), vencimento: datePt(d.dataVencimento), moeda: d.moedaId, bruto: moneyCell(d.valorBruto), desconto: moneyCell(d.valorDesconto), liquido: moneyCell(d.valorLiquido ?? 0), iva: moneyCell(d.valorIvaTotal), retencao: moneyCell(d.valorRetencao), total: moneyCell(d.valorTotal, d.moedaId), estado: <span className={`fac-status ${d.anulado ? "danger" : ""}`}>{statusComercial(d)}</span>, impresso: yesNo(d.impresso), liquidado: yesNo(d.liquidado), emissor: d.emissorId ?? "-" };
@@ -562,6 +632,7 @@ function cellValue(source: SourceKey, raw: unknown, key: string) {
 }
 
 function searchText(source: SourceKey, row: unknown) {
+  if (source === "pendentes") { const p = row as PendenteListagem; return `${p.clienteNome} ${p.clienteCodigo} ${p.documento}`.toLowerCase(); }
   if (source === "comerciais") { const d = row as DocumentoComercial; return `${reference(d.tipoDocumentoId, d.serie, d.numeroDocumento)} ${d.clienteNome} ${d.clienteNif} ${statusComercial(d)}`.toLowerCase(); }
   if (source === "linhasComerciais" || source === "relacaoComercial") { const l = row as LinhaComercialListagem; return `${reference(l.documento.tipoDocumentoId, l.documento.serie, l.documento.numeroDocumento)} ${l.documento.clienteNome} ${l.documento.clienteNif} ${l.artigoId} ${l.descricao}`.toLowerCase(); }
   if (source === "financeiros") { const d = row as DocumentoFinanceiro; return `${reference(d.tipoDocumentoId, d.serie, d.numeroDocumento)} ${d.clienteId} ${d.emissorId}`.toLowerCase(); }
@@ -569,6 +640,7 @@ function searchText(source: SourceKey, row: unknown) {
 }
 
 function rowKey(source: SourceKey, row: unknown, index: number) {
+  if (source === "pendentes") return (row as PendenteListagem).documentoId;
   if (source === "comerciais" || source === "financeiros") return (row as { id: number }).id;
   return `${source}-${(row as { id: number }).id}-${index}`;
 }

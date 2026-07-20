@@ -316,6 +316,42 @@ class DocumentoComercialControllerTests {
         return Long.valueOf(documentoLocation.substring(documentoLocation.lastIndexOf('/') + 1));
     }
 
+    private void emitir(String documentoLocation) throws Exception {
+        mockMvc.perform(post(documentoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"emissorId\":\"EMISSOR\"}"))
+                .andExpect(status().isOk());
+    }
+
+    private void liquidar(Pendente pendente, Cliente clienteDocumento, BigDecimal valorALiquidar) throws Exception {
+        mockMvc.perform(post("/documentos-financeiros")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoDocumentoId": "RCB",
+                                  "serie": "A",
+                                  "dataEmissao": "2026-07-20",
+                                  "clienteId": %d,
+                                  "moedaId": "EUR",
+                                  "mPagamentoId": "%s",
+                                  "emissorId": "EMISSOR",
+                                  "linhas": [
+                                    {
+                                      "pendenteId": %d,
+                                      "valorALiquidar": %s,
+                                      "descontoValor": 0
+                                    }
+                                  ]
+                                }
+                                """.formatted(
+                                clienteDocumento.getId(),
+                                mPagamento.getId(),
+                                pendente.getId(),
+                                valorALiquidar.toPlainString()
+                        )))
+                .andExpect(status().isCreated());
+    }
+
     private Long adicionarLinhaComercial(String documentoLocation, String descricao) throws Exception {
         mockMvc.perform(post(documentoLocation + "/linhas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -435,6 +471,73 @@ class DocumentoComercialControllerTests {
                         org.hamcrest.Matchers.hasItem("RASCUNHO")))
                 .andExpect(jsonPath("$.content[*].id",
                         org.hamcrest.Matchers.hasItem(documentoId(rascunhoLocation).intValue())));
+    }
+
+    @Test
+    void listagemPendentesIncluiApenasDocumentosPorReceberComFiltroMultiCliente() throws Exception {
+        Cliente segundoCliente = criarClienteTeste("Cliente Pendentes Dois", "509000002");
+        Cliente clienteSemPendentes = criarClienteTeste("Cliente Sem Pendentes", "509000003");
+
+        String abertoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-01-10");
+        String parcialLocation = criarDocumentoComPrimeiraLinha(segundoCliente, "2026-07-10");
+        String liquidadoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-02-10");
+        String rascunhoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-03-10");
+        String anuladoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-04-10");
+        String futuroLocation = criarDocumentoComPrimeiraLinha(segundoCliente, "2999-01-10");
+
+        emitir(abertoLocation);
+        emitir(liquidadoLocation);
+        emitir(anuladoLocation);
+        emitir(parcialLocation);
+        emitir(futuroLocation);
+
+        Pendente parcial = pendenteRepository.findByDocumentoComercialId(documentoId(parcialLocation)).orElseThrow();
+        Pendente liquidado = pendenteRepository.findByDocumentoComercialId(documentoId(liquidadoLocation)).orElseThrow();
+        liquidar(parcial, segundoCliente, new BigDecimal("5.000000"));
+        liquidar(liquidado, cliente, liquidado.getValorPendente());
+
+        mockMvc.perform(post(anuladoLocation + "/anular")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Sem efeito para pendentes\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/listagens/pendentes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(2))
+                .andExpect(jsonPath("$.linhas[0].documentoId").value(documentoId(abertoLocation)))
+                .andExpect(jsonPath("$.linhas[1].documentoId").value(documentoId(parcialLocation)))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.hasItems(
+                                documentoId(liquidadoLocation).intValue(),
+                                documentoId(rascunhoLocation).intValue(),
+                                documentoId(anuladoLocation).intValue(),
+                                documentoId(futuroLocation).intValue()
+                        )
+                )))
+                .andExpect(jsonPath("$.totais.total").value(24.600000))
+                .andExpect(jsonPath("$.totais.recebido").value(5.000000))
+                .andExpect(jsonPath("$.totais.pendente").value(19.600000));
+
+        mockMvc.perform(get("/listagens/pendentes").param("clienteIds", String.valueOf(segundoCliente.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(1))
+                .andExpect(jsonPath("$.linhas[0].clienteId").value(segundoCliente.getId()))
+                .andExpect(jsonPath("$.totais.total").value(12.300000))
+                .andExpect(jsonPath("$.totais.recebido").value(5.000000))
+                .andExpect(jsonPath("$.totais.pendente").value(7.300000));
+
+        mockMvc.perform(get("/listagens/pendentes")
+                        .param("clienteIds", String.valueOf(cliente.getId()))
+                        .param("clienteIds", String.valueOf(segundoCliente.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(2));
+
+        mockMvc.perform(get("/listagens/pendentes").param("clienteIds", String.valueOf(clienteSemPendentes.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(0))
+                .andExpect(jsonPath("$.totais.total").value(0))
+                .andExpect(jsonPath("$.totais.recebido").value(0))
+                .andExpect(jsonPath("$.totais.pendente").value(0));
     }
 
     @Test

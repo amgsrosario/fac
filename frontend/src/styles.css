@@ -801,12 +801,53 @@ button:disabled {
   cursor: pointer;
 }
 
+.fac-multi-select-search {
+  width: 100%;
+  min-height: 38px;
+  margin-bottom: 6px;
+  border: 1px solid var(--fac-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
 .fac-multi-select-options {
   display: grid;
   max-height: 280px;
   overflow-y: auto;
   padding-top: 6px;
   gap: 2px;
+}
+
+.fac-multi-select-options label {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  flex-direction: row;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.fac-multi-select-options label:hover {
+  background: var(--fac-sidebar);
+}
+
+.fac-multi-select-options input {
+  width: 16px;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+}
+
+.fac-multi-select-options span,
+.fac-multi-select-empty {
+  overflow: hidden;
+  color: var(--fac-text);
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fac-extrato-filters .fac-multi-select-options label {
@@ -842,6 +883,7 @@ button:disabled {
 
 .fac-extrato-filters input,
 .fac-extrato-filters select,
+.fac-pendentes-filters input,
 .fac-listing-filters input,
 .fac-listing-filters select {
   width: 100%;
@@ -851,6 +893,79 @@ button:disabled {
   padding: 9px 11px;
   color: var(--fac-text);
   background: var(--fac-surface);
+}
+
+.fac-pendentes-filters {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.fac-selected-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fac-selected-chips > span {
+  color: var(--fac-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fac-selected-chips button:not(.fac-ghost-button) {
+  min-height: 32px;
+  border: 1px solid var(--fac-border);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: var(--fac-surface);
+  color: var(--fac-text);
+  cursor: pointer;
+}
+
+.fac-pendentes-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.fac-pendentes-totals div {
+  border: 1px solid var(--fac-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--fac-surface);
+}
+
+.fac-pendentes-totals span,
+.fac-cell-note {
+  display: block;
+  color: var(--fac-muted);
+  font-size: 12px;
+}
+
+.fac-pendentes-totals strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--fac-text);
+  font-size: 18px;
+}
+
+.fac-pendentes-totals .highlight strong {
+  color: var(--fac-petrol);
+  font-size: 22px;
+}
+
+.fac-link-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--fac-petrol);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .fac-money {
@@ -1817,6 +1932,7 @@ button:disabled {
   .fac-metrics,
   .fac-dashboard-action-grid,
   .fac-extrato-filters,
+  .fac-pendentes-totals,
   .fac-listing-filters,
   .fac-balance-strip,
   .fac-form-grid,

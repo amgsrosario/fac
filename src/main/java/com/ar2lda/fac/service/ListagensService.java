@@ -5,6 +5,9 @@ import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDto;
 import com.ar2lda.fac.controller.dto.ListagemDocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.ListagemLinhaComercialDto;
 import com.ar2lda.fac.controller.dto.ListagemLinhaFinanceiraDto;
+import com.ar2lda.fac.controller.dto.PendenteListagemDto;
+import com.ar2lda.fac.controller.dto.PendenteListagemTotaisDto;
+import com.ar2lda.fac.controller.dto.PendentesListagemDto;
 import com.ar2lda.fac.mapper.DocumentoComercialMapper;
 import com.ar2lda.fac.mapper.DocumentoFinanceiroMapper;
 import com.ar2lda.fac.mapper.LinhaDocumentoComercialMapper;
@@ -12,10 +15,12 @@ import com.ar2lda.fac.model.DocumentoComercial;
 import com.ar2lda.fac.model.DocumentoFinanceiro;
 import com.ar2lda.fac.model.LinhaDocumentoComercial;
 import com.ar2lda.fac.model.LinhaDocumentoFinanceiro;
+import com.ar2lda.fac.model.Pendente;
 import com.ar2lda.fac.repository.DocumentoComercialRepository;
 import com.ar2lda.fac.repository.DocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.LinhaDocumentoComercialRepository;
 import com.ar2lda.fac.repository.LinhaDocumentoFinanceiroRepository;
+import com.ar2lda.fac.repository.PendenteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +39,7 @@ public class ListagensService {
     private final LinhaDocumentoComercialRepository linhaDocumentoComercialRepository;
     private final DocumentoFinanceiroRepository documentoFinanceiroRepository;
     private final LinhaDocumentoFinanceiroRepository linhaDocumentoFinanceiroRepository;
+    private final PendenteRepository pendenteRepository;
     private final DocumentoComercialMapper documentoComercialMapper;
     private final LinhaDocumentoComercialMapper linhaDocumentoComercialMapper;
     private final DocumentoFinanceiroMapper documentoFinanceiroMapper;
@@ -62,6 +68,21 @@ public class ListagensService {
                 .map(this::toLinhaFinanceiraDto);
     }
 
+    @Transactional(readOnly = true)
+    public PendentesListagemDto pendentes(List<Long> clienteIds) {
+        List<Long> filtroClientes = clienteIds == null ? List.of() : clienteIds.stream()
+                .filter(id -> id != null && id > 0)
+                .distinct()
+                .toList();
+        boolean filtrarClientes = !filtroClientes.isEmpty();
+        List<PendenteListagemDto> linhas = pendenteRepository
+                .findPendentesListagem(LocalDate.now(), filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L))
+                .stream()
+                .map(this::toPendenteListagemDto)
+                .toList();
+        return new PendentesListagemDto(linhas, pendentesTotais(linhas));
+    }
+
     private ListagemLinhaComercialDto toLinhaComercialDto(LinhaDocumentoComercial linha) {
         return new ListagemLinhaComercialDto(
                 documentoComercialMapper.toDTO(linha.getDocumentoComercial()),
@@ -72,6 +93,28 @@ public class ListagensService {
     private ListagemDocumentoComercialDto toDocumentoComercialDto(DocumentoComercial documento) {
         BigDecimal valorLiquido = nullToZero(documento.getValorBruto()).subtract(nullToZero(documento.getValorDesconto()));
         return new ListagemDocumentoComercialDto(documentoComercialMapper.toDTO(documento), valorLiquido);
+    }
+
+    private PendenteListagemDto toPendenteListagemDto(Pendente pendente) {
+        BigDecimal total = nullToZero(pendente.getValorDocumento());
+        BigDecimal valorPendente = nullToZero(pendente.getValorPendente());
+        return new PendenteListagemDto(
+                pendente.getDocumentoComercial().getId(),
+                "%s %s/%s".formatted(
+                        pendente.getTipoDocumento().getId(),
+                        pendente.getSerieDocumento(),
+                        pendente.getNumeroDocumento()
+                ),
+                pendente.getDataDocumento(),
+                pendente.getDataVencimento(),
+                pendente.getCliente().getId(),
+                pendente.getCliente().getNif(),
+                pendente.getCliente().getNome(),
+                pendente.getMoeda().getId(),
+                total,
+                total.subtract(valorPendente),
+                valorPendente
+        );
     }
 
     private DocumentoFinanceiroDto toDocumentoFinanceiroDto(DocumentoFinanceiro documento) {
@@ -87,6 +130,18 @@ public class ListagensService {
 
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private PendenteListagemTotaisDto pendentesTotais(List<PendenteListagemDto> linhas) {
+        return new PendenteListagemTotaisDto(
+                sum(linhas.stream().map(PendenteListagemDto::total).toList()),
+                sum(linhas.stream().map(PendenteListagemDto::recebido).toList()),
+                sum(linhas.stream().map(PendenteListagemDto::pendente).toList())
+        );
+    }
+
+    private BigDecimal sum(List<BigDecimal> values) {
+        return values.stream().map(this::nullToZero).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private BigDecimal nullToZero(BigDecimal value) {

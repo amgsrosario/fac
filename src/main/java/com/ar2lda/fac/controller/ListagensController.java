@@ -4,6 +4,7 @@ import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDto;
 import com.ar2lda.fac.controller.dto.ListagemDocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.ListagemLinhaComercialDto;
 import com.ar2lda.fac.controller.dto.ListagemLinhaFinanceiraDto;
+import com.ar2lda.fac.controller.dto.PendentesListagemDto;
 import com.ar2lda.fac.service.ListagensService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/listagens")
@@ -62,5 +64,10 @@ public class ListagensController {
             Pageable pageable
     ) {
         return service.linhasFinanceiras(dataInicial, dataFinal, clienteId, pageable);
+    }
+
+    @GetMapping("/pendentes")
+    public PendentesListagemDto pendentes(@RequestParam(required = false) List<Long> clienteIds) {
+        return service.pendentes(clienteIds);
     }
 }
