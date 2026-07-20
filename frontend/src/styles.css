@@ -491,6 +491,8 @@ button:disabled {
 .fac-clients-detail-top,
 .fac-documents-detail-top {
   align-self: start;
+  height: auto;
+  min-height: 0;
 }
 
 .fac-articles-detail-top dl,
@@ -1048,6 +1050,43 @@ button:disabled {
 .fac-detail button {
   width: 100%;
   margin-top: 8px;
+}
+
+.fac-detail.fac-documents-detail-top dl {
+  gap: 10px 14px;
+  margin: 12px 0;
+}
+
+.fac-detail.fac-documents-detail-top dl div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  border-bottom: 0;
+  padding: 0;
+}
+
+.fac-detail.fac-documents-detail-top dt {
+  flex: 0 0 auto;
+  font-size: 12px;
+}
+
+.fac-detail.fac-documents-detail-top dd {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-size: 13px;
+}
+
+.fac-detail.fac-documents-detail-top button {
+  width: auto;
+  min-height: 36px;
+  margin: 6px 6px 0 0;
+  padding: 8px 12px;
 }
 
 .fac-section-panel {
