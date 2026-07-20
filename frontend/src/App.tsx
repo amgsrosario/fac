@@ -985,12 +985,12 @@ function ClientesView({
           <p className="fac-eyebrow">Ficha resumida</p>
           <h2>{selectedCliente?.nome ?? "Sem cliente"}</h2>
           <dl>
-            <div><dt>CÃ³digo</dt><dd>{selectedCliente?.id ?? "-"}</dd></div>
+            <div><dt>Código</dt><dd>{selectedCliente?.id ?? "-"}</dd></div>
             <div><dt>NIF</dt><dd>{selectedCliente?.nif ?? "-"}</dd></div>
             <div><dt>Morada</dt><dd>{selectedCliente?.morada ?? "-"}</dd></div>
             <div><dt>Localidade</dt><dd>{selectedCliente?.localidade ?? "-"}</dd></div>
-            <div><dt>CÃ³digo postal</dt><dd>{selectedCliente?.codPostalId ?? "-"}</dd></div>
-            <div><dt>PaÃ­s</dt><dd>{selectedCliente?.paisId ?? "-"}</dd></div>
+            <div><dt>Código postal</dt><dd>{selectedCliente?.codPostalId ?? "-"}</dd></div>
+            <div><dt>País</dt><dd>{selectedCliente?.paisId ?? "-"}</dd></div>
             <div><dt>Moeda</dt><dd>{selectedCliente?.moedaId ?? "-"}</dd></div>
             <div><dt>Regime IVA</dt><dd>{selectedCliente?.rivaId ?? "-"}</dd></div>
           </dl>

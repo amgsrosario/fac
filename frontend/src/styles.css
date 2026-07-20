@@ -488,6 +488,11 @@ button:disabled {
   align-items: stretch;
 }
 
+.fac-clients-header-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 360px);
+  align-items: stretch;
+}
+
 .fac-articles-hero,
 .fac-clients-hero,
 .fac-documents-hero {
@@ -533,6 +538,13 @@ button:disabled {
 
 .fac-documents-detail-top {
   align-self: stretch;
+  height: 100%;
+}
+
+.fac-clients-detail-top {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
   height: 100%;
 }
 
@@ -1133,6 +1145,56 @@ button:disabled {
   min-height: 36px;
   margin: 6px 6px 0 0;
   padding: 8px 12px;
+}
+
+.fac-detail.fac-clients-detail-top h2 {
+  font-size: 1.08rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.fac-detail.fac-clients-detail-top dl {
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.fac-detail.fac-clients-detail-top dl div {
+  display: grid;
+  grid-template-columns: minmax(108px, max-content) minmax(0, 1fr);
+  align-items: start;
+  column-gap: 14px;
+  min-width: 0;
+  border-bottom: 0;
+  padding: 0;
+}
+
+.fac-detail.fac-clients-detail-top dt {
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.fac-detail.fac-clients-detail-top dd {
+  min-width: 0;
+  overflow: visible;
+  text-align: left;
+  white-space: normal;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.fac-detail.fac-clients-detail-top dl div:nth-child(1) dd,
+.fac-detail.fac-clients-detail-top dl div:nth-child(2) dd,
+.fac-detail.fac-clients-detail-top dl div:nth-child(n+5) dd {
+  white-space: nowrap;
+}
+
+.fac-detail.fac-clients-detail-top button {
+  align-self: flex-start;
+  width: auto;
+  min-height: 38px;
+  margin-top: auto;
+  padding: 9px 14px;
 }
 
 .fac-section-panel {
