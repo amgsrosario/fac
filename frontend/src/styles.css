@@ -761,7 +761,10 @@ button:disabled {
   min-width: 0;
 }
 
-.fac-multi-select summary {
+.fac-multi-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   overflow: hidden;
   width: 100%;
   min-height: 42px;
@@ -771,29 +774,48 @@ button:disabled {
   background: var(--fac-surface);
   color: var(--fac-text);
   cursor: pointer;
-  list-style-position: inside;
+  font: inherit;
+  text-align: left;
+}
+
+.fac-multi-select-trigger::after {
+  position: absolute;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  color: var(--fac-text-muted);
+  content: "";
+  transform: rotate(45deg) translateY(-2px);
+}
+
+.fac-multi-select-trigger > span {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .fac-multi-select-menu {
-  position: absolute;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  position: fixed;
   z-index: 20;
-  top: calc(100% + 6px);
-  left: 0;
-  width: min(430px, calc(100vw - 48px));
-  padding: 8px;
   border: 1px solid var(--fac-border);
   border-radius: 8px;
   background: var(--fac-surface);
   box-shadow: 0 12px 30px rgba(35, 48, 58, .16);
 }
 
+.fac-multi-select-header {
+  padding: 8px 8px 0;
+  border-bottom: 1px solid var(--fac-border);
+}
+
 .fac-multi-select-all {
   width: 100%;
   padding: 9px 10px;
   border: 0;
-  border-bottom: 1px solid var(--fac-border);
   background: transparent;
   color: var(--fac-petrol);
   font-weight: 700;
@@ -812,9 +834,9 @@ button:disabled {
 
 .fac-multi-select-options {
   display: grid;
-  max-height: 280px;
+  min-height: 0;
   overflow-y: auto;
-  padding-top: 6px;
+  padding: 6px 8px;
   gap: 2px;
 }
 
@@ -834,6 +856,7 @@ button:disabled {
 }
 
 .fac-multi-select-options input {
+  flex: 0 0 auto;
   width: 16px;
   min-height: 16px;
   margin: 0;
@@ -848,6 +871,35 @@ button:disabled {
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.fac-multi-select-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border-top: 1px solid var(--fac-border);
+  background: var(--fac-surface);
+}
+
+.fac-multi-select-footer > span {
+  color: var(--fac-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fac-multi-select-footer > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.fac-multi-select-footer button {
+  min-height: 34px;
+  padding: 7px 11px;
 }
 
 .fac-extrato-filters .fac-multi-select-options label {
@@ -883,7 +935,7 @@ button:disabled {
 
 .fac-extrato-filters input,
 .fac-extrato-filters select,
-.fac-pendentes-filters input,
+.fac-pendentes-filters > label input,
 .fac-listing-filters input,
 .fac-listing-filters select {
   width: 100%;
@@ -911,6 +963,17 @@ button:disabled {
 .fac-pendentes-filters label > span {
   color: var(--fac-muted);
   font-size: 13px;
+}
+
+.fac-pendentes-filters .fac-multi-select-options label {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  flex-direction: row;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .fac-pendentes-actions {
