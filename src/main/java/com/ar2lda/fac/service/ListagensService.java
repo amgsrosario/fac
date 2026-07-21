@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -46,6 +47,7 @@ public class ListagensService {
     private final DocumentoComercialMapper documentoComercialMapper;
     private final LinhaDocumentoComercialMapper linhaDocumentoComercialMapper;
     private final DocumentoFinanceiroMapper documentoFinanceiroMapper;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public Page<ListagemDocumentoComercialDto> documentosComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, Pageable pageable) {
@@ -73,10 +75,16 @@ public class ListagensService {
 
     @Transactional(readOnly = true)
     public PendentesListagemDto pendentes(List<Long> clienteIds) {
+        return pendentes(clienteIds, false);
+    }
+
+    @Transactional(readOnly = true)
+    public PendentesListagemDto pendentes(List<Long> clienteIds, boolean apenasVencidos) {
         List<Long> filtroClientes = filtroClientes(clienteIds);
         boolean filtrarClientes = !filtroClientes.isEmpty();
+        LocalDate hoje = LocalDate.now(clock);
         List<PendenteListagemDto> linhas = pendenteRepository
-                .findPendentesListagem(LocalDate.now(), filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L))
+                .findPendentesListagem(hoje, apenasVencidos, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L))
                 .stream()
                 .map(this::toPendenteListagemDto)
                 .toList();
@@ -85,11 +93,17 @@ public class ListagensService {
 
     @Transactional(readOnly = true)
     public PendentesListagemDto pendentesAData(LocalDate dataReferencia, List<Long> clienteIds) {
+        return pendentesAData(dataReferencia, clienteIds, false);
+    }
+
+    @Transactional(readOnly = true)
+    public PendentesListagemDto pendentesAData(LocalDate dataReferencia, List<Long> clienteIds, boolean apenasVencidos) {
         List<Long> filtroClientes = filtroClientes(clienteIds);
         boolean filtrarClientes = !filtroClientes.isEmpty();
         List<Pendente> pendentes = pendenteRepository.findPendentesADataListagem(
                 dataReferencia,
                 dataReferencia.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+                apenasVencidos,
                 filtrarClientes,
                 filtrarClientes ? filtroClientes : List.of(-1L)
         );

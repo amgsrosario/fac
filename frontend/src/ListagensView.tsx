@@ -141,6 +141,7 @@ export default function ListagensView() {
   const [pendentesTotais, setPendentesTotais] = useState<PendentesResponse["totais"]>({ total: 0, recebido: 0, pendente: 0 });
   const [pendentesClienteIds, setPendentesClienteIds] = useState<number[]>([]);
   const [pendentesDataReferencia, setPendentesDataReferencia] = useState(todayIso);
+  const [pendentesApenasVencidos, setPendentesApenasVencidos] = useState(false);
   const [comerciais, setComerciais] = useState<DocumentoComercial[]>([]);
   const [financeiros, setFinanceiros] = useState<DocumentoFinanceiro[]>([]);
   const [linhasComerciais, setLinhasComerciais] = useState<LinhaComercialListagem[]>([]);
@@ -172,7 +173,7 @@ export default function ListagensView() {
     if (source !== "extratoCliente") {
       loadSource(source);
     }
-  }, [source, dataInicial, dataFinal, clienteId, artigoId, pendentesClienteIds, pendentesDataReferencia]);
+  }, [source, dataInicial, dataFinal, clienteId, artigoId, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos]);
 
   async function loadFilterOptions() {
     try {
@@ -232,6 +233,7 @@ export default function ListagensView() {
       if (target === "pendentes" || target === "pendentesAData") {
         const params = new URLSearchParams();
         if (target === "pendentesAData") params.set("dataReferencia", pendentesDataReferencia);
+        params.set("apenasVencidos", String(pendentesApenasVencidos));
         pendentesClienteIds.forEach((id) => params.append("clienteIds", String(id)));
         const endpoint = target === "pendentesAData" ? "/api/listagens/pendentes-a-data" : "/api/listagens/pendentes";
         const response = await fetchJson<PendentesResponse>(`${endpoint}${params.toString() ? `?${params}` : ""}`);
@@ -324,6 +326,7 @@ export default function ListagensView() {
     try {
       const params = new URLSearchParams();
       if (source === "pendentesAData") params.set("dataReferencia", pendentesDataReferencia);
+      params.set("apenasVencidos", String(pendentesApenasVencidos));
       pendentesClienteIds.forEach((id) => params.append("clienteIds", String(id)));
       const endpoint = source === "pendentesAData" ? "/api/listagens/pendentes-a-data/exportar" : "/api/listagens/pendentes/exportar";
       const response = await apiFetch(`${endpoint}/${format}${params.toString() ? `?${params}` : ""}`);
@@ -400,7 +403,7 @@ export default function ListagensView() {
     <section className="fac-panel fac-section-panel">
       <div className="fac-panel-header"><div><p className="fac-eyebrow">{SOURCES.find((item) => item.key === source)?.label}</p><h2>{source === "pendentesAData" ? "Situação dos valores por receber" : "Dados disponíveis"}</h2>{source === "pendentesAData" && <p className="fac-muted">Consulta os valores que se encontravam pendentes na data selecionada, incluindo documentos vencidos e nao vencidos.</p>}</div><div className="fac-inline-actions">{source !== "extratoCliente" && <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar nesta listagem" type="search" value={search}/>}<button className="fac-ghost-button" onClick={() => setColumnsOpen((current) => !current)} type="button">Colunas ({configured.visibleColumns.length})</button><button className="fac-soft-button" disabled={loading} onClick={() => source === "extratoCliente" ? consultarExtrato() : loadSource(source)} type="button">Atualizar</button></div></div>
       {message && <p className="fac-message">{message}</p>}
-      {isPendentesSource(source) && <PendentesFilters clientes={clientes} dataReferencia={source === "pendentesAData" ? pendentesDataReferencia : undefined} onChange={setPendentesClienteIds} onDataReferencia={setPendentesDataReferencia} selectedValues={pendentesClienteIds}/>}
+      {isPendentesSource(source) && <PendentesFilters apenasVencidos={pendentesApenasVencidos} clientes={clientes} dataReferencia={source === "pendentesAData" ? pendentesDataReferencia : undefined} onApenasVencidos={setPendentesApenasVencidos} onChange={setPendentesClienteIds} onDataReferencia={setPendentesDataReferencia} selectedValues={pendentesClienteIds}/>}
       {isPendentesSource(source) && <div className="fac-pendentes-actions">
         <button className="fac-soft-button" disabled={exportingPendentesFormat !== null} onClick={() => exportarPendentes("pdf")} type="button">{exportingPendentesFormat === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button>
         <button className="fac-soft-button" disabled={exportingPendentesFormat !== null} onClick={() => exportarPendentes("xlsx")} type="button">{exportingPendentesFormat === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
@@ -429,14 +432,18 @@ export default function ListagensView() {
 }
 
 function PendentesFilters({
+  apenasVencidos,
   clientes,
   dataReferencia,
+  onApenasVencidos,
   onChange,
   onDataReferencia,
   selectedValues
 }: {
+  apenasVencidos: boolean;
   clientes: ClienteOption[];
   dataReferencia?: string;
+  onApenasVencidos: (value: boolean) => void;
   onChange: (values: number[]) => void;
   onDataReferencia?: (value: string) => void;
   selectedValues: number[];
@@ -451,6 +458,10 @@ function PendentesFilters({
       <span>Clientes</span>
       <MultiSelectFilter allLabel="Todos os clientes" options={clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}${cliente.nif ? ` - NIF ${cliente.nif}` : ""}` }))} selectedValues={selectedValues} onChange={onChange}/>
     </div>
+    <label className="fac-pendentes-checkbox">
+      <input checked={apenasVencidos} onChange={(event) => onApenasVencidos(event.target.checked)} type="checkbox"/>
+      <span>Mostrar apenas vencidos</span>
+    </label>
     {selected.length > 0 && <div className="fac-selected-chips" aria-label="Clientes selecionados">
       <span>Clientes selecionados: {selected.length}</span>
       {selected.map((cliente) => <button key={cliente.id} onClick={() => onChange(selectedValues.filter((id) => id !== cliente.id))} type="button">{cliente.nome} x</button>)}

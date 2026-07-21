@@ -46,12 +46,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.hamcrest.Matchers.nullValue;
@@ -68,6 +77,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class DocumentoComercialControllerTests {
+
+    @TestConfiguration
+    static class FixedClockConfig {
+        @Bean
+        @Primary
+        Clock fixedClock() {
+            return Clock.fixed(Instant.parse("2026-07-21T12:00:00Z"), ZoneOffset.UTC);
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -547,6 +565,63 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void listagemPendentesFiltraApenasVencidosETambemExporta() throws Exception {
+        Cliente segundoCliente = criarClienteTeste("Cliente Pendentes Vencidos Dois", "509000022");
+
+        String vencidoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-01");
+        String naoVencidoLocation = criarDocumentoComPrimeiraLinha(segundoCliente, "2026-07-10");
+
+        emitir(vencidoLocation);
+        emitir(naoVencidoLocation);
+
+        mockMvc.perform(get("/listagens/pendentes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(2))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.containsInAnyOrder(
+                        documentoId(vencidoLocation).intValue(),
+                        documentoId(naoVencidoLocation).intValue()
+                )))
+                .andExpect(jsonPath("$.totais.total").value(24.600000))
+                .andExpect(jsonPath("$.totais.recebido").value(0))
+                .andExpect(jsonPath("$.totais.pendente").value(24.600000));
+
+        mockMvc.perform(get("/listagens/pendentes")
+                        .param("apenasVencidos", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(1))
+                .andExpect(jsonPath("$.linhas[0].documentoId").value(documentoId(vencidoLocation)))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem(
+                        documentoId(naoVencidoLocation).intValue()
+                ))))
+                .andExpect(jsonPath("$.totais.total").value(12.300000))
+                .andExpect(jsonPath("$.totais.recebido").value(0))
+                .andExpect(jsonPath("$.totais.pendente").value(12.300000));
+
+        mockMvc.perform(get("/listagens/pendentes")
+                        .param("clienteIds", String.valueOf(segundoCliente.getId()))
+                        .param("apenasVencidos", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(0))
+                .andExpect(jsonPath("$.totais.total").value(0))
+                .andExpect(jsonPath("$.totais.recebido").value(0))
+                .andExpect(jsonPath("$.totais.pendente").value(0));
+
+        MvcResult xlsx = mockMvc.perform(get("/listagens/pendentes/exportar/xlsx")
+                        .param("apenasVencidos", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .andReturn();
+        assertPendentesXlsx(xlsx.getResponse().getContentAsByteArray(), 1, "Vencimento: Apenas vencidos.");
+
+        mockMvc.perform(get("/listagens/pendentes/exportar/pdf")
+                        .param("apenasVencidos", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsByteArray().length)
+                        .isGreaterThan(100));
+    }
+
+    @Test
     void listagemPendentesADataReconstruiSaldoHistoricoClientesETambemExporta() throws Exception {
         Cliente segundoCliente = criarClienteTeste("Cliente Pendentes Data Dois", "509000012");
         Cliente clienteSemResultados = criarClienteTeste("Cliente Sem Pendentes Data", "509000013");
@@ -678,6 +753,83 @@ class DocumentoComercialControllerTests {
                         org.hamcrest.Matchers.containsString("todos-pendentes-")))
                 .andExpect(result -> org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsByteArray().length)
                         .isGreaterThan(100));
+    }
+
+    @Test
+    void listagemPendentesADataFiltraApenasVencidosETambemExporta() throws Exception {
+        String vencidoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-01");
+        String vencidoNaReferenciaLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-20");
+        String naoVencidoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-07-10");
+
+        emitir(vencidoLocation);
+        emitir(vencidoNaReferenciaLocation);
+        emitir(naoVencidoLocation);
+
+        mockMvc.perform(get("/listagens/pendentes-a-data")
+                        .param("dataReferencia", "2026-07-20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(3))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.containsInAnyOrder(
+                        documentoId(vencidoLocation).intValue(),
+                        documentoId(vencidoNaReferenciaLocation).intValue(),
+                        documentoId(naoVencidoLocation).intValue()
+                )))
+                .andExpect(jsonPath("$.totais.total").value(36.900000))
+                .andExpect(jsonPath("$.totais.recebido").value(0))
+                .andExpect(jsonPath("$.totais.pendente").value(36.900000));
+
+        mockMvc.perform(get("/listagens/pendentes-a-data")
+                        .param("dataReferencia", "2026-07-20")
+                        .param("apenasVencidos", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(2))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.containsInAnyOrder(
+                        documentoId(vencidoLocation).intValue(),
+                        documentoId(vencidoNaReferenciaLocation).intValue()
+                )))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem(
+                        documentoId(naoVencidoLocation).intValue()
+                ))))
+                .andExpect(jsonPath("$.totais.total").value(24.600000))
+                .andExpect(jsonPath("$.totais.recebido").value(0))
+                .andExpect(jsonPath("$.totais.pendente").value(24.600000));
+
+        MvcResult xlsx = mockMvc.perform(get("/listagens/pendentes-a-data/exportar/xlsx")
+                        .param("dataReferencia", "2026-07-20")
+                        .param("apenasVencidos", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .andReturn();
+        assertPendentesXlsx(xlsx.getResponse().getContentAsByteArray(), 2, "Vencimento: Apenas vencidos.");
+
+        mockMvc.perform(get("/listagens/pendentes-a-data/exportar/pdf")
+                        .param("dataReferencia", "2026-07-20")
+                        .param("apenasVencidos", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsByteArray().length)
+                        .isGreaterThan(100));
+    }
+
+    private void assertPendentesXlsx(byte[] content, int expectedRows, String expectedFiltro) throws Exception {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(content))) {
+            var sheet = workbook.getSheetAt(0);
+            org.assertj.core.api.Assertions.assertThat(sheet.getRow(2).getCell(1).getStringCellValue())
+                    .contains(expectedFiltro);
+            int dataRows = 0;
+            for (int rowIndex = 7; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                var row = sheet.getRow(rowIndex);
+                if (row == null) {
+                    continue;
+                }
+                var documentCell = row.getCell(1);
+                if (documentCell != null && "Totais".equals(documentCell.getStringCellValue())) {
+                    break;
+                }
+                dataRows++;
+            }
+            org.assertj.core.api.Assertions.assertThat(dataRows).isEqualTo(expectedRows);
+        }
     }
 
     @Test

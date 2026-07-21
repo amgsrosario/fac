@@ -27,26 +27,38 @@ public class PendentesReportDataService {
 
     @Transactional(readOnly = true)
     public PendentesReportData pendentes(List<Long> clienteIds) {
+        return pendentes(clienteIds, false);
+    }
+
+    @Transactional(readOnly = true)
+    public PendentesReportData pendentes(List<Long> clienteIds, boolean apenasVencidos) {
         return data(
                 "Todos os pendentes",
-                "Inclui documentos vencidos e nao vencidos com valor pendente.",
+                regraVencimento(apenasVencidos),
                 null,
                 clienteIds,
-                listagensService.pendentes(clienteIds),
-                false
+                listagensService.pendentes(clienteIds, apenasVencidos),
+                false,
+                apenasVencidos
         );
     }
 
     @Transactional(readOnly = true)
     public PendentesReportData pendentesAData(LocalDate dataReferencia, List<Long> clienteIds) {
+        return pendentesAData(dataReferencia, clienteIds, false);
+    }
+
+    @Transactional(readOnly = true)
+    public PendentesReportData pendentesAData(LocalDate dataReferencia, List<Long> clienteIds, boolean apenasVencidos) {
         return data(
                 "Valores pendentes numa data",
-                "Consulta os valores que se encontravam pendentes em " + dataReferencia
-                        + ", incluindo documentos vencidos e nao vencidos.",
+                "Consulta os valores que se encontravam pendentes em " + dataReferencia + ". "
+                        + regraVencimento(apenasVencidos),
                 dataReferencia,
                 clienteIds,
-                listagensService.pendentesAData(dataReferencia, clienteIds),
-                true
+                listagensService.pendentesAData(dataReferencia, clienteIds, apenasVencidos),
+                true,
+                apenasVencidos
         );
     }
 
@@ -56,7 +68,8 @@ public class PendentesReportDataService {
             LocalDate dataReferencia,
             List<Long> clienteIds,
             com.ar2lda.fac.controller.dto.PendentesListagemDto pendentes,
-            boolean pendentesAData
+            boolean pendentesAData,
+            boolean apenasVencidos
     ) {
         var empresa = empresaRepository.findById(Empresa.EMPRESA_ID)
                 .orElseThrow(() -> new NotFoundException("Ficha da empresa nao encontrada"));
@@ -67,8 +80,13 @@ public class PendentesReportDataService {
                 regra + " Clientes: " + clientes(clienteIds),
                 dataReferencia,
                 OffsetDateTime.now(),
-                pendentesAData
+                pendentesAData,
+                apenasVencidos
         );
+    }
+
+    private String regraVencimento(boolean apenasVencidos) {
+        return "Vencimento: " + (apenasVencidos ? "Apenas vencidos." : "Vencidos e nao vencidos.");
     }
 
     private String clientes(List<Long> clienteIds) {

@@ -965,6 +965,29 @@ button:disabled {
   font-size: 13px;
 }
 
+.fac-pendentes-filters .fac-pendentes-checkbox {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  flex-direction: row;
+  gap: 9px;
+  color: var(--fac-text);
+  cursor: pointer;
+}
+
+.fac-pendentes-filters .fac-pendentes-checkbox input {
+  width: 16px;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+}
+
+.fac-pendentes-filters .fac-pendentes-checkbox span {
+  color: var(--fac-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .fac-pendentes-filters .fac-multi-select-options label {
   display: flex;
   min-height: 36px;

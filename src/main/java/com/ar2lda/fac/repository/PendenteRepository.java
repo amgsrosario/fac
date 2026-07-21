@@ -29,11 +29,13 @@ public interface PendenteRepository extends JpaRepository<Pendente, Long> {
               and d.numeroDocumento is not null
               and p.dataDocumento <= :dataLimite
               and p.valorPendente > 0
+              and (:apenasVencidos = false or p.dataVencimento <= :dataLimite)
               and (:filtrarClientes = false or c.id in :clienteIds)
             order by p.dataDocumento asc, t.id asc, p.serieDocumento asc, p.numeroDocumento asc
             """)
     List<Pendente> findPendentesListagem(
             @Param("dataLimite") LocalDate dataLimite,
+            @Param("apenasVencidos") boolean apenasVencidos,
             @Param("filtrarClientes") boolean filtrarClientes,
             @Param("clienteIds") Collection<Long> clienteIds
     );
@@ -51,6 +53,7 @@ public interface PendenteRepository extends JpaRepository<Pendente, Long> {
               )
               and d.numeroDocumento is not null
               and p.dataDocumento <= :dataReferencia
+              and (:apenasVencidos = false or p.dataVencimento <= :dataReferencia)
               and (d.anulado = false or d.dataHoraAnulacao is null or d.dataHoraAnulacao > :fimDataReferencia)
               and (:filtrarClientes = false or c.id in :clienteIds)
             order by p.dataVencimento asc, p.dataDocumento asc, t.id asc, p.serieDocumento asc, p.numeroDocumento asc
@@ -58,6 +61,7 @@ public interface PendenteRepository extends JpaRepository<Pendente, Long> {
     List<Pendente> findPendentesADataListagem(
             @Param("dataReferencia") LocalDate dataReferencia,
             @Param("fimDataReferencia") OffsetDateTime fimDataReferencia,
+            @Param("apenasVencidos") boolean apenasVencidos,
             @Param("filtrarClientes") boolean filtrarClientes,
             @Param("clienteIds") Collection<Long> clienteIds
     );

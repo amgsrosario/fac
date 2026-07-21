@@ -75,45 +75,57 @@ public class ListagensController {
     }
 
     @GetMapping("/pendentes")
-    public PendentesListagemDto pendentes(@RequestParam(required = false) List<Long> clienteIds) {
-        return service.pendentes(clienteIds);
+    public PendentesListagemDto pendentes(
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(defaultValue = "false") boolean apenasVencidos
+    ) {
+        return service.pendentes(clienteIds, apenasVencidos);
     }
 
     @GetMapping("/pendentes-a-data")
     public PendentesListagemDto pendentesAData(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataReferencia,
-            @RequestParam(required = false) List<Long> clienteIds
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(defaultValue = "false") boolean apenasVencidos
     ) {
-        return service.pendentesAData(dataReferencia, clienteIds);
+        return service.pendentesAData(dataReferencia, clienteIds, apenasVencidos);
     }
 
     @GetMapping("/pendentes/exportar/pdf")
-    public ResponseEntity<byte[]> exportPendentesPdf(@RequestParam(required = false) List<Long> clienteIds) {
-        var file = pendentesPdfExporter.exportPendentes(clienteIds);
+    public ResponseEntity<byte[]> exportPendentesPdf(
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(defaultValue = "false") boolean apenasVencidos
+    ) {
+        var file = pendentesPdfExporter.exportPendentes(clienteIds, apenasVencidos);
         return download(file.filename(), PendentesPdfExporter.MEDIA_TYPE, file.content());
     }
 
     @GetMapping("/pendentes/exportar/xlsx")
-    public ResponseEntity<byte[]> exportPendentesExcel(@RequestParam(required = false) List<Long> clienteIds) {
-        var file = pendentesExcelExporter.exportPendentes(clienteIds);
+    public ResponseEntity<byte[]> exportPendentesExcel(
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(defaultValue = "false") boolean apenasVencidos
+    ) {
+        var file = pendentesExcelExporter.exportPendentes(clienteIds, apenasVencidos);
         return download(file.filename(), PendentesExcelExporter.MEDIA_TYPE, file.content());
     }
 
     @GetMapping("/pendentes-a-data/exportar/pdf")
     public ResponseEntity<byte[]> exportPendentesADataPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataReferencia,
-            @RequestParam(required = false) List<Long> clienteIds
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(defaultValue = "false") boolean apenasVencidos
     ) {
-        var file = pendentesPdfExporter.exportPendentesAData(dataReferencia, clienteIds);
+        var file = pendentesPdfExporter.exportPendentesAData(dataReferencia, clienteIds, apenasVencidos);
         return download(file.filename(), PendentesPdfExporter.MEDIA_TYPE, file.content());
     }
 
     @GetMapping("/pendentes-a-data/exportar/xlsx")
     public ResponseEntity<byte[]> exportPendentesADataExcel(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataReferencia,
-            @RequestParam(required = false) List<Long> clienteIds
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(defaultValue = "false") boolean apenasVencidos
     ) {
-        var file = pendentesExcelExporter.exportPendentesAData(dataReferencia, clienteIds);
+        var file = pendentesExcelExporter.exportPendentesAData(dataReferencia, clienteIds, apenasVencidos);
         return download(file.filename(), PendentesExcelExporter.MEDIA_TYPE, file.content());
     }
 

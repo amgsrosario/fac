@@ -36,8 +36,16 @@ public class PendentesExcelExporter {
         return export(dataService.pendentes(clienteIds));
     }
 
+    public ExportedExcel exportPendentes(List<Long> clienteIds, boolean apenasVencidos) {
+        return export(dataService.pendentes(clienteIds, apenasVencidos));
+    }
+
     public ExportedExcel exportPendentesAData(LocalDate dataReferencia, List<Long> clienteIds) {
         return export(dataService.pendentesAData(dataReferencia, clienteIds));
+    }
+
+    public ExportedExcel exportPendentesAData(LocalDate dataReferencia, List<Long> clienteIds, boolean apenasVencidos) {
+        return export(dataService.pendentesAData(dataReferencia, clienteIds, apenasVencidos));
     }
 
     ExportedExcel export(PendentesReportData data) {

@@ -28,8 +28,16 @@ public class PendentesPdfExporter {
         return export(dataService.pendentes(clienteIds));
     }
 
+    public ExportedPdf exportPendentes(List<Long> clienteIds, boolean apenasVencidos) {
+        return export(dataService.pendentes(clienteIds, apenasVencidos));
+    }
+
     public ExportedPdf exportPendentesAData(LocalDate dataReferencia, List<Long> clienteIds) {
         return export(dataService.pendentesAData(dataReferencia, clienteIds));
+    }
+
+    public ExportedPdf exportPendentesAData(LocalDate dataReferencia, List<Long> clienteIds, boolean apenasVencidos) {
+        return export(dataService.pendentesAData(dataReferencia, clienteIds, apenasVencidos));
     }
 
     ExportedPdf export(PendentesReportData data) {

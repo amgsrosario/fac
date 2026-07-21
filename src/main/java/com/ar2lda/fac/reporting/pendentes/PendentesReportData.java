@@ -13,6 +13,7 @@ public record PendentesReportData(
         String filtros,
         LocalDate dataReferencia,
         OffsetDateTime geradoEm,
-        boolean pendentesAData
+        boolean pendentesAData,
+        boolean apenasVencidos
 ) {
 }
