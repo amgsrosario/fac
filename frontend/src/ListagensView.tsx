@@ -68,8 +68,6 @@ const SOURCES: { key?: SourceKey; label: string; description: string }[] = [
   { key: "linhasComerciais", label: "Detalhe dos documentos comerciais", description: "Cabeçalho e detalhe de artigos" },
   { key: "financeiros", label: "Documentos financeiros", description: "Uma linha por recebimento" },
   { key: "linhasFinanceiras", label: "Detalhe dos documentos financeiros", description: "Documentos liquidados por recebimento" },
-  { key: "relacaoComercial", label: "Movimentos comerciais", description: "Cabeçalho e linhas na mesma consulta" },
-  { key: "relacaoFinanceira", label: "Movimentos financeiros", description: "Recebimento e liquidações na mesma consulta" },
   { key: "extratoCliente", label: "Extrato histórico de cliente", description: "Faturas, recibos e saldo acumulado" },
   { key: "pendentes", label: "Todos os pendentes", description: "Documentos por receber, vencidos e nao vencidos" },
   { key: "pendentesAData", label: "Valores pendentes numa data", description: "Situação dos valores por receber" }
