@@ -901,6 +901,25 @@ button:disabled {
   margin-bottom: 16px;
 }
 
+.fac-pendentes-filters label {
+  display: grid;
+  gap: 6px;
+  color: var(--fac-text);
+  font-weight: 700;
+}
+
+.fac-pendentes-filters label > span {
+  color: var(--fac-muted);
+  font-size: 13px;
+}
+
+.fac-pendentes-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 16px;
+}
+
 .fac-selected-chips {
   display: flex;
   align-items: center;

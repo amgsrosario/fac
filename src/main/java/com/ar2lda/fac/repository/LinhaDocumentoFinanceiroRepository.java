@@ -59,4 +59,17 @@ public interface LinhaDocumentoFinanceiroRepository extends JpaRepository<LinhaD
     boolean existsActiveLinesForDocumentoComercial(
             @Param("documentoComercialId") Long documentoComercialId
     );
+
+    @Query("""
+            select l.pendente.id, coalesce(sum(l.valorALiquidar), 0)
+            from LinhaDocumentoFinanceiro l
+            where l.pendente.id in :pendenteIds
+              and l.documentoFinanceiro.anulado = false
+              and l.documentoFinanceiro.dataEmissao <= :dataReferencia
+            group by l.pendente.id
+            """)
+    List<Object[]> sumValorLiquidadoAteDataPorPendente(
+            @Param("pendenteIds") Collection<Long> pendenteIds,
+            @Param("dataReferencia") LocalDate dataReferencia
+    );
 }

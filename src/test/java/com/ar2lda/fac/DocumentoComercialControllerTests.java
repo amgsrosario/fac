@@ -60,6 +60,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -324,13 +325,17 @@ class DocumentoComercialControllerTests {
     }
 
     private void liquidar(Pendente pendente, Cliente clienteDocumento, BigDecimal valorALiquidar) throws Exception {
+        liquidar(pendente, clienteDocumento, valorALiquidar, "2026-07-20");
+    }
+
+    private void liquidar(Pendente pendente, Cliente clienteDocumento, BigDecimal valorALiquidar, String dataEmissao) throws Exception {
         mockMvc.perform(post("/documentos-financeiros")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                   "tipoDocumentoId": "RCB",
                                   "serie": "A",
-                                  "dataEmissao": "2026-07-20",
+                                  "dataEmissao": "%s",
                                   "clienteId": %d,
                                   "moedaId": "EUR",
                                   "mPagamentoId": "%s",
@@ -344,6 +349,7 @@ class DocumentoComercialControllerTests {
                                   ]
                                 }
                                 """.formatted(
+                                dataEmissao,
                                 clienteDocumento.getId(),
                                 mPagamento.getId(),
                                 pendente.getId(),
@@ -538,6 +544,140 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.totais.total").value(0))
                 .andExpect(jsonPath("$.totais.recebido").value(0))
                 .andExpect(jsonPath("$.totais.pendente").value(0));
+    }
+
+    @Test
+    void listagemPendentesADataReconstruiSaldoHistoricoClientesETambemExporta() throws Exception {
+        Cliente segundoCliente = criarClienteTeste("Cliente Pendentes Data Dois", "509000012");
+        Cliente clienteSemResultados = criarClienteTeste("Cliente Sem Pendentes Data", "509000013");
+
+        String vencidoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-01");
+        String parcialLocation = criarDocumentoComPrimeiraLinha(segundoCliente, "2026-06-05");
+        String naoVencidoLocation = criarDocumentoComPrimeiraLinha(segundoCliente, "2026-07-10");
+        String liquidadoDepoisLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-07-11");
+        String liquidadoAntesLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-07-12");
+        String emitidoDepoisLocation = criarDocumentoComPrimeiraLinha(segundoCliente, "2026-07-22");
+        String rascunhoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-07-23");
+
+        emitir(vencidoLocation);
+        emitir(parcialLocation);
+        emitir(naoVencidoLocation);
+        emitir(liquidadoDepoisLocation);
+        emitir(liquidadoAntesLocation);
+        emitir(emitidoDepoisLocation);
+
+        Pendente parcial = pendenteRepository.findByDocumentoComercialId(documentoId(parcialLocation)).orElseThrow();
+        Pendente liquidadoAntes = pendenteRepository.findByDocumentoComercialId(documentoId(liquidadoAntesLocation)).orElseThrow();
+        Pendente liquidadoDepois = pendenteRepository.findByDocumentoComercialId(documentoId(liquidadoDepoisLocation)).orElseThrow();
+        liquidar(parcial, segundoCliente, new BigDecimal("5.000000"), "2026-07-08");
+        liquidar(liquidadoAntes, cliente, liquidadoAntes.getValorPendente(), "2026-07-15");
+        liquidar(liquidadoDepois, cliente, liquidadoDepois.getValorPendente(), "2026-07-25");
+
+        mockMvc.perform(get("/listagens/pendentes-a-data")
+                        .param("dataReferencia", "2026-07-20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(4))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.containsInAnyOrder(
+                        documentoId(vencidoLocation).intValue(),
+                        documentoId(parcialLocation).intValue(),
+                        documentoId(naoVencidoLocation).intValue(),
+                        documentoId(liquidadoDepoisLocation).intValue()
+                )))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItems(
+                        documentoId(liquidadoAntesLocation).intValue(),
+                        documentoId(emitidoDepoisLocation).intValue(),
+                        documentoId(rascunhoLocation).intValue()
+                ))))
+                .andExpect(jsonPath("$.totais.total").value(49.200000))
+                .andExpect(jsonPath("$.totais.recebido").value(5.000000))
+                .andExpect(jsonPath("$.totais.pendente").value(44.200000));
+
+        mockMvc.perform(get("/listagens/pendentes-a-data")
+                        .param("dataReferencia", "2026-07-04"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(2))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.containsInAnyOrder(
+                        documentoId(vencidoLocation).intValue(),
+                        documentoId(parcialLocation).intValue()
+                )))
+                .andExpect(jsonPath("$.totais.total").value(24.600000))
+                .andExpect(jsonPath("$.totais.recebido").value(0))
+                .andExpect(jsonPath("$.totais.pendente").value(24.600000));
+
+        mockMvc.perform(get("/listagens/pendentes-a-data")
+                        .param("dataReferencia", "2026-07-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(4))
+                .andExpect(jsonPath("$.linhas[*].documentoId", org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem(
+                        documentoId(liquidadoDepoisLocation).intValue()
+                ))))
+                .andExpect(jsonPath("$.totais.total").value(49.200000))
+                .andExpect(jsonPath("$.totais.recebido").value(5.000000))
+                .andExpect(jsonPath("$.totais.pendente").value(44.200000));
+
+        mockMvc.perform(get("/listagens/pendentes-a-data")
+                        .param("dataReferencia", "2026-07-20")
+                        .param("clienteIds", String.valueOf(segundoCliente.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(2))
+                .andExpect(jsonPath("$.linhas[0].clienteId").value(segundoCliente.getId()))
+                .andExpect(jsonPath("$.totais.total").value(24.600000))
+                .andExpect(jsonPath("$.totais.recebido").value(5.000000))
+                .andExpect(jsonPath("$.totais.pendente").value(19.600000));
+
+        mockMvc.perform(get("/listagens/pendentes-a-data")
+                        .param("dataReferencia", "2026-07-20")
+                        .param("clienteIds", String.valueOf(cliente.getId()))
+                        .param("clienteIds", String.valueOf(segundoCliente.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(4));
+
+        mockMvc.perform(get("/listagens/pendentes-a-data")
+                        .param("dataReferencia", "2026-07-20")
+                        .param("clienteIds", String.valueOf(clienteSemResultados.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(0))
+                .andExpect(jsonPath("$.totais.total").value(0))
+                .andExpect(jsonPath("$.totais.recebido").value(0))
+                .andExpect(jsonPath("$.totais.pendente").value(0));
+
+        mockMvc.perform(get("/listagens/pendentes-a-data/exportar/pdf")
+                        .param("dataReferencia", "2026-07-20")
+                        .param("clienteIds", String.valueOf(cliente.getId())))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("pendentes-a-data-2026-07-20.pdf")))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsByteArray().length)
+                        .isGreaterThan(100));
+
+        mockMvc.perform(get("/listagens/pendentes-a-data/exportar/xlsx")
+                        .param("dataReferencia", "2026-07-20")
+                        .param("clienteIds", String.valueOf(cliente.getId()))
+                        .param("clienteIds", String.valueOf(segundoCliente.getId())))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("pendentes-a-data-2026-07-20.xlsx")))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsByteArray().length)
+                        .isGreaterThan(100));
+
+        mockMvc.perform(get("/listagens/pendentes/exportar/pdf"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("todos-pendentes-")))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsByteArray().length)
+                        .isGreaterThan(100));
+
+        mockMvc.perform(get("/listagens/pendentes/exportar/xlsx")
+                        .param("clienteIds", String.valueOf(segundoCliente.getId())))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("todos-pendentes-")))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsByteArray().length)
+                        .isGreaterThan(100));
     }
 
     @Test

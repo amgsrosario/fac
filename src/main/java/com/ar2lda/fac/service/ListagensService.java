@@ -28,7 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.math.BigDecimal;
 
 @Service
@@ -70,15 +73,30 @@ public class ListagensService {
 
     @Transactional(readOnly = true)
     public PendentesListagemDto pendentes(List<Long> clienteIds) {
-        List<Long> filtroClientes = clienteIds == null ? List.of() : clienteIds.stream()
-                .filter(id -> id != null && id > 0)
-                .distinct()
-                .toList();
+        List<Long> filtroClientes = filtroClientes(clienteIds);
         boolean filtrarClientes = !filtroClientes.isEmpty();
         List<PendenteListagemDto> linhas = pendenteRepository
                 .findPendentesListagem(LocalDate.now(), filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L))
                 .stream()
                 .map(this::toPendenteListagemDto)
+                .toList();
+        return new PendentesListagemDto(linhas, pendentesTotais(linhas));
+    }
+
+    @Transactional(readOnly = true)
+    public PendentesListagemDto pendentesAData(LocalDate dataReferencia, List<Long> clienteIds) {
+        List<Long> filtroClientes = filtroClientes(clienteIds);
+        boolean filtrarClientes = !filtroClientes.isEmpty();
+        List<Pendente> pendentes = pendenteRepository.findPendentesADataListagem(
+                dataReferencia,
+                dataReferencia.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+                filtrarClientes,
+                filtrarClientes ? filtroClientes : List.of(-1L)
+        );
+        Map<Long, BigDecimal> recebidoPorPendente = recebidoPorPendenteAteData(pendentes, dataReferencia);
+        List<PendenteListagemDto> linhas = pendentes.stream()
+                .map(pendente -> toPendenteListagemDto(pendente, recebidoPorPendente.getOrDefault(pendente.getId(), BigDecimal.ZERO)))
+                .filter(linha -> nullToZero(linha.pendente()).compareTo(BigDecimal.ZERO) > 0)
                 .toList();
         return new PendentesListagemDto(linhas, pendentesTotais(linhas));
     }
@@ -98,6 +116,13 @@ public class ListagensService {
     private PendenteListagemDto toPendenteListagemDto(Pendente pendente) {
         BigDecimal total = nullToZero(pendente.getValorDocumento());
         BigDecimal valorPendente = nullToZero(pendente.getValorPendente());
+        return toPendenteListagemDto(pendente, total.subtract(valorPendente));
+    }
+
+    private PendenteListagemDto toPendenteListagemDto(Pendente pendente, BigDecimal recebido) {
+        BigDecimal total = nullToZero(pendente.getValorDocumento());
+        BigDecimal valorRecebido = nullToZero(recebido);
+        BigDecimal valorPendente = total.subtract(valorRecebido);
         return new PendenteListagemDto(
                 pendente.getDocumentoComercial().getId(),
                 "%s %s/%s".formatted(
@@ -112,7 +137,7 @@ public class ListagensService {
                 pendente.getCliente().getNome(),
                 pendente.getMoeda().getId(),
                 total,
-                total.subtract(valorPendente),
+                valorRecebido,
                 valorPendente
         );
     }
@@ -130,6 +155,25 @@ public class ListagensService {
 
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private List<Long> filtroClientes(List<Long> clienteIds) {
+        return clienteIds == null ? List.of() : clienteIds.stream()
+                .filter(id -> id != null && id > 0)
+                .distinct()
+                .toList();
+    }
+
+    private Map<Long, BigDecimal> recebidoPorPendenteAteData(List<Pendente> pendentes, LocalDate dataReferencia) {
+        List<Long> ids = pendentes.stream().map(Pendente::getId).toList();
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        return linhaDocumentoFinanceiroRepository.sumValorLiquidadoAteDataPorPendente(ids, dataReferencia).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> nullToZero((BigDecimal) row[1])
+                ));
     }
 
     private PendenteListagemTotaisDto pendentesTotais(List<PendenteListagemDto> linhas) {

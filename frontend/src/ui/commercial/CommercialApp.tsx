@@ -87,6 +87,7 @@ export default function CommercialApp() {
         <Route element={articlesView} path="/artigos" />
         <Route element={customersView} path="/clientes" />
         <Route element={documentsView} path="/documentos" />
+        <Route element={<ListagensView />} path="/listagens/pendentes-a-data" />
         <Route element={<ListagensView />} path="/listagens/pendentes" />
         <Route element={draftDocumentsView} path="/documentos/novo" />
         <Route element={draftDocumentsView} path="/documentos/:id" />

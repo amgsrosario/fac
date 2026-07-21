@@ -7,7 +7,7 @@ import { MultiSelectFilter } from "./MultiSelectFilter";
 import { EntityLookupColumn, EntityLookupField, EntityLookupSearchField } from "./ui/fac/components";
 
 type Page<T> = { content: T[]; totalElements: number; totalPages?: number };
-type SourceKey = "pendentes" | "comerciais" | "linhasComerciais" | "financeiros" | "linhasFinanceiras" | "relacaoComercial" | "relacaoFinanceira" | "extratoCliente";
+type SourceKey = "pendentesAData" | "pendentes" | "comerciais" | "linhasComerciais" | "financeiros" | "linhasFinanceiras" | "relacaoComercial" | "relacaoFinanceira" | "extratoCliente";
 
 type DocumentoComercial = {
   id: number; tipoDocumentoId: string; serie: string; numeroDocumento: number | null; estado: string;
@@ -64,17 +64,23 @@ type PendentesResponse = {
 };
 
 const SOURCES: { key?: SourceKey; label: string; description: string }[] = [
-  { key: "pendentes", label: "Pendentes", description: "Documentos por receber" },
   { key: "comerciais", label: "Documentos comerciais", description: "Uma linha por cabeçalho comercial" },
   { key: "linhasComerciais", label: "Detalhe dos documentos comerciais", description: "Cabeçalho e detalhe de artigos" },
   { key: "financeiros", label: "Documentos financeiros", description: "Uma linha por recebimento" },
   { key: "linhasFinanceiras", label: "Detalhe dos documentos financeiros", description: "Documentos liquidados por recebimento" },
   { key: "relacaoComercial", label: "Movimentos comerciais", description: "Cabeçalho e linhas na mesma consulta" },
   { key: "relacaoFinanceira", label: "Movimentos financeiros", description: "Recebimento e liquidações na mesma consulta" },
-  { key: "extratoCliente", label: "Extrato histórico de cliente", description: "Faturas, recibos e saldo acumulado" }
+  { key: "extratoCliente", label: "Extrato histórico de cliente", description: "Faturas, recibos e saldo acumulado" },
+  { key: "pendentes", label: "Todos os pendentes", description: "Documentos por receber, vencidos e nao vencidos" },
+  { key: "pendentesAData", label: "Valores pendentes numa data", description: "Situação dos valores por receber" }
 ];
 
 const COLUMNS: Record<SourceKey, ConfigurableColumn[]> = {
+  pendentesAData: [
+    c("cliente", "Cliente", true), c("documento", "Documento", true), c("data", "Data", true),
+    c("vencimento", "Vencimento", true), c("total", "Total", true), c("recebido", "Recebido", true),
+    c("pendente", "Pendente", true)
+  ],
   pendentes: [
     c("cliente", "Cliente", true), c("documento", "Documento", true), c("data", "Data", true),
     c("vencimento", "Vencimento", true), c("total", "Total", true), c("recebido", "Recebido", true),
@@ -130,10 +136,11 @@ export default function ListagensView() {
   const location = useLocation();
   const navigate = useNavigate();
   const defaultPeriod = currentYearDateRange();
-  const [source, setSource] = useState<SourceKey>(() => location.pathname.includes("/listagens/pendentes") ? "pendentes" : "comerciais");
+  const [source, setSource] = useState<SourceKey>(() => location.pathname.includes("/listagens/pendentes-a-data") ? "pendentesAData" : location.pathname.includes("/listagens/pendentes") ? "pendentes" : "comerciais");
   const [pendentes, setPendentes] = useState<PendenteListagem[]>([]);
   const [pendentesTotais, setPendentesTotais] = useState<PendentesResponse["totais"]>({ total: 0, recebido: 0, pendente: 0 });
   const [pendentesClienteIds, setPendentesClienteIds] = useState<number[]>([]);
+  const [pendentesDataReferencia, setPendentesDataReferencia] = useState(todayIso);
   const [comerciais, setComerciais] = useState<DocumentoComercial[]>([]);
   const [financeiros, setFinanceiros] = useState<DocumentoFinanceiro[]>([]);
   const [linhasComerciais, setLinhasComerciais] = useState<LinhaComercialListagem[]>([]);
@@ -157,6 +164,7 @@ export default function ListagensView() {
   const [extratos, setExtratos] = useState<ExtratoCliente[] | null>(null);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
+  const [exportingPendentesFormat, setExportingPendentesFormat] = useState<"pdf" | "xlsx" | null>(null);
   const configured = useConfiguredColumns(`fac.listagens.${source}.colunas`, COLUMNS[source]);
 
   useEffect(() => { loadFilterOptions(); }, []);
@@ -164,7 +172,7 @@ export default function ListagensView() {
     if (source !== "extratoCliente") {
       loadSource(source);
     }
-  }, [source, dataInicial, dataFinal, clienteId, artigoId, pendentesClienteIds]);
+  }, [source, dataInicial, dataFinal, clienteId, artigoId, pendentesClienteIds, pendentesDataReferencia]);
 
   async function loadFilterOptions() {
     try {
@@ -201,11 +209,15 @@ export default function ListagensView() {
   }
 
   async function loadSource(target: SourceKey) {
-    if (target !== "pendentes" && (!dataInicial || !dataFinal)) {
+    if (target !== "pendentes" && target !== "pendentesAData" && (!dataInicial || !dataFinal)) {
       setMessage("Indica a data inicial e a data final.");
       return;
     }
-    if (target !== "pendentes" && dataInicial > dataFinal) {
+    if (target === "pendentesAData" && !pendentesDataReferencia) {
+      setMessage("Indica a data de referencia.");
+      return;
+    }
+    if (target !== "pendentes" && target !== "pendentesAData" && dataInicial > dataFinal) {
       setMessage("A data inicial não pode ser posterior à data final.");
       clearSourceRows(target);
       return;
@@ -217,10 +229,12 @@ export default function ListagensView() {
       if (target === "extratoCliente" && clientesExtrato.length === 0) {
         setClientesExtrato((await fetchPage<ClienteOption>("/api/clientes?size=500&sort=nome,asc")).content);
       }
-      if (target === "pendentes") {
+      if (target === "pendentes" || target === "pendentesAData") {
         const params = new URLSearchParams();
+        if (target === "pendentesAData") params.set("dataReferencia", pendentesDataReferencia);
         pendentesClienteIds.forEach((id) => params.append("clienteIds", String(id)));
-        const response = await fetchJson<PendentesResponse>(`/api/listagens/pendentes${params.toString() ? `?${params}` : ""}`);
+        const endpoint = target === "pendentesAData" ? "/api/listagens/pendentes-a-data" : "/api/listagens/pendentes";
+        const response = await fetchJson<PendentesResponse>(`${endpoint}${params.toString() ? `?${params}` : ""}`);
         setPendentes(response.linhas);
         setPendentesTotais(response.totais);
       }
@@ -300,8 +314,38 @@ export default function ListagensView() {
     }
   }
 
+  async function exportarPendentes(format: "pdf" | "xlsx") {
+    setMessage(null);
+    if (source === "pendentesAData" && !pendentesDataReferencia) {
+      setMessage("Indica a data de referencia.");
+      return;
+    }
+    setExportingPendentesFormat(format);
+    try {
+      const params = new URLSearchParams();
+      if (source === "pendentesAData") params.set("dataReferencia", pendentesDataReferencia);
+      pendentesClienteIds.forEach((id) => params.append("clienteIds", String(id)));
+      const endpoint = source === "pendentesAData" ? "/api/listagens/pendentes-a-data/exportar" : "/api/listagens/pendentes/exportar";
+      const response = await apiFetch(`${endpoint}/${format}${params.toString() ? `?${params}` : ""}`);
+      if (!response.ok) throw new Error(await responseError(response));
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = downloadFilename(response.headers.get("Content-Disposition"), `${source === "pendentesAData" ? "pendentes-a-data" : "todos-pendentes"}.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel exportar a listagem.");
+    } finally {
+      setExportingPendentesFormat(null);
+    }
+  }
+
   function clearSourceRows(target: SourceKey) {
-    if (target === "pendentes") {
+    if (isPendentesSource(target)) {
       setPendentes([]);
       setPendentesTotais({ total: 0, recebido: 0, pendente: 0 });
     }
@@ -333,7 +377,7 @@ export default function ListagensView() {
 
   const rows = useMemo(() => {
     const base: unknown[] = source === "extratoCliente" ? []
-      : source === "pendentes" ? pendentes
+      : isPendentesSource(source) ? pendentes
       : source === "comerciais" ? comerciais
       : source === "linhasComerciais" || source === "relacaoComercial" ? linhasComerciais
       : source === "financeiros" ? financeiros
@@ -354,11 +398,15 @@ export default function ListagensView() {
     </section>
 
     <section className="fac-panel fac-section-panel">
-      <div className="fac-panel-header"><div><p className="fac-eyebrow">{SOURCES.find((item) => item.key === source)?.label}</p><h2>Dados disponíveis</h2></div><div className="fac-inline-actions">{source !== "extratoCliente" && <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar nesta listagem" type="search" value={search}/>}<button className="fac-ghost-button" onClick={() => setColumnsOpen((current) => !current)} type="button">Colunas ({configured.visibleColumns.length})</button><button className="fac-soft-button" disabled={loading} onClick={() => source === "extratoCliente" ? consultarExtrato() : loadSource(source)} type="button">Atualizar</button></div></div>
+      <div className="fac-panel-header"><div><p className="fac-eyebrow">{SOURCES.find((item) => item.key === source)?.label}</p><h2>{source === "pendentesAData" ? "Situação dos valores por receber" : "Dados disponíveis"}</h2>{source === "pendentesAData" && <p className="fac-muted">Consulta os valores que se encontravam pendentes na data selecionada, incluindo documentos vencidos e nao vencidos.</p>}</div><div className="fac-inline-actions">{source !== "extratoCliente" && <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar nesta listagem" type="search" value={search}/>}<button className="fac-ghost-button" onClick={() => setColumnsOpen((current) => !current)} type="button">Colunas ({configured.visibleColumns.length})</button><button className="fac-soft-button" disabled={loading} onClick={() => source === "extratoCliente" ? consultarExtrato() : loadSource(source)} type="button">Atualizar</button></div></div>
       {message && <p className="fac-message">{message}</p>}
-      {source === "pendentes" && <PendentesFilters clientes={clientes} selectedValues={pendentesClienteIds} onChange={setPendentesClienteIds}/>}
-      {source === "pendentes" && <PendentesTotals totais={pendentesTotais}/>}
-      {source !== "extratoCliente" && source !== "pendentes" && <ListingFilters artigos={artigos} clientes={mergeSelectedCliente(clientes, selectedCliente)} dataFinal={dataFinal} dataInicial={dataInicial} onArtigo={changeArtigo} onCliente={changeCliente} onDataFinal={setDataFinal} onDataInicial={setDataInicial} selectedArtigo={selectedArtigo ?? artigos.find((artigo) => artigo.codigo === artigoId) ?? null} selectedCliente={selectedCliente} showArtigo={source === "linhasComerciais"} />}
+      {isPendentesSource(source) && <PendentesFilters clientes={clientes} dataReferencia={source === "pendentesAData" ? pendentesDataReferencia : undefined} onChange={setPendentesClienteIds} onDataReferencia={setPendentesDataReferencia} selectedValues={pendentesClienteIds}/>}
+      {isPendentesSource(source) && <div className="fac-pendentes-actions">
+        <button className="fac-soft-button" disabled={exportingPendentesFormat !== null} onClick={() => exportarPendentes("pdf")} type="button">{exportingPendentesFormat === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button>
+        <button className="fac-soft-button" disabled={exportingPendentesFormat !== null} onClick={() => exportarPendentes("xlsx")} type="button">{exportingPendentesFormat === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
+      </div>}
+      {isPendentesSource(source) && <PendentesTotals totais={pendentesTotais}/>}
+      {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters artigos={artigos} clientes={mergeSelectedCliente(clientes, selectedCliente)} dataFinal={dataFinal} dataInicial={dataInicial} onArtigo={changeArtigo} onCliente={changeCliente} onDataFinal={setDataFinal} onDataInicial={setDataInicial} selectedArtigo={selectedArtigo ?? artigos.find((artigo) => artigo.codigo === artigoId) ?? null} selectedCliente={selectedCliente} showArtigo={source === "linhasComerciais"} />}
       {source === "extratoCliente" && <p className="fac-muted">Extrato calculado a partir dos documentos emitidos. Os documentos anulados não integram os movimentos contabilísticos e cada moeda é apresentada separadamente.</p>}
       {source === "extratoCliente" && <div className="fac-extrato-filters">
         <div className="fac-filter-field"><span>Clientes</span><MultiSelectFilter allLabel="Todos os clientes" options={clientesExtrato.map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}` }))} selectedValues={extratoClienteIds} onChange={(values) => { setExtratoClienteIds(values); setExtratos(null); }}/></div>
@@ -374,15 +422,31 @@ export default function ListagensView() {
       {source !== "extratoCliente" &&
       <div className="fac-table-scroll"><table className="fac-table"><thead><tr>{configured.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>
         {rows.map((row, index) => <tr key={rowKey(source, row, index)}>{configured.visibleColumns.map((column) => <td key={column.key}>{cellValue(source, row, column.key, navigate)}</td>)}</tr>)}
-        {!loading && rows.length === 0 && <tr><td colSpan={configured.visibleColumns.length}>{source === "pendentes" ? (pendentesClienteIds.length > 0 ? "Nao existem documentos pendentes para os clientes selecionados." : "Nao existem documentos pendentes.") : "Sem registos para mostrar."}</td></tr>}
+        {!loading && rows.length === 0 && <tr><td colSpan={configured.visibleColumns.length}>{emptyMessage(source, pendentesClienteIds.length > 0)}</td></tr>}
       </tbody></table></div>}
     </section>
   </>;
 }
 
-function PendentesFilters({ clientes, selectedValues, onChange }: { clientes: ClienteOption[]; selectedValues: number[]; onChange: (values: number[]) => void }) {
+function PendentesFilters({
+  clientes,
+  dataReferencia,
+  onChange,
+  onDataReferencia,
+  selectedValues
+}: {
+  clientes: ClienteOption[];
+  dataReferencia?: string;
+  onChange: (values: number[]) => void;
+  onDataReferencia?: (value: string) => void;
+  selectedValues: number[];
+}) {
   const selected = clientes.filter((cliente) => selectedValues.includes(cliente.id));
   return <div className="fac-pendentes-filters">
+    {dataReferencia !== undefined && <label>
+      <span>Data de referência</span>
+      <input onChange={(event) => onDataReferencia?.(event.target.value)} type="date" value={dataReferencia}/>
+    </label>}
     <div className="fac-filter-field">
       <span>Clientes</span>
       <MultiSelectFilter allLabel="Todos os clientes" options={clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}${cliente.nif ? ` - NIF ${cliente.nif}` : ""}` }))} selectedValues={selectedValues} onChange={onChange}/>
@@ -524,8 +588,27 @@ function extratoTotalValue(key: string, columnIndex: number, label: string, moed
   return "";
 }
 
+function isPendentesSource(source: SourceKey) {
+  return source === "pendentes" || source === "pendentesAData";
+}
+
+function emptyMessage(source: SourceKey, hasClientes: boolean) {
+  if (source === "pendentesAData") {
+    return hasClientes
+      ? "Nao existem valores pendentes na data selecionada para os clientes escolhidos."
+      : "Nao existem valores pendentes na data selecionada.";
+  }
+  if (source === "pendentes") {
+    return hasClientes
+      ? "Nao existem documentos pendentes para os clientes selecionados."
+      : "Nao existem documentos pendentes.";
+  }
+  return "Sem registos para mostrar.";
+}
+
 function c(key: string, label: string, visible = false): ConfigurableColumn { return { key, label, visible }; }
 function reference(tipo: string, serie: string, numero: number | null) { return `${tipo} ${serie}/${numero ?? "rascunho"}`; }
+function todayIso() { return new Date().toLocaleDateString("sv-SE"); }
 function datePt(value?: string) { return value ? value.split("-").reverse().join("/") : "-"; }
 function dateTimePt(value?: string) { return value ? new Date(value).toLocaleString("pt-PT") : "-"; }
 function extratoParams(clienteIds: number[], dataInicial: string, dataFinal: string) { const params = new URLSearchParams({ dataInicial, dataFinal }); clienteIds.forEach((id) => params.append("clienteIds", String(id))); return params; }
@@ -591,7 +674,7 @@ function yesNo(value: boolean) { return value ? "Sim" : "Não"; }
 function statusComercial(d: DocumentoComercial) { return d.anulado ? "ANULADO" : d.estado; }
 
 function cellValue(source: SourceKey, raw: unknown, key: string, navigate?: (path: string) => void) {
-  if (source === "pendentes") {
+  if (isPendentesSource(source)) {
     const p = raw as PendenteListagem;
     const values: Record<string, React.ReactNode> = {
       cliente: <span><strong>{p.clienteNome}</strong><small className="fac-cell-note">NIF {p.clienteCodigo || "-"}</small></span>,
@@ -632,7 +715,7 @@ function cellValue(source: SourceKey, raw: unknown, key: string, navigate?: (pat
 }
 
 function searchText(source: SourceKey, row: unknown) {
-  if (source === "pendentes") { const p = row as PendenteListagem; return `${p.clienteNome} ${p.clienteCodigo} ${p.documento}`.toLowerCase(); }
+  if (isPendentesSource(source)) { const p = row as PendenteListagem; return `${p.clienteNome} ${p.clienteCodigo} ${p.documento}`.toLowerCase(); }
   if (source === "comerciais") { const d = row as DocumentoComercial; return `${reference(d.tipoDocumentoId, d.serie, d.numeroDocumento)} ${d.clienteNome} ${d.clienteNif} ${statusComercial(d)}`.toLowerCase(); }
   if (source === "linhasComerciais" || source === "relacaoComercial") { const l = row as LinhaComercialListagem; return `${reference(l.documento.tipoDocumentoId, l.documento.serie, l.documento.numeroDocumento)} ${l.documento.clienteNome} ${l.documento.clienteNif} ${l.artigoId} ${l.descricao}`.toLowerCase(); }
   if (source === "financeiros") { const d = row as DocumentoFinanceiro; return `${reference(d.tipoDocumentoId, d.serie, d.numeroDocumento)} ${d.clienteId} ${d.emissorId}`.toLowerCase(); }
@@ -640,7 +723,7 @@ function searchText(source: SourceKey, row: unknown) {
 }
 
 function rowKey(source: SourceKey, row: unknown, index: number) {
-  if (source === "pendentes") return (row as PendenteListagem).documentoId;
+  if (isPendentesSource(source)) return (row as PendenteListagem).documentoId;
   if (source === "comerciais" || source === "financeiros") return (row as { id: number }).id;
   return `${source}-${(row as { id: number }).id}-${index}`;
 }
