@@ -873,6 +873,62 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void listagensAnaliticasAceitamFiltrosMultiplosRetrocompativeis() throws Exception {
+        Cliente segundoCliente = criarClienteTeste("Cliente Multiselect Dois", "509654333");
+        Cliente terceiroCliente = criarClienteTeste("Cliente Multiselect Tres", "509654344");
+        String documentoClienteBase = criarDocumentoComPrimeiraLinha(cliente, "2026-06-06");
+        String documentoSegundoCliente = criarDocumentoComPrimeiraLinha(segundoCliente, "2026-06-07");
+        String documentoTerceiroCliente = criarDocumentoComPrimeiraLinha(terceiroCliente, "2026-06-08");
+
+        for (String location : List.of(documentoClienteBase, documentoSegundoCliente, documentoTerceiroCliente)) {
+            emitir(location);
+        }
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-06-01")
+                        .param("dataFinal", "2026-06-30")
+                        .param("clienteIds", String.valueOf(cliente.getId()))
+                        .param("clienteIds", String.valueOf(segundoCliente.getId()))
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[*].documento.clienteId", org.hamcrest.Matchers.containsInAnyOrder(
+                        cliente.getId().intValue(),
+                        segundoCliente.getId().intValue()
+                )));
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-06-01")
+                        .param("dataFinal", "2026-06-30")
+                        .param("clienteId", String.valueOf(terceiroCliente.getId()))
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].documento.clienteId").value(terceiroCliente.getId()));
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-06-01")
+                        .param("dataFinal", "2026-06-30")
+                        .param("clienteIds", String.valueOf(cliente.getId()))
+                        .param("clienteIds", String.valueOf(segundoCliente.getId()))
+                        .param("artigoIds", "ARTLINHA")
+                        .param("artigoIds", "INEXISTENTE")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[*].linha.artigoId", org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is("ARTLINHA"))));
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-06-01")
+                        .param("dataFinal", "2026-06-30")
+                        .param("clienteIds", "-1")
+                        .param("artigoIds", "INEXISTENTE")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
     void criaDocumentoComPrimeiraLinhaAtomicamente() throws Exception {
         mockMvc.perform(post("/documentos-comerciais")
                         .contentType(MediaType.APPLICATION_JSON)

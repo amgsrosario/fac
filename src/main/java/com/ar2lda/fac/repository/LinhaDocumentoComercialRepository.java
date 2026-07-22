@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 public interface LinhaDocumentoComercialRepository extends JpaRepository<LinhaDocumentoComercial, Long> {
@@ -23,14 +24,16 @@ public interface LinhaDocumentoComercialRepository extends JpaRepository<LinhaDo
             where l.documentoComercial.estado <> com.ar2lda.fac.model.EstadoDocumentoComercial.RASCUNHO
               and l.documentoComercial.dataEmissao >= :dataInicial
               and l.documentoComercial.dataEmissao <= :dataFinal
-              and (:clienteId is null or l.documentoComercial.cliente.id = :clienteId)
-              and (:artigoId is null or l.artigo.codigo = :artigoId or l.artigoCodigo = :artigoId)
+              and (:filtrarClientes = false or l.documentoComercial.cliente.id in :clienteIds)
+              and (:filtrarArtigos = false or l.artigo.codigo in :artigoIds or l.artigoCodigo in :artigoIds)
             """)
     Page<LinhaDocumentoComercial> findAnaliticas(
             @Param("dataInicial") LocalDate dataInicial,
             @Param("dataFinal") LocalDate dataFinal,
-            @Param("clienteId") Long clienteId,
-            @Param("artigoId") String artigoId,
+            @Param("filtrarClientes") boolean filtrarClientes,
+            @Param("clienteIds") Collection<Long> clienteIds,
+            @Param("filtrarArtigos") boolean filtrarArtigos,
+            @Param("artigoIds") Collection<String> artigoIds,
             Pageable pageable
     );
 

@@ -38,9 +38,10 @@ public class ListagensController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
             @RequestParam(required = false) Long clienteId,
+            @RequestParam(required = false) List<Long> clienteIds,
             Pageable pageable
     ) {
-        return service.documentosComerciais(dataInicial, dataFinal, clienteId, pageable);
+        return service.documentosComerciais(dataInicial, dataFinal, clienteId, clienteIds, pageable);
     }
 
     @GetMapping("/linhas-comerciais")
@@ -49,9 +50,11 @@ public class ListagensController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
             @RequestParam(required = false) Long clienteId,
             @RequestParam(required = false) String artigoId,
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(required = false) List<String> artigoIds,
             Pageable pageable
     ) {
-        return service.linhasComerciais(dataInicial, dataFinal, clienteId, artigoId, pageable);
+        return service.linhasComerciais(dataInicial, dataFinal, clienteId, clienteIds, artigoId, artigoIds, pageable);
     }
 
     @GetMapping("/documentos-financeiros")
@@ -59,9 +62,10 @@ public class ListagensController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
             @RequestParam(required = false) Long clienteId,
+            @RequestParam(required = false) List<Long> clienteIds,
             Pageable pageable
     ) {
-        return service.documentosFinanceiros(dataInicial, dataFinal, clienteId, pageable);
+        return service.documentosFinanceiros(dataInicial, dataFinal, clienteId, clienteIds, pageable);
     }
 
     @GetMapping("/linhas-financeiras")
@@ -69,9 +73,10 @@ public class ListagensController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
             @RequestParam(required = false) Long clienteId,
+            @RequestParam(required = false) List<Long> clienteIds,
             Pageable pageable
     ) {
-        return service.linhasFinanceiras(dataInicial, dataFinal, clienteId, pageable);
+        return service.linhasFinanceiras(dataInicial, dataFinal, clienteId, clienteIds, pageable);
     }
 
     @GetMapping("/pendentes")

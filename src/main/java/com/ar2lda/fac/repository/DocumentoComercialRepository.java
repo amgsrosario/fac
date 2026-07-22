@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import jakarta.persistence.LockModeType;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 public interface DocumentoComercialRepository extends JpaRepository<DocumentoComercial, Long> {
@@ -29,12 +30,13 @@ public interface DocumentoComercialRepository extends JpaRepository<DocumentoCom
             where d.estado <> com.ar2lda.fac.model.EstadoDocumentoComercial.RASCUNHO
               and d.dataEmissao >= :dataInicial
               and d.dataEmissao <= :dataFinal
-              and (:clienteId is null or d.cliente.id = :clienteId)
+              and (:filtrarClientes = false or d.cliente.id in :clienteIds)
             """)
     Page<DocumentoComercial> findAnaliticos(
             @Param("dataInicial") LocalDate dataInicial,
             @Param("dataFinal") LocalDate dataFinal,
-            @Param("clienteId") Long clienteId,
+            @Param("filtrarClientes") boolean filtrarClientes,
+            @Param("clienteIds") Collection<Long> clienteIds,
             Pageable pageable
     );
 

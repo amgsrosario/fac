@@ -51,25 +51,55 @@ public class ListagensService {
 
     @Transactional(readOnly = true)
     public Page<ListagemDocumentoComercialDto> documentosComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, Pageable pageable) {
-        return documentoComercialRepository.findAnaliticos(dataInicial, dataFinal, clienteId, pageable)
+        return documentosComerciais(dataInicial, dataFinal, clienteId, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ListagemDocumentoComercialDto> documentosComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, Pageable pageable) {
+        List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
+        boolean filtrarClientes = !filtroClientes.isEmpty();
+        return documentoComercialRepository.findAnaliticos(dataInicial, dataFinal, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), pageable)
                 .map(this::toDocumentoComercialDto);
     }
 
     @Transactional(readOnly = true)
     public Page<ListagemLinhaComercialDto> linhasComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, String artigoId, Pageable pageable) {
-        return linhaDocumentoComercialRepository.findAnaliticas(dataInicial, dataFinal, clienteId, blankToNull(artigoId), pageable)
+        return linhasComerciais(dataInicial, dataFinal, clienteId, null, artigoId, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ListagemLinhaComercialDto> linhasComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, String artigoId, List<String> artigoIds, Pageable pageable) {
+        List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
+        boolean filtrarClientes = !filtroClientes.isEmpty();
+        List<String> filtroArtigos = filtroStrings(artigoId, artigoIds);
+        boolean filtrarArtigos = !filtroArtigos.isEmpty();
+        return linhaDocumentoComercialRepository.findAnaliticas(dataInicial, dataFinal, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), filtrarArtigos, filtrarArtigos ? filtroArtigos : List.of("__NO_ARTIGO__"), pageable)
                 .map(this::toLinhaComercialDto);
     }
 
     @Transactional(readOnly = true)
     public Page<DocumentoFinanceiroDto> documentosFinanceiros(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, Pageable pageable) {
-        return documentoFinanceiroRepository.findAnaliticos(dataInicial, dataFinal, clienteId, pageable)
+        return documentosFinanceiros(dataInicial, dataFinal, clienteId, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DocumentoFinanceiroDto> documentosFinanceiros(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, Pageable pageable) {
+        List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
+        boolean filtrarClientes = !filtroClientes.isEmpty();
+        return documentoFinanceiroRepository.findAnaliticos(dataInicial, dataFinal, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), pageable)
                 .map(this::toDocumentoFinanceiroDto);
     }
 
     @Transactional(readOnly = true)
     public Page<ListagemLinhaFinanceiraDto> linhasFinanceiras(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, Pageable pageable) {
-        return linhaDocumentoFinanceiroRepository.findAnaliticas(dataInicial, dataFinal, clienteId, pageable)
+        return linhasFinanceiras(dataInicial, dataFinal, clienteId, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ListagemLinhaFinanceiraDto> linhasFinanceiras(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, Pageable pageable) {
+        List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
+        boolean filtrarClientes = !filtroClientes.isEmpty();
+        return linhaDocumentoFinanceiroRepository.findAnaliticas(dataInicial, dataFinal, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), pageable)
                 .map(this::toLinhaFinanceiraDto);
     }
 
@@ -171,11 +201,32 @@ public class ListagensService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    private List<Long> filtroClientes(Long clienteId, List<Long> clienteIds) {
+        List<Long> fromList = filtroClientes(clienteIds);
+        if (!fromList.isEmpty()) {
+            return fromList;
+        }
+        return clienteId == null || clienteId <= 0 ? List.of() : List.of(clienteId);
+    }
+
     private List<Long> filtroClientes(List<Long> clienteIds) {
         return clienteIds == null ? List.of() : clienteIds.stream()
                 .filter(id -> id != null && id > 0)
                 .distinct()
                 .toList();
+    }
+
+    private List<String> filtroStrings(String value, List<String> values) {
+        List<String> fromList = values == null ? List.of() : values.stream()
+                .map(this::blankToNull)
+                .filter(item -> item != null)
+                .distinct()
+                .toList();
+        if (!fromList.isEmpty()) {
+            return fromList;
+        }
+        String single = blankToNull(value);
+        return single == null ? List.of() : List.of(single);
     }
 
     private Map<Long, BigDecimal> recebidoPorPendenteAteData(List<Pendente> pendentes, LocalDate dataReferencia) {

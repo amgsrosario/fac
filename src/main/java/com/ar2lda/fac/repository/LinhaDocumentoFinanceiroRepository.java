@@ -20,7 +20,7 @@ public interface LinhaDocumentoFinanceiroRepository extends JpaRepository<LinhaD
             from LinhaDocumentoFinanceiro l
             where l.documentoFinanceiro.dataEmissao >= :dataInicial
               and l.documentoFinanceiro.dataEmissao <= :dataFinal
-              and (:clienteId is null or l.documentoFinanceiro.cliente.id = :clienteId)
+              and (:filtrarClientes = false or l.documentoFinanceiro.cliente.id in :clienteIds)
               and (
                 l.pendente is null
                 or l.pendente.documentoComercial is null
@@ -30,7 +30,8 @@ public interface LinhaDocumentoFinanceiroRepository extends JpaRepository<LinhaD
     Page<LinhaDocumentoFinanceiro> findAnaliticas(
             @Param("dataInicial") LocalDate dataInicial,
             @Param("dataFinal") LocalDate dataFinal,
-            @Param("clienteId") Long clienteId,
+            @Param("filtrarClientes") boolean filtrarClientes,
+            @Param("clienteIds") Collection<Long> clienteIds,
             Pageable pageable
     );
 

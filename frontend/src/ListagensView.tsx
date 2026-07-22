@@ -3,8 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 import { currentYearDateRange } from "./dateFilters";
-import { MultiSelectFilter } from "./MultiSelectFilter";
-import { EntityLookupColumn, EntityLookupField, EntityLookupSearchField } from "./ui/fac/components";
+import { MultiSelectFilter, MultiSelectOption } from "./MultiSelectFilter";
 
 type Page<T> = { content: T[]; totalElements: number; totalPages?: number };
 type SourceKey = "pendentesAData" | "pendentes" | "comerciais" | "linhasComerciais" | "financeiros" | "linhasFinanceiras" | "relacaoComercial" | "relacaoFinanceira" | "extratoCliente";
@@ -149,13 +148,11 @@ export default function ListagensView() {
   const [message, setMessage] = useState<string | null>(null);
   const [columnsOpen, setColumnsOpen] = useState(false);
   const [clientes, setClientes] = useState<ClienteOption[]>([]);
-  const [selectedCliente, setSelectedCliente] = useState<ClienteOption | null>(null);
   const [artigos, setArtigos] = useState<ArtigoOption[]>([]);
-  const [selectedArtigo, setSelectedArtigo] = useState<ArtigoOption | null>(null);
   const [dataInicial, setDataInicial] = useState(defaultPeriod.dataInicial);
   const [dataFinal, setDataFinal] = useState(defaultPeriod.dataFinal);
-  const [clienteId, setClienteId] = useState("");
-  const [artigoId, setArtigoId] = useState("");
+  const [clienteIds, setClienteIds] = useState<number[]>([]);
+  const [artigoIds, setArtigoIds] = useState<string[]>([]);
   const [clientesExtrato, setClientesExtrato] = useState<ClienteOption[]>([]);
   const [extratoClienteIds, setExtratoClienteIds] = useState<number[]>([]);
   const [extratoDataInicial, setExtratoDataInicial] = useState(() => currentYearDateRange().dataInicial);
@@ -171,7 +168,7 @@ export default function ListagensView() {
     if (source !== "extratoCliente") {
       loadSource(source);
     }
-  }, [source, dataInicial, dataFinal, clienteId, artigoId, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos]);
+  }, [source, dataInicial, dataFinal, clienteIds, artigoIds, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos]);
 
   async function loadFilterOptions() {
     try {
@@ -185,26 +182,6 @@ export default function ListagensView() {
     } catch {
       // As listagens continuam utilizaveis; apenas os seletores ficam sem opcoes.
     }
-  }
-
-  function changeCliente(cliente: ClienteOption | null) {
-    if (!cliente) {
-      setClienteId("");
-      setSelectedCliente(null);
-      return;
-    }
-    setClienteId(String(cliente.id));
-    setSelectedCliente(cliente);
-  }
-
-  function changeArtigo(artigo: ArtigoOption | null) {
-    if (!artigo) {
-      setArtigoId("");
-      setSelectedArtigo(null);
-      return;
-    }
-    setArtigoId(artigo.codigo);
-    setSelectedArtigo(artigo);
   }
 
   async function loadSource(target: SourceKey) {
@@ -243,7 +220,7 @@ export default function ListagensView() {
         setComerciais(page.content.map((item) => ({ ...item.documento, valorLiquido: item.valorLiquido })));
       }
       if (target === "linhasComerciais" || target === "relacaoComercial") {
-        const page = await fetchPage<LinhaComercialResponse>(`${listagemUrl("/api/listagens/linhas-comerciais", target === "linhasComerciais" ? artigoId : "")}&sort=documentoComercial.dataEmissao,desc&sort=documentoComercial.id,desc&sort=numeroLinha,asc`);
+        const page = await fetchPage<LinhaComercialResponse>(`${listagemUrl("/api/listagens/linhas-comerciais", target === "linhasComerciais")}&sort=documentoComercial.dataEmissao,desc&sort=documentoComercial.id,desc&sort=numeroLinha,asc`);
         setLinhasComerciais(page.content.map((item) => ({ ...item.linha, documento: item.documento })));
       }
       if (target === "financeiros") {
@@ -356,14 +333,14 @@ export default function ListagensView() {
     if (target === "linhasFinanceiras" || target === "relacaoFinanceira") setLinhasFinanceiras([]);
   }
 
-  function listagemUrl(path: string, selectedArtigoId = "") {
+  function listagemUrl(path: string, includeArtigos = false) {
     const params = new URLSearchParams({
       dataInicial,
       dataFinal,
       size: "500"
     });
-    if (clienteId) params.set("clienteId", clienteId);
-    if (selectedArtigoId) params.set("artigoId", selectedArtigoId);
+    clienteIds.forEach((id) => params.append("clienteIds", String(id)));
+    if (includeArtigos) artigoIds.forEach((id) => params.append("artigoIds", id));
     return `${path}?${params}`;
   }
 
@@ -371,8 +348,7 @@ export default function ListagensView() {
     setSource(next);
     setSearch("");
     if (next !== "linhasComerciais") {
-      setArtigoId("");
-      setSelectedArtigo(null);
+      setArtigoIds([]);
     }
   }
 
@@ -407,7 +383,7 @@ export default function ListagensView() {
         <button className="fac-soft-button" disabled={exportingPendentesFormat !== null} onClick={() => exportarPendentes("xlsx")} type="button">{exportingPendentesFormat === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
       </div>}
       {isPendentesSource(source) && <PendentesTotals totais={pendentesTotais}/>}
-      {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters artigos={artigos} clientes={mergeSelectedCliente(clientes, selectedCliente)} dataFinal={dataFinal} dataInicial={dataInicial} onArtigo={changeArtigo} onCliente={changeCliente} onDataFinal={setDataFinal} onDataInicial={setDataInicial} selectedArtigo={selectedArtigo ?? artigos.find((artigo) => artigo.codigo === artigoId) ?? null} selectedCliente={selectedCliente} showArtigo={source === "linhasComerciais"} />}
+      {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters artigos={artigos} clientes={clientes} dataFinal={dataFinal} dataInicial={dataInicial} onArtigos={setArtigoIds} onClientes={setClienteIds} onDataFinal={setDataFinal} onDataInicial={setDataInicial} selectedArtigoIds={artigoIds} selectedClienteIds={clienteIds} showArtigo={source === "linhasComerciais"} />}
       {source === "extratoCliente" && <p className="fac-muted">Extrato calculado a partir dos documentos emitidos. Os documentos anulados não integram os movimentos contabilísticos e cada moeda é apresentada separadamente.</p>}
       {source === "extratoCliente" && <div className="fac-extrato-filters">
         <div className="fac-filter-field"><span>Clientes</span><MultiSelectFilter allLabel="Todos os clientes" options={clientesExtrato.map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}` }))} selectedValues={extratoClienteIds} onChange={(values) => { setExtratoClienteIds(values); setExtratos(null); }}/></div>
@@ -481,70 +457,50 @@ function ListingFilters({
   clientes,
   dataFinal,
   dataInicial,
-  onArtigo,
-  onCliente,
+  onArtigos,
+  onClientes,
   onDataFinal,
   onDataInicial,
-  selectedArtigo,
-  selectedCliente,
+  selectedArtigoIds,
+  selectedClienteIds,
   showArtigo
 }: {
   artigos: ArtigoOption[];
   clientes: ClienteOption[];
   dataFinal: string;
   dataInicial: string;
-  onArtigo: (value: ArtigoOption | null) => void;
-  onCliente: (value: ClienteOption | null) => void;
+  onArtigos: (values: string[]) => void;
+  onClientes: (values: number[]) => void;
   onDataFinal: (value: string) => void;
   onDataInicial: (value: string) => void;
-  selectedArtigo: ArtigoOption | null;
-  selectedCliente: ClienteOption | null;
+  selectedArtigoIds: string[];
+  selectedClienteIds: number[];
   showArtigo: boolean;
 }) {
+  const activeClientes = clientes.filter((cliente) => !cliente.inativo);
+  const activeArtigos = artigos.filter((artigo) => !artigo.inativo);
+  const selectedClientes = activeClientes.filter((cliente) => selectedClienteIds.includes(cliente.id));
+  const selectedArtigos = activeArtigos.filter((artigo) => selectedArtigoIds.includes(artigo.codigo));
   return (
     <div className="fac-listing-filters">
       <label><span>Data inicial</span><input onChange={(event) => onDataInicial(event.target.value)} type="date" value={dataInicial} /></label>
       <label><span>Data final</span><input onChange={(event) => onDataFinal(event.target.value)} type="date" value={dataFinal} /></label>
-      <EntityLookupField<ClienteOption>
-        clearable
-        columns={clienteLookupColumns}
-        dataKey="id"
-        emptyMessage="Sem clientes para selecionar."
-        label="Cliente"
-        optionLabel={clienteLookupLabel}
-        optionMeta={(cliente) => [cliente.nif && `NIF ${cliente.nif}`, cliente.localidade].filter(Boolean).join(" · ")}
-        onClear={() => onCliente(null)}
-        onSelect={onCliente}
-        placeholder="Todos os clientes"
-        preferenceKey="fac.lookup.listagens.clientes"
-        searchFields={clienteSearchFields}
-        selection={selectedCliente}
-        title="Selecionar cliente"
-        value={clientes.filter((cliente) => !cliente.inativo)}
-        valueLabel={selectedCliente ? clienteLookupLabel(selectedCliente) : undefined}
-      />
-      {showArtigo && <EntityLookupField<ArtigoOption>
-        clearable
-        columns={artigoLookupColumns}
-        dataKey="codigo"
-        emptyMessage="Sem artigos para selecionar."
-        label="Artigo"
-        optionLabel={artigoLookupLabel}
-        optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, artigo.pvp !== undefined ? money(artigo.pvp) : null].filter(Boolean).join(" · ")}
-        onClear={() => onArtigo(null)}
-        onSelect={onArtigo}
-        placeholder="Todos os artigos"
-        preferenceKey="fac.lookup.listagens.artigos"
-        searchFields={artigoSearchFields}
-        selection={selectedArtigo}
-        title="Selecionar artigo"
-        value={artigos.filter((artigo) => !artigo.inativo)}
-        valueLabel={selectedArtigo ? artigoLookupLabel(selectedArtigo) : undefined}
-      />}
+      <div className="fac-filter-field">
+        <span>Clientes</span>
+        <MultiSelectFilter allLabel="Todos os clientes" emptyMessage="Sem clientes encontrados." label="cliente" onChange={onClientes} options={clienteOptions(activeClientes)} searchPlaceholder="Pesquisar clientes" selectedValues={selectedClienteIds}/>
+      </div>
+      {showArtigo && <div className="fac-filter-field">
+        <span>Artigos</span>
+        <MultiSelectFilter<string> allLabel="Todos os artigos" emptyMessage="Sem artigos encontrados." label="artigo" onChange={onArtigos} options={artigoOptions(activeArtigos)} searchPlaceholder="Pesquisar artigos" selectedValues={selectedArtigoIds}/>
+      </div>}
+      {(selectedClientes.length > 0 || selectedArtigos.length > 0) && <div className="fac-selected-chips" aria-label="Filtros selecionados">
+        {selectedClientes.map((cliente) => <button key={cliente.id} onClick={() => onClientes(selectedClienteIds.filter((id) => id !== cliente.id))} type="button">{cliente.nome} x</button>)}
+        {selectedArtigos.map((artigo) => <button key={artigo.codigo} onClick={() => onArtigos(selectedArtigoIds.filter((id) => id !== artigo.codigo))} type="button">{artigo.descricao} x</button>)}
+        <button className="fac-ghost-button" onClick={() => { onClientes([]); onArtigos([]); }} type="button">Limpar</button>
+      </div>}
     </div>
   );
 }
-
 function ExtratoTable({ extratos, loading, columns }: { extratos: ExtratoCliente[] | null; loading: boolean; columns: ConfigurableColumn[] }) {
   if (loading) return <p className="fac-empty-state">A calcular o extrato...</p>;
   if (!extratos) return <p className="fac-empty-state">Sem seleção de clientes serão considerados todos.</p>;
@@ -621,61 +577,21 @@ function todayIso() { return new Date().toLocaleDateString("sv-SE"); }
 function datePt(value?: string) { return value ? value.split("-").reverse().join("/") : "-"; }
 function dateTimePt(value?: string) { return value ? new Date(value).toLocaleString("pt-PT") : "-"; }
 function extratoParams(clienteIds: number[], dataInicial: string, dataFinal: string) { const params = new URLSearchParams({ dataInicial, dataFinal }); clienteIds.forEach((id) => params.append("clienteIds", String(id))); return params; }
-function mergeSelectedCliente(clientes: ClienteOption[], selected: ClienteOption | null) {
-  if (!selected || clientes.some((cliente) => cliente.id === selected.id)) return clientes;
-  return [selected, ...clientes];
+function clienteOptions(clientes: ClienteOption[]): MultiSelectOption<number>[] {
+  return clientes.map((cliente) => ({
+    value: cliente.id,
+    label: `${cliente.id} - ${cliente.nome}${cliente.nif ? ` - NIF ${cliente.nif}` : ""}`,
+    searchText: [cliente.id, cliente.nome, cliente.nif, cliente.localidade, cliente.email, cliente.tel, cliente.tm].filter(Boolean).join(" ")
+  }));
 }
 
-const clienteLookupColumns: EntityLookupColumn<ClienteOption>[] = [
-  { defaultVisible: true, field: "nome", filterable: true, globalSearch: true, header: "Nome", required: true, sortable: true },
-  { defaultVisible: true, field: "nif", filterable: true, globalSearch: true, header: "NIF", sortable: true, width: "9rem" },
-  { defaultVisible: true, field: "localidade", filterable: true, globalSearch: true, header: "Localidade", sortable: true },
-  { body: (cliente) => cliente.tm || cliente.tel || "-", defaultVisible: true, field: "tel", globalSearch: true, header: "Telefone", sortable: true, width: "9rem" },
-  { field: "id", header: "ID", sortable: true, width: "6rem" },
-  { field: "email", globalSearch: true, header: "Email", sortable: true },
-  { field: "paisId", header: "País", sortable: true, width: "7rem" },
-  { field: "codPostalId", header: "Código postal", sortable: true, width: "9rem" },
-  { body: (cliente) => cliente.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
-];
-
-const clienteSearchFields: EntityLookupSearchField<ClienteOption>[] = [
-  { fields: ["nome"], key: "nome" },
-  { fields: ["nif"], key: "nif" },
-  { fields: ["localidade"], key: "localidade" },
-  { fields: ["email"], key: "email" },
-  { aliases: ["telefone", "telemovel", "telemóvel"], fields: ["tel", "tm"], key: "telefone" },
-  { fields: ["id"], key: "id" }
-];
-
-const artigoLookupColumns: EntityLookupColumn<ArtigoOption>[] = [
-  { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Código", required: true, sortable: true, width: "8rem" },
-  { defaultVisible: true, field: "descricao", filterable: true, globalSearch: true, header: "Descrição", sortable: true },
-  { body: (artigo) => artigo.familiaId ?? "-", defaultVisible: true, field: "familiaId", filterable: true, globalSearch: true, header: "Família", sortable: true, width: "8rem" },
-  { defaultVisible: true, field: "unidade", filterable: true, globalSearch: true, header: "Unidade", sortable: true, width: "7rem" },
-  { body: (artigo) => money(artigo.pvp ?? 0), defaultVisible: true, field: "pvp", header: "PVP", sortable: true, width: "8rem" },
-  { defaultVisible: true, field: "ivaVendaId", filterable: true, header: "IVA venda", sortable: true, width: "8rem" },
-  { body: (artigo) => artigo.retencao ? "Sim" : "Não", field: "retencao", header: "Retenção", sortable: true, width: "8rem" },
-  { body: (artigo) => artigo.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" },
-  { field: "observacoes", header: "Observações", sortable: true }
-];
-
-const artigoSearchFields: EntityLookupSearchField<ArtigoOption>[] = [
-  { aliases: ["id"], fields: ["codigo"], key: "codigo" },
-  { fields: ["descricao"], key: "descricao" },
-  { fields: ["familiaId"], key: "familia" },
-  { fields: ["unidade"], key: "unidade" },
-  { fields: ["pvp"], key: "pvp" },
-  { fields: ["ivaVendaId"], key: "iva" }
-];
-
-function clienteLookupLabel(cliente: ClienteOption) {
-  return `${cliente.nome}${cliente.nif ? ` - NIF ${cliente.nif}` : ""}`;
+function artigoOptions(artigos: ArtigoOption[]): MultiSelectOption<string>[] {
+  return artigos.map((artigo) => ({
+    value: artigo.codigo,
+    label: `${artigo.codigo} - ${artigo.descricao}`,
+    searchText: [artigo.codigo, artigo.descricao, artigo.unidade, artigo.familiaId, artigo.ivaVendaId].filter(Boolean).join(" ")
+  }));
 }
-
-function artigoLookupLabel(artigo: ArtigoOption) {
-  return `${artigo.codigo} - ${artigo.descricao}`;
-}
-
 function money(value: number) { return Number(value || 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function moneyCell(value: number, moeda?: string) { return <span className="fac-money">{money(value)}{moeda ? ` ${moeda}` : ""}</span>; }
 function decimal(value: number) { return Number(value || 0).toLocaleString("pt-PT", { maximumFractionDigits: 6 }); }

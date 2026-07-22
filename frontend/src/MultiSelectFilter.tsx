@@ -1,16 +1,37 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
-type Option = { value: number; label: string };
-
-type Props = {
-  allLabel: string;
-  options: Option[];
-  selectedValues: number[];
-  onChange: (values: number[]) => void;
+export type MultiSelectOption<Value extends string | number = number> = {
+  value: Value;
+  label: string;
+  searchText?: string;
 };
 
-export function MultiSelectFilter({ allLabel, options, selectedValues, onChange }: Props) {
+type Props<Value extends string | number = number> = {
+  label?: string;
+  allLabel: string;
+  searchPlaceholder?: string;
+  options: MultiSelectOption<Value>[];
+  selectedValues: Value[];
+  onChange: (values: Value[]) => void;
+  formatSummary?: (selectedCount: number, allLabel: string) => string;
+  disabled?: boolean;
+  loading?: boolean;
+  emptyMessage?: string;
+};
+
+export function MultiSelectFilter<Value extends string | number = number>({
+  label = "cliente",
+  allLabel,
+  searchPlaceholder,
+  options,
+  selectedValues,
+  onChange,
+  formatSummary,
+  disabled = false,
+  loading = false,
+  emptyMessage
+}: Props<Value>) {
   const id = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -18,13 +39,12 @@ export function MultiSelectFilter({ allLabel, options, selectedValues, onChange 
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<CSSProperties>();
   const selected = new Set(selectedValues);
-  const filteredOptions = options.filter((option) => option.label.toLowerCase().includes(search.trim().toLowerCase()));
-  const selectedCountLabel = selectedValues.length === 1 ? "1 cliente selecionado" : `${selectedValues.length} clientes selecionados`;
-  const summary = selectedValues.length === 0
-    ? allLabel
-    : selectedValues.length === 1
-      ? "1 cliente selecionado"
-      : selectedCountLabel;
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredOptions = options.filter((option) => (option.searchText ?? option.label).toLowerCase().includes(normalizedSearch));
+  const selectedCountLabel = selectedValues.length === 1 ? `1 ${label} selecionado` : `${selectedValues.length} ${label}s selecionados`;
+  const summary = formatSummary?.(selectedValues.length, allLabel) ?? (selectedValues.length === 0 ? allLabel : selectedCountLabel);
+  const searchLabel = searchPlaceholder ?? `Pesquisar ${label}`;
+  const noResults = emptyMessage ?? `Sem ${label} encontrados.`;
 
   useEffect(() => {
     if (!open) return;
@@ -78,7 +98,7 @@ export function MultiSelectFilter({ allLabel, options, selectedValues, onChange 
     };
   }, [open]);
 
-  function toggle(value: number) {
+  function toggle(value: Value) {
     onChange(selected.has(value)
       ? selectedValues.filter((item) => item !== value)
       : [...selectedValues, value]);
@@ -94,20 +114,20 @@ export function MultiSelectFilter({ allLabel, options, selectedValues, onChange 
   }
 
   return <div className="fac-multi-select" ref={containerRef}>
-    <button aria-expanded={open} aria-haspopup="listbox" className="fac-multi-select-trigger" onClick={() => setOpen((current) => !current)} ref={triggerRef} title={summary} type="button">
+    <button aria-expanded={open} aria-haspopup="listbox" className="fac-multi-select-trigger" disabled={disabled || loading} onClick={() => setOpen((current) => !current)} ref={triggerRef} title={summary} type="button">
       <span>{summary}</span>
     </button>
     {open && <div className="fac-multi-select-menu" style={menuStyle}>
       <div className="fac-multi-select-header">
-        <input aria-label="Pesquisar clientes" className="fac-multi-select-search" onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar clientes" type="search" value={search}/>
+        <input aria-label={searchLabel} className="fac-multi-select-search" onChange={(event) => setSearch(event.target.value)} placeholder={searchLabel} type="search" value={search}/>
         <button aria-pressed={selectedValues.length === 0} className="fac-multi-select-all" onClick={clearSelection} type="button">{allLabel}</button>
       </div>
-      <div className="fac-multi-select-options" role="group" aria-label="Selecionar clientes">
+      <div className="fac-multi-select-options" role="group" aria-label={`Selecionar ${label}`}>
         {filteredOptions.map((option) => <label key={option.value} title={option.label}>
           <input checked={selected.has(option.value)} onChange={() => toggle(option.value)} type="checkbox" id={`${id}-${option.value}`}/>
           <span>{option.label}</span>
         </label>)}
-        {filteredOptions.length === 0 && <span className="fac-multi-select-empty">Sem clientes encontrados.</span>}
+        {filteredOptions.length === 0 && <span className="fac-multi-select-empty">{loading ? "A carregar..." : noResults}</span>}
       </div>
       <div className="fac-multi-select-footer">
         <span>{selectedCountLabel}</span>

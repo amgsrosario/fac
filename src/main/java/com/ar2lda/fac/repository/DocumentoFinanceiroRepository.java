@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFinanceiro, Long> {
@@ -21,12 +22,13 @@ public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFi
             from DocumentoFinanceiro d
             where d.dataEmissao >= :dataInicial
               and d.dataEmissao <= :dataFinal
-              and (:clienteId is null or d.cliente.id = :clienteId)
+              and (:filtrarClientes = false or d.cliente.id in :clienteIds)
             """)
     Page<DocumentoFinanceiro> findAnaliticos(
             @Param("dataInicial") LocalDate dataInicial,
             @Param("dataFinal") LocalDate dataFinal,
-            @Param("clienteId") Long clienteId,
+            @Param("filtrarClientes") boolean filtrarClientes,
+            @Param("clienteIds") Collection<Long> clienteIds,
             Pageable pageable
     );
 
