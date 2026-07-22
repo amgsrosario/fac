@@ -890,7 +890,7 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
         </>
       ) : (
         <>
-          <td>
+          <td className="fac-draft-article-cell">
             <EntityLookupField<Artigo>
               clearable
               columns={artigoLookupColumns(catalogos.tiposIva)}
@@ -903,7 +903,7 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
               onClear={() => active ? props.onChooseActiveArticle(null) : props.onChooseArticle(line.uid, null)}
               onQueryChange={active ? props.onActiveArticleQueryChange : undefined}
               onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo.codigo) : props.onChooseArticle(line.uid, artigo.codigo)}
-              placeholder="Artigo"
+              placeholder="Pesquisar artigo ou serviço"
               preferenceKey="fac.lookup.draft.artigos"
               searchFields={artigoSearchFields(catalogos.tiposIva)}
               selection={selectedArticle}
@@ -912,12 +912,12 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
               valueLabel={selectedArticle ? selectedArticle.codigo : undefined}
             />
           </td>
-          <td><input className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} maxLength={80} onChange={(event) => update({ descricao: event.target.value })} value={line.descricao} /></td>
+          <td className="fac-draft-description-cell"><input aria-label="Descrição da linha" className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} maxLength={80} onChange={(event) => update({ descricao: event.target.value })} title={line.descricao} value={line.descricao} /></td>
           <td><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ quantidade: value })} value={line.quantidade} /></td>
-          <td><input className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} onChange={(event) => update({ unidade: event.target.value })} value={line.unidade} /></td>
+          <td className="fac-draft-unit-cell"><input aria-label="Unidade" className="fac-draft-cell fac-draft-cell-code" data-active-line={active || undefined} disabled={disabled} maxLength={6} onChange={(event) => update({ unidade: event.target.value })} title={line.unidade} value={line.unidade} /></td>
           <td><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ precoUnitario: value })} value={line.precoUnitario} /></td>
           <td><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ desconto: value })} value={line.desconto} /></td>
-          <td><select className="fac-draft-cell" data-active-line={active || undefined} disabled={disabled} onChange={(event) => update({ tipoTaxaIvaId: event.target.value })} title={catalogos.tiposIva.find((iva) => iva.id === line.tipoTaxaIvaId)?.descricao} value={line.tipoTaxaIvaId}><option value="">IVA</option>{catalogos.tiposIva.map((iva) => <option key={iva.id} value={iva.id}>{ivaCompactLabel(iva)}</option>)}</select></td>
+          <td className="fac-draft-vat-cell"><select aria-label="IVA" className="fac-draft-cell fac-draft-cell-code" data-active-line={active || undefined} disabled={disabled} onChange={(event) => update({ tipoTaxaIvaId: event.target.value })} title={catalogos.tiposIva.find((iva) => iva.id === line.tipoTaxaIvaId)?.descricao} value={line.tipoTaxaIvaId}><option value="">IVA</option>{catalogos.tiposIva.map((iva) => <option key={iva.id} value={iva.id}>{ivaCompactLabel(iva)}</option>)}</select></td>
           <td className="fac-draft-money">{money(lineTotal(line, catalogos))}</td>
           <td className="fac-draft-row-actions">{active ? <FacButton label="OK" onClick={() => props.onCommitActiveLine("COMERCIAL")} variant="secondary" /> : <RowActions {...props} line={line} />}</td>
         </>

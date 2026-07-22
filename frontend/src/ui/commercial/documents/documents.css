@@ -517,21 +517,22 @@
 
 .fac-draft-lines-table {
   border-collapse: collapse;
-  min-width: 86rem;
+  min-width: 78rem;
+  table-layout: fixed;
   width: 100%;
 }
 
 .fac-draft-col-number { width: 3%; }
-.fac-draft-col-type { width: 7%; }
-.fac-draft-col-article { width: 15%; }
-.fac-draft-col-description { width: 30%; }
-.fac-draft-col-qty { width: 8%; }
-.fac-draft-col-unit { width: 5%; }
-.fac-draft-col-price { width: 10%; }
-.fac-draft-col-discount { width: 8%; }
-.fac-draft-col-vat { width: 7%; }
+.fac-draft-col-type { width: 6%; }
+.fac-draft-col-article { width: 14%; }
+.fac-draft-col-description { width: 36%; }
+.fac-draft-col-qty { width: 7%; }
+.fac-draft-col-unit { width: 4%; }
+.fac-draft-col-price { width: 8%; }
+.fac-draft-col-discount { width: 7%; }
+.fac-draft-col-vat { width: 5%; }
 .fac-draft-col-total { width: 8%; }
-.fac-draft-col-actions { width: 1%; }
+.fac-draft-col-actions { width: 2%; }
 
 .fac-draft-lines-table th {
   background: var(--fac-surface-soft);
@@ -546,7 +547,7 @@
 
 .fac-draft-lines-table td {
   border-top: 1px solid var(--fac-border);
-  padding: 0.4rem;
+  padding: 0.35rem;
   vertical-align: top;
 }
 
@@ -564,8 +565,21 @@
   border-radius: 6px;
   color: var(--fac-text);
   min-height: 2.25rem;
-  padding: 0.35rem 0.45rem;
+  padding: 0.32rem 0.42rem;
   width: 100%;
+}
+
+.fac-draft-description-cell .fac-draft-cell {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fac-draft-cell-code {
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .fac-draft-cell-number {
@@ -584,6 +598,11 @@
 .fac-draft-number,
 .fac-draft-number .p-inputnumber-input {
   width: 100%;
+}
+
+.fac-draft-unit-cell,
+.fac-draft-vat-cell {
+  white-space: nowrap;
 }
 
 .fac-draft-money {
