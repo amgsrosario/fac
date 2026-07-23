@@ -1451,6 +1451,16 @@ button:disabled {
   outline: none;
 }
 
+.fac-list-search {
+  width: min(360px, 100%);
+  border: 1px solid var(--fac-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  color: var(--fac-text);
+  background: var(--fac-surface);
+  outline: none;
+}
+
 .fac-editor-message {
   margin: 0 0 18px;
   border: 1px solid #dde6d9;
@@ -2129,6 +2139,12 @@ button:disabled {
   .fac-list-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .fac-receipt-action-panel .fac-inline-actions {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 
   .fac-articles-detail-top dl,
