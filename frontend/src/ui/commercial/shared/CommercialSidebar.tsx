@@ -11,6 +11,7 @@ export type CommercialNavItem = {
 
 export const defaultCommercialNavItems: CommercialNavItem[] = [
   { description: "Faturação", group: "Vendas", href: "/documentos", id: "documents", label: "Documentos" },
+  { description: "Recebimentos", group: "Vendas", href: "/recebimentos", id: "receipts", label: "Recebimentos" },
   { description: "Entidades", group: "Dados comerciais", href: "/clientes", id: "customers", label: "Clientes" },
   { description: "Catálogo", group: "Dados comerciais", href: "/artigos", id: "articles", label: "Artigos" }
 ];

@@ -1660,6 +1660,82 @@ button:disabled {
   background: var(--fac-surface);
 }
 
+.fac-table-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--fac-petrol);
+  font: inherit;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.fac-table-link:focus-visible {
+  outline: 3px solid rgba(40, 90, 103, 0.24);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.fac-receipt-action-panel .fac-panel-header {
+  align-items: center;
+}
+
+.fac-financial-detail {
+  display: grid;
+  gap: 18px;
+}
+
+.fac-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fac-detail-grid section {
+  min-width: 0;
+  border: 1px solid var(--fac-border);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--fac-surface);
+}
+
+.fac-detail-grid h3,
+.fac-financial-lines h3 {
+  margin: 0 0 12px;
+  color: var(--fac-petrol);
+  font-size: 1rem;
+}
+
+.fac-detail-grid dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.fac-detail-grid dl div {
+  display: grid;
+  gap: 2px;
+}
+
+.fac-detail-grid dt {
+  color: var(--fac-text-muted);
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.fac-detail-grid dd {
+  margin: 0;
+  color: var(--fac-text);
+  overflow-wrap: anywhere;
+}
+
+.fac-panel-header.compact {
+  margin-bottom: 10px;
+}
+
 .fac-allocation-row {
   cursor: pointer;
 }
@@ -2041,6 +2117,7 @@ button:disabled {
   .fac-listing-filters,
   .fac-balance-strip,
   .fac-form-grid,
+  .fac-detail-grid,
   .fac-grid-two,
   .fac-emission-summary,
   .fac-receipt-totals {

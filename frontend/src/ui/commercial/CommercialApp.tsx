@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import LoginView from "../../LoginView";
+import PendentesView from "../../PendentesView";
 import ListagensView from "../../ListagensView";
 import {
   AuthSession,
@@ -87,6 +88,7 @@ export default function CommercialApp() {
         <Route element={articlesView} path="/artigos" />
         <Route element={customersView} path="/clientes" />
         <Route element={documentsView} path="/documentos" />
+        <Route element={<PendentesView />} path="/recebimentos" />
         <Route element={<ListagensView />} path="/listagens/pendentes-a-data" />
         <Route element={<ListagensView />} path="/listagens/pendentes" />
         <Route element={draftDocumentsView} path="/documentos/novo" />
