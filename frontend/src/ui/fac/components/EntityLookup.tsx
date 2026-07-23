@@ -1,4 +1,5 @@
-import { type CSSProperties, KeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, KeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable, DataTableSelectionSingleChangeEvent } from "primereact/datatable";
@@ -71,6 +72,10 @@ const SEARCH_OPERATORS = [
 const SUGGESTIONS_VIEWPORT_MARGIN = 8;
 const SUGGESTIONS_MAX_HEIGHT_REM = 28;
 
+type SuggestionsStyle = CSSProperties & {
+  "--fac-lookup-suggestions-max-height"?: string;
+};
+
 export function EntityLookupField<T extends object>({
   clearable = true,
   disabled = false,
@@ -91,10 +96,12 @@ export function EntityLookupField<T extends object>({
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [suggestionsPlacement, setSuggestionsPlacement] = useState<"below" | "above">("below");
-  const [suggestionsMaxHeight, setSuggestionsMaxHeight] = useState<number | null>(null);
+  const [suggestionsStyle, setSuggestionsStyle] = useState<SuggestionsStyle | null>(null);
+  const suggestionsId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const canUseDocument = typeof document !== "undefined";
   const text = valueLabel || "";
   const searchFields = useMemo(
     () => dialogProps.searchFields ?? searchFieldsFromColumns(dialogProps.columns, dialogProps.globalFilterFields),
@@ -115,16 +122,17 @@ export function EntityLookupField<T extends object>({
 
   useEffect(() => {
     function onPointerDown(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setSuggestionsOpen(false);
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !suggestionsRef.current?.contains(target)) setSuggestionsOpen(false);
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
   useEffect(() => {
-    if (!suggestionsOpen || suggestions.length === 0) {
+    if (!canUseDocument || !suggestionsOpen || suggestions.length === 0) {
       setSuggestionsPlacement("below");
-      setSuggestionsMaxHeight(null);
+      setSuggestionsStyle(null);
       return;
     }
     const updateSuggestionsLayout = () => {
@@ -138,16 +146,29 @@ export function EntityLookupField<T extends object>({
       const aboveSpace = Math.max(0, rootRect.top - SUGGESTIONS_VIEWPORT_MARGIN);
       const nextPlacement = belowSpace < targetHeight && aboveSpace > belowSpace ? "above" : "below";
       const availableSpace = nextPlacement === "above" ? aboveSpace : belowSpace;
+      const viewportWidth = Math.max(0, window.innerWidth - SUGGESTIONS_VIEWPORT_MARGIN * 2);
+      const width = Math.min(rootRect.width, viewportWidth);
+      const left = Math.min(Math.max(SUGGESTIONS_VIEWPORT_MARGIN, rootRect.left), Math.max(SUGGESTIONS_VIEWPORT_MARGIN, window.innerWidth - width - SUGGESTIONS_VIEWPORT_MARGIN));
+      const maxHeight = Math.max(0, Math.min(configuredMaxHeight, availableSpace));
+      const renderedHeight = Math.min(targetHeight, maxHeight);
+      const top = nextPlacement === "above" ? Math.max(SUGGESTIONS_VIEWPORT_MARGIN, rootRect.top - renderedHeight - 4) : Math.min(window.innerHeight - SUGGESTIONS_VIEWPORT_MARGIN, rootRect.bottom + 4);
       setSuggestionsPlacement(nextPlacement);
-      setSuggestionsMaxHeight(Math.max(0, Math.min(configuredMaxHeight, availableSpace)));
+      setSuggestionsStyle({
+        "--fac-lookup-suggestions-max-height": `${maxHeight}px`,
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${width}px`
+      });
     };
     const frame = window.requestAnimationFrame(updateSuggestionsLayout);
     window.addEventListener("resize", updateSuggestionsLayout);
+    window.addEventListener("scroll", updateSuggestionsLayout, true);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("resize", updateSuggestionsLayout);
+      window.removeEventListener("scroll", updateSuggestionsLayout, true);
     };
-  }, [query, suggestions.length, suggestionsOpen]);
+  }, [canUseDocument, query, suggestions.length, suggestionsOpen]);
 
   function hide() {
     setVisible(false);
@@ -201,11 +222,43 @@ export function EntityLookupField<T extends object>({
     }
   }
 
+  const suggestionsList =
+    canUseDocument && suggestionsOpen && suggestions.length > 0
+      ? createPortal(
+          <div
+            className={`fac-lookup-suggestions ${suggestionsPlacement === "above" ? "above" : ""}`}
+            id={suggestionsId}
+            ref={suggestionsRef}
+            role="listbox"
+            style={suggestionsStyle ?? { left: 0, top: 0, visibility: "hidden", width: rootRef.current?.getBoundingClientRect().width ?? undefined }}
+          >
+            {suggestions.map((row, index) => (
+              <button
+                aria-selected={index === activeIndex}
+                className={index === activeIndex ? "active" : ""}
+                key={entityKey(row, dialogProps.dataKey)}
+                onMouseEnter={() => setActiveIndex(index)}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => selectRow(row)}
+                role="option"
+                type="button"
+              >
+                <span>{optionLabel(row)}</span>
+                {optionMeta && <small>{optionMeta(row)}</small>}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )
+      : null;
+
   const control = (
     <div className="fac-lookup-wrap" ref={rootRef}>
       <div className={`fac-lookup-field ${disabled ? "disabled" : ""}`}>
         <InputText
           aria-label={label ?? placeholder}
+          aria-controls={suggestionsOpen && suggestions.length > 0 ? suggestionsId : undefined}
+          aria-expanded={suggestionsOpen && suggestions.length > 0}
           className="fac-lookup-input"
           disabled={disabled}
           onChange={(event) => {
@@ -234,36 +287,13 @@ export function EntityLookupField<T extends object>({
           </button>
         )}
       </div>
-      {suggestionsOpen && suggestions.length > 0 && (
-        <div
-          className={`fac-lookup-suggestions ${suggestionsPlacement === "above" ? "above" : ""}`}
-          ref={suggestionsRef}
-          role="listbox"
-          style={suggestionsMaxHeight ? ({ "--fac-lookup-suggestions-max-height": `${suggestionsMaxHeight}px` } as CSSProperties) : undefined}
-        >
-          {suggestions.map((row, index) => (
-            <button
-              aria-selected={index === activeIndex}
-              className={index === activeIndex ? "active" : ""}
-              key={entityKey(row, dialogProps.dataKey)}
-              onMouseEnter={() => setActiveIndex(index)}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => selectRow(row)}
-              role="option"
-              type="button"
-            >
-              <span>{optionLabel(row)}</span>
-              {optionMeta && <small>{optionMeta(row)}</small>}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 
   return (
     <>
       {label ? <label className="fac-field-stack"><span>{label}</span>{control}</label> : control}
+      {suggestionsList}
       <EntityLookupDialog
         {...dialogProps}
         onHide={hide}

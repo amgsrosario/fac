@@ -59,11 +59,9 @@
 }
 
 .fac-lookup-suggestions {
-  position: absolute;
-  z-index: 1200;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+  position: fixed;
+  z-index: calc(var(--fac-z-toast, 1100) + 50);
+  box-sizing: border-box;
   height: auto;
   max-height: var(--fac-lookup-suggestions-max-height, 28rem);
   overflow-y: auto;
@@ -71,11 +69,6 @@
   border-radius: var(--fac-radius-sm, 8px);
   background: var(--fac-surface);
   box-shadow: var(--fac-shadow-lg, 0 16px 32px rgba(15, 23, 42, 0.16));
-}
-
-.fac-lookup-suggestions.above {
-  top: auto;
-  bottom: calc(100% + 4px);
 }
 
 .fac-lookup-suggestions button {
