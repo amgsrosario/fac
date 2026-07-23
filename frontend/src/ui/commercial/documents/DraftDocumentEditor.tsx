@@ -906,6 +906,7 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
               placeholder="Pesquisar artigo ou serviço"
               preferenceKey="fac.lookup.draft.artigos"
               searchFields={artigoSearchFields(catalogos.tiposIva)}
+              showAllSuggestionsOnEmptyQuery
               selection={selectedArticle}
               title="Selecionar artigo"
               value={catalogos.artigos.filter((artigo) => !artigo.inativo)}

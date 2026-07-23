@@ -54,6 +54,7 @@ type EntityLookupFieldProps<T extends object> = Omit<EntityLookupDialogProps<T>,
   onQueryChange?: (query: string) => void;
   onSelect: (row: T) => void;
   placeholder: string;
+  showAllSuggestionsOnEmptyQuery?: boolean;
   selection?: T | null;
   suggestionLimit?: number;
   valueLabel?: string;
@@ -77,6 +78,7 @@ export function EntityLookupField<T extends object>({
   optionLabel,
   optionMeta,
   placeholder,
+  showAllSuggestionsOnEmptyQuery = false,
   selection = null,
   suggestionLimit = 10,
   valueLabel,
@@ -86,8 +88,10 @@ export function EntityLookupField<T extends object>({
   const [query, setQuery] = useState("");
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [suggestionsPlacement, setSuggestionsPlacement] = useState<"below" | "above">("below");
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
   const text = valueLabel || "";
   const searchFields = useMemo(
     () => dialogProps.searchFields ?? searchFieldsFromColumns(dialogProps.columns, dialogProps.globalFilterFields),
@@ -95,9 +99,9 @@ export function EntityLookupField<T extends object>({
   );
   const suggestions = useMemo(() => {
     const trimmed = query.trim();
-    if (!trimmed) return [];
+    if (!trimmed) return showAllSuggestionsOnEmptyQuery ? dialogProps.value.slice(0, suggestionLimit) : [];
     return dialogProps.value.filter((row) => matchEntityQuery(row, trimmed, searchFields)).slice(0, suggestionLimit);
-  }, [dialogProps.value, query, searchFields, suggestionLimit]);
+  }, [dialogProps.value, query, searchFields, showAllSuggestionsOnEmptyQuery, suggestionLimit]);
 
   useEffect(() => {
     if (selection) {
@@ -113,6 +117,22 @@ export function EntityLookupField<T extends object>({
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
+
+  useEffect(() => {
+    if (!suggestionsOpen || suggestions.length === 0) {
+      setSuggestionsPlacement("below");
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      const rootRect = rootRef.current?.getBoundingClientRect();
+      const suggestionsHeight = suggestionsRef.current?.getBoundingClientRect().height ?? 0;
+      if (!rootRect || suggestionsHeight === 0) return;
+      const belowSpace = window.innerHeight - rootRect.bottom - 4;
+      const aboveSpace = rootRect.top - 4;
+      setSuggestionsPlacement(belowSpace < suggestionsHeight && aboveSpace > belowSpace ? "above" : "below");
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [suggestions.length, suggestionsOpen]);
 
   function hide() {
     setVisible(false);
@@ -134,7 +154,7 @@ export function EntityLookupField<T extends object>({
   function clearSelection() {
     setQuery("");
     onQueryChange?.("");
-    setSuggestionsOpen(false);
+    setSuggestionsOpen(showAllSuggestionsOnEmptyQuery);
     onClear?.();
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }
@@ -178,9 +198,9 @@ export function EntityLookupField<T extends object>({
             setQuery(nextQuery);
             onQueryChange?.(nextQuery);
             setActiveIndex(0);
-            setSuggestionsOpen(Boolean(nextQuery.trim()));
+            setSuggestionsOpen(showAllSuggestionsOnEmptyQuery || Boolean(nextQuery.trim()));
           }}
-          onFocus={() => query.trim() && setSuggestionsOpen(true)}
+          onFocus={() => (showAllSuggestionsOnEmptyQuery || query.trim()) && setSuggestionsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={text || placeholder}
           ref={inputRef}
@@ -200,7 +220,7 @@ export function EntityLookupField<T extends object>({
         )}
       </div>
       {suggestionsOpen && suggestions.length > 0 && (
-        <div className="fac-lookup-suggestions" role="listbox">
+        <div className={`fac-lookup-suggestions ${suggestionsPlacement === "above" ? "above" : ""}`} ref={suggestionsRef} role="listbox">
           {suggestions.map((row, index) => (
             <button
               aria-selected={index === activeIndex}

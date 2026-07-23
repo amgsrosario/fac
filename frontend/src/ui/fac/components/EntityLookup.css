@@ -64,12 +64,17 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  max-height: 18rem;
+  max-height: min(14rem, 40vh);
   overflow: auto;
   border: 1px solid var(--fac-border);
   border-radius: var(--fac-radius-sm, 8px);
   background: var(--fac-surface);
   box-shadow: var(--fac-shadow-lg, 0 16px 32px rgba(15, 23, 42, 0.16));
+}
+
+.fac-lookup-suggestions.above {
+  top: auto;
+  bottom: calc(100% + 4px);
 }
 
 .fac-lookup-suggestions button {
