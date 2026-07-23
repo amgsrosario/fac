@@ -64,8 +64,9 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  max-height: min(14rem, 40vh);
-  overflow: auto;
+  height: auto;
+  max-height: var(--fac-lookup-suggestions-max-height, 28rem);
+  overflow-y: auto;
   border: 1px solid var(--fac-border);
   border-radius: var(--fac-radius-sm, 8px);
   background: var(--fac-surface);

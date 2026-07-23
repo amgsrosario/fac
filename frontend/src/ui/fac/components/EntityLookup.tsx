@@ -1,4 +1,4 @@
-import { KeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, KeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable, DataTableSelectionSingleChangeEvent } from "primereact/datatable";
@@ -68,6 +68,8 @@ const SEARCH_OPERATORS = [
   ["!", "não contém"],
   ["$", "termina em"]
 ] as const;
+const SUGGESTIONS_VIEWPORT_MARGIN = 8;
+const SUGGESTIONS_MAX_HEIGHT_REM = 28;
 
 export function EntityLookupField<T extends object>({
   clearable = true,
@@ -89,6 +91,7 @@ export function EntityLookupField<T extends object>({
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [suggestionsPlacement, setSuggestionsPlacement] = useState<"below" | "above">("below");
+  const [suggestionsMaxHeight, setSuggestionsMaxHeight] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -121,18 +124,30 @@ export function EntityLookupField<T extends object>({
   useEffect(() => {
     if (!suggestionsOpen || suggestions.length === 0) {
       setSuggestionsPlacement("below");
+      setSuggestionsMaxHeight(null);
       return;
     }
-    const frame = window.requestAnimationFrame(() => {
+    const updateSuggestionsLayout = () => {
       const rootRect = rootRef.current?.getBoundingClientRect();
-      const suggestionsHeight = suggestionsRef.current?.getBoundingClientRect().height ?? 0;
-      if (!rootRect || suggestionsHeight === 0) return;
-      const belowSpace = window.innerHeight - rootRect.bottom - 4;
-      const aboveSpace = rootRect.top - 4;
-      setSuggestionsPlacement(belowSpace < suggestionsHeight && aboveSpace > belowSpace ? "above" : "below");
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [suggestions.length, suggestionsOpen]);
+      const suggestionsElement = suggestionsRef.current;
+      if (!rootRect || !suggestionsElement) return;
+      const rootFontSize = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
+      const configuredMaxHeight = SUGGESTIONS_MAX_HEIGHT_REM * rootFontSize;
+      const targetHeight = Math.min(suggestionsElement.scrollHeight, configuredMaxHeight);
+      const belowSpace = Math.max(0, window.innerHeight - rootRect.bottom - SUGGESTIONS_VIEWPORT_MARGIN);
+      const aboveSpace = Math.max(0, rootRect.top - SUGGESTIONS_VIEWPORT_MARGIN);
+      const nextPlacement = belowSpace < targetHeight && aboveSpace > belowSpace ? "above" : "below";
+      const availableSpace = nextPlacement === "above" ? aboveSpace : belowSpace;
+      setSuggestionsPlacement(nextPlacement);
+      setSuggestionsMaxHeight(Math.max(0, Math.min(configuredMaxHeight, availableSpace)));
+    };
+    const frame = window.requestAnimationFrame(updateSuggestionsLayout);
+    window.addEventListener("resize", updateSuggestionsLayout);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateSuggestionsLayout);
+    };
+  }, [query, suggestions.length, suggestionsOpen]);
 
   function hide() {
     setVisible(false);
@@ -220,7 +235,12 @@ export function EntityLookupField<T extends object>({
         )}
       </div>
       {suggestionsOpen && suggestions.length > 0 && (
-        <div className={`fac-lookup-suggestions ${suggestionsPlacement === "above" ? "above" : ""}`} ref={suggestionsRef} role="listbox">
+        <div
+          className={`fac-lookup-suggestions ${suggestionsPlacement === "above" ? "above" : ""}`}
+          ref={suggestionsRef}
+          role="listbox"
+          style={suggestionsMaxHeight ? ({ "--fac-lookup-suggestions-max-height": `${suggestionsMaxHeight}px` } as CSSProperties) : undefined}
+        >
           {suggestions.map((row, index) => (
             <button
               aria-selected={index === activeIndex}
