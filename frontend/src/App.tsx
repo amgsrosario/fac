@@ -1104,14 +1104,9 @@ function ClientesView({
 
           <div className="fac-client-form-sections">
             <FormSection title="Identificação">
+              <Field label="Código"><input disabled value={editingClienteId ? String(editingClienteId) : "Automático"} /></Field>
               <Field label="Nome"><input maxLength={80} onChange={(event) => changeField("nome", event.target.value)} value={form.nome} /></Field>
               <Field label="NIF"><input maxLength={9} onChange={(event) => changeField("nif", event.target.value)} value={form.nif} /></Field>
-              <Field label="Regime de IVA">
-                <select onChange={(event) => changeField("rivaId", event.target.value)} value={form.rivaId}>
-                  <option value="">Sem valor</option>
-                  {catalogos?.regimesIva.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
-                </select>
-              </Field>
             </FormSection>
 
             <FormSection title="Contactos">
@@ -1150,6 +1145,12 @@ function ClientesView({
                 <select onChange={(event) => changeField("pPagamentoId", event.target.value)} value={form.pPagamentoId}>
                   <option value="">Sem valor</option>
                   {catalogos?.prazosPagamento.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                </select>
+              </Field>
+              <Field label="Regime de IVA">
+                <select onChange={(event) => changeField("rivaId", event.target.value)} value={form.rivaId}>
+                  <option value="">Sem valor</option>
+                  {catalogos?.regimesIva.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
                 </select>
               </Field>
               <Field label="IBAN"><input maxLength={34} onChange={(event) => changeField("iban", event.target.value)} value={form.iban} /></Field>

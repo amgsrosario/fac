@@ -640,10 +640,9 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
       {editorMessage && <FacMessage tone="error" title="Validação">{editorMessage}</FacMessage>}
 
       <FormSection title="Identificação">
-        {editorMode === "edit" && <FacInputText disabled label="Código" value={selected ? String(selected.id) : ""} />}
+        <FacInputText disabled label="Código" value={editorMode === "edit" && selected ? String(selected.id) : "Automático"} />
         <FacInputText label="Nome" maxLength={80} onChange={(event) => onChangeForm({ ...form, nome: event.target.value })} required value={form.nome} />
         <FacInputText label="NIF" maxLength={9} onChange={(event) => onChangeForm({ ...form, nif: event.target.value })} required value={form.nif} />
-        <FacSelect label="Regime de IVA" onChange={(value) => onChangeForm({ ...form, rivaId: value ?? "" })} options={catalogOptions(catalogos.regimesIva)} value={form.rivaId} />
       </FormSection>
 
       <FormSection title="Contactos">
@@ -664,6 +663,7 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
         <FacSelect label="Moeda" onChange={(value) => onChangeForm({ ...form, moedaId: value ?? "" })} options={catalogOptions(catalogos.moedas)} value={form.moedaId} />
         <FacSelect label="Modo de pagamento" onChange={(value) => onChangeForm({ ...form, mPagamentoId: value ?? "" })} options={catalogOptions(catalogos.modosPagamento)} value={form.mPagamentoId} />
         <FacSelect label="Prazo de pagamento" onChange={(value) => onChangeForm({ ...form, pPagamentoId: value ?? "" })} options={catalogOptions(catalogos.prazosPagamento)} value={form.pPagamentoId} />
+        <FacSelect label="Regime de IVA" onChange={(value) => onChangeForm({ ...form, rivaId: value ?? "" })} options={catalogOptions(catalogos.regimesIva)} value={form.rivaId} />
         <FacInputText label="IBAN" maxLength={34} onChange={(event) => onChangeForm({ ...form, iban: event.target.value })} value={form.iban} />
         <label className="fac-customers-check">
           <input checked={form.retencao} onChange={(event) => onChangeForm({ ...form, retencao: event.target.checked })} type="checkbox" />
@@ -815,7 +815,6 @@ function validate(form: ClienteForm) {
   if (!form.nome.trim()) return "O nome é obrigatório.";
   if (form.nif.trim().length !== 9) return "O NIF deve ter 9 caracteres.";
   if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) return "Indica um email valido.";
-  if (form.email1.trim() && !/^\S+@\S+\.\S+$/.test(form.email1.trim())) return "Indica um segundo email valido.";
   if (!form.morada.trim()) return "A morada e obrigatoria.";
   if (!form.codPostalId.trim()) return "O código postal é obrigatório.";
   if (!form.paisId) return "O país é obrigatório.";
