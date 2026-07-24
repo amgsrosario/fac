@@ -936,7 +936,7 @@ button:disabled {
 .fac-extrato-filters input,
 .fac-extrato-filters select,
 .fac-pendentes-filters > label input,
-.fac-listing-filters input,
+.fac-listing-filters > label input,
 .fac-listing-filters select {
   width: 100%;
   min-height: 42px;
