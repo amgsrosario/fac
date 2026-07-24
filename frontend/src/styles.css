@@ -1628,7 +1628,7 @@ button:disabled {
 
 .fac-receipt-totals {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 12px;
   margin: 20px 0 14px;
 }
@@ -2129,9 +2129,12 @@ button:disabled {
   .fac-form-grid,
   .fac-detail-grid,
   .fac-grid-two,
-  .fac-emission-summary,
-  .fac-receipt-totals {
+  .fac-emission-summary {
     grid-template-columns: 1fr;
+  }
+
+  .fac-receipt-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .fac-inline-actions,
@@ -2172,6 +2175,12 @@ button:disabled {
     max-width: none;
     order: 10;
     width: 100%;
+  }
+}
+
+@media (max-width: 800px) {
+  .fac-receipt-totals {
+    grid-template-columns: 1fr;
   }
 }
 

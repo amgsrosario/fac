@@ -424,6 +424,7 @@ export default function PendentesView() {
     .map((pendente) => ({ pendente, amount: round6(Number(allocations[pendente.id] || 0)) }))
     .filter((item) => item.amount > 0);
   const allocatedTotal = round6(sum(allocatedLines.map((item) => item.amount)));
+  const totalPendenteCliente = round6(sum(receiptPendentes.map((pendente) => Number(pendente.valorPendente) || 0)));
   const difference = round6(receiptTarget - allocatedTotal);
   const availableSeries = series.filter((serie) => serie.tipoDocumentoId === form.tipoDocumentoId);
   const filteredPendentes = useMemo(() => {
@@ -463,7 +464,7 @@ export default function PendentesView() {
         <Field label="Emissor"><input disabled value={getAuthSession()?.nome ?? "Utilizador autenticado"}/></Field>
       </div>
 
-      <div className="fac-receipt-totals"><div><span>Valor recebido</span><strong>{money(receiptTarget)} {form.moedaId}</strong></div><div><span>Distribuído</span><strong>{money(allocatedTotal)} {form.moedaId}</strong></div><div className={difference === 0 && receiptTarget > 0 ? "balanced" : "unbalanced"}><span>Diferença</span><strong>{money(difference)} {form.moedaId}</strong></div></div>
+      <div className="fac-receipt-totals"><div><span>Total pendente do cliente</span><strong>{money(totalPendenteCliente)} {form.moedaId || "EUR"}</strong></div><div><span>Valor recebido</span><strong>{money(receiptTarget)} {form.moedaId}</strong></div><div><span>Distribuído</span><strong>{money(allocatedTotal)} {form.moedaId}</strong></div><div className={difference === 0 && receiptTarget > 0 ? "balanced" : "unbalanced"}><span>Diferença</span><strong>{money(difference)} {form.moedaId}</strong></div></div>
       <div className="fac-inline-actions"><button className="fac-soft-button" disabled={!form.valorRecebido || !form.moedaId} onClick={distributeReceipt} type="button">Distribuir por antiguidade</button><button className="fac-ghost-button" disabled={allocatedTotal === 0} onClick={clearAllocations} type="button">Limpar distribuição</button></div>
 
       <table className="fac-table fac-allocation-table"><thead><tr><th>Documento</th><th>Emissão</th><th>Vencimento</th><th>Valor original</th><th>Pendente antes</th><th>Valor a liquidar</th><th>Novo pendente</th></tr></thead><tbody>
