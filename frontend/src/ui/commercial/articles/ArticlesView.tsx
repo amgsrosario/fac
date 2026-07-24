@@ -711,7 +711,7 @@ function ServiceFormFields({
 
         <FormSection title="Preço e fiscalidade">
           <FacInputText
-            label="Preço sem IVA"
+            label="Preço de venda"
             min="0"
             onChange={(event) => onChangeForm({ ...form, pvp: event.target.value })}
             required
@@ -720,7 +720,7 @@ function ServiceFormFields({
             value={form.pvp}
           />
           <FacSelect
-            label="Taxa de IVA"
+            label="IVA de venda"
             onChange={(value) => onChangeForm({ ...form, ivaVendaId: value ?? "" })}
             options={ivaOptions}
             value={form.ivaVendaId}
@@ -882,9 +882,9 @@ function validate(form: ServiceForm, editing: boolean, defaults: HiddenDefaults)
   if (!form.descricao.trim()) return "A descrição é obrigatória.";
   if (!form.familiaId) return "A família é obrigatória.";
   if (!form.unidade.trim()) return "A unidade é obrigatória.";
-  if (!form.ivaVendaId) return "A taxa de IVA é obrigatória.";
+  if (!form.ivaVendaId) return "O IVA de venda é obrigatório.";
   if (!defaults.ivaCompraId) return "Não existe uma taxa de IVA segura nos catálogos atuais.";
-  if (form.pvp === "" || Number(form.pvp) < 0) return "O preço deve ser igual ou superior a zero.";
+  if (form.pvp === "" || Number(form.pvp) < 0) return "O preço de venda deve ser igual ou superior a zero.";
   return null;
 }
 

@@ -225,8 +225,8 @@ export default function ArtigosView() {
           </FormSection>
 
           <FormSection title="Preço e fiscalidade">
-            <Field label="PVP"><input min="0" onChange={(event) => change("pvp", event.target.value)} step="0.000001" type="number" value={form.pvp} /></Field>
-            <Field label="IVA na venda">
+            <Field label="Preço de venda"><input min="0" onChange={(event) => change("pvp", event.target.value)} step="0.000001" type="number" value={form.pvp} /></Field>
+            <Field label="IVA de venda">
               <select onChange={(event) => change("ivaVendaId", event.target.value)} value={form.ivaVendaId}>
                 <option value="">Selecionar</option>
                 {tiposIva.map((tipo) => <option disabled={tipo.inativo && tipo.id !== form.ivaVendaId} key={tipo.id} value={tipo.id}>{tipo.descricao}{tipo.inativo ? " (inativo)" : ""}</option>)}
@@ -395,8 +395,8 @@ function validate(form: ArtigoForm, editing: boolean) {
   if (!form.descricao.trim()) return "A descrição é obrigatória.";
   if (!form.unidade.trim()) return "A unidade é obrigatória.";
   if (!form.familiaId) return "A família é obrigatória.";
-  if (!form.ivaVendaId) return "O IVA na venda é obrigatório.";
-  if (form.pvp === "" || Number(form.pvp) < 0) return "O PVP deve ser igual ou superior a zero.";
+  if (!form.ivaVendaId) return "O IVA de venda é obrigatório.";
+  if (form.pvp === "" || Number(form.pvp) < 0) return "O preço de venda deve ser igual ou superior a zero.";
   if (form.peso !== "" && Number(form.peso) < 0) return "O peso não pode ser negativo.";
   return null;
 }
