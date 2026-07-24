@@ -14,7 +14,7 @@ class FlywaySchemaIntegrationTests {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void esquemaEstaNaVersaoDezEContemSnapshotFiscalBlocoTresMD28EMD29EChavesNaturais() {
+    void esquemaEstaNaVersaoOnzeEContemSnapshotFiscalBlocoTresMD28EMD29EChavesNaturaisETipoArtigo() {
         Integer versao = jdbcTemplate.queryForObject(
                 "select max(version::integer) from flyway_schema_history where success",
                 Integer.class
@@ -77,7 +77,25 @@ class FlywaySchemaIntegrationTests {
                     or (table_name = 'parametros_cliente' and column_name = 'id_transporte' and data_type = 'character varying' and character_maximum_length = 3))
                 """, Integer.class);
 
-        assertThat(versao).isEqualTo(10);
+        Integer tipoArtigo = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.columns
+                where table_schema = 'public'
+                  and table_name = 'artigo'
+                  and column_name = 'tipo_artigo'
+                  and data_type = 'character varying'
+                  and character_maximum_length = 20
+                  and is_nullable = 'NO'
+                """, Integer.class);
+
+        Integer tipoArtigoConstraint = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.table_constraints
+                where table_schema = 'public'
+                  and table_name = 'artigo'
+                  and constraint_name = 'ck_artigo_tipo_artigo'
+                  and constraint_type = 'CHECK'
+                """, Integer.class);
+
+        assertThat(versao).isEqualTo(11);
         assertThat(colunasSnapshot).isEqualTo(2);
         assertThat(estruturasBlocoTres).isEqualTo(3);
         assertThat(estruturasMd28).isEqualTo(10);
@@ -85,5 +103,7 @@ class FlywaySchemaIntegrationTests {
         assertThat(armazemNatural).isEqualTo(3);
         assertThat(modoPagamentoNatural).isEqualTo(5);
         assertThat(transporteNatural).isEqualTo(4);
+        assertThat(tipoArtigo).isEqualTo(1);
+        assertThat(tipoArtigoConstraint).isEqualTo(1);
     }
 }

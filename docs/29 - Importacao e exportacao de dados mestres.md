@@ -124,12 +124,13 @@ Obrigatorios:
 
 Modelo:
 
-`codigo;abreviatura;codigoIdentificacao;descricao;unidade;familiaId;peso;ivaCompraId;ivaVendaId;pvp;inativo;retencao;observacoes`
+`codigo;abreviatura;codigoIdentificacao;descricao;tipoArtigo;unidade;familiaId;peso;ivaCompraId;ivaVendaId;pvp;inativo;retencao;observacoes`
 
 Obrigatorios:
 
 - `codigo`;
 - `descricao`;
+- `tipoArtigo` (`ARTIGO` ou `SERVICO`);
 - `unidade`;
 - `familiaId`;
 - `ivaCompraId`;

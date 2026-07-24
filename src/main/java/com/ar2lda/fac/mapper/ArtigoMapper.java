@@ -4,6 +4,7 @@ import com.ar2lda.fac.controller.dto.ArtigoCreateDto;
 import com.ar2lda.fac.controller.dto.ArtigoDto;
 import com.ar2lda.fac.controller.dto.ArtigoUpdateDto;
 import com.ar2lda.fac.model.Artigo;
+import com.ar2lda.fac.model.TipoArtigo;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
@@ -19,6 +20,7 @@ public interface ArtigoMapper {
                 entity.getAbreviatura(),
                 entity.getCodigoIdentificacao(),
                 entity.getDescricao(),
+                entity.getTipoArtigo(),
                 entity.getUnidade(),
                 entity.getFamilia().getId(),
                 entity.getPeso(),
@@ -37,7 +39,7 @@ public interface ArtigoMapper {
         }
         Artigo entity = new Artigo(dto.codigo());
         applyScalars(
-                dto.abreviatura(), dto.codigoIdentificacao(), dto.descricao(), dto.unidade(), dto.peso(),
+                dto.abreviatura(), dto.codigoIdentificacao(), dto.descricao(), dto.tipoArtigo(), dto.unidade(), dto.peso(),
                 dto.pvp(), dto.inativo(), dto.retencao(), dto.observacoes(), entity
         );
         return entity;
@@ -48,17 +50,18 @@ public interface ArtigoMapper {
             return;
         }
         applyScalars(
-                dto.abreviatura(), dto.codigoIdentificacao(), dto.descricao(), dto.unidade(), dto.peso(),
+                dto.abreviatura(), dto.codigoIdentificacao(), dto.descricao(), dto.tipoArtigo(), dto.unidade(), dto.peso(),
                 dto.pvp(), dto.inativo(), dto.retencao(), dto.observacoes(), entity
         );
     }
 
-    private void applyScalars(String abreviatura, String codigoIdentificacao, String descricao, String unidade,
-                              java.math.BigDecimal peso, java.math.BigDecimal pvp, boolean inativo,
+    private void applyScalars(String abreviatura, String codigoIdentificacao, String descricao, TipoArtigo tipoArtigo,
+                              String unidade, java.math.BigDecimal peso, java.math.BigDecimal pvp, boolean inativo,
                               boolean retencao, String observacoes, Artigo entity) {
         entity.setAbreviatura(abreviatura);
         entity.setCodigoIdentificacao(codigoIdentificacao);
         entity.setDescricao(descricao);
+        entity.setTipoArtigo(tipoArtigo);
         entity.setUnidade(unidade);
         entity.setPeso(peso);
         entity.setPvp(pvp);

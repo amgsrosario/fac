@@ -119,6 +119,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         Familia familia = familiaRepository.save(new Familia("Integridade"));
         Artigo artigo = new Artigo("ARTINT");
         artigo.setDescricao("Artigo Integridade");
+        artigo.setTipoArtigo(TipoArtigo.ARTIGO);
         artigo.setUnidade("UN");
         artigo.setFamilia(familia);
         artigo.setIvaCompra(taxaNormal);

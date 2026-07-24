@@ -1,5 +1,7 @@
 package com.ar2lda.fac.controller.dto;
 
+import com.ar2lda.fac.model.TipoArtigo;
+
 import java.math.BigDecimal;
 
 public record ArtigoDto(
@@ -7,6 +9,7 @@ public record ArtigoDto(
         String abreviatura,
         String codigoIdentificacao,
         String descricao,
+        TipoArtigo tipoArtigo,
         String unidade,
         Long familiaId,
         BigDecimal peso,

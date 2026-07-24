@@ -213,6 +213,7 @@ insert into artigo (
     abreviatura,
     codigo_identificacao,
     descricao,
+    tipo_artigo,
     unidade,
     id_familia,
     peso,
@@ -228,8 +229,9 @@ values (
     'HORA',
     null,
     'Servico tecnico por hora',
+    'SERVICO',
     'H',
-    'TFB',
+    1001,
     0.000,
     'NORMAL',
     'NORMAL',
@@ -242,6 +244,7 @@ on conflict (codigo) do update set
     abreviatura = excluded.abreviatura,
     codigo_identificacao = excluded.codigo_identificacao,
     descricao = excluded.descricao,
+    tipo_artigo = excluded.tipo_artigo,
     unidade = excluded.unidade,
     id_familia = excluded.id_familia,
     peso = excluded.peso,
@@ -357,16 +360,16 @@ insert into codpostal (id, nome) values ('7000-001','Evora Demo'),('28000','Madr
 update armazem set nome='Armazem Alentejo Sabores', morada='Avenida das Oliveiras, 14', id_codpostal='7000-001', localidade='Evora Demo' where id='001';
 
 insert into familia (id, descricao) values (1002,'Azeites'),(1003,'Vinhos'),(1004,'Cabazes e servicos') on conflict (id) do update set descricao=excluded.descricao;
-insert into artigo (codigo,abreviatura,codigo_identificacao,descricao,unidade,id_familia,peso,id_iva_compra,id_iva_venda,pvp,inativo,retencao,observacoes) values
-('AZ075','AZ075',null,'Azeite Virgem Extra 0,75 L','UN',1002,0.750,'INTERMEDIA','INTERMEDIA',12.500000,false,false,'Produto ficticio de demonstracao'),
-('AZ5L','AZ5L',null,'Azeite Virgem Extra 5 L','UN',1002,5.000,'INTERMEDIA','INTERMEDIA',54.900000,false,false,'Produto ficticio de demonstracao'),
-('VTRES','VTRES',null,'Vinho Tinto Reserva','UN',1003,0.750,'NORMAL','NORMAL',18.900000,false,false,'Produto ficticio de demonstracao'),
-('VBREG','VBREG',null,'Vinho Branco Regional','UN',1003,0.750,'NORMAL','NORMAL',11.900000,false,false,'Produto ficticio de demonstracao'),
-('CABAZ','CABAZ',null,'Caixa Presente Alentejana','UN',1004,2.000,'NORMAL','NORMAL',39.900000,false,false,'Produto ficticio de demonstracao'),
-('PREPCAB','PREP',null,'Servico de Preparacao de Cabaz','UN',1004,0.000,'NORMAL','NORMAL',7.500000,false,false,'Servico ficticio de demonstracao'),
-('TRNAC','TRNAC',null,'Transporte Nacional','UN',1004,0.000,'NORMAL','NORMAL',15.000000,false,false,'Servico ficticio de demonstracao'),
-('TRINT','TRINT',null,'Transporte Intracomunitario','UN',1004,0.000,'NORMAL','NORMAL',35.000000,false,false,'Tratado com a regra IVA atualmente suportada pelo FAC')
-on conflict (codigo) do update set descricao=excluded.descricao,pvp=excluded.pvp,id_iva_venda=excluded.id_iva_venda,inativo=false;
+insert into artigo (codigo,abreviatura,codigo_identificacao,descricao,tipo_artigo,unidade,id_familia,peso,id_iva_compra,id_iva_venda,pvp,inativo,retencao,observacoes) values
+('AZ075','AZ075',null,'Azeite Virgem Extra 0,75 L','ARTIGO','UN',1002,0.750,'INTERMEDIA','INTERMEDIA',12.500000,false,false,'Produto ficticio de demonstracao'),
+('AZ5L','AZ5L',null,'Azeite Virgem Extra 5 L','ARTIGO','UN',1002,5.000,'INTERMEDIA','INTERMEDIA',54.900000,false,false,'Produto ficticio de demonstracao'),
+('VTRES','VTRES',null,'Vinho Tinto Reserva','ARTIGO','UN',1003,0.750,'NORMAL','NORMAL',18.900000,false,false,'Produto ficticio de demonstracao'),
+('VBREG','VBREG',null,'Vinho Branco Regional','ARTIGO','UN',1003,0.750,'NORMAL','NORMAL',11.900000,false,false,'Produto ficticio de demonstracao'),
+('CABAZ','CABAZ',null,'Caixa Presente Alentejana','ARTIGO','UN',1004,2.000,'NORMAL','NORMAL',39.900000,false,false,'Produto ficticio de demonstracao'),
+('PREPCAB','PREP',null,'Servico de Preparacao de Cabaz','SERVICO','UN',1004,0.000,'NORMAL','NORMAL',7.500000,false,false,'Servico ficticio de demonstracao'),
+('TRNAC','TRNAC',null,'Transporte Nacional','SERVICO','UN',1004,0.000,'NORMAL','NORMAL',15.000000,false,false,'Servico ficticio de demonstracao'),
+('TRINT','TRINT',null,'Transporte Intracomunitario','SERVICO','UN',1004,0.000,'NORMAL','NORMAL',35.000000,false,false,'Tratado com a regra IVA atualmente suportada pelo FAC')
+on conflict (codigo) do update set descricao=excluded.descricao,tipo_artigo=excluded.tipo_artigo,pvp=excluded.pvp,id_iva_venda=excluded.id_iva_venda,inativo=false;
 
 insert into cliente (id,nome,morada,morada1,localidade,id_codpostal,id_pais,nif,id_moeda,tel,tm,email,email1,id_mpagamento,id_ppagamento,id_riva,tspiva,iban,retencao,id_transporte,inativo,observacoes) values
 (1101,'Mercearia Campo Dourado, Lda.','Rua do Mercado Demo, 8',null,'Evora Demo','7000-001','PT','599100011','EUR',null,null,'compras@campo-dourado.demo',null,'TFB','P30','CON',null,null,false,'001',false,'Cliente empresarial nacional ficticio'),

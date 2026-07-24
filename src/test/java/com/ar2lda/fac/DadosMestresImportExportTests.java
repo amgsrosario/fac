@@ -137,6 +137,7 @@ class DadosMestresImportExportTests {
                 .andExpect(jsonPath("$.criados").value(1));
 
         assertThat(artigoRepository.existsById("IMP001")).isTrue();
+        assertThat(artigoRepository.findById("IMP001").orElseThrow().getTipoArtigo().name()).isEqualTo("SERVICO");
     }
 
     @Test
@@ -194,8 +195,8 @@ class DadosMestresImportExportTests {
     }
 
     private String artigosCsv(String codigo, String identificacao) {
-        return "codigo;abreviatura;codigoIdentificacao;descricao;unidade;familiaId;peso;ivaCompraId;ivaVendaId;pvp;inativo;retencao;observacoes\n"
-                + "%s;Imp;%s;Artigo importado;UN;%d;1.000;REDUZIDA;NORMAL;12.500000;false;false;Obs\n"
+        return "codigo;abreviatura;codigoIdentificacao;descricao;tipoArtigo;unidade;familiaId;peso;ivaCompraId;ivaVendaId;pvp;inativo;retencao;observacoes\n"
+                + "%s;Imp;%s;Artigo importado;SERVICO;UN;%d;1.000;REDUZIDA;NORMAL;12.500000;false;false;Obs\n"
                 .formatted(codigo, identificacao, familiaId);
     }
 
@@ -203,10 +204,10 @@ class DadosMestresImportExportTests {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             var sheet = workbook.createSheet("dados");
             Row h = sheet.createRow(0);
-            String[] headers = {"codigo", "abreviatura", "codigoIdentificacao", "descricao", "unidade", "familiaId", "peso", "ivaCompraId", "ivaVendaId", "pvp", "inativo", "retencao", "observacoes"};
+            String[] headers = {"codigo", "abreviatura", "codigoIdentificacao", "descricao", "tipoArtigo", "unidade", "familiaId", "peso", "ivaCompraId", "ivaVendaId", "pvp", "inativo", "retencao", "observacoes"};
             for (int i = 0; i < headers.length; i++) h.createCell(i).setCellValue(headers[i]);
             Row r = sheet.createRow(1);
-            String[] values = {"IMPXLSX", "Imp", "5600000000002", "Artigo XLSX", "UN", String.valueOf(familiaId), "1.000", "REDUZIDA", "NORMAL", "9.990000", "false", "false", "Obs"};
+            String[] values = {"IMPXLSX", "Imp", "5600000000002", "Artigo XLSX", "ARTIGO", "UN", String.valueOf(familiaId), "1.000", "REDUZIDA", "NORMAL", "9.990000", "false", "false", "Obs"};
             for (int i = 0; i < values.length; i++) r.createCell(i).setCellValue(values[i]);
             if (formula) r.getCell(3).setCellFormula("1+1");
             workbook.write(out);

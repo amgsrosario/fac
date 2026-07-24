@@ -13,6 +13,7 @@ type Artigo = {
   abreviatura?: string;
   codigoIdentificacao?: string;
   descricao: string;
+  tipoArtigo: TipoArtigo;
   unidade: string;
   familiaId: number;
   peso?: number;
@@ -23,6 +24,8 @@ type Artigo = {
   retencao: boolean;
   observacoes?: string;
 };
+
+type TipoArtigo = "ARTIGO" | "SERVICO";
 
 type Familia = {
   id: number;
@@ -40,6 +43,7 @@ type ArtigoForm = {
   abreviatura: string;
   codigoIdentificacao: string;
   descricao: string;
+  tipoArtigo: TipoArtigo;
   unidade: string;
   familiaId: string;
   peso: string;
@@ -56,6 +60,7 @@ const emptyForm: ArtigoForm = {
   abreviatura: "",
   codigoIdentificacao: "",
   descricao: "",
+  tipoArtigo: "SERVICO",
   unidade: "UN",
   familiaId: "",
   peso: "0",
@@ -221,6 +226,12 @@ export default function ArtigosView() {
               <input disabled={editingCodigo != null} maxLength={50} onChange={(event) => change("codigo", normalizeCode(event.target.value))} value={form.codigo} />
             </Field>
             <Field label="Descrição"><input maxLength={80} onChange={(event) => change("descricao", event.target.value)} value={form.descricao} /></Field>
+            <Field label="Tipo Artigo/Serviço">
+              <select onChange={(event) => change("tipoArtigo", event.target.value as TipoArtigo)} value={form.tipoArtigo}>
+                <option value="SERVICO">Serviço</option>
+                <option value="ARTIGO">Artigo</option>
+              </select>
+            </Field>
             <Field label="Unidade"><input maxLength={3} onChange={(event) => change("unidade", event.target.value.toUpperCase())} value={form.unidade} /></Field>
           </FormSection>
 
@@ -290,6 +301,7 @@ export default function ArtigosView() {
         <h2>{selected?.codigo ?? "Sem artigo"}</h2>
         <dl>
           <div><dt>Descrição</dt><dd>{selected?.descricao ?? "-"}</dd></div>
+          <div><dt>Tipo</dt><dd>{selected ? tipoArtigoLabel(selected.tipoArtigo) : "-"}</dd></div>
           <div><dt>Família</dt><dd>{familiaNome}</dd></div>
           <div><dt>Unidade</dt><dd>{selected?.unidade ?? "-"}</dd></div>
           <div><dt>IVA venda</dt><dd>{selected?.ivaVendaId ?? "-"}</dd></div>
@@ -327,6 +339,7 @@ export default function ArtigosView() {
           <h2>{selected?.codigo ?? "Sem artigo"}</h2>
           <dl>
             <div><dt>Descrição</dt><dd>{selected?.descricao ?? "-"}</dd></div>
+            <div><dt>Tipo</dt><dd>{selected ? tipoArtigoLabel(selected.tipoArtigo) : "-"}</dd></div>
             <div><dt>Família</dt><dd>{familiaNome}</dd></div>
             <div><dt>Unidade</dt><dd>{selected?.unidade ?? "-"}</dd></div>
             <div><dt>IVA venda</dt><dd>{selected?.ivaVendaId ?? "-"}</dd></div>
@@ -393,6 +406,7 @@ async function responseError(response: Response) {
 function validate(form: ArtigoForm, editing: boolean) {
   if (!editing && !/^[A-Z0-9]{1,50}$/.test(form.codigo)) return "O código deve conter apenas letras maiúsculas e números.";
   if (!form.descricao.trim()) return "A descrição é obrigatória.";
+  if (!form.tipoArtigo) return "Tipo Artigo/Serviço é obrigatório.";
   if (!form.unidade.trim()) return "A unidade é obrigatória.";
   if (!form.familiaId) return "A família é obrigatória.";
   if (!form.ivaVendaId) return "O IVA de venda é obrigatório.";
@@ -407,6 +421,7 @@ function toForm(artigo: Artigo): ArtigoForm {
     abreviatura: artigo.abreviatura ?? "",
     codigoIdentificacao: artigo.codigoIdentificacao ?? "",
     descricao: artigo.descricao,
+    tipoArtigo: artigo.tipoArtigo ?? "SERVICO",
     unidade: artigo.unidade,
     familiaId: String(artigo.familiaId),
     peso: String(artigo.peso ?? 0),
@@ -425,6 +440,7 @@ function toPayload(form: ArtigoForm, creating: boolean) {
     abreviatura: blankToNull(form.abreviatura),
     codigoIdentificacao: blankToNull(form.codigoIdentificacao),
     descricao: form.descricao.trim(),
+    tipoArtigo: form.tipoArtigo,
     unidade: form.unidade.trim().toUpperCase(),
     familiaId: Number(form.familiaId),
     peso: form.peso === "" ? null : Number(form.peso),
@@ -448,6 +464,10 @@ function blankToNull(value: string) {
 
 function firstActiveIva(tiposIva: TipoTaxaIva[]) {
   return tiposIva.find((tipo) => !tipo.inativo) ?? tiposIva[0] ?? null;
+}
+
+function tipoArtigoLabel(tipo: TipoArtigo) {
+  return tipo === "ARTIGO" ? "Artigo" : "Serviço";
 }
 
 function money(value: number) {

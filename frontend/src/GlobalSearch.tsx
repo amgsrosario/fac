@@ -33,6 +33,7 @@ type Cliente = {
 type Artigo = {
   codigo: string;
   descricao: string;
+  tipoArtigo?: "ARTIGO" | "SERVICO";
   familiaId?: number | null;
   unidade?: string | null;
 };

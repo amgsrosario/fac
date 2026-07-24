@@ -14,6 +14,7 @@ import com.ar2lda.fac.model.Pais;
 import com.ar2lda.fac.model.PPagamento;
 import com.ar2lda.fac.model.RIva;
 import com.ar2lda.fac.model.Serie;
+import com.ar2lda.fac.model.TipoArtigo;
 import com.ar2lda.fac.model.TipoTaxaIva;
 import com.ar2lda.fac.model.TipoDocumento;
 import com.ar2lda.fac.model.Transporte;
@@ -239,6 +240,7 @@ class DocumentoComercialControllerTests {
         Familia familia = familiaRepository.save(new Familia("Teste"));
         artigo = new Artigo("ARTLINHA");
         artigo.setDescricao("Artigo Linha");
+        artigo.setTipoArtigo(TipoArtigo.ARTIGO);
         artigo.setUnidade("UN");
         artigo.setFamilia(familia);
         artigo.setPeso(new BigDecimal("1.250"));

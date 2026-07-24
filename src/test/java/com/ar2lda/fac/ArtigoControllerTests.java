@@ -43,7 +43,8 @@ class ArtigoControllerTests {
                         .content(createJson("ART001", "5601234567890")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.codigo").value("ART001"))
-                .andExpect(jsonPath("$.familiaId").value(familiaId))
+                        .andExpect(jsonPath("$.familiaId").value(familiaId))
+                .andExpect(jsonPath("$.tipoArtigo").value("SERVICO"))
                 .andExpect(jsonPath("$.ivaCompraId").value("REDUZIDA"))
                 .andExpect(jsonPath("$.ivaVendaId").value("NORMAL"))
                 .andExpect(jsonPath("$.pvp").value(12.345678));
@@ -60,6 +61,7 @@ class ArtigoControllerTests {
                                   "abreviatura": "Art. atualizado",
                                   "codigoIdentificacao": "5601234567890",
                                   "descricao": "Artigo atualizado",
+                                  "tipoArtigo": "ARTIGO",
                                   "unidade": "UN",
                                   "familiaId": %d,
                                   "peso": 2.500,
@@ -76,6 +78,7 @@ class ArtigoControllerTests {
         mockMvc.perform(get("/artigos/ART001"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.descricao").value("Artigo atualizado"))
+                .andExpect(jsonPath("$.tipoArtigo").value("ARTIGO"))
                 .andExpect(jsonPath("$.inativo").value(true));
 
         mockMvc.perform(delete("/artigos/ART001"))
@@ -104,13 +107,60 @@ class ArtigoControllerTests {
                 .andExpect(status().isConflict());
     }
 
+    @Test
+    void criaArtigoFisico() throws Exception {
+        mockMvc.perform(post("/artigos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createJson("ART004", "5601234567894", "ARTIGO")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tipoArtigo").value("ARTIGO"));
+    }
+
+    @Test
+    void rejeitaTipoAusente() throws Exception {
+        mockMvc.perform(post("/artigos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "codigo": "ART005",
+                                  "abreviatura": "Art. teste",
+                                  "codigoIdentificacao": "5601234567895",
+                                  "descricao": "Artigo de teste",
+                                  "unidade": "UN",
+                                  "familiaId": %d,
+                                  "peso": 1.250,
+                                  "ivaCompraId": "REDUZIDA",
+                                  "ivaVendaId": "NORMAL",
+                                  "pvp": 12.345678,
+                                  "inativo": false,
+                                  "retencao": false,
+                                  "observacoes": "ObservaÃ§Ã£o de teste"
+                                }
+                                """.formatted(familiaId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("tipoArtigo"));
+    }
+
+    @Test
+    void rejeitaTipoInvalido() throws Exception {
+        mockMvc.perform(post("/artigos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createJson("ART006", "5601234567896").replace("\"SERVICO\"", "\"PRODUTO\"")))
+                .andExpect(status().isBadRequest());
+    }
+
     private String createJson(String codigo, String codigoIdentificacao) {
+        return createJson(codigo, codigoIdentificacao, "SERVICO");
+    }
+
+    private String createJson(String codigo, String codigoIdentificacao, String tipoArtigo) {
         return """
                 {
                   "codigo": "%s",
                   "abreviatura": "Art. teste",
                   "codigoIdentificacao": "%s",
                   "descricao": "Artigo de teste",
+                  "tipoArtigo": "%s",
                   "unidade": "UN",
                   "familiaId": %d,
                   "peso": 1.250,
@@ -121,6 +171,6 @@ class ArtigoControllerTests {
                   "retencao": false,
                   "observacoes": "Observação de teste"
                 }
-                """.formatted(codigo, codigoIdentificacao, familiaId);
+                """.formatted(codigo, codigoIdentificacao, tipoArtigo, familiaId);
     }
 }

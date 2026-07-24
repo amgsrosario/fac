@@ -15,6 +15,7 @@ import com.ar2lda.fac.model.EstadoImportacaoDadosMestres;
 import com.ar2lda.fac.model.ImportacaoDadosMestres;
 import com.ar2lda.fac.model.ResultadoAuditoria;
 import com.ar2lda.fac.model.TipoAuditoriaEvento;
+import com.ar2lda.fac.model.TipoArtigo;
 import com.ar2lda.fac.model.TipoDadosMestres;
 import com.ar2lda.fac.repository.ArtigoRepository;
 import com.ar2lda.fac.repository.ClienteRepository;
@@ -77,7 +78,7 @@ public class DadosMestresTransferService {
             "codPostalId", "paisId", "moedaId", "mPagamentoId", "pPagamentoId", "rivaId", "transporteId");
 
     private static final List<String> ARTIGO_HEADERS = List.of("codigo", "abreviatura", "codigoIdentificacao",
-            "descricao", "unidade", "familiaId", "peso", "ivaCompraId", "ivaVendaId", "pvp", "inativo",
+            "descricao", "tipoArtigo", "unidade", "familiaId", "peso", "ivaCompraId", "ivaVendaId", "pvp", "inativo",
             "retencao", "observacoes");
 
     private final ImportacaoDadosMestresRepository importacaoRepository;
@@ -302,6 +303,7 @@ public class DadosMestresTransferService {
         int duplicates = 0;
         required(line, row, errors, "codigo", "ARTIGO_CODIGO_OBRIGATORIO");
         required(line, row, errors, "descricao", "ARTIGO_DESCRICAO_OBRIGATORIA");
+        required(line, row, errors, "tipoArtigo", "ARTIGO_TIPO_OBRIGATORIO");
         required(line, row, errors, "unidade", "ARTIGO_UNIDADE_OBRIGATORIA");
         required(line, row, errors, "familiaId", "ARTIGO_FAMILIA_OBRIGATORIA");
         required(line, row, errors, "ivaCompraId", "ARTIGO_IVA_COMPRA_OBRIGATORIO");
@@ -333,6 +335,7 @@ public class DadosMestresTransferService {
             }
         }
         integerExists(line, row, errors, "familiaId", "ARTIGO_FAMILIA_INVALIDA", id -> familiaRepository.existsById(Long.valueOf(id)));
+        enumValue(line, row, errors, "tipoArtigo", TipoArtigo.class, "ARTIGO_TIPO_INVALIDO");
         exists(line, row, errors, "ivaCompraId", "ARTIGO_IVA_INEXISTENTE", id -> tipoTaxaIvaRepository.existsById(id));
         exists(line, row, errors, "ivaVendaId", "ARTIGO_IVA_INEXISTENTE", id -> tipoTaxaIvaRepository.existsById(id));
         decimal(line, row, errors, "peso", 3, false, "ARTIGO_PESO_INVALIDO");
@@ -477,7 +480,8 @@ public class DadosMestresTransferService {
 
     private ArtigoCreateDto toArtigo(Map<String, String> row) {
         return new ArtigoCreateDto(value(row, "codigo").toUpperCase(Locale.ROOT), blankToNull(row, "abreviatura"),
-                blankToNull(row, "codigoIdentificacao"), value(row, "descricao"), value(row, "unidade"),
+                blankToNull(row, "codigoIdentificacao"), value(row, "descricao"),
+                TipoArtigo.valueOf(value(row, "tipoArtigo").toUpperCase(Locale.ROOT)), value(row, "unidade"),
                 Long.valueOf(value(row, "familiaId")), decimalOrNull(row, "peso"), value(row, "ivaCompraId"),
                 value(row, "ivaVendaId"), new BigDecimal(value(row, "pvp").replace(',', '.')),
                 bool(row, "inativo"), bool(row, "retencao"), blankToNull(row, "observacoes"));
@@ -529,6 +533,7 @@ public class DadosMestresTransferService {
         row.put("abreviatura", a.getAbreviatura());
         row.put("codigoIdentificacao", a.getCodigoIdentificacao());
         row.put("descricao", a.getDescricao());
+        row.put("tipoArtigo", a.getTipoArtigo().name());
         row.put("unidade", a.getUnidade());
         row.put("familiaId", String.valueOf(a.getFamilia().getId()));
         row.put("peso", a.getPeso() == null ? "" : a.getPeso().toPlainString());
@@ -593,6 +598,7 @@ public class DadosMestresTransferService {
         } else {
             row.put("codigo", "ARTEXEMPLO");
             row.put("descricao", "Artigo exemplo");
+            row.put("tipoArtigo", "SERVICO");
             row.put("unidade", "UN");
             row.put("familiaId", "1");
             row.put("ivaCompraId", "NOR");
@@ -664,6 +670,17 @@ public class DadosMestresTransferService {
             if (!predicate.test(id)) errors.add(issue(line, column, value, code, "Código inexistente"));
         } catch (NumberFormatException exception) {
             errors.add(issue(line, column, value, code, "Valor inteiro inválido"));
+        }
+    }
+
+    private <E extends Enum<E>> void enumValue(int line, Map<String, String> row, List<ImportacaoErroDto> errors,
+                                               String column, Class<E> enumType, String code) {
+        String raw = value(row, column);
+        if (raw.isBlank()) return;
+        try {
+            Enum.valueOf(enumType, raw.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            errors.add(issue(line, column, raw, code, "Valor invÃ¡lido"));
         }
     }
 

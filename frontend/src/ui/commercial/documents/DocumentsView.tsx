@@ -154,6 +154,7 @@ type Artigo = {
   abreviatura?: string | null;
   codigoIdentificacao?: string | null;
   descricao: string;
+  tipoArtigo?: "ARTIGO" | "SERVICO";
   unidade: string;
   familiaId?: number | null;
   peso?: string | number | null;

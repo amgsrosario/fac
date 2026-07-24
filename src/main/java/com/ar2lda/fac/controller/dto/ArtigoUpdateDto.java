@@ -1,5 +1,6 @@
 package com.ar2lda.fac.controller.dto;
 
+import com.ar2lda.fac.model.TipoArtigo;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -16,6 +17,8 @@ public record ArtigoUpdateDto(
         @NotBlank(message = "Descrição é obrigatória")
         @Size(max = 80, message = "Descrição deve ter no máximo 80 caracteres")
         String descricao,
+        @NotNull(message = "Tipo Artigo/Serviço é obrigatório")
+        TipoArtigo tipoArtigo,
         @NotBlank(message = "Unidade é obrigatória")
         @Size(max = 3, message = "Unidade deve ter no máximo 3 caracteres")
         String unidade,

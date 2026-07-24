@@ -36,6 +36,7 @@ type Artigo = {
   abreviatura?: string;
   codigoIdentificacao?: string;
   descricao: string;
+  tipoArtigo: TipoArtigo;
   unidade: string;
   familiaId: number;
   peso?: number;
@@ -46,6 +47,8 @@ type Artigo = {
   retencao: boolean;
   observacoes?: string;
 };
+
+type TipoArtigo = "ARTIGO" | "SERVICO";
 
 type Familia = {
   id: number;
@@ -61,6 +64,7 @@ type TipoTaxaIva = {
 type ServiceForm = {
   codigo: string;
   descricao: string;
+  tipoArtigo: TipoArtigo;
   familiaId: string;
   unidade: string;
   pvp: string;
@@ -83,6 +87,7 @@ type MobileScreen = "list" | "detail" | "form";
 const emptyForm: ServiceForm = {
   codigo: "",
   descricao: "",
+  tipoArtigo: "SERVICO",
   familiaId: "",
   unidade: "UN",
   pvp: "0",
@@ -201,6 +206,7 @@ export default function ArticlesView({
     setForm({
       codigo: service.codigo,
       descricao: service.descricao,
+      tipoArtigo: service.tipoArtigo ?? "SERVICO",
       familiaId: String(service.familiaId),
       unidade: service.unidade,
       pvp: String(service.pvp),
@@ -621,6 +627,7 @@ function ServiceDetail({
       </div>
       <dl>
         <div><dt>Código</dt><dd>{selected.codigo}</dd></div>
+        <div><dt>Tipo</dt><dd>{tipoArtigoLabel(selected.tipoArtigo)}</dd></div>
         <div><dt>Unidade</dt><dd>{selected.unidade}</dd></div>
         <div><dt>Preço sem IVA</dt><dd>{money(selected.pvp)} EUR</dd></div>
         <div><dt>Taxa de IVA</dt><dd>{selectedIva}</dd></div>
@@ -700,6 +707,15 @@ function ServiceFormFields({
             onChange={(event) => onChangeForm({ ...form, descricao: event.target.value })}
             required
             value={form.descricao}
+          />
+          <FacSelect
+            label="Tipo Artigo/Serviço"
+            onChange={(value) => onChangeForm({ ...form, tipoArtigo: (value as TipoArtigo | null) ?? "SERVICO" })}
+            options={[
+              { label: "Serviço", value: "SERVICO" },
+              { label: "Artigo", value: "ARTIGO" }
+            ]}
+            value={form.tipoArtigo}
           />
           <FacSelect
             label="Unidade"
@@ -880,6 +896,7 @@ async function responseError(response: Response) {
 function validate(form: ServiceForm, editing: boolean, defaults: HiddenDefaults) {
   if (!editing && !/^[A-Z0-9]{1,50}$/.test(form.codigo)) return "O código deve conter apenas letras maiúsculas e números.";
   if (!form.descricao.trim()) return "A descrição é obrigatória.";
+  if (!form.tipoArtigo) return "Tipo Artigo/Serviço é obrigatório.";
   if (!form.familiaId) return "A família é obrigatória.";
   if (!form.unidade.trim()) return "A unidade é obrigatória.";
   if (!form.ivaVendaId) return "O IVA de venda é obrigatório.";
@@ -894,6 +911,7 @@ function toPayload(form: ServiceForm, defaults: HiddenDefaults, creating: boolea
     abreviatura: blankToNull(defaults.abreviatura),
     codigoIdentificacao: blankToNull(defaults.codigoIdentificacao),
     descricao: form.descricao.trim(),
+    tipoArtigo: form.tipoArtigo,
     unidade: form.unidade.trim().toUpperCase(),
     familiaId: Number(form.familiaId),
     peso: Number(defaults.peso),
@@ -929,6 +947,10 @@ function normalizeCode(value: string) {
 function blankToNull(value: string) {
   const trimmed = value.trim();
   return trimmed || null;
+}
+
+function tipoArtigoLabel(tipo: TipoArtigo) {
+  return tipo === "ARTIGO" ? "Artigo" : "Serviço";
 }
 
 function money(value: number) {
