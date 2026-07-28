@@ -236,6 +236,7 @@ const navigationItems: MenuItem[] = [...menuGroups.flatMap((group) => group.item
 
 function menuLabel(label: ViewKey) {
   if (label === "Dashboard") return "Visão geral";
+  if (label === "Tesouraria") return "Recebimentos";
   if (label === "Configuracao") return "Configuração";
   if (label === "ImportExport") return "Importar/Exportar";
   return label;
@@ -851,7 +852,7 @@ function DashboardView({
             <span>Criar e acompanhar faturação</span>
           </button>
           <button onClick={() => onNavigate("Tesouraria")} type="button">
-            <strong>Tesouraria</strong>
+            <strong>Recebimentos</strong>
             <span>Receber e consultar pendentes</span>
           </button>
           <button onClick={() => onNavigate("Listagens")} type="button">
