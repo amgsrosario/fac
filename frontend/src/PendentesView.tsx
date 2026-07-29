@@ -76,6 +76,7 @@ type ReceiptForm = {
   observacoes: string;
 };
 type Allocations = Record<number, string>;
+type ReceiptPostAction = "DETAIL" | "PDF";
 
 const PENDENTE_COLUMNS: ConfigurableColumn[] = [
   { key: "documento", label: "Documento", visible: true }, { key: "cliente", label: "Cliente", visible: true },
@@ -97,6 +98,7 @@ export default function PendentesView() {
   const receiptEditorRef = useRef<HTMLElement | null>(null);
   const clientSelectRef = useRef<HTMLSelectElement | null>(null);
   const newReceiptButtonRef = useRef<HTMLButtonElement | null>(null);
+  const receiptSubmittingRef = useRef(false);
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [financeiros, setFinanceiros] = useState<DocumentoFinanceiro[]>([]);
@@ -109,6 +111,8 @@ export default function PendentesView() {
   const [notice, setNotice] = useState<string | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [form, setForm] = useState<ReceiptForm>(emptyReceiptForm());
+  const [initialReceiptFormKey, setInitialReceiptFormKey] = useState("");
+  const [receiptSubmitting, setReceiptSubmitting] = useState(false);
   const [allocations, setAllocations] = useState<Allocations>({});
   const [manualReceiptValue, setManualReceiptValue] = useState(false);
   const [pendenteColumnsOpen, setPendenteColumnsOpen] = useState(false);
@@ -165,12 +169,14 @@ export default function PendentesView() {
       setTipos(financeirosTipos);
       setSeries(seriesFinanceiras);
       setModos(modosPage.content);
-      setForm({
+      const nextForm = {
         ...emptyReceiptForm(),
         tipoDocumentoId: tipoInicial,
         serie: seriesFinanceiras.find((serie) => serie.tipoDocumentoId === tipoInicial)?.serie ?? "",
         emissorId: getAuthSession()?.codigo ?? ""
-      });
+      };
+      setForm(nextForm);
+      setInitialReceiptFormKey(receiptFormKey(nextForm));
       setAllocations({});
       setManualReceiptValue(false);
       setReceiptOpen(true);
@@ -183,7 +189,24 @@ export default function PendentesView() {
 
   function closeReceipt() {
     setReceiptOpen(false);
+    setInitialReceiptFormKey("");
     requestAnimationFrame(() => newReceiptButtonRef.current?.focus());
+  }
+
+  function hasReceiptChanges() {
+    return Boolean(
+      receiptFormKey(form) !== initialReceiptFormKey
+      || Object.values(allocations).some((value) => Number(value || 0) > 0)
+      || manualReceiptValue
+    );
+  }
+
+  function backToReceiptList() {
+    if (hasReceiptChanges()
+        && !window.confirm("Existem dados de um recebimento ainda não emitido. Pretende sair e perder estas alterações?")) {
+      return;
+    }
+    closeReceipt();
   }
 
   async function openFinancialDetail(documento: DocumentoFinanceiro) {
@@ -334,14 +357,18 @@ export default function PendentesView() {
     toggleAllocation(pendente);
   }
 
-  async function issueReceipt() {
+  async function issueReceipt(postAction: ReceiptPostAction = "DETAIL") {
+    if (receiptSubmittingRef.current) return;
     const validation = validateReceipt(form, receiptPendentes, allocations);
     if (validation) {
       setMessage(validation);
       return;
     }
     const cliente = clientes.find((item) => item.id === Number(form.clienteId));
-    if (!window.confirm(`Emitir recebimento de ${money(receiptTarget)} ${form.moedaId} para ${cliente?.nome ?? form.clienteId}, distribuído por ${allocatedLines.length} pendentes?`)) return;
+    const pdfMessage = postAction === "PDF" ? " O PDF será aberto após a emissão." : "";
+    if (!window.confirm(`Confirmar a emissão deste recibo de ${money(receiptTarget)} ${form.moedaId} para ${cliente?.nome ?? form.clienteId}? Após a emissão, o documento deixa de poder ser editado.${pdfMessage}`)) return;
+    receiptSubmittingRef.current = true;
+    setReceiptSubmitting(true);
     setLoading(true);
     setMessage(null);
     try {
@@ -362,13 +389,19 @@ export default function PendentesView() {
           descontoValor: 0
         }))
       });
-      await loadTesouraria();
       closeReceipt();
       setCreatedReceipt(created);
       setNotice(`${financialReference(created)} emitido por ${money(created.valorPagamentoLiquido)} ${created.moedaId}. Pendentes atualizados.`);
+      await loadTesouraria();
+      await openFinancialDetail(created);
+      if (postAction === "PDF") {
+        await openFinancialPdf(created);
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível emitir o recebimento.");
     } finally {
+      receiptSubmittingRef.current = false;
+      setReceiptSubmitting(false);
       setLoading(false);
     }
   }
@@ -427,6 +460,9 @@ export default function PendentesView() {
   const totalPendenteCliente = round6(sum(receiptPendentes.map((pendente) => Number(pendente.valorPendente) || 0)));
   const difference = round6(receiptTarget - allocatedTotal);
   const availableSeries = series.filter((serie) => serie.tipoDocumentoId === form.tipoDocumentoId);
+  const canIssueReceipt = !loading && !receiptSubmitting && !validateReceipt(form, receiptPendentes, allocations);
+  const issueButtonLabel = receiptSubmitting ? "A emitir..." : "Emitir recebimento";
+  const issuePdfButtonLabel = receiptSubmitting ? "A emitir..." : "Emitir e abrir PDF";
   const filteredPendentes = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return pendentes;
@@ -452,7 +488,7 @@ export default function PendentesView() {
     {!receiptOpen && selectedFinanceiroId && <section className="fac-panel fac-section-panel fac-financial-detail"><div className="fac-panel-header"><div><p className="fac-eyebrow">Recibo</p><h2 id="financial-detail-heading" tabIndex={-1}>{selectedFinanceiro ? financialReference(selectedFinanceiro) : "A carregar recebimento..."}</h2>{selectedFinanceiro && <p className="fac-muted">Emitido em {datePt(selectedFinanceiro.dataEmissao)}</p>}</div><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={closeFinancialDetail} type="button">Voltar à lista</button>{selectedFinanceiro && hasPermission("DOCUMENTO_OBTER_PDF") && <button className="fac-gold-button" disabled={loading || detailLoading} onClick={() => openFinancialPdf(selectedFinanceiro)} type="button">Abrir PDF</button>}{selectedFinanceiro && canAnnul && !selectedFinanceiro.anulado && <button className="fac-link-danger" disabled={loading || detailLoading} onClick={() => annulFinancial(selectedFinanceiro)} type="button">Anular recebimento</button>}</div></div>{detailLoading && <p className="fac-muted">A carregar detalhe...</p>}{selectedFinanceiro && <><div className="fac-detail-grid"><section><h3>Identificação</h3><dl><div><dt>Documento</dt><dd>{financialReference(selectedFinanceiro)}</dd></div><div><dt>Estado</dt><dd><span className={`fac-status ${selectedFinanceiro.anulado ? "danger" : ""}`}>{selectedFinanceiro.anulado ? "ANULADO" : "EMITIDO"}</span></dd></div><div><dt>Data</dt><dd>{datePt(selectedFinanceiro.dataEmissao)}</dd></div><div><dt>Cliente</dt><dd>{selectedCliente ? `${selectedCliente.nome} - ${selectedCliente.nif}` : selectedFinanceiro.clienteId}</dd></div><div><dt>Moeda</dt><dd>{selectedFinanceiro.moedaId}</dd></div><div><dt>Modo de pagamento</dt><dd>{selectedModo?.nome ?? selectedFinanceiro.mPagamentoId}</dd></div></dl></section><section><h3>Valores</h3><dl><div><dt>Total recebido</dt><dd>{money(selectedFinanceiro.valorPagamentoLiquido)} {selectedFinanceiro.moedaId}</dd></div><div><dt>Valor bruto</dt><dd>{money(selectedFinanceiro.valorPagamentoBruto ?? selectedFinanceiro.valorPagamentoLiquido)} {selectedFinanceiro.moedaId}</dd></div><div><dt>Desconto financeiro</dt><dd>{money(selectedFinanceiro.valorDescontoFinanceiro ?? 0)} {selectedFinanceiro.moedaId}</dd></div><div><dt>Valor aplicado</dt><dd>{money(sum((selectedFinanceiro.linhas ?? []).map((linha) => linha.valorALiquidar)))} {selectedFinanceiro.moedaId}</dd></div></dl></section><section><h3>Auditoria funcional</h3><dl><div><dt>Emitido por</dt><dd>{selectedFinanceiro.emissorId}</dd></div><div><dt>Emitido em</dt><dd>{dateTimePt(selectedFinanceiro.momentoEmissao)}</dd></div><div><dt>Operação</dt><dd>{dateTimePt(selectedFinanceiro.dataHoraOperacao)}</dd></div><div><dt>Anulação</dt><dd>{selectedFinanceiro.anulado ? "Anulado" : "Não anulado"}</dd></div><div><dt>Observações</dt><dd>{selectedFinanceiro.observacoes || "-"}</dd></div></dl></section></div><section className="fac-financial-lines"><div className="fac-panel-header compact"><div><p className="fac-eyebrow">Liquidações</p><h3>Documentos comerciais associados</h3></div><span className="fac-muted">{selectedFinanceiro.linhas?.length ?? 0} linhas</span></div><table className="fac-table"><thead><tr><th>Documento</th><th>Vencimento</th><th>Valor documento</th><th>Saldo anterior</th><th>Liquidado</th><th>Saldo posterior</th></tr></thead><tbody>{(selectedFinanceiro.linhas ?? []).map((linha) => { const documentoComercialId = pendenteById.get(linha.pendenteId)?.documentoComercialId; return <tr key={linha.id}><td>{documentoComercialId ? <button className="fac-table-link" onClick={() => navigate(`/documentos/${documentoComercialId}`)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(`/documentos/${documentoComercialId}`); } }} type="button">{lineReference(linha)}</button> : lineReference(linha)}</td><td>{datePt(linha.dataVencimento)}</td><td>{money(linha.valorDocumento)} {linha.moedaId}</td><td>{money(linha.valorPendenteAntes)} {linha.moedaId}</td><td>{money(linha.valorALiquidar)} {linha.moedaId}</td><td>{money(linha.novoValorPendente)} {linha.moedaId}</td></tr>; })}{(!selectedFinanceiro.linhas || selectedFinanceiro.linhas.length === 0) && <tr><td colSpan={6}>Sem liquidações associadas.</td></tr>}</tbody></table></section></>}</section>}
 
     {receiptOpen && <section aria-label="Novo recebimento" className="fac-panel fac-section-panel fac-emission-panel" onKeyDown={handleReceiptKeyDown} ref={receiptEditorRef}>
-      <div className="fac-panel-header"><div><p className="fac-eyebrow">Novo documento financeiro</p><h2>Distribuir recebimento</h2></div><button className="fac-ghost-button" onClick={closeReceipt} type="button">Cancelar</button></div>
+      <div className="fac-panel-header"><div><p className="fac-eyebrow">Novo documento financeiro</p><h2>Distribuir recebimento</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading || receiptSubmitting} onClick={backToReceiptList} type="button">Voltar à listagem</button><button className="fac-gold-button" disabled={!canIssueReceipt} onClick={() => issueReceipt("DETAIL")} type="button">{issueButtonLabel}</button><button className="fac-primary-button" disabled={!canIssueReceipt} onClick={() => issueReceipt("PDF")} type="button">{issuePdfButtonLabel}</button></div></div>
       <div className="fac-form-grid">
         <Field label="Cliente"><select onChange={(event) => selectClient(event.target.value)} ref={clientSelectRef} value={form.clienteId}><option value="">Selecionar cliente</option>{clientesComPendentes.map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.nome} - {cliente.nif}</option>)}</select></Field>
         <Field label="Moeda"><select data-receipt-currency disabled={!form.clienteId || clientCurrencies.length <= 1} onChange={(event) => { setForm((current) => ({ ...current, moedaId: event.target.value, valorRecebido: "" })); setAllocations({}); setManualReceiptValue(false); requestAnimationFrame(() => receiptEditorRef.current?.querySelector<HTMLElement>("[data-receipt-value]")?.focus()); }} value={form.moedaId}><option value="">Selecionar moeda</option>{clientCurrencies.map((moeda) => <option key={moeda} value={moeda}>{moeda}</option>)}</select></Field>
@@ -473,7 +509,7 @@ export default function PendentesView() {
       </tbody></table>
 
       <div className="fac-form-grid"><Field label="Observações"><textarea maxLength={250} onChange={(event) => setForm((current) => ({ ...current, observacoes: event.target.value }))} value={form.observacoes}/></Field></div>
-      <div className="fac-form-footer"><span className="fac-muted">O recibo só pode ser emitido quando o valor recebido estiver totalmente distribuído pelos pendentes.</span><button className="fac-gold-button" disabled={loading || receiptTarget <= 0 || difference !== 0 || allocatedLines.length === 0} onClick={issueReceipt} type="button">Emitir recebimento</button></div>
+      <div className="fac-form-footer"><span className="fac-muted">O recibo só pode ser emitido quando o valor recebido estiver totalmente distribuído pelos pendentes.</span></div>
     </section>}
 
     {!receiptOpen && !selectedFinanceiroId && <>
@@ -483,6 +519,7 @@ export default function PendentesView() {
 }
 
 function emptyReceiptForm(): ReceiptForm { return { clienteId: "", moedaId: "", tipoDocumentoId: "", serie: "", dataEmissao: todayIso(), valorRecebido: "", mPagamentoId: "", emissorId: getAuthSession()?.codigo ?? "", observacoes: "" }; }
+function receiptFormKey(form: ReceiptForm) { return JSON.stringify({ clienteId: form.clienteId, moedaId: form.moedaId, tipoDocumentoId: form.tipoDocumentoId, serie: form.serie, dataEmissao: form.dataEmissao, valorRecebido: form.valorRecebido, mPagamentoId: form.mPagamentoId, observacoes: form.observacoes.trim() }); }
 function openPendentesForClient(pendentes: Pendente[], clienteId: number) { return clienteId ? pendentes.filter((item) => item.clienteId === clienteId && Number(item.valorPendente) > 0) : []; }
 function validPaymentMode(modos: MPagamento[], mPagamentoId?: string | null) { return mPagamentoId && modos.some((modo) => modo.id === mPagamentoId) ? mPagamentoId : ""; }
 function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations) { if (!form.clienteId) return "Seleciona o cliente."; if (!form.moedaId) return "Seleciona a moeda."; if (!form.tipoDocumentoId) return "Seleciona o tipo de documento financeiro."; if (!form.serie) return "Seleciona a série."; if (!form.dataEmissao) return "A data de emissão é obrigatória."; if (!form.mPagamentoId) return "Confirma o modo de pagamento."; const target = round6(Number(form.valorRecebido)); if (!Number.isFinite(target) || target <= 0) return "O valor recebido deve ser positivo."; const total = round6(sum(pendentes.map((item) => Number(allocations[item.id] || 0)))); if (total <= 0) return "Distribui o recebimento por pelo menos um pendente."; if (round6(target - total) !== 0) return "O valor recebido e a distribuição pelos pendentes não coincidem."; return null; }
