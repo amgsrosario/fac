@@ -416,7 +416,7 @@ export default function PendentesView() {
         setMessage(diagnostico.bloqueios.join(" ") || "Este documento financeiro não pode ser anulado.");
         return;
       }
-      if (!window.confirm(`Anular ${diagnostico.referencia}? Os valores recebidos serão repostos nos respetivos pendentes.`)) return;
+      if (!window.confirm(`Anular este recibo? Os valores liquidados em ${diagnostico.referencia} voltarão a ficar pendentes nos documentos respetivos.`)) return;
       await sendJson<DocumentoFinanceiro>(`/api/documentos-financeiros/${documento.id}/anular`, null);
       await loadTesouraria();
       const updated = await fetchJson<DocumentoFinanceiro>(`/api/documentos-financeiros/${documento.id}`);
@@ -470,6 +470,9 @@ export default function PendentesView() {
   }, [pendentes, search]);
   const selectedCliente = selectedFinanceiro ? clientes.find((cliente) => cliente.id === selectedFinanceiro.clienteId) ?? null : null;
   const selectedModo = selectedFinanceiro ? modos.find((modo) => modo.id === selectedFinanceiro.mPagamentoId) ?? null : null;
+  const selectedAppliedTotal = selectedFinanceiro ? round6(sum((selectedFinanceiro.linhas ?? []).map((linha) => linha.valorALiquidar))) : 0;
+  const selectedReceiptDifference = selectedFinanceiro ? round6(Number(selectedFinanceiro.valorPagamentoLiquido || 0) - selectedAppliedTotal) : 0;
+  const selectedReceiptStatus = selectedFinanceiro ? receiptStatusLabel(selectedFinanceiro) : "";
   const pendenteById = useMemo(() => new Map(pendentes.map((pendente) => [pendente.id, pendente])), [pendentes]);
 
   return <>
@@ -485,7 +488,56 @@ export default function PendentesView() {
 
     {!receiptOpen && !selectedFinanceiroId && <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><div className="fac-inline-actions"><span className="fac-muted">{financeiros.length} documentos</span><button className="fac-ghost-button" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div></div><ColumnSelector columns={financeiroColumns.columns} open={financeiroColumnsOpen} onMove={financeiroColumns.moveColumn} onReset={financeiroColumns.resetColumns} onToggle={financeiroColumns.toggleColumn}/><table className="fac-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td key={column.key}>{financeiroColumnValue(documento, column.key, openFinancialDetail)}</td>)}</tr>)}{!loading && financeiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length}>Sem documentos financeiros para mostrar.</td></tr>}</tbody></table></section>}
 
-    {!receiptOpen && selectedFinanceiroId && <section className="fac-panel fac-section-panel fac-financial-detail"><div className="fac-panel-header"><div><p className="fac-eyebrow">Recibo</p><h2 id="financial-detail-heading" tabIndex={-1}>{selectedFinanceiro ? financialReference(selectedFinanceiro) : "A carregar recebimento..."}</h2>{selectedFinanceiro && <p className="fac-muted">Emitido em {datePt(selectedFinanceiro.dataEmissao)}</p>}</div><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={closeFinancialDetail} type="button">Voltar à lista</button>{selectedFinanceiro && hasPermission("DOCUMENTO_OBTER_PDF") && <button className="fac-gold-button" disabled={loading || detailLoading} onClick={() => openFinancialPdf(selectedFinanceiro)} type="button">Abrir PDF</button>}{selectedFinanceiro && canAnnul && !selectedFinanceiro.anulado && <button className="fac-link-danger" disabled={loading || detailLoading} onClick={() => annulFinancial(selectedFinanceiro)} type="button">Anular recebimento</button>}</div></div>{detailLoading && <p className="fac-muted">A carregar detalhe...</p>}{selectedFinanceiro && <><div className="fac-detail-grid"><section><h3>Identificação</h3><dl><div><dt>Documento</dt><dd>{financialReference(selectedFinanceiro)}</dd></div><div><dt>Estado</dt><dd><span className={`fac-status ${selectedFinanceiro.anulado ? "danger" : ""}`}>{selectedFinanceiro.anulado ? "ANULADO" : "EMITIDO"}</span></dd></div><div><dt>Data</dt><dd>{datePt(selectedFinanceiro.dataEmissao)}</dd></div><div><dt>Cliente</dt><dd>{selectedCliente ? `${selectedCliente.nome} - ${selectedCliente.nif}` : selectedFinanceiro.clienteId}</dd></div><div><dt>Moeda</dt><dd>{selectedFinanceiro.moedaId}</dd></div><div><dt>Modo de pagamento</dt><dd>{selectedModo?.nome ?? selectedFinanceiro.mPagamentoId}</dd></div></dl></section><section><h3>Valores</h3><dl><div><dt>Total recebido</dt><dd>{money(selectedFinanceiro.valorPagamentoLiquido)} {selectedFinanceiro.moedaId}</dd></div><div><dt>Valor bruto</dt><dd>{money(selectedFinanceiro.valorPagamentoBruto ?? selectedFinanceiro.valorPagamentoLiquido)} {selectedFinanceiro.moedaId}</dd></div><div><dt>Desconto financeiro</dt><dd>{money(selectedFinanceiro.valorDescontoFinanceiro ?? 0)} {selectedFinanceiro.moedaId}</dd></div><div><dt>Valor aplicado</dt><dd>{money(sum((selectedFinanceiro.linhas ?? []).map((linha) => linha.valorALiquidar)))} {selectedFinanceiro.moedaId}</dd></div></dl></section><section><h3>Auditoria funcional</h3><dl><div><dt>Emitido por</dt><dd>{selectedFinanceiro.emissorId}</dd></div><div><dt>Emitido em</dt><dd>{dateTimePt(selectedFinanceiro.momentoEmissao)}</dd></div><div><dt>Operação</dt><dd>{dateTimePt(selectedFinanceiro.dataHoraOperacao)}</dd></div><div><dt>Anulação</dt><dd>{selectedFinanceiro.anulado ? "Anulado" : "Não anulado"}</dd></div><div><dt>Observações</dt><dd>{selectedFinanceiro.observacoes || "-"}</dd></div></dl></section></div><section className="fac-financial-lines"><div className="fac-panel-header compact"><div><p className="fac-eyebrow">Liquidações</p><h3>Documentos comerciais associados</h3></div><span className="fac-muted">{selectedFinanceiro.linhas?.length ?? 0} linhas</span></div><table className="fac-table"><thead><tr><th>Documento</th><th>Vencimento</th><th>Valor documento</th><th>Saldo anterior</th><th>Liquidado</th><th>Saldo posterior</th></tr></thead><tbody>{(selectedFinanceiro.linhas ?? []).map((linha) => { const documentoComercialId = pendenteById.get(linha.pendenteId)?.documentoComercialId; return <tr key={linha.id}><td>{documentoComercialId ? <button className="fac-table-link" onClick={() => navigate(`/documentos/${documentoComercialId}`)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(`/documentos/${documentoComercialId}`); } }} type="button">{lineReference(linha)}</button> : lineReference(linha)}</td><td>{datePt(linha.dataVencimento)}</td><td>{money(linha.valorDocumento)} {linha.moedaId}</td><td>{money(linha.valorPendenteAntes)} {linha.moedaId}</td><td>{money(linha.valorALiquidar)} {linha.moedaId}</td><td>{money(linha.novoValorPendente)} {linha.moedaId}</td></tr>; })}{(!selectedFinanceiro.linhas || selectedFinanceiro.linhas.length === 0) && <tr><td colSpan={6}>Sem liquidações associadas.</td></tr>}</tbody></table></section></>}</section>}
+    {!receiptOpen && selectedFinanceiroId && <section className="fac-panel fac-section-panel fac-financial-detail fac-documents-detail">
+      <div className="fac-financial-detail-heading">
+        <div className="fac-documents-detail-title">
+          <div>
+            <p className="fac-eyebrow">Recibo</p>
+            <h2 id="financial-detail-heading" tabIndex={-1}>{selectedFinanceiro ? financialReference(selectedFinanceiro) : "A carregar recebimento..."}</h2>
+            {selectedFinanceiro && <p className="fac-muted">Emitido em {datePt(selectedFinanceiro.dataEmissao)}</p>}
+          </div>
+          {selectedFinanceiro && <span aria-label={`Estado do recibo: ${selectedReceiptStatus}`} className={`fac-status ${selectedFinanceiro.anulado ? "danger" : ""}`}>{selectedReceiptStatus}</span>}
+        </div>
+        <div className="fac-documents-actions fac-financial-actions">
+          <button className="fac-ghost-button" onClick={closeFinancialDetail} type="button">Voltar à listagem</button>
+          {selectedFinanceiro && hasPermission("DOCUMENTO_OBTER_PDF") && <button className="fac-gold-button" disabled={loading || detailLoading} onClick={() => openFinancialPdf(selectedFinanceiro)} type="button">Abrir PDF</button>}
+          {selectedFinanceiro && canAnnul && !selectedFinanceiro.anulado && <button className="fac-link-danger" disabled={loading || detailLoading} onClick={() => annulFinancial(selectedFinanceiro)} type="button">Anular recibo</button>}
+        </div>
+      </div>
+      {detailLoading && <p className="fac-muted">A carregar detalhe do recibo...</p>}
+      {selectedFinanceiro && <>
+        <section>
+          <h3 className="fac-financial-section-title">Identificação</h3>
+          <dl className="fac-documents-definition fac-financial-definition">
+            <div><dt>Cliente</dt><dd>{selectedCliente ? selectedCliente.nome : selectedFinanceiro.clienteId}</dd></div>
+            {selectedCliente?.nif && <div><dt>NIF</dt><dd>{selectedCliente.nif}</dd></div>}
+            <div><dt>Tipo</dt><dd>{selectedFinanceiro.tipoDocumentoId}</dd></div>
+            <div><dt>Série</dt><dd>{selectedFinanceiro.serie}</dd></div>
+            <div><dt>Data</dt><dd>{datePt(selectedFinanceiro.dataEmissao)}</dd></div>
+            <div><dt>Moeda</dt><dd>{selectedFinanceiro.moedaId}</dd></div>
+            <div><dt>Modo de pagamento</dt><dd>{selectedModo?.nome ?? selectedFinanceiro.mPagamentoId}</dd></div>
+            <div><dt>Emissor</dt><dd>{selectedFinanceiro.emissorId}</dd></div>
+            <div><dt>Operação</dt><dd>{dateTimePt(selectedFinanceiro.dataHoraOperacao)}</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h3 className="fac-financial-section-title">Resumo financeiro</h3>
+          <div className="fac-documents-totals fac-financial-summary" aria-label="Resumo financeiro do recibo">
+            <div><span>Valor recebido</span><strong>{money(selectedFinanceiro.valorPagamentoLiquido)} {selectedFinanceiro.moedaId}</strong></div>
+            <div><span>Distribuído</span><strong>{money(selectedAppliedTotal)} {selectedFinanceiro.moedaId}</strong></div>
+            <div><span>Diferença</span><strong>{money(selectedReceiptDifference)} {selectedFinanceiro.moedaId}</strong></div>
+            <div className="fac-documents-total-final"><span>Estado</span><strong>{selectedReceiptStatus}</strong></div>
+          </div>
+        </section>
+        <section className="fac-financial-lines">
+          <div className="fac-panel-header compact"><div><p className="fac-eyebrow">Documentos liquidados</p><h3>Documentos comerciais associados</h3></div><span className="fac-muted">{selectedFinanceiro.linhas?.length ?? 0} linhas</span></div>
+          <div className="fac-table-scroll">
+            <table className="fac-table"><thead><tr><th>Documento</th><th>Emissão</th><th>Vencimento</th><th>Valor original</th><th>Saldo anterior</th><th>Valor liquidado</th><th>Saldo posterior</th></tr></thead><tbody>{(selectedFinanceiro.linhas ?? []).map((linha) => { const documentoComercialId = pendenteById.get(linha.pendenteId)?.documentoComercialId; return <tr key={linha.id}><td>{documentoComercialId ? <button className="fac-table-link" onClick={() => navigate(`/documentos/${documentoComercialId}`)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(`/documentos/${documentoComercialId}`); } }} type="button">{lineReference(linha)}</button> : lineReference(linha)}</td><td>{datePt(linha.dataDocumento)}</td><td>{datePt(linha.dataVencimento)}</td><td className="fac-amount">{money(linha.valorDocumento)} {linha.moedaId}</td><td className="fac-amount">{money(linha.valorPendenteAntes)} {linha.moedaId}</td><td className="fac-amount">{money(linha.valorALiquidar)} {linha.moedaId}</td><td className="fac-amount">{money(linha.novoValorPendente)} {linha.moedaId}</td></tr>; })}{(!selectedFinanceiro.linhas || selectedFinanceiro.linhas.length === 0) && <tr><td colSpan={7}>Sem documentos liquidados.</td></tr>}</tbody></table>
+          </div>
+        </section>
+        {selectedFinanceiro.observacoes && <section><h3 className="fac-financial-section-title">Observações</h3><p className="fac-financial-observations">{selectedFinanceiro.observacoes}</p></section>}
+      </>}
+    </section>}
 
     {receiptOpen && <section aria-label="Novo recebimento" className="fac-panel fac-section-panel fac-emission-panel" onKeyDown={handleReceiptKeyDown} ref={receiptEditorRef}>
       <div className="fac-panel-header"><div><p className="fac-eyebrow">Novo documento financeiro</p><h2>Distribuir recebimento</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading || receiptSubmitting} onClick={backToReceiptList} type="button">Voltar à listagem</button><button className="fac-gold-button" disabled={!canIssueReceipt} onClick={() => issueReceipt("DETAIL")} type="button">{issueButtonLabel}</button><button className="fac-primary-button" disabled={!canIssueReceipt} onClick={() => issueReceipt("PDF")} type="button">{issuePdfButtonLabel}</button></div></div>
@@ -528,6 +580,7 @@ function referencia(item: Pendente) { return `${item.tipoDocumentoId} ${item.ser
 function pendenteColumnValue(item: Pendente, key: string) { switch (key) { case "documento": return referencia(item); case "cliente": return item.clienteId; case "emissao": return datePt(item.dataDocumento); case "vencimento": return datePt(item.dataVencimento); case "moeda": return item.moedaId; case "original": return `${money(item.valorDocumento)} ${item.moedaId}`; case "pendente": return `${money(item.valorPendente)} ${item.moedaId}`; case "estado": return <span className="fac-status">{estado(item)}</span>; default: return "-"; } }
 function financeiroColumnValue(documento: DocumentoFinanceiro, key: string, onOpen: (documento: DocumentoFinanceiro) => void) { switch (key) { case "documento": return <button className="fac-table-link" onClick={() => onOpen(documento)} type="button">{financialReference(documento)}</button>; case "cliente": return documento.clienteId; case "data": return datePt(documento.dataEmissao); case "modo": return documento.mPagamentoId; case "moeda": return documento.moedaId; case "liquido": return `${money(documento.valorPagamentoLiquido)} ${documento.moedaId}`; case "emissor": return documento.emissorId; case "estado": return <span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span>; default: return "-"; } }
 function financialReference(documento: DocumentoFinanceiro) { return `${documento.tipoDocumentoId} ${documento.serie}/${documento.numeroDocumento}`; }
+function receiptStatusLabel(documento: DocumentoFinanceiro) { return documento.anulado ? "Anulado" : "Emitido"; }
 function lineReference(linha: LinhaFinanceira) { return `${linha.tipoDocumentoId} ${linha.serieDocumento}/${linha.numeroDocumento}`; }
 function datePt(value: string) { return value ? value.split("-").reverse().join("/") : "-"; }
 function dateTimePt(value?: string | null) { return value ? new Date(value).toLocaleString("pt-PT") : "-"; }

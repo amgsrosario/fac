@@ -1634,9 +1634,9 @@ button:disabled {
 }
 
 .fac-receipt-totals div {
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--fac-border);
-  border-radius: 14px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.72);
 }
 
@@ -1694,7 +1694,106 @@ button:disabled {
 
 .fac-financial-detail {
   display: grid;
-  gap: 18px;
+  gap: 1rem;
+}
+
+.fac-financial-detail.fac-documents-detail {
+  padding: 18px;
+}
+
+.fac-financial-detail-heading {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fac-financial-detail .fac-documents-detail-title {
+  align-items: start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.fac-financial-detail .fac-documents-detail-title h2 {
+  margin: 0;
+}
+
+.fac-financial-actions {
+  align-items: center;
+  border-top: 1px solid var(--fac-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-start;
+  margin-top: 0;
+  padding-top: 0.75rem;
+}
+
+.fac-financial-section-title {
+  margin: 0 0 0.75rem;
+  color: var(--fac-petrol);
+  font-size: 1rem;
+}
+
+.fac-financial-definition {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.fac-financial-definition dt,
+.fac-financial-summary span:first-child {
+  color: var(--fac-text-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fac-financial-definition dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.fac-financial-summary {
+  border-top: 1px solid var(--fac-border);
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding-top: 0.75rem;
+}
+
+.fac-financial-summary > div,
+.fac-financial-summary .fac-documents-total-final {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.fac-financial-summary strong {
+  font-size: 1.15rem;
+}
+
+.fac-financial-summary .fac-documents-total-final strong {
+  font-size: 1rem;
+}
+
+.fac-financial-lines {
+  min-width: 0;
+}
+
+.fac-financial-lines .fac-table {
+  min-width: 860px;
+}
+
+.fac-amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fac-financial-observations {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .fac-detail-grid {
@@ -2128,6 +2227,7 @@ button:disabled {
   .fac-balance-strip,
   .fac-form-grid,
   .fac-detail-grid,
+  .fac-financial-definition,
   .fac-grid-two,
   .fac-emission-summary {
     grid-template-columns: 1fr;
@@ -2138,9 +2238,14 @@ button:disabled {
   }
 
   .fac-inline-actions,
+  .fac-financial-actions,
   .fac-form-footer,
   .fac-list-toolbar {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fac-financial-detail .fac-documents-detail-title {
     flex-direction: column;
   }
 
