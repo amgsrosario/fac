@@ -1496,6 +1496,9 @@ function parametrosClientePayload(form: ParametrosClienteForm) {
 
 function viewTitle(view: ViewKey) {
   if (view === "Clientes") return "Clientes e conta corrente";
+  if (view === "Documentos") return "Documentos";
+  if (view === "Artigos") return "Artigos e serviços";
+  if (view === "Tesouraria") return "Recebimentos";
   if (view === "Listagens") return "Listagens e análise";
   if (view === "ImportExport") return "Importação e exportação de dados mestres";
   if (view === "Auditoria") return "Auditoria fiscal";

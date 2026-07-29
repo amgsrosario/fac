@@ -587,6 +587,8 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       setError("Guarde o rascunho antes de emitir.");
       return;
     }
+    const reference = documentRef(documento);
+    if (!window.confirm(`Emitir definitivamente ${reference}? Depois de emitido, o documento fica imutável.`)) return;
     setSaving(true);
     setError(null);
     try {
@@ -676,7 +678,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         <div className="fac-draft-actions">
           <GlobalSearch className="fac-commercial-global-search" />
           {dirty && <span className="fac-draft-dirty">Alteracoes por guardar</span>}
-          <FacButton icon="pi pi-arrow-left" label="Lista" onClick={goBack} variant="ghost" />
+          <FacButton icon="pi pi-arrow-left" label="Voltar à listagem" onClick={goBack} variant="ghost" />
           {documento && <FacButton disabled={saving || loading} icon="pi pi-plus" label="Novo documento" onClick={newDocument} variant="secondary" />}
           {documento && documento.estado === "RASCUNHO" && canDeleteDraft && <FacButton disabled={saving || loading} icon="pi pi-trash" label="Eliminar rascunho" onClick={() => setDeleteOpen(true)} variant="destructive" />}
           {canOpenPdfCurrent && <FacButton disabled={saving} icon="pi pi-file-pdf" label="PDF" onClick={openPdf} variant="secondary" />}
