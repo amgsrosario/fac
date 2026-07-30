@@ -1,12 +1,14 @@
 package com.ar2lda.fac.controller.dto;
 
 import com.ar2lda.fac.model.TipoDescontoLinha;
+import com.ar2lda.fac.model.TipoLinhaDocumento;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
 public record LinhaDocumentoComercialUpdateDto(
+        TipoLinhaDocumento tipoLinha,
         String artigoId,
         @Size(max = 80, message = "Descricao deve ter no maximo 80 caracteres")
         String descricao,

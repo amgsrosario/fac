@@ -91,7 +91,9 @@ public class LinhaDocumentoComercialService {
         DocumentoComercial documento = findDocumento(documentoId);
         validateRascunho(documento);
         LinhaDocumentoComercial linha = findLinha(documentoId, linhaId);
-        if (linha.getTipoLinha() == TipoLinhaDocumento.TEXTO) {
+        TipoLinhaDocumento tipoLinha = dto.tipoLinha() != null ? dto.tipoLinha() : linha.getTipoLinha();
+        linha.setTipoLinha(tipoLinha);
+        if (tipoLinha == TipoLinhaDocumento.TEXTO) {
             applyTextoValues(linha, dto.descricao());
         } else {
             applyComercialValues(linha, documento, dto.artigoId(), dto.descricao(), dto.quantidade(), dto.precoUnitario(),
@@ -169,10 +171,7 @@ public class LinhaDocumentoComercialService {
     }
 
     private void applyTextoValues(LinhaDocumentoComercial linha, String descricao) {
-        if (descricao == null || descricao.isBlank()) {
-            throw new BadRequestException("Descricao e obrigatoria em linhas de texto");
-        }
-        linha.setDescricao(descricao);
+        linha.setDescricao(descricao == null || descricao.isBlank() ? "" : descricao);
         linha.setArtigo(null);
         linha.setQuantidade(null);
         linha.setPrecoUnitario(null);

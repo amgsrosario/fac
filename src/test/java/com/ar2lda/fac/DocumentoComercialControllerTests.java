@@ -1207,6 +1207,108 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void criaLinhasTextoVaziasSemAlterarTotaisComerciais() throws Exception {
+        String documentoLocation = criarDocumentoComPrimeiraLinha();
+
+        mockMvc.perform(post(documentoLocation + "/linhas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoLinha": "TEXTO",
+                                  "descricao": ""
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.numeroLinha").value(2))
+                .andExpect(jsonPath("$.tipoLinha").value("TEXTO"))
+                .andExpect(jsonPath("$.descricao").value(""))
+                .andExpect(jsonPath("$.artigoId").value(nullValue()))
+                .andExpect(jsonPath("$.quantidade").value(nullValue()))
+                .andExpect(jsonPath("$.valorLinha").value(nullValue()))
+                .andExpect(jsonPath("$.tipoTaxaIvaId").value(nullValue()));
+
+        mockMvc.perform(post(documentoLocation + "/linhas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoLinha": "TEXTO"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.numeroLinha").value(3))
+                .andExpect(jsonPath("$.tipoLinha").value("TEXTO"))
+                .andExpect(jsonPath("$.descricao").value(""))
+                .andExpect(jsonPath("$.artigoId").value(nullValue()))
+                .andExpect(jsonPath("$.quantidade").value(nullValue()))
+                .andExpect(jsonPath("$.valorLinha").value(nullValue()))
+                .andExpect(jsonPath("$.tipoTaxaIvaId").value(nullValue()));
+
+        mockMvc.perform(get(documentoLocation))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valorBruto").value(10.000000))
+                .andExpect(jsonPath("$.valorDesconto").value(0.000000))
+                .andExpect(jsonPath("$.valorSujeitoNormal").value(10.000000))
+                .andExpect(jsonPath("$.valorIvaNormal").value(2.300000))
+                .andExpect(jsonPath("$.valorIvaTotal").value(2.300000))
+                .andExpect(jsonPath("$.valorTotal").value(12.300000))
+                .andExpect(jsonPath("$.peso").value(1.250));
+
+        mockMvc.perform(get(documentoLocation + "/linhas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].tipoLinha").value("COMERCIAL"))
+                .andExpect(jsonPath("$[1].tipoLinha").value("TEXTO"))
+                .andExpect(jsonPath("$[1].descricao").value(""))
+                .andExpect(jsonPath("$[2].tipoLinha").value("TEXTO"))
+                .andExpect(jsonPath("$[2].descricao").value(""));
+    }
+
+    @Test
+    void converteLinhaComercialEmTextoVazioSemEmitirDocumentoSemLinhaComercial() throws Exception {
+        String documentoLocation = criarDocumentoComPrimeiraLinha();
+        Long primeira = linhaDocumentoComercialRepository
+                .findByDocumentoComercialIdOrderByNumeroLinha(documentoId(documentoLocation)).get(0).getId();
+
+        mockMvc.perform(put(documentoLocation + "/linhas/" + primeira)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipoLinha": "TEXTO",
+                                  "descricao": ""
+                                }
+                                """))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(documentoLocation + "/linhas/" + primeira))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tipoLinha").value("TEXTO"))
+                .andExpect(jsonPath("$.descricao").value(""))
+                .andExpect(jsonPath("$.artigoId").value(nullValue()))
+                .andExpect(jsonPath("$.quantidade").value(nullValue()))
+                .andExpect(jsonPath("$.precoUnitario").value(nullValue()))
+                .andExpect(jsonPath("$.valorLinha").value(nullValue()))
+                .andExpect(jsonPath("$.tipoTaxaIvaId").value(nullValue()))
+                .andExpect(jsonPath("$.percentagemIva").value(nullValue()))
+                .andExpect(jsonPath("$.peso").value(nullValue()));
+
+        mockMvc.perform(get(documentoLocation))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valorBruto").value(0.000000))
+                .andExpect(jsonPath("$.valorDesconto").value(0.000000))
+                .andExpect(jsonPath("$.valorIvaTotal").value(0.000000))
+                .andExpect(jsonPath("$.valorTotal").value(0.000000))
+                .andExpect(jsonPath("$.peso").value(nullValue()));
+
+        mockMvc.perform(post(documentoLocation + "/emitir")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "emissorId": "EMISSOR"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void reordenaTresLinhasComerciaisSemViolarUnicidade() throws Exception {
         String documentoLocation = criarDocumentoComPrimeiraLinha();
         Long primeira = linhaDocumentoComercialRepository

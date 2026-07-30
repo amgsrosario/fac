@@ -133,6 +133,31 @@ class DocumentoComercialPdfServiceTests {
     }
 
     @Test
+    void htmlEPdfRenderizamLinhaTextoVaziaSemValoresComerciais() throws Exception {
+        List<LinhaDocumentoComercialDto> linhas = List.of(
+                linhaComercial(1, "ART-1", "Artigo de demonstracao"),
+                linhaTexto(2, "")
+        );
+        DocumentoComercialImpressaoDto base = criarImpressao(1, Scenario.standard());
+        String html = renderHtml(new DocumentoComercialImpressaoDto(base.empresa(), base.documento(), linhas));
+
+        assertThat(html)
+                .contains("class=\"text-row\"")
+                .contains("<td class=\"text-body\" colspan=\"7\"></td>")
+                .doesNotContain("null")
+                .doesNotContain("0.00 0.00 0.00");
+
+        byte[] pdf = gerarComLinhasPersonalizadas(linhas);
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            String text = new PDFTextStripper().getText(document);
+            assertThat(text)
+                    .contains("ART-1")
+                    .doesNotContain("null")
+                    .doesNotContain("0.00 0.00 0.00");
+        }
+    }
+
+    @Test
     void pdfRespeitaOrdemDeLinhasTextoEComerciais() throws Exception {
         byte[] pdf = gerarComLinhasPersonalizadas(List.of(
                 linhaTexto(1, "Introducao documental"),
