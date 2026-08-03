@@ -287,9 +287,12 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   const location = useLocation();
   const navigate = useNavigate();
   const adminAccessRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileDrawerRef = useRef<HTMLElement>(null);
   const navigationView = viewFromNavigationState(location.state);
   const [activeView, setActiveView] = useState<ViewKey>(navigationView ?? initialView);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [clientes, setClientes] = useState<Page<Cliente> | null>(null);
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(null);
@@ -570,6 +573,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 
   useEffect(() => {
     setAdminMenuOpen(false);
+    setMobileDrawerOpen(false);
   }, [shellView]);
 
   useEffect(() => {
@@ -595,6 +599,45 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     };
   }, [adminMenuOpen]);
 
+  useEffect(() => {
+    if (!mobileDrawerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusableSelector = "button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])";
+    const firstFocusable = mobileDrawerRef.current?.querySelector<HTMLElement>(focusableSelector);
+    window.requestAnimationFrame(() => firstFocusable?.focus());
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMobileDrawer();
+        return;
+      }
+      if (event.key !== "Tab" || !mobileDrawerRef.current) return;
+      const focusable = Array.from(mobileDrawerRef.current.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter((element) => element.offsetParent !== null);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileDrawerOpen]);
+
   function selectView(view: ViewKey) {
     setActiveView(view);
     if (view === "Dashboard") {
@@ -609,6 +652,39 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   function selectAdminView(view: ViewKey) {
     selectView(view);
     setAdminMenuOpen(false);
+    setMobileDrawerOpen(false);
+  }
+
+  function closeMobileDrawer(returnFocus = true) {
+    setMobileDrawerOpen(false);
+    if (returnFocus) {
+      window.requestAnimationFrame(() => mobileMenuButtonRef.current?.focus());
+    }
+  }
+
+  function selectMobileView(view: ViewKey) {
+    selectView(view);
+    closeMobileDrawer(false);
+  }
+
+  function renderMenu(groups: MenuGroup[], onSelect: (view: ViewKey) => void) {
+    return groups.map((group) => (
+      <section className="fac-menu-section" key={group.title}>
+        <p>{group.title}</p>
+        {group.items.map((item) => (
+          <button
+            aria-current={shellView === item.label ? "page" : undefined}
+            className={shellView === item.label ? "active" : ""}
+            key={item.label}
+            onClick={() => onSelect(item.label)}
+            type="button"
+          >
+            <span>{menuLabel(item.label)}</span>
+            <small>{item.hint}</small>
+          </button>
+        ))}
+      </section>
+    ));
   }
 
   const saldoPendente = useMemo(
@@ -664,6 +740,87 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 
   return (
     <main className="fac-shell">
+      <header className="fac-mobile-topbar">
+        <button
+          aria-controls="fac-mobile-drawer"
+          aria-expanded={mobileDrawerOpen}
+          aria-label="Abrir menu"
+          className="fac-mobile-menu-button"
+          onClick={() => setMobileDrawerOpen(true)}
+          ref={mobileMenuButtonRef}
+          type="button"
+        >
+          <i aria-hidden="true" className="pi pi-bars" />
+        </button>
+        <div className="fac-mobile-title">
+          <strong>FAC</strong>
+          <span>{viewTitle(shellView)}</span>
+        </div>
+        <div className="fac-mobile-actions">
+          {visibleAdminMenuItems.length > 0 && (
+            <button
+              aria-label="Administração e configuração"
+              className={`fac-admin-trigger${isAdminView ? " active" : ""}`}
+              onClick={() => setMobileDrawerOpen(true)}
+              title="Administração e configuração"
+              type="button"
+            >
+              <i aria-hidden="true" className="pi pi-shield" />
+            </button>
+          )}
+          <button className="fac-mobile-logout" onClick={onLogout} type="button">Sair</button>
+        </div>
+      </header>
+
+      {mobileDrawerOpen && <button aria-label="Fechar menu" className="fac-mobile-drawer-overlay" onClick={() => closeMobileDrawer()} type="button" />}
+      {mobileDrawerOpen && (
+        <aside
+          aria-label="Menu principal"
+          aria-modal="true"
+          className="fac-mobile-drawer open"
+          id="fac-mobile-drawer"
+          ref={mobileDrawerRef}
+          role="dialog"
+        >
+          <div className="fac-mobile-drawer-header">
+            <div className="fac-brand">
+              <div className="fac-brand-mark">FAC</div>
+              <div>
+                <strong>FAC</strong>
+                <span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Ambiente de demonstração" : "Gestão comercial e faturação"}</span>
+              </div>
+            </div>
+            <button aria-label="Fechar menu" className="fac-mobile-drawer-close" onClick={() => closeMobileDrawer()} type="button">
+              <i aria-hidden="true" className="pi pi-times" />
+            </button>
+          </div>
+          <nav className="fac-menu fac-mobile-drawer-nav" aria-label="Navegação principal">
+            {renderMenu(visibleMenuGroups, selectMobileView)}
+            {visibleAdminMenuItems.length > 0 && (
+              <section className="fac-menu-section">
+                <p>Administração</p>
+                {visibleAdminMenuItems.map((item) => (
+                  <button
+                    aria-current={shellView === item.label ? "page" : undefined}
+                    className={shellView === item.label ? "active" : ""}
+                    key={item.label}
+                    onClick={() => selectMobileView(item.label)}
+                    type="button"
+                  >
+                    <span>{menuLabel(item.label)}</span>
+                    <small>{item.hint}</small>
+                  </button>
+                ))}
+              </section>
+            )}
+          </nav>
+          <div className="fac-mobile-drawer-footer">
+            <div className="fac-current-user"><span>{currentUser.nome}</span><small>{currentUser.papel} · {currentUser.codigo}</small></div>
+            <button className="fac-ghost-button" onClick={onLogout} type="button">Sair</button>
+          </div>
+        </aside>
+      )}
+
       <aside className="fac-sidebar">
         <div className="fac-brand">
           <div className="fac-brand-mark">FAC</div>
@@ -674,22 +831,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         </div>
 
         <nav className="fac-menu" aria-label="Navegação principal">
-          {visibleMenuGroups.map((group) => (
-            <section className="fac-menu-section" key={group.title}>
-              <p>{group.title}</p>
-              {group.items.map((item) => (
-                <button
-                  className={shellView === item.label ? "active" : ""}
-                  key={item.label}
-                  onClick={() => selectView(item.label)}
-                  type="button"
-                >
-                  <span>{menuLabel(item.label)}</span>
-                  <small>{item.hint}</small>
-                </button>
-              ))}
-            </section>
-          ))}
+          {renderMenu(visibleMenuGroups, selectView)}
         </nav>
       </aside>
 

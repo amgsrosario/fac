@@ -140,6 +140,86 @@ textarea {
   min-width: 0;
 }
 
+.fac-mobile-topbar,
+.fac-mobile-drawer,
+.fac-mobile-drawer-overlay {
+  display: none;
+}
+
+.fac-mobile-menu-button,
+.fac-mobile-drawer-close,
+.fac-mobile-logout {
+  border: 1px solid var(--fac-border);
+  border-radius: 14px;
+  color: var(--fac-petrol);
+  background: var(--fac-surface);
+  cursor: pointer;
+}
+
+.fac-mobile-menu-button,
+.fac-mobile-drawer-close,
+.fac-mobile-actions .fac-admin-trigger {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+}
+
+.fac-mobile-menu-button:focus-visible,
+.fac-mobile-drawer-close:focus-visible,
+.fac-mobile-logout:focus-visible,
+.fac-mobile-actions .fac-admin-trigger:focus-visible,
+.fac-mobile-drawer .fac-menu button:focus-visible,
+.fac-mobile-drawer-footer .fac-ghost-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(186, 150, 60, 0.24);
+}
+
+.fac-mobile-title {
+  display: grid;
+  min-width: 0;
+}
+
+.fac-mobile-title strong,
+.fac-mobile-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fac-mobile-title strong {
+  color: var(--fac-petrol);
+  font-weight: 800;
+}
+
+.fac-mobile-title span {
+  color: var(--fac-text-muted);
+  font-size: 0.78rem;
+}
+
+.fac-mobile-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.fac-mobile-actions .fac-admin-trigger {
+  flex: 0 0 auto;
+}
+
+.fac-mobile-actions .fac-admin-trigger.active {
+  border-color: rgba(68, 81, 93, 0.36);
+  background: #f1f5f7;
+}
+
+.fac-mobile-logout {
+  min-height: 42px;
+  padding: 0 0.75rem;
+  white-space: nowrap;
+}
+
 .fac-eyebrow {
   margin: 0 0 7px;
   color: var(--fac-gold);
@@ -2193,7 +2273,6 @@ button:disabled {
 }
 
 @media (max-width: 1100px) {
-  .fac-shell,
   .fac-hero,
   .fac-content-grid,
   .fac-articles-header-grid,
@@ -2202,14 +2281,8 @@ button:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .fac-sidebar,
   .fac-workspace {
     min-width: 0;
-  }
-
-  .fac-sidebar {
-    border-right: 0;
-    border-bottom: 1px solid var(--fac-border);
   }
 
   .fac-topbar,
@@ -2279,6 +2352,119 @@ button:disabled {
     flex: 1 0 100%;
     max-width: none;
     order: 10;
+    width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .fac-shell {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .fac-sidebar {
+    display: none;
+  }
+
+  .fac-workspace {
+    padding: 16px;
+  }
+
+  .fac-mobile-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 760;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 58px;
+    border-bottom: 1px solid var(--fac-border);
+    padding: 0.5rem 0.75rem;
+    background: rgba(250, 250, 250, 0.98);
+    box-shadow: 0 10px 24px rgba(68, 81, 93, 0.08);
+  }
+
+  .fac-topbar {
+    display: none;
+  }
+
+  .fac-mobile-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 780;
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    border: 0;
+    padding: 0;
+    background: rgba(38, 52, 60, 0.42);
+    cursor: default;
+  }
+
+  .fac-mobile-drawer {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 790;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(320px, calc(100vw - 28px));
+    max-width: 100vw;
+    height: 100vh;
+    border-right: 1px solid var(--fac-border);
+    background: var(--fac-sidebar);
+    box-shadow: 18px 0 44px rgba(38, 52, 60, 0.18);
+    transform: translateX(-104%);
+    transition: transform 0.18s ease;
+  }
+
+  .fac-mobile-drawer.open {
+    transform: translateX(0);
+  }
+
+  .fac-mobile-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--fac-border);
+    padding: 1rem;
+  }
+
+  .fac-mobile-drawer-header .fac-brand {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .fac-mobile-drawer-header .fac-brand > div:last-child {
+    min-width: 0;
+  }
+
+  .fac-mobile-drawer-nav {
+    align-content: start;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  .fac-mobile-drawer .fac-menu button[aria-current="page"] small::after {
+    content: " · Atual";
+  }
+
+  .fac-mobile-drawer-footer {
+    display: grid;
+    gap: 0.75rem;
+    border-top: 1px solid var(--fac-border);
+    padding: 1rem;
+    background: var(--fac-sidebar);
+  }
+
+  .fac-mobile-drawer-footer .fac-current-user {
+    max-width: none;
+    padding: 0;
+    text-align: left;
+  }
+
+  .fac-mobile-drawer-footer .fac-ghost-button {
     width: 100%;
   }
 }
