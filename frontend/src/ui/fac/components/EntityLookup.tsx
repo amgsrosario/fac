@@ -50,6 +50,7 @@ type EntityLookupFieldProps<T extends object> = Omit<EntityLookupDialogProps<T>,
   clearable?: boolean;
   closeRequest?: number;
   disabled?: boolean;
+  openDialogOnF2?: boolean;
   label?: string;
   optionLabel: (row: T) => ReactNode;
   optionMeta?: (row: T) => ReactNode;
@@ -83,6 +84,7 @@ export function EntityLookupField<T extends object>({
   clearable = true,
   closeRequest = 0,
   disabled = false,
+  openDialogOnF2 = false,
   label,
   onClear,
   onQueryChange,
@@ -225,6 +227,15 @@ export function EntityLookupField<T extends object>({
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "F2") {
+      setSuggestionsOpen(false);
+      if (openDialogOnF2) {
+        event.preventDefault();
+        event.stopPropagation();
+        openDialog();
+      }
+      return;
+    }
     if (event.key === "ArrowDown" && suggestions.length > 0) {
       event.preventDefault();
       setSuggestionsOpen(true);
@@ -246,7 +257,9 @@ export function EntityLookupField<T extends object>({
       }
       return;
     }
-    if (event.key === "Escape") {
+    if (event.key === "Escape" && suggestionsOpen) {
+      event.preventDefault();
+      event.stopPropagation();
       setSuggestionsOpen(false);
     }
   }

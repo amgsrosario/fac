@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getAuthSession, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
+import { EntityLookupField, type EntityLookupColumn, type EntityLookupSearchField } from "./ui/fac/components/EntityLookup";
 
 type Page<T> = { content: T[]; totalElements: number };
 type Pendente = {
@@ -17,7 +18,7 @@ type Pendente = {
   dataVencimento: string;
   moedaId: string;
 };
-type Cliente = { id: number; nome: string; nif: string; inativo: boolean; moedaId?: string | null; mPagamentoId?: string | null; pPagamentoId?: string | null };
+type Cliente = { id: number; nome: string; nif: string; email?: string | null; localidade?: string | null; inativo: boolean; moedaId?: string | null; mPagamentoId?: string | null; pPagamentoId?: string | null };
 type TipoDocumento = { id: string; descricao: string; areaGestao: number };
 type Serie = { serie: string; tipoDocumentoId: string; nome: string };
 type MPagamento = { id: string; nome: string };
@@ -90,13 +91,26 @@ const FINANCEIRO_COLUMNS: ConfigurableColumn[] = [
   { key: "moeda", label: "Moeda", visible: false }, { key: "liquido", label: "Líquido", visible: true },
   { key: "emissor", label: "Emissor", visible: false }, { key: "estado", label: "Estado", visible: true }
 ];
+const CLIENT_LOOKUP_COLUMNS: EntityLookupColumn<Cliente>[] = [
+  { defaultVisible: true, field: "id", filterable: true, globalSearch: true, header: "Código", required: true, sortable: true, width: "7rem" },
+  { defaultVisible: true, field: "nome", filterable: true, globalSearch: true, header: "Nome", required: true, sortable: true },
+  { defaultVisible: true, field: "nif", filterable: true, globalSearch: true, header: "NIF", sortable: true, width: "9rem" },
+  { defaultVisible: true, field: "email", filterable: true, globalSearch: true, header: "Email", sortable: true },
+  { body: (cliente) => cliente.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
+];
+const CLIENT_SEARCH_FIELDS: EntityLookupSearchField<Cliente>[] = [
+  { aliases: ["codigo", "código"], fields: ["id"], key: "id" },
+  { fields: ["nome"], key: "nome" },
+  { fields: ["nif"], key: "nif" },
+  { fields: ["email"], key: "email" },
+  { fields: ["localidade"], key: "localidade" }
+];
 
 export default function PendentesView() {
   const navigate = useNavigate();
   const canManageTreasury = hasPermission("TESOURARIA_GERIR");
   const canAnnul = hasPermission("DOCUMENTO_ANULAR");
   const receiptEditorRef = useRef<HTMLElement | null>(null);
-  const clientSelectRef = useRef<HTMLSelectElement | null>(null);
   const newReceiptButtonRef = useRef<HTMLButtonElement | null>(null);
   const receiptSubmittingRef = useRef(false);
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
@@ -115,6 +129,7 @@ export default function PendentesView() {
   const [receiptSubmitting, setReceiptSubmitting] = useState(false);
   const [allocations, setAllocations] = useState<Allocations>({});
   const [manualReceiptValue, setManualReceiptValue] = useState(false);
+  const [clientFocusRequest, setClientFocusRequest] = useState(0);
   const [pendenteColumnsOpen, setPendenteColumnsOpen] = useState(false);
   const [financeiroColumnsOpen, setFinanceiroColumnsOpen] = useState(false);
   const [selectedFinanceiroId, setSelectedFinanceiroId] = useState<number | null>(null);
@@ -128,7 +143,7 @@ export default function PendentesView() {
 
   useEffect(() => {
     if (!receiptOpen) return;
-    requestAnimationFrame(() => clientSelectRef.current?.focus());
+    setClientFocusRequest((current) => current + 1);
   }, [receiptOpen]);
 
   async function loadTesouraria() {
@@ -231,6 +246,18 @@ export default function PendentesView() {
   }
 
   function selectClient(clienteId: string) {
+    if (!clienteId) {
+      setForm((current) => ({
+        ...current,
+        clienteId: "",
+        moedaId: "",
+        mPagamentoId: "",
+        valorRecebido: ""
+      }));
+      setAllocations({});
+      setManualReceiptValue(false);
+      return;
+    }
     const cliente = clientes.find((item) => item.id === Number(clienteId));
     const moedas = openPendentesForClient(pendentes, Number(clienteId)).map((item) => item.moedaId);
     const moedasUnicas = [...new Set(moedas)];
@@ -448,6 +475,7 @@ export default function PendentesView() {
 
   const abertas = pendentes.filter((item) => Number(item.valorPendente) > 0);
   const clientesComPendentes = clientes.filter((cliente) => !cliente.inativo && abertas.some((item) => item.clienteId === cliente.id));
+  const receiptCliente = clientesComPendentes.find((cliente) => cliente.id === Number(form.clienteId)) ?? null;
   const receiptPendentes = openPendentesForClient(pendentes, Number(form.clienteId))
     .filter((item) => !form.moedaId || item.moedaId === form.moedaId)
     .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento) || a.numeroDocumento - b.numeroDocumento);
@@ -542,7 +570,26 @@ export default function PendentesView() {
     {receiptOpen && <section aria-label="Novo recebimento" className="fac-panel fac-section-panel fac-emission-panel" onKeyDown={handleReceiptKeyDown} ref={receiptEditorRef}>
       <div className="fac-panel-header"><div><p className="fac-eyebrow">Novo documento financeiro</p><h2>Distribuir recebimento</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading || receiptSubmitting} onClick={backToReceiptList} type="button">Voltar à listagem</button><button className="fac-gold-button" disabled={!canIssueReceipt} onClick={() => issueReceipt("DETAIL")} type="button">{issueButtonLabel}</button><button className="fac-primary-button" disabled={!canIssueReceipt} onClick={() => issueReceipt("PDF")} type="button">{issuePdfButtonLabel}</button></div></div>
       <div className="fac-form-grid">
-        <Field label="Cliente"><select onChange={(event) => selectClient(event.target.value)} ref={clientSelectRef} value={form.clienteId}><option value="">Selecionar cliente</option>{clientesComPendentes.map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.nome} - {cliente.nif}</option>)}</select></Field>
+        <EntityLookupField<Cliente>
+          autoFocusRequest={clientFocusRequest}
+          columns={CLIENT_LOOKUP_COLUMNS}
+          dataKey="id"
+          emptyMessage="Sem clientes com documentos pendentes para selecionar."
+          label="Cliente"
+          loading={loading}
+          onClear={() => selectClient("")}
+          onSelect={(cliente) => selectClient(String(cliente.id))}
+          openDialogOnF2
+          optionLabel={(cliente) => `${cliente.id} · ${cliente.nome}`}
+          optionMeta={(cliente) => [cliente.nif && `NIF ${cliente.nif}`, cliente.email, cliente.inativo ? "Inativo" : null].filter(Boolean).join(" · ")}
+          placeholder="Pesquisar cliente"
+          preferenceKey="fac.lookup.recebimentos.clientes"
+          searchFields={CLIENT_SEARCH_FIELDS}
+          selection={receiptCliente}
+          title="Selecionar cliente"
+          value={clientesComPendentes}
+          valueLabel={receiptCliente ? `${receiptCliente.id} · ${receiptCliente.nome}` : undefined}
+        />
         <Field label="Moeda"><select data-receipt-currency disabled={!form.clienteId || clientCurrencies.length <= 1} onChange={(event) => { setForm((current) => ({ ...current, moedaId: event.target.value, valorRecebido: "" })); setAllocations({}); setManualReceiptValue(false); requestAnimationFrame(() => receiptEditorRef.current?.querySelector<HTMLElement>("[data-receipt-value]")?.focus()); }} value={form.moedaId}><option value="">Selecionar moeda</option>{clientCurrencies.map((moeda) => <option key={moeda} value={moeda}>{moeda}</option>)}</select></Field>
         <Field label="Valor recebido"><input data-receipt-value disabled={!form.moedaId} min="0.000001" onChange={(event) => { const value = event.target.value; setForm((current) => ({ ...current, valorRecebido: value })); setAllocations({}); setManualReceiptValue(value !== ""); }} step="0.000001" type="number" value={form.valorRecebido}/></Field>
         <Field label="Modo de pagamento"><select onChange={(event) => setForm((current) => ({ ...current, mPagamentoId: event.target.value }))} value={form.mPagamentoId}><option value="">Confirmar modo</option>{modos.map((modo) => <option key={modo.id} value={modo.id}>{modo.nome}</option>)}</select></Field>
