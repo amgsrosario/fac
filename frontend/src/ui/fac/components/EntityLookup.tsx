@@ -40,6 +40,7 @@ type EntityLookupDialogProps<T extends object> = {
   preferenceKey?: string;
   searchFields?: EntityLookupSearchField<T>[];
   selection?: T | null;
+  selectionLabel?: (row: T) => ReactNode;
   title: string;
   value: T[];
   visible: boolean;
@@ -201,9 +202,9 @@ export function EntityLookupField<T extends object>({
     };
   }, [canUseDocument, query, suggestions.length, suggestionsOpen]);
 
-  function hide() {
+  function hide(restoreFocus = true) {
     setVisible(false);
-    window.setTimeout(() => inputRef.current?.focus(), 0);
+    if (restoreFocus) window.setTimeout(() => inputRef.current?.focus(), 0);
   }
 
   function selectRow(row: T) {
@@ -344,14 +345,15 @@ export function EntityLookupField<T extends object>({
       {suggestionsList}
       <EntityLookupDialog
         {...dialogProps}
-        onHide={hide}
+        onHide={() => hide()}
         initialQuery={query}
         onSelect={(row) => {
           selectRow(row);
-          hide();
+          hide(false);
         }}
         searchFields={searchFields}
         selection={selection}
+        selectionLabel={optionLabel}
         visible={visible}
       />
     </>
@@ -369,6 +371,7 @@ export function EntityLookupDialog<T extends object>({
   preferenceKey,
   searchFields: providedSearchFields,
   selection = null,
+  selectionLabel,
   title,
   value,
   visible,
@@ -411,6 +414,12 @@ export function EntityLookupDialog<T extends object>({
     window.localStorage.setItem(preferenceKey, JSON.stringify(visibleFields));
   }, [preferenceKey, visibleFields]);
 
+  useEffect(() => {
+    if (!selected) return;
+    const selectedKey = entityKey(selected, dataKey);
+    if (!filteredValue.some((row) => entityKey(row, dataKey) === selectedKey)) setSelected(null);
+  }, [dataKey, filteredValue, selected]);
+
   function changeColumns(nextFields: string[]) {
     const required = requiredFields.filter((field) => !nextFields.includes(field));
     const merged = Array.from(new Set([...required, ...nextFields]));
@@ -445,10 +454,17 @@ export function EntityLookupDialog<T extends object>({
     if (row) onSelect(row);
   }
 
+  const selectedSummary = selected
+    ? selectionLabel?.(selected) ?? defaultSelectionLabel(selected, columns)
+    : null;
+
   const footer = (
     <div className="fac-entity-lookup-footer">
-      <Button className="fac-button fac-button-ghost" label="Cancelar" onClick={onHide} type="button" />
-      <Button className="fac-button fac-button-primary" disabled={!selected} icon="pi pi-check" label="Selecionar" onClick={() => confirmSelection()} type="button" />
+      {selectedSummary && <div className="fac-entity-lookup-selected"><i aria-hidden="true" className="pi pi-check-circle" /><span><strong>Selecionado:</strong> {selectedSummary}</span></div>}
+      <div className="fac-entity-lookup-footer-actions">
+        <Button className="fac-button fac-button-ghost" label="Cancelar" onClick={onHide} type="button" />
+        <Button className="fac-button fac-button-primary" disabled={!selected} icon="pi pi-check" label="Selecionar" onClick={() => confirmSelection()} type="button" />
+      </div>
     </div>
   );
   const appendTarget = typeof document === "undefined" ? undefined : document.body;
@@ -524,9 +540,11 @@ export function EntityLookupDialog<T extends object>({
         emptyMessage={emptyMessage}
         filterDisplay={filtersVisible ? "row" : undefined}
         loading={loading}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
+        onKeyDownCapture={(event) => {
+          const target = event.target as HTMLElement;
+          if (event.key === "Enter" && target.closest('[data-pc-section="bodyrow"]')) {
             event.preventDefault();
+            event.stopPropagation();
             confirmSelection();
           }
         }}
@@ -599,6 +617,15 @@ function searchFieldsFromColumns<T extends object>(columns: EntityLookupColumn<T
 
 function entityKey<T extends object>(row: T, dataKey: Extract<keyof T, string>) {
   return String(row[dataKey] ?? "");
+}
+
+function defaultSelectionLabel<T extends object>(row: T, columns: EntityLookupColumn<T>[]) {
+  return columns
+    .filter((column) => column.required || column.defaultVisible)
+    .slice(0, 2)
+    .map((column) => String(getFieldValue(row, column.field) ?? "").trim())
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function matchColumnFilter<T extends object>(row: T, column: EntityLookupColumn<T>, query?: string) {
