@@ -46,7 +46,9 @@ type EntityLookupDialogProps<T extends object> = {
 };
 
 type EntityLookupFieldProps<T extends object> = Omit<EntityLookupDialogProps<T>, "onHide" | "onSelect" | "selection" | "visible"> & {
+  autoFocusRequest?: number;
   clearable?: boolean;
+  closeRequest?: number;
   disabled?: boolean;
   label?: string;
   optionLabel: (row: T) => ReactNode;
@@ -77,7 +79,9 @@ type SuggestionsStyle = CSSProperties & {
 };
 
 export function EntityLookupField<T extends object>({
+  autoFocusRequest = 0,
   clearable = true,
+  closeRequest = 0,
   disabled = false,
   label,
   onClear,
@@ -101,6 +105,7 @@ export function EntityLookupField<T extends object>({
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const suppressNextFocusSuggestionsRef = useRef(false);
   const canUseDocument = typeof document !== "undefined";
   const text = valueLabel || "";
   const searchFields = useMemo(
@@ -119,6 +124,30 @@ export function EntityLookupField<T extends object>({
       setSuggestionsOpen(false);
     }
   }, [selection]);
+
+  useEffect(() => {
+    if (autoFocusRequest === 0) return;
+    const frame = window.requestAnimationFrame(() => {
+      suppressNextFocusSuggestionsRef.current = true;
+      if (inputRef.current) HTMLElement.prototype.focus.call(inputRef.current);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [autoFocusRequest]);
+
+  useEffect(() => {
+    if (closeRequest === 0) return;
+    let cancelled = false;
+    setQuery("");
+    setSuggestionsOpen(false);
+    const close = (attempts: number) => window.requestAnimationFrame(() => {
+      if (cancelled) return;
+      setQuery("");
+      setSuggestionsOpen(false);
+      if (attempts > 0) close(attempts - 1);
+    });
+    close(20);
+    return () => { cancelled = true; };
+  }, [closeRequest]);
 
   useEffect(() => {
     function onPointerDown(event: PointerEvent) {
@@ -268,7 +297,13 @@ export function EntityLookupField<T extends object>({
             setActiveIndex(0);
             setSuggestionsOpen(showAllSuggestionsOnEmptyQuery || Boolean(nextQuery.trim()));
           }}
-          onFocus={() => (showAllSuggestionsOnEmptyQuery || query.trim()) && setSuggestionsOpen(true)}
+          onFocus={() => {
+            if (suppressNextFocusSuggestionsRef.current) {
+              suppressNextFocusSuggestionsRef.current = false;
+              return;
+            }
+            if (showAllSuggestionsOnEmptyQuery || query.trim()) setSuggestionsOpen(true);
+          }}
           onKeyDown={handleKeyDown}
           placeholder={text || placeholder}
           ref={inputRef}

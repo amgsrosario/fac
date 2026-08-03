@@ -169,9 +169,13 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const [header, setHeader] = useState<HeaderState>(emptyHeader);
   const [lines, setLines] = useState<EditorLine[]>([]);
   const [activeLine, setActiveLine] = useState<EditorLine>(() => emptyLine());
+  const activeLineRef = useRef(activeLine);
   const [activeArticleQuery, setActiveArticleQuery] = useState("");
   const [removedLineIds, setRemovedLineIds] = useState<number[]>([]);
   const [selectedLineUid, setSelectedLineUid] = useState<string | null>(null);
+  const [activeArticleFocusRequest, setActiveArticleFocusRequest] = useState(0);
+  const [activeArticleCloseRequest, setActiveArticleCloseRequest] = useState(0);
+  const [activeQuantityFocusRequest, setActiveQuantityFocusRequest] = useState(0);
   const [originalHeaderKey, setOriginalHeaderKey] = useState("");
   const [originalOrderKey, setOriginalOrderKey] = useState("");
   const [dirty, setDirty] = useState(false);
@@ -220,6 +224,10 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   }, [documentId]);
 
   useEffect(() => {
+    activeLineRef.current = activeLine;
+  }, [activeLine]);
+
+  useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!dirty) return;
       event.preventDefault();
@@ -258,7 +266,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setOriginalOrderKey(orderKey(mappedLines));
         setDiagnostico(diag);
         setImpressao(printModel);
-        setActiveLine(emptyLine());
+        replaceActiveLine(emptyLine());
         setActiveArticleQuery("");
         setRemovedLineIds([]);
         setDirty(false);
@@ -273,7 +281,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setDiagnostico(null);
         setImpressao(null);
         setNotice(warnings.length > 0 ? warnings.join(" ") : null);
-        setActiveLine(emptyLine());
+        replaceActiveLine(emptyLine());
         setActiveArticleQuery("");
         setRemovedLineIds([]);
         setDirty(false);
@@ -315,13 +323,33 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     setDirty(true);
   }
 
+  function replaceActiveLine(next: EditorLine) {
+    activeLineRef.current = next;
+    setActiveLine(next);
+  }
+
+  function patchActiveLine(patch: Partial<EditorLine>) {
+    const next = normalizeLineByArticle({ ...activeLineRef.current, ...patch });
+    activeLineRef.current = next;
+    setActiveLine(next);
+    return next;
+  }
+
   function chooseArticle(uid: string, artigoId: string | null, draft = false) {
     if (!canEditCurrent) return;
     const artigo = catalogos.artigos.find((item) => item.codigo === artigoId);
     if (draft) {
-      setActiveLine((current) => applyArticleToLine(current, artigo));
+      if (!artigo) {
+        replaceActiveLine(applyArticleToLine(activeLineRef.current, undefined));
+        setActiveArticleQuery("");
+        setDirty(true);
+        return;
+      }
+      replaceActiveLine(applyArticleToLine(activeLineRef.current, artigo));
       setActiveArticleQuery("");
       setDirty(true);
+      setActiveArticleCloseRequest((current) => current + 1);
+      setActiveQuantityFocusRequest((current) => current + 1);
       return;
     }
     const target = lines.find((line) => line.uid === uid);
@@ -331,8 +359,8 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   function setActivePatch(patch: Partial<EditorLine>) {
     if (!canEditCurrent) return;
-    if (!hasLinePatchChanges(activeLine, patch)) return;
-    setActiveLine((current) => normalizeLineByArticle({ ...current, ...patch }));
+    if (!hasLinePatchChanges(activeLineRef.current, patch)) return;
+    patchActiveLine(patch);
     setDirty(true);
   }
 
@@ -342,12 +370,12 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     if (query.trim()) setDirty(true);
   }
 
-  function preparePendingLine(_tipoLinha = activeLine.tipoLinha, baseLines = lines): PendingLineCommitResult {
-    const line = normalizeLineByArticle(activeLine);
+  function preparePendingLine(_tipoLinha = activeLineRef.current.tipoLinha, baseLines = lines, sourceLine = activeLineRef.current, allowEmptyText = false): PendingLineCommitResult {
+    const line = normalizeLineByArticle(sourceLine);
     if (activeArticleQuery.trim() && !line.artigoId) {
       return { status: "invalid", message: "Conclua ou limpe a linha em edição antes de guardar o rascunho." };
     }
-    if (isPendingLineEmpty(line)) {
+    if (isPendingLineEmpty(line) && !allowEmptyText) {
       return { status: "empty", lines: resequenceLines(baseLines) };
     }
     if (!isLineFilled(line)) {
@@ -361,9 +389,9 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     return { status: "committed", line: committed, lines: resequenceLines([...baseLines, committed]) };
   }
 
-  function commitPendingLine(tipoLinha = activeLine.tipoLinha): PendingLineCommitResult {
+  function promoteActiveLine(sourceLine = activeLineRef.current, allowEmptyText = false): PendingLineCommitResult {
     if (!canEditCurrent) return { status: "invalid", message: "Não é possível editar este rascunho." };
-    const result = preparePendingLine(tipoLinha);
+    const result = preparePendingLine(sourceLine.tipoLinha, lines, sourceLine, allowEmptyText);
     if (result.status === "empty") {
       setNotice("A linha ativa continua local e não foi adicionada.");
       return result;
@@ -373,25 +401,22 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       return result;
     }
     setLines(result.lines);
-    setActiveLine(emptyLine());
+    replaceActiveLine(emptyLine());
     setActiveArticleQuery("");
     setSelectedLineUid(result.line.uid);
     setDirty(true);
+    setActiveArticleFocusRequest((current) => current + 1);
     setNotice("Linha adicionada localmente.");
     return result;
   }
 
-  function addBlankLine(tipoLinha: TipoLinha, afterUid?: string) {
+  function commitPendingLine(tipoLinha = activeLineRef.current.tipoLinha): PendingLineCommitResult {
+    return promoteActiveLine({ ...activeLineRef.current, tipoLinha });
+  }
+
+  function addBlankLine(tipoLinha: TipoLinha, _afterUid?: string) {
     if (!canEditCurrent) return;
-    const nextLine = normalizeLineByArticle(emptyLine(tipoLinha));
-    setLines((current) => {
-      const next = [...current];
-      const index = afterUid ? next.findIndex((line) => line.uid === afterUid) : next.length - 1;
-      next.splice(index >= 0 ? index + 1 : next.length, 0, nextLine);
-      return resequenceLines(next);
-    });
-    setSelectedLineUid(nextLine.uid);
-    setDirty(true);
+    promoteActiveLine({ ...activeLineRef.current, tipoLinha }, true);
   }
 
   function duplicateLine(uid: string) {
@@ -547,7 +572,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       setDocumento(freshDoc);
       setHeader(nextHeader);
       setLines(resequenceLines(freshEditorLines.map((line) => ({ ...line, dirty: false }))));
-      setActiveLine(emptyLine());
+      replaceActiveLine(emptyLine());
       setActiveArticleQuery("");
       setRemovedLineIds([]);
       setOriginalHeaderKey(headerKey(nextHeader));
@@ -643,7 +668,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     const nextLines = freshLines.slice().sort((left, right) => left.numeroLinha - right.numeroLinha).map(lineFromDto);
     setHeader(nextHeader);
     setLines(resequenceLines(nextLines.map((line) => ({ ...line, dirty: false }))));
-    setActiveLine(emptyLine());
+    replaceActiveLine(emptyLine());
     setOriginalHeaderKey(headerKey(nextHeader));
     setOriginalOrderKey(orderKey(nextLines));
     setRemovedLineIds([]);
@@ -703,6 +728,9 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
           ) : (
             <DraftLines
               activeLine={activeLine}
+              activeArticleCloseRequest={activeArticleCloseRequest}
+              activeArticleFocusRequest={activeArticleFocusRequest}
+              activeQuantityFocusRequest={activeQuantityFocusRequest}
               catalogos={catalogos}
               lines={lines}
               onAddBlankLine={addBlankLine}
@@ -807,6 +835,9 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
 
 function DraftLines(props: {
   activeLine: EditorLine;
+  activeArticleCloseRequest: number;
+  activeArticleFocusRequest: number;
+  activeQuantityFocusRequest: number;
   catalogos: Catalogos;
   lines: EditorLine[];
   onAddBlankLine: (tipoLinha: TipoLinha, afterUid?: string) => void;
@@ -836,6 +867,32 @@ function DraftLines(props: {
     const line = row === props.lines.length ? props.activeLine : props.lines[row];
     if (line) setArticleDialogLineUid(line.uid);
   }
+  useEffect(() => {
+    if (props.activeArticleFocusRequest === 0) return;
+    let cancelled = false;
+    const focus = (attempts: number) => window.requestAnimationFrame(() => {
+      if (cancelled) return;
+      const cell = gridRef.current?.querySelector<HTMLElement>(`[data-grid-row="${props.lines.length}"][data-grid-column="0"]`);
+      const control = cell ? focusCellControl(cell) : null;
+      if (control && document.activeElement === control) return;
+      if (attempts > 0) focus(attempts - 1);
+    });
+    focus(20);
+    return () => { cancelled = true; };
+  }, [props.activeArticleFocusRequest, props.lines.length]);
+  useEffect(() => {
+    if (props.activeQuantityFocusRequest === 0) return;
+    let cancelled = false;
+    const focus = (attempts: number) => window.requestAnimationFrame(() => {
+      if (cancelled) return;
+      const cell = gridRef.current?.querySelector<HTMLElement>(`[data-grid-row="${props.lines.length}"][data-grid-column="2"]`);
+      const control = cell ? focusCellControl(cell) : null;
+      if (control && document.activeElement === control) return;
+      if (attempts > 0) focus(attempts - 1);
+    });
+    focus(20);
+    return () => { cancelled = true; };
+  }, [props.activeQuantityFocusRequest, props.lines.length]);
   useEffect(() => {
     function onNativeGridKeyDown(event: globalThis.KeyboardEvent) {
       if (event.key !== "F2" && !(event.altKey && event.key === "ArrowDown")) return;
@@ -869,10 +926,28 @@ function DraftLines(props: {
       openArticleDialogFromCell(cell);
       return;
     }
+    if ((event.key === "Enter" || event.key === "Tab") && isActiveTextDescriptionCell(cell, props.lines.length, props.activeLine)) {
+      event.preventDefault();
+      props.onCommitActiveLine("TEXTO");
+      return;
+    }
+    if ((event.key === "Enter" || event.key === "Tab") && isActiveCommercialLastCell(cell, props.lines.length, props.activeLine)) {
+      event.preventDefault();
+      props.onCommitActiveLine("COMERCIAL");
+      return;
+    }
     if (target.matches("input, textarea, select") || target.closest(".fac-lookup-wrap")) return;
+    if (isTextEntryKey(event)) {
+      const control = focusCellControl(cell);
+      if (control) {
+        event.preventDefault();
+        insertInitialKey(control, event.key);
+      }
+      return;
+    }
     if (event.key === "Enter") {
       event.preventDefault();
-      cell.querySelector<HTMLElement>("input, textarea, select, .fac-lookup-input")?.focus();
+      focusCellControl(cell);
       return;
     }
     if (event.key === "ArrowRight") { event.preventDefault(); focusGridCell(cell, "next"); }
@@ -904,7 +979,7 @@ function DraftLines(props: {
             {props.lines.map((line, index) => (
               <DraftLineRow index={index} key={line.uid} line={line} {...props} />
             ))}
-            {!props.readOnly && <DraftLineRow active index={props.lines.length} line={props.activeLine} {...props} />}
+            {!props.readOnly && <DraftLineRow active index={props.lines.length} key={props.activeLine.uid} line={props.activeLine} {...props} />}
           </tbody>
         </table>
       </div>
@@ -912,7 +987,7 @@ function DraftLines(props: {
         {props.lines.map((line, index) => (
           <DraftLineCard index={index} key={line.uid} line={line} {...props} />
         ))}
-        {!props.readOnly && <DraftLineCard active index={props.lines.length} line={props.activeLine} {...props} />}
+        {!props.readOnly && <DraftLineCard active index={props.lines.length} key={props.activeLine.uid} line={props.activeLine} {...props} />}
       </div>
       <EntityLookupDialog<Artigo>
         columns={artigoLookupColumns(props.catalogos.tiposIva)}
@@ -925,8 +1000,6 @@ function DraftLines(props: {
           if (articleDialogLine.uid === props.activeLine.uid) props.onChooseActiveArticle(artigo.codigo);
           else props.onChooseArticle(articleDialogLine.uid, artigo.codigo);
           setArticleDialogLineUid(null);
-          const rowIndex = articleDialogLine.uid === props.activeLine.uid ? props.lines.length : articleDialogLine.numeroLinha - 1;
-          window.setTimeout(() => gridRef.current?.querySelector<HTMLElement>(`[data-grid-row="${rowIndex}"][data-grid-column="0"]`)?.focus(), 0);
         }}
         preferenceKey="fac.lookup.draft.artigos"
         searchFields={artigoSearchFields(props.catalogos.tiposIva)}
@@ -945,6 +1018,34 @@ function DraftLines(props: {
   );
 }
 
+const gridControlSelector = "input:not([type='hidden']):not(:disabled), textarea:not(:disabled), select:not(:disabled), .fac-lookup-input:not(:disabled)";
+
+function focusCellControl(cell: HTMLElement) {
+  const control = cell.querySelector<HTMLElement>(gridControlSelector);
+  if (control) HTMLElement.prototype.focus.call(control);
+  return control ?? null;
+}
+
+function insertInitialKey(control: HTMLElement, key: string) {
+  if (!(control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement)) return;
+  const start = control.selectionStart ?? control.value.length;
+  const end = control.selectionEnd ?? start;
+  control.setRangeText(key, start, end, "end");
+  control.dispatchEvent(new InputEvent("input", { bubbles: true, data: key, inputType: "insertText" }));
+}
+
+function isTextEntryKey(event: KeyboardEvent<HTMLElement>) {
+  return event.key.length === 1 && !event.altKey && !event.ctrlKey && !event.metaKey;
+}
+
+function isActiveTextDescriptionCell(cell: HTMLElement, activeRow: number, activeLine: EditorLine) {
+  return Number(cell.dataset.gridRow ?? -1) === activeRow && cell.dataset.gridColumn === "1" && !activeLine.artigoId;
+}
+
+function isActiveCommercialLastCell(cell: HTMLElement, activeRow: number, activeLine: EditorLine) {
+  return Number(cell.dataset.gridRow ?? -1) === activeRow && cell.dataset.gridColumn === "6" && Boolean(activeLine.artigoId);
+}
+
 function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boolean; index: number; line: EditorLine }) {
   const { active = false, catalogos, index, line } = props;
   const hasArticle = Boolean(line.artigoId);
@@ -961,10 +1062,11 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
       if (!editable || disabled) return;
       const target = event.target as HTMLElement;
       if (target.closest(".fac-draft-row-actions")) return;
+      if (target.closest(gridControlSelector)) return;
       event.preventDefault();
-      event.currentTarget.focus();
+      focusCellControl(event.currentTarget);
     },
-    tabIndex: editable && !disabled ? 0 : undefined
+    tabIndex: editable && !disabled && !(active && column === 0) ? 0 : undefined
   });
   const inactiveCell = <span className="fac-draft-empty-cell" aria-hidden="true"></span>;
   return (
@@ -977,7 +1079,9 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
           <>
             <span className="fac-draft-cell-rest fac-draft-article-rest" title={selectedArticle?.codigo ?? ""}>{selectedArticle?.codigo || "Selecionar artigo"}</span>
             <EntityLookupField<Artigo>
+              autoFocusRequest={active ? props.activeArticleFocusRequest : 0}
               clearable
+              closeRequest={active ? props.activeArticleCloseRequest : 0}
               columns={artigoLookupColumns(catalogos.tiposIva)}
               dataKey="codigo"
               disabled={disabled}
@@ -1022,7 +1126,7 @@ function DraftLineCard(props: Parameters<typeof DraftLines>[0] & { active?: bool
     <article className={`fac-draft-line-card ${props.selectedLineUid === line.uid || active ? "selected" : ""} ${isTextLine ? "text-line" : ""} ${isTextLine && !line.descricao.trim() ? "text-line-empty" : ""} ${active ? "active-line" : ""}`} onFocus={() => !active && props.onSelectLine(line.uid)} onMouseDown={() => !active && props.onSelectLine(line.uid)}>
       <div className="fac-draft-card-top"><span>{active ? "Nova linha" : `Linha ${index + 1}`}</span></div>
       {!isTextLine && (
-        <EntityLookupField<Artigo> clearable columns={artigoLookupColumns(catalogos.tiposIva)} dataKey="codigo" disabled={disabled} emptyMessage="Sem artigos para selecionar." loading={catalogos.artigos.length === 0} optionLabel={artigoLookupLabel} optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, money(Number(artigo.pvp))].filter(Boolean).join(" · ")} onClear={() => active ? props.onChooseActiveArticle(null) : props.onChooseArticle(line.uid, null)} onQueryChange={active ? props.onActiveArticleQueryChange : undefined} onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo.codigo) : props.onChooseArticle(line.uid, artigo.codigo)} placeholder="Pesquisar artigo" preferenceKey="fac.lookup.draft.artigos" searchFields={artigoSearchFields(catalogos.tiposIva)} selection={selectedArticle} title="Selecionar artigo" value={catalogos.artigos.filter((artigo) => !artigo.inativo)} valueLabel={selectedArticle ? selectedArticle.codigo : undefined} />
+        <EntityLookupField<Artigo> autoFocusRequest={active ? props.activeArticleFocusRequest : 0} clearable closeRequest={active ? props.activeArticleCloseRequest : 0} columns={artigoLookupColumns(catalogos.tiposIva)} dataKey="codigo" disabled={disabled} emptyMessage="Sem artigos para selecionar." loading={catalogos.artigos.length === 0} optionLabel={artigoLookupLabel} optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, money(Number(artigo.pvp))].filter(Boolean).join(" · ")} onClear={() => active ? props.onChooseActiveArticle(null) : props.onChooseArticle(line.uid, null)} onQueryChange={active ? props.onActiveArticleQueryChange : undefined} onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo.codigo) : props.onChooseArticle(line.uid, artigo.codigo)} placeholder="Pesquisar artigo" preferenceKey="fac.lookup.draft.artigos" searchFields={artigoSearchFields(catalogos.tiposIva)} selection={selectedArticle} title="Selecionar artigo" value={catalogos.artigos.filter((artigo) => !artigo.inativo)} valueLabel={selectedArticle ? selectedArticle.codigo : undefined} />
       )}
       <input aria-label="Descrição da linha" className="fac-draft-cell fac-draft-cell-display" disabled={disabled} maxLength={80} onChange={(event) => update({ descricao: event.target.value })} placeholder="Descrição" value={line.descricao} />
       {hasArticle && (
