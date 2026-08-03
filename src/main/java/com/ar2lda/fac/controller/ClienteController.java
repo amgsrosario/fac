@@ -28,8 +28,10 @@ public class ClienteController implements GenericController {
     }
 
     @GetMapping
-    public Page<ClienteDto> list(Pageable pageable) {
-        return service.list(pageable);
+    public Page<ClienteDto> list(@RequestParam(name = "search", required = false) String search,
+                                 @RequestParam(name = "inativo", required = false) Boolean inativo,
+                                 Pageable pageable) {
+        return service.list(search, inativo, pageable);
     }
 
     @GetMapping("/{id}")

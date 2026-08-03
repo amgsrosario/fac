@@ -5,6 +5,7 @@ import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.model.RIva;
 import com.ar2lda.fac.model.Transporte;
 import com.ar2lda.fac.repository.CodPostalRepository;
+import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
 import com.ar2lda.fac.repository.RIvaRepository;
 import com.ar2lda.fac.repository.TransporteRepository;
@@ -19,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -33,6 +37,9 @@ class ClienteControllerTests {
 
     @Autowired
     private CodPostalRepository codPostalRepository;
+
+    @Autowired
+    private ClienteRepository clienteRepository;
 
     @Autowired
     private MoedaRepository moedaRepository;
@@ -101,5 +108,91 @@ class ClienteControllerTests {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void pesquisaClienteForaDosPrimeirosCemResultados() throws Exception {
+        for (int index = 0; index < 105; index++) {
+            criarCliente("Cliente Pesquisa %03d".formatted(index), "8%08d".formatted(index),
+                    "cliente%03d@pesquisa.test".formatted(index), false);
+        }
+        criarCliente("ZZZ Cliente Remoto", "599999999", "remoto@pesquisa.test", true);
+
+        mockMvc.perform(get("/clientes")
+                        .param("page", "0")
+                        .param("size", "100")
+                        .param("sort", "nome,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(100)))
+                .andExpect(jsonPath("$.totalElements", greaterThanOrEqualTo(106)))
+                .andExpect(jsonPath("$.totalPages", greaterThanOrEqualTo(2)));
+
+        long clienteId = clienteRepository.findAll().stream()
+                .filter(cliente -> "599999999".equals(cliente.getNif()))
+                .findFirst()
+                .orElseThrow()
+                .getId();
+
+        assertPesquisaEncontra(String.valueOf(clienteId));
+        assertPesquisaEncontra("ZZZ Cliente Remoto");
+        assertPesquisaEncontra("  ZZZ Cliente Remoto  ");
+        assertPesquisaEncontra("239999999");
+        assertPesquisaEncontra("919999999");
+        assertPesquisaEncontra("Localidade Remota");
+
+        mockMvc.perform(get("/clientes").param("search", "remoto@pesquisa.test"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].nome").value("ZZZ Cliente Remoto"));
+
+        mockMvc.perform(get("/clientes").param("search", "599999999").param("inativo", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].inativo").value(true));
+
+        mockMvc.perform(get("/clientes").param("search", "cliente-inexistente-xyz"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(0)))
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    private void assertPesquisaEncontra(String search) throws Exception {
+        mockMvc.perform(get("/clientes")
+                        .param("search", search)
+                        .param("page", "0")
+                        .param("size", "20")
+                        .param("sort", "nome,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].nome").value("ZZZ Cliente Remoto"));
+    }
+
+    private void criarCliente(String nome, String nif, String email, boolean inativo) throws Exception {
+        mockMvc.perform(post("/clientes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "%s",
+                                  "morada": "Rua da Pesquisa",
+                                  "localidade": "%s",
+                                  "nif": "%s",
+                                  "email": "%s",
+                                  "tel": "%s",
+                                  "tm": "%s",
+                                  "retencao": false,
+                                  "inativo": %s,
+                                  "codPostalId": "3750-003",
+                                  "paisId": "PT",
+                                  "moedaId": "EUR",
+                                  "transporteId": "%s"
+                                }
+                                """.formatted(nome,
+                                "599999999".equals(nif) ? "Localidade Remota" : "Águeda",
+                                nif, email,
+                                "599999999".equals(nif) ? "239999999" : "210000000",
+                                "599999999".equals(nif) ? "919999999" : "910000000",
+                                inativo, transporteId)))
+                .andExpect(status().isCreated());
     }
 }

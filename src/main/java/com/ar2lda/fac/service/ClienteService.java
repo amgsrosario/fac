@@ -55,8 +55,10 @@ public class ClienteService {
         return mapper.toDTO(clienteRepository.save(cliente));
     }
 
-    public Page<ClienteDto> list(Pageable pageable) {
-        return clienteRepository.findAll(pageable).map(mapper::toDTO);
+    public Page<ClienteDto> list(String search, Boolean inativo, Pageable pageable) {
+        String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
+        return clienteRepository.findAllBySearch(normalizedSearch, normalizedSearch.isEmpty(), inativo, pageable)
+                .map(mapper::toDTO);
     }
 
     public ClienteDto getById(Long id) {

@@ -1,5 +1,6 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { FilterMatchMode } from "primereact/api";
+import { Paginator } from "primereact/paginator";
 import { useLocation } from "react-router-dom";
 import { GlobalSearch } from "../../../GlobalSearch";
 import { apiFetch, AuthSession } from "../../../api";
@@ -26,6 +27,9 @@ import "./customers.css";
 type Page<T> = {
   content: T[];
   totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
 };
 
 type Cliente = {
@@ -143,6 +147,11 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState<StateFilter>("all");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalElements, setTotalElements] = useState(0);
+  const customerRequestRef = useRef(0);
+  const customerSearchReadyRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -156,6 +165,15 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!customerSearchReadyRef.current) {
+      customerSearchReadyRef.current = true;
+      return;
+    }
+    const timeout = window.setTimeout(() => loadCustomers(0, pageSize), 300);
+    return () => window.clearTimeout(timeout);
+  }, [search, stateFilter]);
 
   useEffect(() => {
     if (clientes.length === 0) return;
@@ -172,7 +190,7 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
     setError(null);
     try {
       const [clientesPage, codPostaisPage, paisesPage, moedasPage, regimesIvaPage, modosPagamentoPage, prazosPagamentoPage, transportesPage] = await Promise.all([
-        fetchPage<Cliente>("/api/clientes?size=300&sort=nome,asc"),
+        fetchPage<Cliente>("/api/clientes?page=0&size=20&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/codpostal?size=300&sort=id,asc"),
         fetchPage<CatalogoString>("/api/paises?size=300&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
@@ -182,6 +200,9 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
         fetchPage<CatalogoString>("/api/transportes?size=100&sort=nome,asc")
       ]);
       setClientes(clientesPage.content);
+      setPage(clientesPage.number);
+      setPageSize(clientesPage.size);
+      setTotalElements(clientesPage.totalElements);
       setCatalogos({
         codPostais: codPostaisPage.content,
         paises: paisesPage.content,
@@ -199,27 +220,28 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
     }
   }
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return clientes.filter((cliente) => {
-      const matchesSearch = !term || [
-        String(cliente.id),
-        cliente.nome,
-        cliente.nif,
-        cliente.email,
-        cliente.email1,
-        cliente.tel,
-        cliente.tm,
-        cliente.localidade
-      ]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term));
-      const matchesState = stateFilter === "all"
-        || (stateFilter === "active" && !cliente.inativo)
-        || (stateFilter === "inactive" && cliente.inativo);
-      return matchesSearch && matchesState;
-    });
-  }, [clientes, search, stateFilter]);
+  async function loadCustomers(pageNumber = page, rows = pageSize) {
+    const requestId = ++customerRequestRef.current;
+    setLoading(true);
+    const params = new URLSearchParams({ page: String(pageNumber), size: String(rows), sort: "nome,asc" });
+    if (search.trim()) params.set("search", search.trim());
+    if (stateFilter !== "all") params.set("inativo", String(stateFilter === "inactive"));
+    try {
+      const result = await fetchPage<Cliente>(`/api/clientes?${params}`);
+      if (requestId !== customerRequestRef.current) return;
+      setClientes(result.content);
+      setPage(result.number);
+      setPageSize(result.size);
+      setTotalElements(result.totalElements);
+      setSelectedId((current) => result.content.some((cliente) => cliente.id === current) ? current : result.content[0]?.id ?? null);
+    } catch (err) {
+      if (requestId === customerRequestRef.current) setError(err instanceof Error ? err.message : "Não foi possível carregar os clientes.");
+    } finally {
+      if (requestId === customerRequestRef.current) setLoading(false);
+    }
+  }
+
+  const filtered = clientes;
 
   const selected = clientes.find((cliente) => cliente.id === selectedId) ?? null;
   const activeCount = clientes.filter((cliente) => !cliente.inativo).length;
@@ -271,8 +293,7 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
         const created = await requestJson<Cliente>("/api/clientes", "POST", payload);
         nextSelectedId = created.id;
       }
-      const page = await fetchPage<Cliente>("/api/clientes?size=300&sort=nome,asc");
-      setClientes(page.content);
+      await loadCustomers(0, pageSize);
       setSelectedId(nextSelectedId);
       setEditorOpen(false);
       setNotice(`Cliente ${form.nome.trim()} ${editorMode === "edit" ? "atualizado" : "criado"}.`);
@@ -316,10 +337,14 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
       onNew={openNew}
       onSave={save}
       onSearch={setSearch}
+      onPageChange={(pageNumber, rows) => loadCustomers(pageNumber, rows)}
       onSelect={selectCliente}
       onStateFilter={setStateFilter}
       saving={saving}
       search={search}
+      page={page}
+      pageSize={pageSize}
+      totalElements={totalElements}
       selected={selected}
       stateFilter={stateFilter}
     />
@@ -354,12 +379,16 @@ function CustomersContent(props: {
   onCloseEditor: () => void;
   onEdit: (cliente: Cliente) => void;
   onNew: () => void;
+  onPageChange: (page: number, rows: number) => void;
   onSave: (event?: FormEvent) => void;
   onSearch: (value: string) => void;
   onSelect: (id: number) => void;
   onStateFilter: (value: StateFilter) => void;
   saving: boolean;
   search: string;
+  page: number;
+  pageSize: number;
+  totalElements: number;
   selected: Cliente | null;
   stateFilter: StateFilter;
 }) {
@@ -465,10 +494,12 @@ function CustomersToolbar({ canManage, deviceClass, onNew, onSearch, onStateFilt
       <FacInputText
         aria-label="Pesquisar clientes"
         onChange={(event) => onSearch(event.target.value)}
+        onKeyDown={(event) => { if (event.key === "Escape") onSearch(""); }}
         placeholder={placeholder}
         type="search"
         value={search}
       />
+      <FacButton disabled={!search} icon="pi pi-times" label="Limpar" onClick={() => onSearch("")} type="button" variant="ghost" />
       <FacSelect
         onChange={(value) => onStateFilter((value as StateFilter) ?? "all")}
         options={[
@@ -483,14 +514,27 @@ function CustomersToolbar({ canManage, deviceClass, onNew, onSearch, onStateFilt
   );
 }
 
-function CustomersList({ deviceClass, filtered, loading, onSelect, search, selected, clientes, stateFilter }: Parameters<typeof CustomersContent>[0]) {
+function CustomersList({
+  clientes,
+  deviceClass,
+  filtered,
+  loading,
+  onPageChange,
+  onSelect,
+  page,
+  pageSize,
+  search,
+  selected,
+  stateFilter,
+  totalElements
+}: Parameters<typeof CustomersContent>[0]) {
   if (loading) return <FacLoadingState description="A carregar clientes." />;
   if (clientes.length === 0) return <FacEmptyState description="Ainda não existem clientes." />;
   if (filtered.length === 0) return <FacEmptyState description="Sem resultados para a pesquisa e filtros atuais." />;
 
   const isMobile = deviceClass === "mobile";
   if (!isMobile) {
-    const tableValue = clientes.filter((cliente) => stateFilter === "all" || (stateFilter === "active" && !cliente.inativo) || (stateFilter === "inactive" && cliente.inativo));
+    const tableValue = clientes;
     const columns: FacDataTableColumn<Cliente>[] = [
       { dataType: "numeric", field: "id", filter: true, filterPlaceholder: "Código", header: "Código", sortable: true, style: { width: "6rem" } },
       { field: "nome", filter: true, filterPlaceholder: "Nome", header: "Nome", sortable: true },
@@ -516,11 +560,14 @@ function CustomersList({ deviceClass, filtered, loading, onSelect, search, selec
         columns={columns}
         dataKey="id"
         emptyMessage="Sem resultados para a pesquisa e filtros atuais."
-        globalFilter={search}
-        globalFilterFields={["id", "nome", "nif", "email", "tel", "tm", "localidade"]}
+        first={page * pageSize}
+        lazy
         loading={loading}
+        onLazyPage={(event) => onPageChange(event.page ?? 0, event.rows)}
         onSelectionChange={(cliente) => cliente && onSelect(cliente.id)}
+        rows={pageSize}
         selection={selected}
+        totalRecords={totalElements}
         value={tableValue}
       />
     );
@@ -529,7 +576,7 @@ function CustomersList({ deviceClass, filtered, loading, onSelect, search, selec
   return (
     <>
       <div className="fac-customers-list-meta">
-        <span>{filtered.length} resultados</span>
+        <span>{totalElements} {totalElements === 1 ? "resultado" : "resultados"}</span>
       </div>
       <div className="fac-customers-table-wrap" data-filter={stateFilter} data-search={search ? "active" : "empty"}>
         <table className="fac-customers-table">
@@ -575,6 +622,7 @@ function CustomersList({ deviceClass, filtered, loading, onSelect, search, selec
             </button>
           ))}
         </div>
+        <Paginator first={page * pageSize} onPageChange={(event) => onPageChange(event.page, event.rows)} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={totalElements} />
       </div>
     </>
   );

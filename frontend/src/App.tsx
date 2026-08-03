@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Paginator } from "primereact/paginator";
 import ArtigosView from "./ArtigosView";
 import DocumentosView from "./DocumentosView";
 import PendentesView from "./PendentesView";
@@ -16,6 +17,9 @@ import { apiFetch, AuthSession } from "./api";
 type Page<T> = {
   content: T[];
   totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
 };
 
 type ViewKey = "Dashboard" | "Clientes" | "Documentos" | "Artigos" | "Tesouraria" | "Listagens" | "ImportExport" | "Auditoria" | "Configuracao";
@@ -301,6 +305,9 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   const [clientesLoading, setClientesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clienteSearch, setClienteSearch] = useState("");
+  const [clientePage, setClientePage] = useState(0);
+  const [clientePageSize, setClientePageSize] = useState(20);
+  const clienteRequestRef = useRef(0);
   const [clienteEditorOpen, setClienteEditorOpen] = useState(false);
   const [editingClienteId, setEditingClienteId] = useState<number | null>(null);
   const [clienteForm, setClienteForm] = useState<ClienteForm>(emptyClienteForm);
@@ -329,18 +336,24 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     }
   }
 
-  async function loadClientes() {
+  async function loadClientes(pageNumber = clientePage, search = clienteSearch, pageSize = clientePageSize) {
+    const requestId = ++clienteRequestRef.current;
     setClientesLoading(true);
     setError(null);
     try {
-      const page = await fetchPage<Cliente>("/api/clientes?size=100&sort=nome,asc");
+      const params = new URLSearchParams({ page: String(pageNumber), size: String(pageSize), sort: "nome,asc" });
+      if (search.trim()) params.set("search", search.trim());
+      const page = await fetchPage<Cliente>(`/api/clientes?${params}`);
+      if (requestId !== clienteRequestRef.current) return;
       setClientes(page);
+      setClientePage(page.number);
       const firstClienteId = page.content[0]?.id ?? null;
-      setSelectedClienteId((current) => current ?? firstClienteId);
+      setSelectedClienteId((current) => page.content.some((cliente) => cliente.id === current) ? current : firstClienteId);
     } catch (err) {
+      if (requestId !== clienteRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Não foi possível carregar clientes.");
     } finally {
-      setClientesLoading(false);
+      if (requestId === clienteRequestRef.current) setClientesLoading(false);
     }
   }
 
@@ -450,8 +463,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     try {
       const created = await sendJson<Cliente>("/api/clientes", clientePayload(clienteForm));
 
-      const page = await fetchPage<Cliente>("/api/clientes?size=100&sort=nome,asc");
-      setClientes(page);
+      await loadClientes(0, clienteSearch, clientePageSize);
       setSelectedClienteId(created.id);
       setClienteEditorOpen(false);
       setClienteForm(emptyClienteForm);
@@ -475,8 +487,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     setEditorMessage(null);
     try {
       await putJson(`/api/clientes/${editingClienteId}`, clientePayload(clienteForm));
-      const page = await fetchPage<Cliente>("/api/clientes?size=100&sort=nome,asc");
-      setClientes(page);
+      await loadClientes(clientePage, clienteSearch, clientePageSize);
       setSelectedClienteId(editingClienteId);
       setClienteEditorOpen(false);
       setEditingClienteId(null);
@@ -541,8 +552,14 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 
   useEffect(() => {
     loadDashboard();
-    loadClientes();
+    loadClientes(0, "", clientePageSize);
   }, []);
+
+  useEffect(() => {
+    if (shellView !== "Clientes") return;
+    const timeout = window.setTimeout(() => loadClientes(0, clienteSearch, clientePageSize), 300);
+    return () => window.clearTimeout(timeout);
+  }, [clienteSearch]);
 
   useEffect(() => {
     if (!embeddedContent) {
@@ -703,18 +720,6 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       .reduce((total, documento) => total + Number(documento.valorPagamentoLiquido || 0), 0) ?? 0,
     [dashboardData]
   );
-
-  const filteredClientes = useMemo(() => {
-    const term = clienteSearch.trim().toLowerCase();
-    if (!term) {
-      return clientes?.content ?? [];
-    }
-    return (clientes?.content ?? []).filter((cliente) =>
-      [cliente.nome, cliente.nif, String(cliente.id), cliente.email]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term))
-    );
-  }, [clientes, clienteSearch]);
 
   const selectedCliente = clientes?.content.find((cliente) => cliente.id === selectedClienteId) ?? null;
   const contaResumo = contaCorrente?.totais[0] ?? null;
@@ -883,7 +888,11 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         {embeddedContent ? embeddedContent : shellView === "Clientes" ? (
           <ClientesView
             catalogos={clienteCatalogos}
-            clientes={filteredClientes}
+            clientes={clientes?.content ?? []}
+            page={clientePage}
+            pageSize={clientePageSize}
+            search={clienteSearch}
+            totalElements={clientes?.totalElements ?? 0}
             notice={clienteNotice}
             editorMessage={editorMessage}
             form={clienteForm}
@@ -900,6 +909,8 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             onCloseEditor={() => { setClienteEditorOpen(false); setEditingClienteId(null); }}
             onEditCliente={openClienteEditEditor}
             onOpenEditor={openClienteEditor}
+            onPageChange={(page, size) => { setClientePageSize(size); loadClientes(page, clienteSearch, size); }}
+            onSearch={setClienteSearch}
             onSaveCliente={editingClienteId ? updateCliente : createCliente}
             onSelectCliente={setSelectedClienteId}
           />
@@ -1010,6 +1021,10 @@ function DashboardView({
 type ClientesViewProps = {
   catalogos: ClienteCatalogos | null;
   clientes: Cliente[];
+  page: number;
+  pageSize: number;
+  search: string;
+  totalElements: number;
   notice: string | null;
   editorMessage: string | null;
   form: ClienteForm;
@@ -1026,6 +1041,8 @@ type ClientesViewProps = {
   onCloseEditor: () => void;
   onEditCliente: (clienteId: number) => void;
   onOpenEditor: () => void;
+  onPageChange: (page: number, size: number) => void;
+  onSearch: (value: string) => void;
   onSaveCliente: () => void;
   onSelectCliente: (clienteId: number) => void;
 };
@@ -1033,6 +1050,10 @@ type ClientesViewProps = {
 function ClientesView({
   catalogos,
   clientes,
+  page,
+  pageSize,
+  search,
+  totalElements,
   notice,
   editorMessage,
   form,
@@ -1049,6 +1070,8 @@ function ClientesView({
   onCloseEditor,
   onEditCliente,
   onOpenEditor,
+  onPageChange,
+  onSearch,
   onSaveCliente,
   onSelectCliente
 }: ClientesViewProps) {
@@ -1156,6 +1179,8 @@ function ClientesView({
               <h2>Clientes</h2>
             </div>
             <div className="fac-inline-actions">
+              <input aria-label="Pesquisar clientes" className="fac-list-search" onChange={(event) => onSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onSearch(""); }} placeholder="Pesquisar por código, nome, NIF ou email" type="search" value={search} />
+              <button className="fac-ghost-button" disabled={!search} onClick={() => onSearch("")} type="button">Limpar</button>
               <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({visibleColumns.length})</button>
               {canManage && <button className="fac-soft-button" onClick={onOpenEditor} type="button">Novo cliente</button>}
             </div>
@@ -1195,11 +1220,15 @@ function ClientesView({
               ))}
               {!loading && clientes.length === 0 && (
                 <tr>
-                  <td colSpan={visibleColumns.length}>Sem clientes para mostrar.</td>
+                  <td colSpan={visibleColumns.length}>{search ? "Nenhum cliente corresponde à pesquisa." : "Sem clientes para mostrar."}</td>
                 </tr>
               )}
             </tbody>
           </table>
+          <div className="fac-list-pagination">
+            <span>{search ? `${clientes.length} de ${totalElements}` : totalElements} {totalElements === 1 ? "cliente" : "clientes"}</span>
+            <Paginator first={page * pageSize} onPageChange={(event) => onPageChange(event.page, event.rows)} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={totalElements} />
+          </div>
         </article>
 
         <aside className="fac-panel fac-detail fac-clients-detail-card">
