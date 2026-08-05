@@ -21,22 +21,46 @@ done
 assert_database_name "$DATABASE"; assert_environment "$ENVIRONMENT"; require_value User "$USER_NAME"; require_value Host "$HOST"
 dir="$(backup_root "$ENVIRONMENT" "$BACKUP_ROOT")"; base="$(backup_base_name "$ENVIRONMENT" "$DATABASE")"
 backup="$dir/$base.backup"; metadata="$dir/$base.metadata.json"; started="$(date -Iseconds)"
+container_tmp=""; host_tmp=""
+
+cleanup() {
+  if [[ -n "$container_tmp" ]]; then
+    compose exec -T db rm -f -- "$container_tmp" >/dev/null 2>&1 || true
+  fi
+  if [[ -n "$host_tmp" ]]; then
+    rm -f -- "$host_tmp"
+  fi
+}
+trap cleanup EXIT
 
 if [[ "$USE_DOCKER_DEMO" == "true" ]]; then
   [[ "$ENVIRONMENT" == "demo" && "$DATABASE" == "fac_demo" ]] || die "--docker-demo apenas permite demo/fac_demo"
   require_command docker; load_demo_env
   compose up -d db
-  compose exec -T db pg_dump -U "$USER_NAME" -d "$DATABASE" -Fc -f "/tmp/$base.backup"
-  compose cp "db:/tmp/$base.backup" "$backup"
-  compose exec -T db rm -f "/tmp/$base.backup"
-  pg_version="docker-postgres"
+  container_tmp="$(compose exec -T db mktemp '/tmp/fac-backup.backup.XXXXXX' | tr -d '\r')"
+  [[ "$container_tmp" == /tmp/fac-backup.backup.* ]] || die "nao foi possivel criar temporario seguro no container"
+  compose exec -T db pg_dump -U "$USER_NAME" -d "$DATABASE" -Fc -f "$container_tmp"
+  listing="$(compose exec -T db pg_restore -l "$container_tmp")" || die "pg_restore -l falhou no container db"
+  [[ -n "$listing" ]] || die "pg_restore -l devolveu uma listagem vazia"
+  for object in cliente artigo documento_comercial linha_documento_comercial documento_financeiro utilizador auditoria_evento mpagamento serie empresa importacao_dados_mestres flyway_schema_history; do
+    grep -q "TABLE public $object" <<<"$listing" || die "objeto essencial ausente: $object"
+  done
+  info "pg_restore -l validou o arquivo no container db"
+  host_tmp="$(mktemp "$dir/.${base}.XXXXXX.backup")"
+  compose cp "db:$container_tmp" "$host_tmp"
+  [[ -s "$host_tmp" ]] || die "backup copiado esta vazio"
+  mv -- "$host_tmp" "$backup"
+  host_tmp=""
+  pg_version="$(compose exec -T db pg_dump --version | tr -d '\r')"
 else
   require_command pg_dump; require_command psql
   PGPASSWORD="${PGPASSWORD:-}" pg_dump -h "$HOST" -p "$PORT" -U "$USER_NAME" -d "$DATABASE" -Fc -f "$backup"
   pg_version="$(PGPASSWORD="${PGPASSWORD:-}" psql -h "$HOST" -p "$PORT" -U "$USER_NAME" -d "$DATABASE" -At -c 'show server_version')"
 fi
 
-verify_backup_file "$backup"
+if [[ "$USE_DOCKER_DEMO" != "true" ]]; then
+  verify_backup_file "$backup"
+fi
 checksum="$(sha256_file "$backup")"
 size="$(wc -c <"$backup" | tr -d ' ')"
 cat >"$metadata" <<JSON
@@ -60,4 +84,4 @@ cat >"$metadata" <<JSON
 }
 JSON
 audit backup "$ENVIRONMENT" "$DATABASE" OK "$backup $checksum"
-printf 'FAC_BACKUP_OK %s %s\n' "$backup" "$checksum"
+printf 'FAC_BACKUP_OK caminho=%s tamanho_bytes=%s commit=%s sha256=%s\n' "$backup" "$size" "$(git_commit)" "$checksum"
