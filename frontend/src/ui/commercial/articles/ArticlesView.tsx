@@ -688,6 +688,10 @@ function ServiceFormFields({
     setMoreOptionsOpen(editorMode === "edit" && Boolean(form.familiaId || form.observacoes.trim() || form.retencao || form.inativo));
   }, [editorMode, form.codigo]);
 
+  useEffect(() => {
+    if (editorMessage) setMoreOptionsOpen(true);
+  }, [editorMessage]);
+
   return (
     <form className="fac-services-form" onSubmit={onSave}>
       {editorMessage && <FacMessage tone="error" title="Validação">{editorMessage}</FacMessage>}
@@ -770,12 +774,8 @@ function ServiceFormFields({
               <span>Sujeito a retenção</span>
             </label>
             <label className="fac-services-check">
-              <input
-                checked={!form.inativo}
-                onChange={(event) => onChangeForm({ ...form, inativo: !event.target.checked })}
-                type="checkbox"
-              />
-              <span>Artigo ativo</span>
+              <input checked={form.inativo} onChange={(event) => onChangeForm({ ...form, inativo: event.target.checked })} type="checkbox" />
+              <span>Artigo inativo</span>
             </label>
           </div>
         </section>

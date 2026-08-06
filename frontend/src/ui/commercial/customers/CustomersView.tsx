@@ -683,6 +683,10 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
     setMoreOptionsOpen(editorMode === "edit" && Boolean(form.transporteId || form.observacoes.trim() || form.inativo));
   }, [editorMode, selected?.id]);
 
+  useEffect(() => {
+    if (editorMessage) setMoreOptionsOpen(true);
+  }, [editorMessage]);
+
   return (
     <form className="fac-customers-form" id={formId} onSubmit={onSave}>
       {editorMessage && <FacMessage tone="error" title="Validação">{editorMessage}</FacMessage>}
@@ -737,8 +741,8 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
             <textarea maxLength={300} onChange={(event) => onChangeForm({ ...form, observacoes: event.target.value })} value={form.observacoes} />
           </label>
           <label className="fac-customers-check">
-            <input checked={!form.inativo} onChange={(event) => onChangeForm({ ...form, inativo: !event.target.checked })} type="checkbox" />
-            <span>Cliente ativo</span>
+            <input checked={form.inativo} onChange={(event) => onChangeForm({ ...form, inativo: event.target.checked })} type="checkbox" />
+            <span>Cliente inativo</span>
           </label>
         </div>
       </section>
