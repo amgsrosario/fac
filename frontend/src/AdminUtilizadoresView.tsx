@@ -205,6 +205,7 @@ export default function AdminUtilizadoresView() {
           {!editing && <Field label="Password inicial">
             <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
           </Field>}
+          {!editing && <small className="fac-muted">8 a 72 caracteres, com maiúscula, minúscula, número e símbolo. Não pode conter o código do utilizador.</small>}
           <div className="fac-form-footer">
             <span className="fac-muted">O código é imutável depois da criação.</span>
             <button className="fac-primary-button" onClick={save} type="button">{editing ? "Guardar" : "Criar"}</button>
@@ -269,7 +270,15 @@ async function apiSend<T>(url: string, method: "POST" | "PUT" | "PATCH", body: u
 
 async function responseError(response: Response) {
   try {
-    const payload = await response.json();
+    const payload = await response.json() as {
+      error?: string;
+      fieldErrors?: Array<{ field?: string; message?: string }>;
+      message?: string;
+    };
+    const fieldMessages = payload.fieldErrors
+      ?.map((item) => item.message?.trim())
+      .filter((message): message is string => Boolean(message));
+    if (fieldMessages?.length) return fieldMessages.join(" ");
     return payload.message || payload.error || `Erro HTTP ${response.status}`;
   } catch {
     return `Erro HTTP ${response.status}`;
