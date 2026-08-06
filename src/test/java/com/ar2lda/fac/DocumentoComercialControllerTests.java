@@ -931,6 +931,46 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void listagensComerciaisPaginamOrdenamERejeitamSortDesconhecido() throws Exception {
+        String primeiro = criarDocumentoComPrimeiraLinha(cliente, "2026-06-06");
+        String segundo = criarDocumentoComPrimeiraLinha(cliente, "2026-06-07");
+        emitir(primeiro);
+        emitir(segundo);
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-06-01")
+                        .param("dataFinal", "2026-06-30")
+                        .param("page", "0")
+                        .param("size", "1")
+                        .param("sort", "dataEmissao,desc")
+                        .param("sort", "id,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].documento.id").value(documentoId(segundo)));
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-06-01")
+                        .param("dataFinal", "2026-06-30")
+                        .param("page", "1")
+                        .param("size", "1")
+                        .param("sort", "documentoComercial.dataEmissao,asc")
+                        .param("sort", "documentoComercial.id,asc")
+                        .param("sort", "numeroLinha,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.content[0].documento.id").value(documentoId(segundo)));
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-06-01")
+                        .param("dataFinal", "2026-06-30")
+                        .param("sort", "campoInexistente,asc"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void criaDocumentoComPrimeiraLinhaAtomicamente() throws Exception {
         mockMvc.perform(post("/documentos-comerciais")
                         .contentType(MediaType.APPLICATION_JSON)

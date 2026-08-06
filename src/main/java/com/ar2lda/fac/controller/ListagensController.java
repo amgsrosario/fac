@@ -10,12 +10,15 @@ import com.ar2lda.fac.reporting.pendentes.PendentesPdfExporter;
 import com.ar2lda.fac.service.ListagensService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,11 +26,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestController
 @RequestMapping("/listagens")
 @RequiredArgsConstructor
 public class ListagensController {
+
+    private static final Set<String> DOCUMENTO_COMERCIAL_SORTS = Set.of(
+            "id", "dataEmissao", "numeroDocumento", "cliente.nome", "estado",
+            "valorTotal", "dataVencimento", "liquidado"
+    );
+    private static final Set<String> LINHA_COMERCIAL_SORTS = Set.of(
+            "id", "numeroLinha", "documentoComercial.id", "documentoComercial.dataEmissao",
+            "documentoComercial.numeroDocumento", "documentoComercial.cliente.nome",
+            "artigoCodigo", "descricao", "quantidade", "valorLinha"
+    );
 
     private final ListagensService service;
     private final PendentesPdfExporter pendentesPdfExporter;
@@ -41,7 +57,8 @@ public class ListagensController {
             @RequestParam(required = false) List<Long> clienteIds,
             Pageable pageable
     ) {
-        return service.documentosComerciais(dataInicial, dataFinal, clienteId, clienteIds, pageable);
+        return service.documentosComerciais(dataInicial, dataFinal, clienteId, clienteIds,
+                validatedPageable(pageable, DOCUMENTO_COMERCIAL_SORTS));
     }
 
     @GetMapping("/linhas-comerciais")
@@ -54,7 +71,8 @@ public class ListagensController {
             @RequestParam(required = false) List<String> artigoIds,
             Pageable pageable
     ) {
-        return service.linhasComerciais(dataInicial, dataFinal, clienteId, clienteIds, artigoId, artigoIds, pageable);
+        return service.linhasComerciais(dataInicial, dataFinal, clienteId, clienteIds, artigoId, artigoIds,
+                validatedPageable(pageable, LINHA_COMERCIAL_SORTS));
     }
 
     @GetMapping("/documentos-financeiros")
@@ -143,5 +161,14 @@ public class ListagensController {
                 .contentType(MediaType.parseMediaType(mediaType))
                 .contentLength(content.length)
                 .body(content);
+    }
+
+    private Pageable validatedPageable(Pageable pageable, Set<String> allowedSorts) {
+        for (Sort.Order order : pageable.getSort()) {
+            if (!allowedSorts.contains(order.getProperty())) {
+                throw new ResponseStatusException(BAD_REQUEST, "Ordenacao nao suportada: " + order.getProperty());
+            }
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
     }
 }

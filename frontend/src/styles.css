@@ -2480,3 +2480,20 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+.fac-table-sort {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: inherit;
+  gap: 0.35rem;
+  padding: 0;
+}
+
+.fac-table-sort:hover,
+.fac-table-sort:focus-visible {
+  color: var(--fac-accent, #9a6b00);
+}

@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Paginator } from "primereact/paginator";
 import { apiFetch } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 import { currentYearDateRange } from "./dateFilters";
 import { MultiSelectFilter, MultiSelectOption } from "./MultiSelectFilter";
 
 type Page<T> = { content: T[]; totalElements: number; totalPages?: number };
+type SortDirection = "asc" | "desc";
 type SourceKey = "pendentesAData" | "pendentes" | "comerciais" | "linhasComerciais" | "financeiros" | "linhasFinanceiras" | "relacaoComercial" | "relacaoFinanceira" | "extratoCliente";
 
 type DocumentoComercial = {
@@ -91,7 +93,7 @@ const COLUMNS: Record<SourceKey, ConfigurableColumn[]> = {
   ],
   linhasComerciais: [
     c("documento", "Documento", true), c("emissao", "Emissão"), c("cliente", "Cliente", true), c("nif", "NIF"),
-    c("linha", "Linha", true), c("artigo", "Artigo", true), c("descricao", "Descrição", true), c("quantidade", "Quantidade", true),
+    c("linha", "Linha", true), c("tipoLinha", "Tipo de linha", true), c("artigo", "Artigo", true), c("descricao", "Descrição", true), c("quantidade", "Quantidade", true), c("unidade", "Unidade"),
     c("preco", "Preço unitário", true), c("bruto", "Bruto"), c("desconto", "Desconto"), c("liquido", "Valor linha", true),
     c("tipoIva", "Tipo IVA"), c("taxaIva", "Taxa IVA"), c("peso", "Peso"), c("moeda", "Moeda")
   ],
@@ -161,6 +163,12 @@ export default function ListagensView() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingPendentesFormat, setExportingPendentesFormat] = useState<"pdf" | "xlsx" | null>(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalElements, setTotalElements] = useState(0);
+  const [sortKey, setSortKey] = useState("emissao");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const loadRequestRef = useRef(0);
   const configured = useConfiguredColumns(`fac.listagens.${source}.colunas`, COLUMNS[source]);
 
   useEffect(() => { loadFilterOptions(); }, []);
@@ -168,7 +176,7 @@ export default function ListagensView() {
     if (source !== "extratoCliente") {
       loadSource(source);
     }
-  }, [source, dataInicial, dataFinal, clienteIds, artigoIds, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos]);
+  }, [source, dataInicial, dataFinal, clienteIds, artigoIds, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos, page, pageSize, sortKey, sortDirection]);
 
   async function loadFilterOptions() {
     try {
@@ -198,6 +206,7 @@ export default function ListagensView() {
       clearSourceRows(target);
       return;
     }
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setMessage(null);
     clearSourceRows(target);
@@ -216,24 +225,29 @@ export default function ListagensView() {
         setPendentesTotais(response.totais);
       }
       if (target === "comerciais") {
-        const page = await fetchPage<DocumentoComercialResponse>(`${listagemUrl("/api/listagens/documentos-comerciais")}&sort=dataEmissao,desc&sort=id,desc`);
-        setComerciais(page.content.map((item) => ({ ...item.documento, valorLiquido: item.valorLiquido })));
+        const response = await fetchPage<DocumentoComercialResponse>(listagemUrl("/api/listagens/documentos-comerciais", false, target));
+        if (requestId !== loadRequestRef.current) return;
+        setComerciais(response.content.map((item) => ({ ...item.documento, valorLiquido: item.valorLiquido })));
+        setTotalElements(response.totalElements);
       }
       if (target === "linhasComerciais" || target === "relacaoComercial") {
-        const page = await fetchPage<LinhaComercialResponse>(`${listagemUrl("/api/listagens/linhas-comerciais", target === "linhasComerciais")}&sort=documentoComercial.dataEmissao,desc&sort=documentoComercial.id,desc&sort=numeroLinha,asc`);
-        setLinhasComerciais(page.content.map((item) => ({ ...item.linha, documento: item.documento })));
+        const response = await fetchPage<LinhaComercialResponse>(listagemUrl("/api/listagens/linhas-comerciais", target === "linhasComerciais", target));
+        if (requestId !== loadRequestRef.current) return;
+        setLinhasComerciais(response.content.map((item) => ({ ...item.linha, documento: item.documento })));
+        if (target === "linhasComerciais") setTotalElements(response.totalElements);
       }
       if (target === "financeiros") {
-        setFinanceiros((await fetchPage<DocumentoFinanceiro>(`${listagemUrl("/api/listagens/documentos-financeiros")}&sort=dataEmissao,desc&sort=id,desc`)).content);
+        setFinanceiros((await fetchPage<DocumentoFinanceiro>(listagemUrl("/api/listagens/documentos-financeiros", false, target))).content);
       }
       if (target === "linhasFinanceiras" || target === "relacaoFinanceira") {
-        const page = await fetchPage<LinhaFinanceiraResponse>(`${listagemUrl("/api/listagens/linhas-financeiras")}&sort=documentoFinanceiro.dataEmissao,desc&sort=documentoFinanceiro.id,desc&sort=numeroLinha,asc`);
+        const page = await fetchPage<LinhaFinanceiraResponse>(listagemUrl("/api/listagens/linhas-financeiras", false, target));
         setLinhasFinanceiras(page.content.map((item) => ({ ...item.linha, documento: item.documento })));
       }
     } catch (error) {
+      if (requestId !== loadRequestRef.current) return;
       setMessage(error instanceof Error ? error.message : "Não foi possível carregar a listagem.");
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestRef.current) setLoading(false);
     }
   }
 
@@ -333,22 +347,40 @@ export default function ListagensView() {
     if (target === "linhasFinanceiras" || target === "relacaoFinanceira") setLinhasFinanceiras([]);
   }
 
-  function listagemUrl(path: string, includeArtigos = false) {
+  function listagemUrl(path: string, includeArtigos = false, target = source) {
+    const remote = isRemoteCommercialSource(target);
     const params = new URLSearchParams({
       dataInicial,
       dataFinal,
-      size: "500"
+      page: String(remote ? page : 0),
+      size: String(remote ? pageSize : 500)
     });
     clienteIds.forEach((id) => params.append("clienteIds", String(id)));
     if (includeArtigos) artigoIds.forEach((id) => params.append("artigoIds", id));
+    const sort = remoteSort(target, sortKey, sortDirection);
+    sort.forEach((value) => params.append("sort", value));
     return `${path}?${params}`;
   }
 
   function changeSource(next: SourceKey) {
     setSource(next);
     setSearch("");
+    setPage(0);
+    setSortKey(defaultSortKey(next));
+    setSortDirection("desc");
     if (next !== "linhasComerciais") {
       setArtigoIds([]);
+    }
+  }
+
+  function changeSort(key: string) {
+    if (!remoteSortField(source, key)) return;
+    setPage(0);
+    if (sortKey === key) {
+      setSortDirection((current) => current === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
     }
   }
 
@@ -367,7 +399,7 @@ export default function ListagensView() {
   return <>
     <section className="fac-hero">
       <div><p className="fac-eyebrow">Listagens</p><h2>Consulta transversal dos dados do FAC</h2><p>Escolhe uma fonte, define as colunas necessárias e consulta cabeçalhos ou linhas sem interferir com a operação diária.</p></div>
-      <div className="fac-hero-card"><span>Fonte atual</span><strong>{SOURCES.find((item) => item.key === source)?.label}</strong><small>{loading ? "A carregar..." : source === "extratoCliente" ? extratos ? `${extratos.reduce((total, extrato) => total + extrato.moedas.reduce((subtotal, moeda) => subtotal + moeda.movimentos.length, 0), 0)} movimentos` : "A aguardar consulta" : `${rows.length} registos`}</small></div>
+      <div className="fac-hero-card"><span>Fonte atual</span><strong>{SOURCES.find((item) => item.key === source)?.label}</strong><small>{loading ? "A carregar..." : source === "extratoCliente" ? extratos ? `${extratos.reduce((total, extrato) => total + extrato.moedas.reduce((subtotal, moeda) => subtotal + moeda.movimentos.length, 0), 0)} movimentos` : "A aguardar consulta" : `${isRemoteCommercialSource(source) ? totalElements : rows.length} registos`}</small></div>
     </section>
 
     <section className="fac-report-source-grid">
@@ -383,7 +415,7 @@ export default function ListagensView() {
         <button className="fac-soft-button" disabled={exportingPendentesFormat !== null} onClick={() => exportarPendentes("xlsx")} type="button">{exportingPendentesFormat === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
       </div>}
       {isPendentesSource(source) && <PendentesTotals totais={pendentesTotais}/>}
-      {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters artigos={artigos} clientes={clientes} dataFinal={dataFinal} dataInicial={dataInicial} onArtigos={setArtigoIds} onClientes={setClienteIds} onDataFinal={setDataFinal} onDataInicial={setDataInicial} selectedArtigoIds={artigoIds} selectedClienteIds={clienteIds} showArtigo={source === "linhasComerciais"} />}
+      {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters artigos={artigos} clientes={clientes} dataFinal={dataFinal} dataInicial={dataInicial} onArtigos={(values) => { setPage(0); setArtigoIds(values); }} onClientes={(values) => { setPage(0); setClienteIds(values); }} onDataFinal={(value) => { setPage(0); setDataFinal(value); }} onDataInicial={(value) => { setPage(0); setDataInicial(value); }} selectedArtigoIds={artigoIds} selectedClienteIds={clienteIds} showArtigo={source === "linhasComerciais"} />}
       {source === "extratoCliente" && <p className="fac-muted">Extrato calculado a partir dos documentos emitidos. Os documentos anulados não integram os movimentos contabilísticos e cada moeda é apresentada separadamente.</p>}
       {source === "extratoCliente" && <div className="fac-extrato-filters">
         <div className="fac-filter-field"><span>Clientes</span><MultiSelectFilter allLabel="Todos os clientes" options={clientesExtrato.map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}` }))} selectedValues={extratoClienteIds} onChange={(values) => { setExtratoClienteIds(values); setExtratos(null); }}/></div>
@@ -397,10 +429,11 @@ export default function ListagensView() {
       <ColumnSelector columns={configured.columns} open={columnsOpen} onMove={configured.moveColumn} onReset={configured.resetColumns} onToggle={configured.toggleColumn}/>
       {source === "extratoCliente" && <ExtratoTable extratos={extratos} loading={loading} columns={configured.visibleColumns}/>}
       {source !== "extratoCliente" &&
-      <div className="fac-table-scroll"><table className="fac-table"><thead><tr>{configured.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>
+      <div className="fac-table-scroll"><table className="fac-table"><thead><tr>{configured.visibleColumns.map((column) => <th aria-sort={sortKey === column.key && isRemoteCommercialSource(source) ? (sortDirection === "asc" ? "ascending" : "descending") : undefined} key={column.key}>{remoteSortField(source, column.key) ? <button className="fac-table-sort" onClick={() => changeSort(column.key)} type="button">{column.label}<span aria-hidden="true">{sortKey === column.key ? (sortDirection === "asc" ? " ↑" : " ↓") : ""}</span></button> : column.label}</th>)}</tr></thead><tbody>
         {rows.map((row, index) => <tr key={rowKey(source, row, index)}>{configured.visibleColumns.map((column) => <td key={column.key}>{cellValue(source, row, column.key, navigate)}</td>)}</tr>)}
         {!loading && rows.length === 0 && <tr><td colSpan={configured.visibleColumns.length}>{emptyMessage(source, pendentesClienteIds.length > 0)}</td></tr>}
       </tbody></table></div>}
+      {isRemoteCommercialSource(source) && <Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={totalElements}/>}
     </section>
   </>;
 }
@@ -557,6 +590,57 @@ function isPendentesSource(source: SourceKey) {
   return source === "pendentes" || source === "pendentesAData";
 }
 
+function isRemoteCommercialSource(source: SourceKey) {
+  return source === "comerciais" || source === "linhasComerciais";
+}
+
+const COMMERCIAL_SORT_FIELDS: Partial<Record<SourceKey, Record<string, string>>> = {
+  comerciais: {
+    emissao: "dataEmissao",
+    documento: "numeroDocumento",
+    cliente: "cliente.nome",
+    estado: "estado",
+    total: "valorTotal",
+    vencimento: "dataVencimento",
+    liquidado: "liquidado"
+  },
+  linhasComerciais: {
+    documento: "documentoComercial.numeroDocumento",
+    emissao: "documentoComercial.dataEmissao",
+    cliente: "documentoComercial.cliente.nome",
+    linha: "numeroLinha",
+    artigo: "artigoCodigo",
+    descricao: "descricao",
+    quantidade: "quantidade",
+    liquido: "valorLinha"
+  }
+};
+
+function remoteSortField(source: SourceKey, key: string) {
+  return COMMERCIAL_SORT_FIELDS[source]?.[key];
+}
+
+function defaultSortKey(source: SourceKey) {
+  return source === "linhasComerciais" ? "emissao" : "emissao";
+}
+
+function remoteSort(source: SourceKey, key: string, direction: SortDirection) {
+  const field = remoteSortField(source, key);
+  if (field) {
+    return source === "linhasComerciais"
+      ? [`${field},${direction}`, `documentoComercial.id,${direction}`, "numeroLinha,asc"]
+      : [`${field},${direction}`, `id,${direction}`];
+  }
+  if (source === "relacaoComercial") {
+    return ["documentoComercial.dataEmissao,desc", "documentoComercial.id,desc", "numeroLinha,asc"];
+  }
+  if (source === "financeiros") return ["dataEmissao,desc", "id,desc"];
+  if (source === "linhasFinanceiras" || source === "relacaoFinanceira") {
+    return ["documentoFinanceiro.dataEmissao,desc", "documentoFinanceiro.id,desc", "numeroLinha,asc"];
+  }
+  return [];
+}
+
 function emptyMessage(source: SourceKey, hasClientes: boolean) {
   if (source === "pendentesAData") {
     return hasClientes
@@ -619,7 +703,8 @@ function cellValue(source: SourceKey, raw: unknown, key: string, navigate?: (pat
   }
   if (source === "linhasComerciais") {
     const l = raw as LinhaComercialListagem; const d = l.documento;
-    const values: Record<string, React.ReactNode> = { documento: reference(d.tipoDocumentoId, d.serie, d.numeroDocumento), emissao: datePt(d.dataEmissao), cliente: d.clienteNome, nif: d.clienteNif, linha: l.numeroLinha, artigo: l.artigoId ?? "-", descricao: l.descricao, quantidade: decimal(l.quantidade), preco: moneyCell(l.precoUnitario), bruto: moneyCell(l.valorBruto), desconto: moneyCell(l.valorDesconto), liquido: moneyCell(l.valorLinha), tipoIva: l.tipoTaxaIvaId ?? "-", taxaIva: `${decimal(l.percentagemIva)}%`, peso: decimal(l.peso), moeda: d.moedaId };
+    const texto = l.tipoLinha === "TEXTO";
+    const values: Record<string, React.ReactNode> = { documento: reference(d.tipoDocumentoId, d.serie, d.numeroDocumento), emissao: datePt(d.dataEmissao), cliente: d.clienteNome, nif: d.clienteNif, linha: l.numeroLinha, tipoLinha: l.tipoLinha, artigo: texto ? "-" : l.artigoId ?? "-", descricao: l.descricao, quantidade: texto ? "-" : decimal(l.quantidade), unidade: texto ? "-" : l.unidade ?? "-", preco: texto ? "-" : moneyCell(l.precoUnitario), bruto: texto ? "-" : moneyCell(l.valorBruto), desconto: texto ? "-" : moneyCell(l.valorDesconto), liquido: texto ? "-" : moneyCell(l.valorLinha), tipoIva: texto ? "-" : l.tipoTaxaIvaId ?? "-", taxaIva: texto ? "-" : `${decimal(l.percentagemIva)}%`, peso: texto ? "-" : decimal(l.peso), moeda: d.moedaId };
     return values[key] ?? "-";
   }
   if (source === "relacaoComercial") {
