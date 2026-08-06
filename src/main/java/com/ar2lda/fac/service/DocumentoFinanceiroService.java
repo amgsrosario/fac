@@ -282,6 +282,12 @@ public class DocumentoFinanceiroService {
             pendenteRepository.save(pendente);
         }
 
+        Utilizador utilizador = currentUserService.currentUserOrNull();
+        auditoriaService.registarComo(TipoAuditoriaEvento.DOCUMENTO_ANULADO, "DOCUMENTO_FINANCEIRO",
+                documento.getId(), utilizador, com.ar2lda.fac.model.ResultadoAuditoria.SUCESSO,
+                referencia(documento), "Recebimento anulado",
+                "{\"versao\":1,\"valor\":" + documento.getValorPagamentoLiquido().toPlainString() + "}");
+
         return toDTO(documento);
     }
 
@@ -411,7 +417,7 @@ public class DocumentoFinanceiroService {
     }
 
     private Pendente findPendente(Long id) {
-        return pendenteRepository.findById(id)
+        return pendenteRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new NotFoundException("Pendente nao encontrado: " + id));
     }
 

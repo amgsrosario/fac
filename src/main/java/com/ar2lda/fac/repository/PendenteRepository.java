@@ -2,8 +2,11 @@ package com.ar2lda.fac.repository;
 
 import com.ar2lda.fac.model.Pendente;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -12,6 +15,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PendenteRepository extends JpaRepository<Pendente, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Pendente p where p.id = :id")
+    Optional<Pendente> findByIdForUpdate(@Param("id") Long id);
 
     Optional<Pendente> findByDocumentoComercialId(Long documentoComercialId);
 

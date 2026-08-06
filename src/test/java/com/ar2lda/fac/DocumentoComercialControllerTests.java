@@ -1929,6 +1929,13 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.anulado").value(true))
                 .andExpect(jsonPath("$.atcud").value(atcudDocumentoFinanceiro));
 
+        Long documentoFinanceiroId = documentoId(financeiroLocation);
+        org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
+                .anyMatch(evento -> evento.getTipoEvento() == TipoAuditoriaEvento.DOCUMENTO_ANULADO
+                        && "DOCUMENTO_FINANCEIRO".equals(evento.getEntidadeTipo())
+                        && documentoFinanceiroId.toString().equals(evento.getEntidadeId())
+                        && "Recebimento anulado".equals(evento.getDescricao()));
+
         Pendente pendenteReposto = pendenteRepository.findById(pendente.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(pendenteReposto.getValorPendente()).isEqualByComparingTo("24.600000");
         org.assertj.core.api.Assertions.assertThat(documentoRepository.findById(documento.getId()).orElseThrow().isLiquidado()).isFalse();
