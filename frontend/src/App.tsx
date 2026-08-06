@@ -208,9 +208,14 @@ type ContaCorrenteDiagnostico = {
 };
 
 type DashboardData = {
-  comerciais: Page<DocumentoComercial>;
-  pendentes: Page<Pendente>;
-  financeiros: Page<DocumentoFinanceiro>;
+  periodo: { dataInicio: string; dataFim: string };
+  moedaId: string;
+  vendas: number;
+  recebimentos: number;
+  valorEmAberto: number;
+  documentosVencidos: { quantidade: number; valor: number };
+  evolucao: { periodo: string; vendas: number; recebimentos: number }[];
+  clientesComMaiorSaldo: { clienteId: number; clienteNome: string; saldo: number; documentosPendentes: number; vencimentoMaisAntigo?: string }[];
 };
 
 type MenuItem = { label: ViewKey; hint: string };
@@ -298,6 +303,9 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardStart, setDashboardStart] = useState(() => monthStartIso());
+  const [dashboardEnd, setDashboardEnd] = useState(() => todayIso());
+  const dashboardRequestRef = useRef(0);
   const [clientes, setClientes] = useState<Page<Cliente> | null>(null);
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(null);
   const [contaCorrente, setContaCorrente] = useState<ContaCorrenteDiagnostico | null>(null);
@@ -319,20 +327,25 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   const [configLoading, setConfigLoading] = useState(false);
   const [configMessage, setConfigMessage] = useState<string | null>(null);
 
-  async function loadDashboard() {
+  async function loadDashboard(dataInicio = dashboardStart, dataFim = dashboardEnd) {
+    if (!dataInicio || !dataFim || dataInicio > dataFim) {
+      setError("A data inicial não pode ser posterior à data final.");
+      return;
+    }
+    const requestId = ++dashboardRequestRef.current;
     setLoading(true);
     setError(null);
     try {
-      const [comerciais, pendentes, financeiros] = await Promise.all([
-        fetchPage<DocumentoComercial>("/api/documentos-comerciais?size=100&sort=id,desc"),
-        fetchPage<Pendente>("/api/pendentes?size=100&sort=id,desc"),
-        fetchPage<DocumentoFinanceiro>("/api/documentos-financeiros?size=100&sort=id,desc")
-      ]);
-      setDashboardData({ comerciais, pendentes, financeiros });
+      const params = new URLSearchParams({ dataInicio, dataFim });
+      const response = await fetchJson<DashboardData>(`/api/dashboard/comercial?${params}`);
+      if (requestId === dashboardRequestRef.current) setDashboardData(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível carregar dados.");
+      if (requestId === dashboardRequestRef.current) {
+        setDashboardData(null);
+        setError(err instanceof Error ? err.message : "Não foi possível carregar dados.");
+      }
     } finally {
-      setLoading(false);
+      if (requestId === dashboardRequestRef.current) setLoading(false);
     }
   }
 
@@ -704,23 +717,6 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     ));
   }
 
-  const saldoPendente = useMemo(
-    () => dashboardData?.pendentes.content.reduce((total, pendente) => total + Number(pendente.valorPendente || 0), 0) ?? 0,
-    [dashboardData]
-  );
-
-  const documentosVencidos = useMemo(
-    () => dashboardData?.pendentes.content.filter((pendente) => pendente.valorPendente > 0 && pendente.dataVencimento < todayIso()).length ?? 0,
-    [dashboardData]
-  );
-
-  const recebidoAtivo = useMemo(
-    () => dashboardData?.financeiros.content
-      .filter((documento) => !documento.anulado)
-      .reduce((total, documento) => total + Number(documento.valorPagamentoLiquido || 0), 0) ?? 0,
-    [dashboardData]
-  );
-
   const selectedCliente = clientes?.content.find((cliente) => cliente.id === selectedClienteId) ?? null;
   const contaResumo = contaCorrente?.totais[0] ?? null;
   const visibleMenuGroups = menuGroups
@@ -737,10 +733,10 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   }
 
   const metrics = [
-    { label: "Saldo pendente", value: `${money(saldoPendente)} EUR`, tone: "client" },
-    { label: "Documentos vencidos", value: String(documentosVencidos), tone: "document" },
-    { label: "Recebido ativo", value: `${money(recebidoAtivo)} EUR`, tone: "treasury" },
-    { label: "Documentos comerciais", value: String(dashboardData?.comerciais.totalElements ?? 0), tone: "product" }
+    { label: "Vendas no período", value: `${money(dashboardData?.vendas ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "product" },
+    { label: "Recebimentos no período", value: `${money(dashboardData?.recebimentos ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "treasury" },
+    { label: "Valores em aberto", value: `${money(dashboardData?.valorEmAberto ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "client" },
+    { label: "Documentos vencidos", value: `${dashboardData?.documentosVencidos.quantidade ?? 0} · ${money(dashboardData?.documentosVencidos.valor ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "document" }
   ];
 
   return (
@@ -938,10 +934,16 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
           />
         ) : (
           <DashboardView
+            data={dashboardData}
+            dataFim={dashboardEnd}
+            dataInicio={dashboardStart}
             error={error}
             loading={loading}
             metrics={metrics}
+            onDataFim={setDashboardEnd}
+            onDataInicio={setDashboardStart}
             onNavigate={selectView}
+            onRefresh={() => loadDashboard()}
           />
         )}
 
@@ -952,18 +954,31 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 }
 
 type DashboardViewProps = {
+  data: DashboardData | null;
+  dataFim: string;
+  dataInicio: string;
   error: string | null;
   loading: boolean;
   metrics: { label: string; value: string; tone: string }[];
+  onDataFim: (value: string) => void;
+  onDataInicio: (value: string) => void;
   onNavigate: (view: ViewKey) => void;
+  onRefresh: () => void;
 };
 
 function DashboardView({
+  data,
+  dataFim,
+  dataInicio,
   error,
   loading,
   metrics,
-  onNavigate
+  onDataFim,
+  onDataInicio,
+  onNavigate,
+  onRefresh
 }: DashboardViewProps) {
+  const maxEvolution = Math.max(1, ...(data?.evolucao.flatMap((point) => [Number(point.vendas), Number(point.recebimentos)]) ?? [0]));
   return (
     <>
       <section className="fac-hero">
@@ -981,6 +996,13 @@ function DashboardView({
         </div>
       </section>
 
+      <section className="fac-dashboard-period" aria-label="Período do dashboard">
+        <label><span>Data inicial</span><input max={dataFim} onChange={(event) => onDataInicio(event.target.value)} type="date" value={dataInicio}/></label>
+        <label><span>Data final</span><input min={dataInicio} onChange={(event) => onDataFim(event.target.value)} type="date" value={dataFim}/></label>
+        <button className="fac-soft-button" disabled={loading || !dataInicio || !dataFim || dataInicio > dataFim} onClick={onRefresh} type="button">Atualizar</button>
+        <span>Vendas e recebimentos usam o período. Saldos e vencidos mostram a posição atual.</span>
+      </section>
+
       <section className="fac-metrics" aria-label="Indicadores">
         {metrics.map((metric) => (
           <article className={`fac-metric ${metric.tone}`} key={metric.label}>
@@ -989,6 +1011,29 @@ function DashboardView({
           </article>
         ))}
       </section>
+
+      {error && <section className="fac-panel fac-dashboard-error" role="alert"><strong>Não foi possível atualizar o dashboard.</strong><span>{error}</span><button className="fac-soft-button" onClick={onRefresh} type="button">Tentar novamente</button></section>}
+
+      {!error && <div className="fac-dashboard-grid">
+        <section className="fac-panel fac-dashboard-evolution" aria-labelledby="dashboard-evolution-title">
+          <div className="fac-panel-header"><div><p className="fac-eyebrow">Fluxos do período</p><h2 id="dashboard-evolution-title">Evolução de vendas e recebimentos</h2></div></div>
+          {loading ? <p className="fac-empty-state">A carregar evolução...</p> : data?.evolucao.length ? <div className="fac-dashboard-chart" role="img" aria-label="Evolução temporal de vendas e recebimentos">
+            {data.evolucao.map((point) => <div className="fac-dashboard-chart-row" key={point.periodo}>
+              <span>{dashboardPeriodLabel(point.periodo)}</span>
+              <div><i className="fac-dashboard-bar sales" style={{ width: `${Math.max(0, Number(point.vendas)) / maxEvolution * 100}%` }}/></div><strong>{money(point.vendas)}</strong>
+              <div><i className="fac-dashboard-bar receipts" style={{ width: `${Math.max(0, Number(point.recebimentos)) / maxEvolution * 100}%` }}/></div><strong>{money(point.recebimentos)}</strong>
+            </div>)}
+            <footer className="fac-dashboard-legend"><span><i className="sales"/>Vendas</span><span><i className="receipts"/>Recebimentos</span></footer>
+          </div> : <p className="fac-empty-state">Sem vendas ou recebimentos no período selecionado.</p>}
+        </section>
+
+        <section className="fac-panel fac-dashboard-clients" aria-labelledby="dashboard-clients-title">
+          <div className="fac-panel-header"><div><p className="fac-eyebrow">Posição atual</p><h2 id="dashboard-clients-title">Clientes com maior saldo</h2></div></div>
+          {loading ? <p className="fac-empty-state">A carregar saldos...</p> : data?.clientesComMaiorSaldo.length ? <div className="fac-table-scroll"><table className="fac-table"><thead><tr><th>Cliente</th><th>Documentos</th><th>Mais antigo</th><th>Saldo</th></tr></thead><tbody>
+            {data.clientesComMaiorSaldo.map((cliente) => <tr key={cliente.clienteId}><td><button className="fac-table-link" onClick={() => onNavigate("Clientes")} type="button">{cliente.clienteNome}</button><small className="fac-cell-note">#{cliente.clienteId}</small></td><td>{cliente.documentosPendentes}</td><td>{datePt(cliente.vencimentoMaisAntigo)}</td><td className="fac-money">{money(cliente.saldo)} {data.moedaId}</td></tr>)}
+          </tbody></table></div> : <p className="fac-empty-state">Não existem clientes com valores em aberto.</p>}
+        </section>
+      </div>}
 
       <section className="fac-panel fac-dashboard-actions">
         <div className="fac-panel-header">
@@ -1749,7 +1794,7 @@ function referencia(tipo: string, serie: string, numero: number | null) {
   return `${tipo} ${serie}/${numero ?? "rascunho"}`;
 }
 
-function datePt(value: string) {
+function datePt(value?: string) {
   if (!value) {
     return "-";
   }
@@ -1764,6 +1809,17 @@ function viewFromNavigationState(state: unknown): ViewKey | null {
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function monthStartIso() {
+  return `${todayIso().slice(0, 7)}-01`;
+}
+
+function dashboardPeriodLabel(value: string) {
+  if (value.length !== 7) return datePt(value);
+  const [year, month] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-PT", { month: "short", year: "numeric" })
+    .format(new Date(Date.UTC(year, month - 1, 1)));
 }
 
 export default App;

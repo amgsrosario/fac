@@ -411,6 +411,50 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void dashboardComercialSeparaFluxosDoPeriodoDaPosicaoAtual() throws Exception {
+        String emitidoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-06");
+        String anuladoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-07");
+        emitir(emitidoLocation);
+        emitir(anuladoLocation);
+        mockMvc.perform(post(anuladoLocation + "/anular")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Excluido do dashboard\"}"))
+                .andExpect(status().isOk());
+
+        Pendente pendente = pendenteRepository.findByDocumentoComercialId(documentoId(emitidoLocation)).orElseThrow();
+        liquidar(pendente, cliente, new BigDecimal("2.300000"), "2026-07-20");
+        documentoFinanceiroRepository.flush();
+        pendenteRepository.flush();
+
+        mockMvc.perform(get("/dashboard/comercial")
+                        .param("dataInicio", "2026-06-01")
+                        .param("dataFim", "2026-07-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.periodo.dataInicio").value("2026-06-01"))
+                .andExpect(jsonPath("$.periodo.dataFim").value("2026-07-31"))
+                .andExpect(jsonPath("$.moedaId").value("EUR"))
+                .andExpect(jsonPath("$.vendas").value(12.300000))
+                .andExpect(jsonPath("$.recebimentos").value(2.300000))
+                .andExpect(jsonPath("$.valorEmAberto").value(10.000000))
+                .andExpect(jsonPath("$.documentosVencidos.quantidade").value(1))
+                .andExpect(jsonPath("$.documentosVencidos.valor").value(10.000000))
+                .andExpect(jsonPath("$.evolucao[0].periodo").value("2026-06"))
+                .andExpect(jsonPath("$.evolucao[0].vendas").value(12.300000))
+                .andExpect(jsonPath("$.evolucao[1].periodo").value("2026-07"))
+                .andExpect(jsonPath("$.evolucao[1].recebimentos").value(2.300000))
+                .andExpect(jsonPath("$.clientesComMaiorSaldo[0].clienteId").value(cliente.getId()))
+                .andExpect(jsonPath("$.clientesComMaiorSaldo[0].saldo").value(10.000000));
+    }
+
+    @Test
+    void dashboardComercialRejeitaPeriodoInvertido() throws Exception {
+        mockMvc.perform(get("/dashboard/comercial")
+                        .param("dataInicio", "2026-07-31")
+                        .param("dataFim", "2026-07-01"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void listagensAnaliticasExcluemRascunhosEMantemValoresOficiais() throws Exception {
         criarDocumentoComPrimeiraLinha();
         String emitidoLocation = criarDocumentoComPrimeiraLinha();
