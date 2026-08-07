@@ -7,6 +7,7 @@ import com.ar2lda.fac.controller.dto.EmpresaDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoFinanceiroDto;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -25,6 +26,9 @@ public class DocumentoFinanceiroPdfService {
     private final DocumentoFinanceiroService documentoService;
     private final QrCodeImageService qrCodeImageService;
     private final FiscalQrService fiscalQrService;
+
+    @Value("${fac.demo.enabled:false}")
+    private boolean demoEnabled;
 
     public PdfDocumento gerar(Long id) {
         DocumentoFinanceiroImpressaoDto impressao = documentoService.getImpressao(id);
@@ -102,8 +106,10 @@ public class DocumentoFinanceiroPdfService {
                   .fiscal-atcud { font-size: 7.5pt; font-weight: bold; color: #111; margin-bottom: 3mm; }
                   .qr { width: 40mm; height: 40mm; }
                   .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #dfe2e3; font-size: 7.5pt; color: #777f87; line-height: 1.4; }
+                  .demo-label { position: fixed; bottom: 2mm; left: 0; width: 100%%; text-align: left; font-size: 7pt; color: #8a8f94; }
                   .watermark { position: fixed; top: 44%%; left: 18%%; width: 64%%; transform: rotate(-28deg); text-align: center; font-size: 58pt; font-weight: bold; color: #efdede; }
                 </style></head><body>
+                %s
                 %s
                 <table class="top"><tr>
                   <td class="company"><strong>%s</strong><br />NIF %s<br />%s<br />%s<br /><span class="muted">%s %s</span></td>
@@ -123,9 +129,9 @@ public class DocumentoFinanceiroPdfService {
                 <div class="footer">Emitido por %s em %s. Capital social: %s EUR. Matricula comercial: %s. CAE: %s - %s.</div>
                 </body></html>
                 """.formatted(
-                anulada,
+                demoLabel(), anulada,
                 esc(empresa.nome()), esc(empresa.nif()), address(empresa.morada(), empresa.morada1()), esc(joinPostal(empresa.codPostalId(), empresa.localidade())), esc(empresa.email()), esc(empresa.web()),
-                esc(documento.tipoDocumentoId()), esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
+                "Recibo", esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
                 esc(cliente.nome()), esc(cliente.nif()), address(cliente.morada(), cliente.morada1()), esc(joinPostal(cliente.codPostalId(), cliente.localidade())),
                 esc(documento.moedaId()), value(documento.mPagamentoId()), documento.dataHoraOperacao() == null ? "-" : esc(documento.dataHoraOperacao().toString()),
                 linhas,
@@ -135,6 +141,10 @@ public class DocumentoFinanceiroPdfService {
                 esc(documento.emissorId()), documento.momentoEmissao() == null ? "-" : esc(documento.momentoEmissao().toString()),
                 money(empresa.capitalSocial()), esc(empresa.matriculaRegistoComercial()), esc(empresa.cae()), esc(empresa.descricaoCae())
         );
+    }
+
+    private String demoLabel() {
+        return demoEnabled ? "<div class=\"demo-label\">Versão de demonstração</div>" : "";
     }
 
     private String td(String text, String cssClass) {

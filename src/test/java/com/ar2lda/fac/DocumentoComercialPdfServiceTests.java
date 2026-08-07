@@ -19,6 +19,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -68,6 +69,21 @@ class DocumentoComercialPdfServiceTests {
             assertThat(page).contains(DOCUMENT_NUMBER, COMPANY, CLIENT, "Descricao", "Valor bruto", "ATCUD: " + ATCUD);
             assertThat(page).doesNotContain("CONTINUAÇÃO");
             assertThat(countImages(document.getPage(0))).isGreaterThanOrEqualTo(1);
+        }
+    }
+
+    @Test
+    void identificaVersaoDeDemonstracaoApenasQuandoAtivada() throws Exception {
+        ReflectionTestUtils.setField(pdfService, "demoEnabled", true);
+        try (PDDocument demo = Loader.loadPDF(gerar(35, Scenario.standard()))) {
+            for (int page = 1; page <= demo.getNumberOfPages(); page++) {
+                assertThat(pageText(demo, page)).contains("Versão de demonstração");
+            }
+        }
+
+        ReflectionTestUtils.setField(pdfService, "demoEnabled", false);
+        try (PDDocument normal = Loader.loadPDF(gerar(1, Scenario.standard()))) {
+            assertThat(pageText(normal, 1)).doesNotContain("Versão de demonstração");
         }
     }
 
@@ -208,6 +224,7 @@ class DocumentoComercialPdfServiceTests {
 
     @Test
     void produzArtefactosParaValidacaoVisual() throws Exception {
+        ReflectionTestUtils.setField(pdfService, "demoEnabled", true);
         Path output = Path.of("target", "pdf-validation");
         Files.createDirectories(output);
         String runId = ARTIFACT_TIMESTAMP.format(LocalDateTime.now());

@@ -17,9 +17,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -73,9 +76,38 @@ class DocumentoFinanceiroPdfServiceTests {
         assertThat(pdf.content().length).isGreaterThan(1_000);
         try (PDDocument pdfDocument = Loader.loadPDF(pdf.content())) {
             String text = new PDFTextStripper().getText(pdfDocument);
-            assertThat(text).contains("ATCUD");
+            assertThat(text).contains("Recibo", "RC 2026/3", "ATCUD");
             assertThat(text).contains("ABCD1234-3");
+            assertThat(text).doesNotContain("Versão de demonstração");
         }
         verify(documentoService).marcarComoImpresso(documentoId);
+    }
+
+
+    @Test
+    void identificaReciboComoVersaoDeDemonstracaoQuandoAtivada() throws Exception {
+        Long documentoId = 30L;
+        EmpresaDto empresa = new EmpresaDto(1L, "FAC Lda", "500000000", "Rua da Empresa, 1", null,
+                "3750-001", "Agueda", "PT", null, null, null, null, null,
+                BigDecimal.ZERO, "CRC Agueda", "62010", "Programacao", "fac@example.pt", "https://fac.example.pt");
+        ClienteDto cliente = new ClienteDto(1001L, "Cliente Lda", "Rua do Cliente, 10", null, "Agueda",
+                "509999990", null, null, "cliente@example.pt", null, null, null, false, false, null,
+                "3750-001", "PT", "EUR", "TFB", "P30", "CON", "001");
+        DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", null, "2026", 4L,
+                "ABCD1234-4", true, "QR", LocalDate.of(2026, 6, 10), "EUR", BigDecimal.ZERO,
+                BigDecimal.ZERO, BigDecimal.ZERO, "TFB", OffsetDateTime.parse("2026-06-10T10:00:00Z"), "DEMO",
+                OffsetDateTime.parse("2026-06-10T10:00:00Z"), null, false, false, List.of());
+        when(documentoService.getImpressao(documentoId))
+                .thenReturn(new DocumentoFinanceiroImpressaoDto(empresa, cliente, documento));
+        ReflectionTestUtils.setField(pdfService, "demoEnabled", true);
+
+        byte[] pdf = pdfService.gerar(documentoId).content();
+        Path output = Path.of("target", "pdf-validation");
+        Files.createDirectories(output);
+        Files.write(output.resolve("fac-recibo-demo.pdf"), pdf);
+        try (PDDocument pdfDocument = Loader.loadPDF(pdf)) {
+            String text = new PDFTextStripper().getText(pdfDocument);
+            assertThat(text).contains("Recibo", "RC 2026/4", "Versão de demonstração");
+        }
     }
 }

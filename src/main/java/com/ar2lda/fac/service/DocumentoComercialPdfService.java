@@ -11,6 +11,7 @@ import com.ar2lda.fac.model.TipoAuditoriaEvento;
 import com.ar2lda.fac.model.TipoLinhaDocumento;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,9 @@ public class DocumentoComercialPdfService {
     private final DocumentoComercialService documentoService;
     private final QrCodeImageService qrCodeImageService;
     private final AuditoriaService auditoriaService;
+
+    @Value("${fac.demo.enabled:false}")
+    private boolean demoEnabled;
 
     @Transactional
     public PdfDocumento gerar(Long id) {
@@ -128,11 +132,12 @@ public class DocumentoComercialPdfService {
                     .number { text-align: right; white-space: nowrap; }
                     .center { text-align: center; }
                     .summary { width: 100%%; page-break-inside: avoid; }
-                    .tax { width: 61%%; border-collapse: collapse; vertical-align: top; }
+                    .tax { width: 57%%; border-collapse: collapse; vertical-align: top; }
                     .tax th, .tax td { padding: 5px; border-bottom: 1px solid #e2e4e5; }
                     .tax th { text-align: left; background: #f7f7f5; }
-                    .totals { width: 36%%; margin-left: 3%%; border-collapse: collapse; vertical-align: top; }
+                    .totals { width: 40%%; margin-left: 3%%; border-collapse: collapse; vertical-align: top; }
                     .totals td { padding: 5px 2px; border-bottom: 1px solid #e2e4e5; }
+                    .totals td:first-child { white-space: nowrap; }
                     .totals td:last-child { text-align: right; white-space: nowrap; }
                     .grand td { font-size: 12pt; font-weight: bold; color: #44515d; border-top: 2px solid #ba963c; }
                     .fiscal { width: 100%%; margin-top: 12px; padding-top: 8px; border-top: 1px solid #dfe2e3; page-break-inside: avoid; }
@@ -140,11 +145,13 @@ public class DocumentoComercialPdfService {
                     .fiscal-atcud { font-size: 7.5pt; font-weight: bold; color: #111; margin-bottom: 3mm; }
                     .qr { width: 40mm; height: 40mm; }
                     .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #dfe2e3; font-size: 7.5pt; color: #777f87; line-height: 1.4; }
+                    .demo-label { position: fixed; bottom: 2mm; left: 0; width: 100%%; text-align: left; font-size: 7pt; color: #8a8f94; }
                     .watermark { position: fixed; top: 44%%; left: 18%%; width: 64%%; transform: rotate(-28deg); text-align: center; font-size: 58pt; font-weight: bold; color: #efdede; }
                     .annulment { border: 2px solid #a51f1f; color: #7d1717; background: #fff4f4; padding: 8px; margin-bottom: 10px; line-height: 1.45; }
                   </style>
                 </head>
                 <body>
+                %s
                 <div class="continuation-header"><table><tr>
                   <td class="continuation-company"><strong>%s</strong><br />NIF %s</td>
                   <td class="continuation-document"><span class="continuation-label">Continuação</span><br /><strong>%s - %s %s/%s</strong><br />Data %s</td>
@@ -183,6 +190,7 @@ public class DocumentoComercialPdfService {
                 <div class="footer">%s</div>
                 </body></html>
                 """.formatted(
+                demoLabel(),
                 esc(empresa.nome()), esc(empresa.nif()), esc(documento.tipoDocumentoDescricao()),
                 esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
                 esc(documento.clienteNome()), esc(documento.clienteNif()),
@@ -206,6 +214,10 @@ public class DocumentoComercialPdfService {
                 fiscal(documento.atcud(), documento.qrPayload()),
                 footer(empresa, documento)
         );
+    }
+
+    private String demoLabel() {
+        return demoEnabled ? "<div class=\"demo-label\">Versão de demonstração</div>" : "";
     }
 
     private String logo(EmitenteFiscalSnapshotDto empresa) {
