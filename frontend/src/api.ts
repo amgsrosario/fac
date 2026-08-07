@@ -50,3 +50,14 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
   }
   return response;
 }
+
+export async function responseError(response: Response) {
+  try {
+    const payload = await response.json();
+    if (payload.message || payload.error) return payload.message || payload.error;
+  } catch {
+    // The development proxy returns an empty response when the backend is unavailable.
+  }
+  if (response.status >= 500) return "O serviço está temporariamente indisponível. Tenta novamente.";
+  return `Erro HTTP ${response.status}`;
+}

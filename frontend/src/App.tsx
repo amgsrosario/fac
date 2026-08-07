@@ -12,7 +12,7 @@ import EmpresaAdminView from "./EmpresaAdminView";
 import AdminUtilizadoresView from "./AdminUtilizadoresView";
 import ImportExportView from "./ImportExportView";
 import { GlobalSearch } from "./GlobalSearch";
-import { apiFetch, AuthSession } from "./api";
+import { apiFetch, AuthSession, responseError } from "./api";
 
 type Page<T> = {
   content: T[];
@@ -896,6 +896,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             editingClienteId={editingClienteId}
             contaCorrente={contaCorrente}
             contaResumo={contaResumo}
+            error={error}
             loading={clientesLoading}
             canManage={currentUser.permissoes?.includes("MESTRES_GERIR") ?? false}
             selectedCliente={selectedCliente}
@@ -1007,7 +1008,7 @@ function DashboardView({
         {metrics.map((metric) => (
           <article className={`fac-metric ${metric.tone}`} key={metric.label}>
             <span>{metric.label}</span>
-            <strong>{loading ? "-" : metric.value}</strong>
+            <strong>{loading || error ? "-" : metric.value}</strong>
           </article>
         ))}
       </section>
@@ -1072,6 +1073,7 @@ type ClientesViewProps = {
   totalElements: number;
   notice: string | null;
   editorMessage: string | null;
+  error: string | null;
   form: ClienteForm;
   editorOpen: boolean;
   editingClienteId: number | null;
@@ -1101,6 +1103,7 @@ function ClientesView({
   totalElements,
   notice,
   editorMessage,
+  error,
   form,
   editorOpen,
   editingClienteId,
@@ -1263,7 +1266,7 @@ function ClientesView({
                   {visibleColumns.map((column) => <td key={column.key}>{clientColumnValue(cliente, column.key)}</td>)}
                 </tr>
               ))}
-              {!loading && clientes.length === 0 && (
+              {!loading && !error && clientes.length === 0 && (
                 <tr>
                   <td colSpan={visibleColumns.length}>{search ? "Nenhum cliente corresponde à pesquisa." : "Sem clientes para mostrar."}</td>
                 </tr>
@@ -1662,15 +1665,6 @@ async function putJson(url: string, body: unknown): Promise<void> {
   });
   if (!response.ok) {
     throw new Error(await responseError(response));
-  }
-}
-
-async function responseError(response: Response) {
-  try {
-    const payload = await response.json();
-    return payload.message || payload.error || `Erro HTTP ${response.status}`;
-  } catch {
-    return `Erro HTTP ${response.status}`;
   }
 }
 
