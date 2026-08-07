@@ -546,7 +546,8 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     }
   }
 
-  const shellView = embeddedContent ? initialView : activeView;
+  const requestedShellView = embeddedContent ? initialView : activeView;
+  const shellView = canShowMenuItem({ label: requestedShellView, hint: "" }) ? requestedShellView : "Dashboard";
 
   async function refreshActiveView() {
     if (shellView === "Clientes") {

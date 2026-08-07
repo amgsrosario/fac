@@ -204,6 +204,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     prazosPagamento: []
   });
 
+  const canCreate = currentUser.permissoes.includes("DOCUMENTO_CRIAR");
   const canEdit = currentUser.permissoes.includes("DOCUMENTO_EDITAR_RASCUNHO");
   const canDeleteDraft = currentUser.permissoes.includes("DOCUMENTO_ELIMINAR_RASCUNHO");
   const canEmit = currentUser.permissoes.includes("DOCUMENTO_EMITIR");
@@ -702,7 +703,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
           <GlobalSearch className="fac-commercial-global-search" />
           {dirty && <span className="fac-draft-dirty">Alteracoes por guardar</span>}
           <FacButton icon="pi pi-arrow-left" label="Voltar à listagem" onClick={goBack} variant="ghost" />
-          {documento && <FacButton disabled={saving || loading} icon="pi pi-plus" label="Novo documento" onClick={newDocument} variant="secondary" />}
+          {documento && canCreate && <FacButton disabled={saving || loading} icon="pi pi-plus" label="Novo documento" onClick={newDocument} variant="secondary" />}
           {documento && documento.estado === "RASCUNHO" && canDeleteDraft && <FacButton disabled={saving || loading} icon="pi pi-trash" label="Eliminar rascunho" onClick={() => setDeleteOpen(true)} variant="destructive" />}
           {canOpenPdfCurrent && <FacButton disabled={saving} icon="pi pi-file-pdf" label="PDF" onClick={openPdf} variant="secondary" />}
           {canVoidCurrent && <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={() => setAnularOpen(true)} variant="destructive" />}
