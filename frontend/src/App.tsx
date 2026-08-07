@@ -1231,7 +1231,7 @@ function ClientesView({
               <input aria-label="Pesquisar clientes" className="fac-list-search" onChange={(event) => onSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onSearch(""); }} placeholder="Pesquisar por código, nome, NIF ou email" type="search" value={search} />
               <button className="fac-ghost-button" disabled={!search} onClick={() => onSearch("")} type="button">Limpar</button>
               <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({visibleColumns.length})</button>
-              {canManage && <button className="fac-soft-button" onClick={onOpenEditor} type="button">Novo cliente</button>}
+              {canManage && <button className="fac-primary-button" onClick={onOpenEditor} type="button">Novo cliente</button>}
             </div>
           </div>
 
