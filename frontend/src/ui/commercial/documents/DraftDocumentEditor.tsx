@@ -74,6 +74,7 @@ type Artigo = { codigo: string; abreviatura?: string | null; codigoIdentificacao
 type CatalogoString = { id: string; nome: string };
 type CatalogoNumero = { id: number; nome: string };
 type TipoTaxaIva = { id: string; descricao: string; inativo: boolean };
+type RegimeIva = CatalogoString & { taxas: { tipoTaxaIvaId: string; valor: string | number }[] };
 type Armazem = { id: string; nome: string };
 type ParametrosDocumentoComercial = { tipoDocumentoId?: string | null; serie?: string | null; armazemCargaId?: string | null };
 
@@ -82,7 +83,7 @@ type Catalogos = {
   armazens: Armazem[];
   clientes: Cliente[];
   moedas: CatalogoString[];
-  regimesIva: CatalogoString[];
+  regimesIva: RegimeIva[];
   series: Serie[];
   tiposDocumento: TipoDocumento[];
   tiposIva: TipoTaxaIva[];
@@ -216,7 +217,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const showEmitAction = Boolean(documento && isDraft && canEmit);
   const showSaveDraftAction = Boolean(isDraft && canEditCurrent && (!documento || dirty));
   const saveDraftLabel = saving ? "A guardar..." : documento ? "Guardar alterações" : "Guardar rascunho";
-  const draftTotals = useMemo(() => calculateTotals(isLineFilled(activeLine) ? [...lines, activeLine] : lines, catalogos), [activeLine, catalogos, lines]);
+  const draftTotals = useMemo(() => calculateTotals(isLineFilled(activeLine) ? [...lines, activeLine] : lines, catalogos, header.rivaId), [activeLine, catalogos, header.rivaId, lines]);
   const sidebar = embedded ? null : <CommercialSidebar active="documents" currentUser={currentUser} onLogout={() => confirmLeave(dirty) && onLogout()} />;
 
   useEffect(() => {
@@ -745,6 +746,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
               onUpdateActiveLine={setActivePatch}
               onUpdateLine={updateLine}
               readOnly={!canEditCurrent}
+              rivaId={header.rivaId}
               selectedLineUid={selectedLineUid}
               totals={draftTotals}
             />
@@ -852,6 +854,7 @@ function DraftLines(props: {
   onUpdateActiveLine: (patch: Partial<EditorLine>) => void;
   onUpdateLine: (uid: string, patch: Partial<EditorLine>) => void;
   readOnly: boolean;
+  rivaId: string;
   selectedLineUid: string | null;
   totals: Totals;
 }) {
@@ -1110,7 +1113,7 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
       <td {...cellProps(4, hasArticle)}>{hasArticle ? <DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ precoUnitario: value })} value={line.precoUnitario} /> : inactiveCell}</td>
       <td {...cellProps(5, hasArticle)}>{hasArticle ? <DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ desconto: value })} value={line.desconto} /> : inactiveCell}</td>
       <td className="fac-draft-vat-cell fac-draft-choice-cell" {...cellProps(6, hasArticle)}>{hasArticle ? <><span className="fac-draft-cell-rest">{line.tipoTaxaIvaId ? ivaCompactLabel(catalogos.tiposIva.find((iva) => iva.id === line.tipoTaxaIvaId) ?? { descricao: line.tipoTaxaIvaId, id: line.tipoTaxaIvaId, inativo: false }) : "IVA"}</span><select aria-label="IVA" className="fac-draft-cell fac-draft-cell-code fac-draft-cell-display" data-active-line={active || undefined} disabled={disabled} onChange={(event) => update({ tipoTaxaIvaId: event.target.value })} title={catalogos.tiposIva.find((iva) => iva.id === line.tipoTaxaIvaId)?.descricao} value={line.tipoTaxaIvaId}><option value="">IVA</option>{catalogos.tiposIva.map((iva) => <option key={iva.id} value={iva.id}>{ivaCompactLabel(iva)}</option>)}</select></> : inactiveCell}</td>
-      <td className={`fac-draft-money ${active ? "fac-draft-money-empty" : ""}`}>{hasArticle ? money(lineTotal(line, catalogos)) : ""}</td>
+      <td className={`fac-draft-money ${active ? "fac-draft-money-empty" : ""}`}>{hasArticle ? money(lineTotal(line, catalogos, props.rivaId)) : ""}</td>
       <td className="fac-draft-row-actions">{active ? null : <RowActions {...props} index={index} line={line} />}</td>
     </tr>
   );
@@ -1133,7 +1136,7 @@ function DraftLineCard(props: Parameters<typeof DraftLines>[0] & { active?: bool
         <>
           <div className="fac-draft-card-grid"><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ quantidade: value })} value={line.quantidade} /><input aria-label="Unidade" className="fac-draft-cell fac-draft-cell-code fac-draft-cell-display" disabled={disabled} maxLength={6} onChange={(event) => update({ unidade: event.target.value })} value={line.unidade} /></div>
           <div className="fac-draft-card-grid"><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ precoUnitario: value })} value={line.precoUnitario} /><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ desconto: value })} value={line.desconto} /><select aria-label="IVA" className="fac-draft-cell fac-draft-cell-code fac-draft-cell-display" disabled={disabled} onChange={(event) => update({ tipoTaxaIvaId: event.target.value })} value={line.tipoTaxaIvaId}><option value="">IVA</option>{catalogos.tiposIva.map((iva) => <option key={iva.id} value={iva.id}>{ivaCompactLabel(iva)}</option>)}</select></div>
-          <div className="fac-draft-card-total"><span>Total</span><strong>{money(lineTotal(line, catalogos))}</strong></div>
+          <div className="fac-draft-card-total"><span>Total</span><strong>{money(lineTotal(line, catalogos, props.rivaId))}</strong></div>
         </>
       )}
       {!active && <div className="fac-draft-row-actions"><RowActions {...props} index={index} line={line} /></div>}
@@ -1254,7 +1257,7 @@ async function loadCatalogos(): Promise<Catalogos> {
     fetchAllPages<Artigo>("/api/artigos", "descricao,asc"),
     fetchPage<Armazem>("/api/armazens?size=100&sort=nome,asc"),
     fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
-    fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
+    fetchPage<RegimeIva>("/api/riva?size=100&sort=nome,asc"),
     fetchPage<CatalogoString>("/api/mpagamentos?size=100&sort=nome,asc"),
     fetchPage<CatalogoString>("/api/p-pagamentos?size=100&sort=nome,asc"),
     fetchPage<CatalogoString>("/api/transportes?size=100&sort=nome,asc"),
@@ -1501,10 +1504,10 @@ function isValidCommercialLine(line: EditorLine) {
   return Boolean(line.artigoId) && validateLine(line) === null;
 }
 
-function calculateTotals(lines: EditorLine[], catalogos: Catalogos): Totals {
+function calculateTotals(lines: EditorLine[], catalogos: Catalogos, rivaId: string): Totals {
   return lines.reduce<Totals>((acc, line) => {
     if (!line.artigoId) return acc;
-    const values = lineCommercialValues(line, catalogos);
+    const values = lineCommercialValues(line, catalogos, rivaId);
     return {
       subtotal: acc.subtotal + values.base,
       discount: acc.discount + values.discount,
@@ -1514,17 +1517,17 @@ function calculateTotals(lines: EditorLine[], catalogos: Catalogos): Totals {
   }, { discount: 0, subtotal: 0, total: 0, vat: 0 });
 }
 
-function lineTotal(line: EditorLine, catalogos: Catalogos) {
+function lineTotal(line: EditorLine, catalogos: Catalogos, rivaId: string) {
   if (!line.artigoId) return 0;
-  return lineCommercialValues(line, catalogos).total;
+  return lineCommercialValues(line, catalogos, rivaId).total;
 }
 
-function lineCommercialValues(line: EditorLine, catalogos: Catalogos) {
+function lineCommercialValues(line: EditorLine, catalogos: Catalogos, rivaId: string) {
   const base = Number(line.quantidade || 0) * Number(line.precoUnitario || 0);
   const rawDiscount = Number(line.desconto || 0);
   const discount = line.tipoDesconto === "PERCENTAGEM" ? base * (rawDiscount / 100) : rawDiscount;
   const taxable = Math.max(base - discount, 0);
-  const iva = catalogos.tiposIva.find((item) => item.id === line.tipoTaxaIvaId)?.descricao.match(/(\d+(?:[,.]\d+)?)/)?.[1]?.replace(",", ".");
+  const iva = catalogos.regimesIva.find((item) => item.id === rivaId)?.taxas.find((taxa) => taxa.tipoTaxaIvaId === line.tipoTaxaIvaId)?.valor;
   const vat = taxable * (Number(iva ?? 0) / 100);
   return { base, discount, taxable, total: taxable + vat, vat };
 }
