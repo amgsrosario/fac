@@ -520,6 +520,10 @@ button:disabled {
 }
 
 .fac-metric {
+  display: grid;
+  align-content: space-between;
+  min-width: 0;
+  min-height: 96px;
   border: 1px solid var(--fac-border);
   border-radius: 22px;
   padding: 17px;
@@ -544,6 +548,13 @@ button:disabled {
 .fac-balance-strip strong {
   color: var(--fac-petrol);
   font-size: 22px;
+}
+
+.fac-metric strong {
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .fac-content-grid {
@@ -703,7 +714,7 @@ button:disabled {
 
 .fac-dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(0, 1.65fr) minmax(360px, 1fr);
   gap: 18px;
   margin-bottom: 18px;
 }
@@ -728,11 +739,24 @@ button:disabled {
 
 .fac-dashboard-chart-row {
   display: grid;
-  grid-template-columns: 80px minmax(80px, 1fr) 88px minmax(80px, 1fr) 88px;
+  grid-template-columns: 80px repeat(2, minmax(0, 1fr));
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   min-height: 28px;
   font-size: 12px;
+}
+
+.fac-dashboard-series {
+  display: grid;
+  grid-template-columns: minmax(32px, 1fr) 76px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fac-dashboard-series strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .fac-dashboard-bar {
@@ -762,21 +786,56 @@ button:disabled {
   border-radius: 2px;
 }
 
-.fac-dashboard-top-clients {
-  width: 100%;
-  border-collapse: collapse;
+.fac-dashboard-client-list {
+  display: grid;
 }
 
-.fac-dashboard-top-clients th,
-.fac-dashboard-top-clients td {
+.fac-dashboard-client-row {
+  display: grid;
+  gap: 6px;
   border-bottom: 1px solid var(--fac-border);
-  padding: 9px 6px;
-  text-align: left;
-  font-size: 13px;
+  padding: 11px 0;
 }
 
-.fac-dashboard-top-clients th:last-child,
-.fac-dashboard-top-clients td:last-child { text-align: right; }
+.fac-dashboard-client-row:first-child {
+  padding-top: 2px;
+}
+
+.fac-dashboard-clients .fac-table-link {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: left;
+}
+
+.fac-dashboard-client-row .fac-table-link span {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.fac-dashboard-client-meta {
+  display: grid;
+  grid-template-columns: auto minmax(118px, 1fr) minmax(78px, auto) minmax(96px, auto);
+  align-items: baseline;
+  gap: 8px;
+  color: var(--fac-text-muted);
+  font-size: 12px;
+}
+
+.fac-dashboard-client-count,
+.fac-dashboard-client-meta strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fac-dashboard-client-meta strong {
+  color: var(--fac-petrol);
+  white-space: nowrap;
+}
 
 .fac-dashboard-action-grid {
   display: grid;
@@ -2402,7 +2461,6 @@ button:disabled {
   }
 
   .fac-topbar-actions,
-  .fac-metrics,
   .fac-dashboard-action-grid,
   .fac-extrato-filters,
   .fac-pendentes-totals,
@@ -2414,6 +2472,10 @@ button:disabled {
   .fac-grid-two,
   .fac-emission-summary {
     grid-template-columns: 1fr;
+  }
+
+  .fac-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .fac-receipt-totals {
@@ -2490,9 +2552,40 @@ button:disabled {
   }
 
   .fac-dashboard-chart-row {
-    grid-template-columns: 62px minmax(55px, 1fr) 72px minmax(55px, 1fr) 72px;
-    gap: 5px;
+    grid-template-columns: 62px repeat(2, minmax(0, 1fr));
+    gap: 7px;
     font-size: 11px;
+  }
+
+  .fac-dashboard-series {
+    grid-template-columns: minmax(20px, 1fr) 62px;
+    gap: 4px;
+  }
+
+  .fac-dashboard-client-meta {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .fac-dashboard-client-meta > span:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .fac-dashboard-client-meta > span:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .fac-dashboard-client-meta strong {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: end;
+  }
+
+  .fac-dashboard-client-count {
+    grid-column: 1 / span 2;
+    grid-row: 2;
+    text-align: left;
   }
 
   .fac-mobile-topbar {
@@ -2601,6 +2694,7 @@ button:disabled {
 }
 
 @media (max-width: 600px) {
+  .fac-metrics,
   .fac-header-metrics {
     grid-template-columns: 1fr;
   }

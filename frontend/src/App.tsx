@@ -1020,8 +1020,8 @@ function DashboardView({
           {loading ? <p className="fac-empty-state">A carregar evolução...</p> : data?.evolucao.length ? <div className="fac-dashboard-chart" role="img" aria-label="Evolução temporal de vendas e recebimentos">
             {data.evolucao.map((point) => <div className="fac-dashboard-chart-row" key={point.periodo}>
               <span>{dashboardPeriodLabel(point.periodo)}</span>
-              <div><i className="fac-dashboard-bar sales" style={{ width: `${Math.max(0, Number(point.vendas)) / maxEvolution * 100}%` }}/></div><strong>{money(point.vendas)}</strong>
-              <div><i className="fac-dashboard-bar receipts" style={{ width: `${Math.max(0, Number(point.recebimentos)) / maxEvolution * 100}%` }}/></div><strong>{money(point.recebimentos)}</strong>
+              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar sales" style={{ width: `${Math.max(0, Number(point.vendas)) / maxEvolution * 100}%` }}/></div><strong>{money(point.vendas)}</strong></div>
+              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar receipts" style={{ width: `${Math.max(0, Number(point.recebimentos)) / maxEvolution * 100}%` }}/></div><strong>{money(point.recebimentos)}</strong></div>
             </div>)}
             <footer className="fac-dashboard-legend"><span><i className="sales"/>Vendas</span><span><i className="receipts"/>Recebimentos</span></footer>
           </div> : <p className="fac-empty-state">Sem vendas ou recebimentos no período selecionado.</p>}
@@ -1029,9 +1029,12 @@ function DashboardView({
 
         <section className="fac-panel fac-dashboard-clients" aria-labelledby="dashboard-clients-title">
           <div className="fac-panel-header"><div><p className="fac-eyebrow">Posição atual</p><h2 id="dashboard-clients-title">Clientes com maior saldo</h2></div></div>
-          {loading ? <p className="fac-empty-state">A carregar saldos...</p> : data?.clientesComMaiorSaldo.length ? <div className="fac-table-scroll"><table className="fac-table"><thead><tr><th>Cliente</th><th>Documentos</th><th>Mais antigo</th><th>Saldo</th></tr></thead><tbody>
-            {data.clientesComMaiorSaldo.map((cliente) => <tr key={cliente.clienteId}><td><button className="fac-table-link" onClick={() => onNavigate("Clientes")} type="button">{cliente.clienteNome}</button><small className="fac-cell-note">#{cliente.clienteId}</small></td><td>{cliente.documentosPendentes}</td><td>{datePt(cliente.vencimentoMaisAntigo)}</td><td className="fac-money">{money(cliente.saldo)} {data.moedaId}</td></tr>)}
-          </tbody></table></div> : <p className="fac-empty-state">Não existem clientes com valores em aberto.</p>}
+          {loading ? <p className="fac-empty-state">A carregar saldos...</p> : data?.clientesComMaiorSaldo.length ? <div className="fac-dashboard-client-list">
+            {data.clientesComMaiorSaldo.map((cliente) => <article className="fac-dashboard-client-row" key={cliente.clienteId}>
+              <button className="fac-table-link" onClick={() => onNavigate("Clientes")} title={cliente.clienteNome} type="button"><span>{cliente.clienteNome}</span></button>
+              <div className="fac-dashboard-client-meta"><span>#{cliente.clienteId}</span><span>mais antigo {datePt(cliente.vencimentoMaisAntigo)}</span><span className="fac-dashboard-client-count">{cliente.documentosPendentes} documentos</span><strong>{money(cliente.saldo)} {data.moedaId}</strong></div>
+            </article>)}
+          </div> : <p className="fac-empty-state">Não existem clientes com valores em aberto.</p>}
         </section>
       </div>}
 
