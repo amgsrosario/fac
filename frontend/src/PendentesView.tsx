@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Paginator } from "primereact/paginator";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getAuthSession, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
@@ -120,6 +121,15 @@ export default function PendentesView() {
   const [series, setSeries] = useState<Serie[]>([]);
   const [modos, setModos] = useState<MPagamento[]>([]);
   const [search, setSearch] = useState("");
+  const [financeiroDateFrom, setFinanceiroDateFrom] = useState(currentYearStartIso);
+  const [financeiroDateTo, setFinanceiroDateTo] = useState(todayIso);
+  const [showAnnulledFinanceiros, setShowAnnulledFinanceiros] = useState(false);
+  const [financeirosPage, setFinanceirosPage] = useState(0);
+  const [financeirosPageSize, setFinanceirosPageSize] = useState(10);
+  const [dueFilter, setDueFilter] = useState<"all" | "overdue" | "not-overdue">("all");
+  const [excludeSettled, setExcludeSettled] = useState(false);
+  const [pendentesPage, setPendentesPage] = useState(0);
+  const [pendentesPageSize, setPendentesPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -493,9 +503,42 @@ export default function PendentesView() {
   const issuePdfButtonLabel = receiptSubmitting ? "A emitir..." : "Emitir e abrir PDF";
   const filteredPendentes = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return pendentes;
-    return pendentes.filter((item) => [referencia(item), String(item.clienteId), String(item.id), estado(item)].some((value) => value.toLowerCase().includes(term)));
-  }, [pendentes, search]);
+    return pendentes.filter((item) => {
+      const itemEstado = estado(item);
+      if (excludeSettled && itemEstado === "LIQUIDADO") return false;
+      if (dueFilter === "overdue" && itemEstado !== "VENCIDO") return false;
+      if (dueFilter === "not-overdue" && itemEstado === "VENCIDO") return false;
+      return !term || [referencia(item), String(item.clienteId), String(item.id), itemEstado].some((value) => value.toLowerCase().includes(term));
+    });
+  }, [dueFilter, excludeSettled, pendentes, search]);
+  const pagedPendentes = filteredPendentes.slice(pendentesPage * pendentesPageSize, (pendentesPage + 1) * pendentesPageSize);
+  const subtotalPendentes = summarizePendentes(pagedPendentes);
+  const totalFilteredPendentes = summarizePendentes(filteredPendentes);
+  const filteredFinanceiros = useMemo(() => financeiros.filter((documento) => {
+    if (!showAnnulledFinanceiros && documento.anulado) return false;
+    if (financeiroDateFrom && documento.dataEmissao < financeiroDateFrom) return false;
+    if (financeiroDateTo && documento.dataEmissao > financeiroDateTo) return false;
+    return true;
+  }), [financeiroDateFrom, financeiroDateTo, financeiros, showAnnulledFinanceiros]);
+  const pagedFinanceiros = filteredFinanceiros.slice(financeirosPage * financeirosPageSize, (financeirosPage + 1) * financeirosPageSize);
+
+  useEffect(() => {
+    setPendentesPage(0);
+  }, [dueFilter, excludeSettled, search]);
+
+  useEffect(() => {
+    const lastPage = Math.max(0, Math.ceil(filteredPendentes.length / pendentesPageSize) - 1);
+    if (pendentesPage > lastPage) setPendentesPage(lastPage);
+  }, [filteredPendentes.length, pendentesPage, pendentesPageSize]);
+
+  useEffect(() => {
+    setFinanceirosPage(0);
+  }, [financeiroDateFrom, financeiroDateTo, showAnnulledFinanceiros]);
+
+  useEffect(() => {
+    const lastPage = Math.max(0, Math.ceil(filteredFinanceiros.length / financeirosPageSize) - 1);
+    if (financeirosPage > lastPage) setFinanceirosPage(lastPage);
+  }, [filteredFinanceiros.length, financeirosPage, financeirosPageSize]);
   const selectedCliente = selectedFinanceiro ? clientes.find((cliente) => cliente.id === selectedFinanceiro.clienteId) ?? null : null;
   const selectedModo = selectedFinanceiro ? modos.find((modo) => modo.id === selectedFinanceiro.mPagamentoId) ?? null : null;
   const selectedAppliedTotal = selectedFinanceiro ? round6(sum((selectedFinanceiro.linhas ?? []).map((linha) => linha.valorALiquidar))) : 0;
@@ -514,7 +557,7 @@ export default function PendentesView() {
 
     {!receiptOpen && !selectedFinanceiroId && <section className="fac-panel fac-section-panel fac-receipt-action-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Novo recebimento</p><h2>Liquidar pendentes</h2><p className="fac-muted">Cria um recibo a partir dos documentos em aberto selecionados.</p></div><div className="fac-inline-actions"><button className="fac-soft-button" disabled={loading} onClick={loadTesouraria} type="button">Atualizar</button>{canManageTreasury && <button className="fac-primary-button" disabled={loading || clientesComPendentes.length === 0} onClick={openReceipt} ref={newReceiptButtonRef} type="button">Novo recebimento</button>}</div></div></section>}
 
-    {!receiptOpen && !selectedFinanceiroId && <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><div className="fac-inline-actions"><span className="fac-muted">{financeiros.length} documentos</span><button className="fac-ghost-button" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div></div><ColumnSelector columns={financeiroColumns.columns} open={financeiroColumnsOpen} onMove={financeiroColumns.moveColumn} onReset={financeiroColumns.resetColumns} onToggle={financeiroColumns.toggleColumn}/><table className="fac-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td key={column.key}>{financeiroColumnValue(documento, column.key, openFinancialDetail)}</td>)}</tr>)}{!loading && financeiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length}>Sem documentos financeiros para mostrar.</td></tr>}</tbody></table></section>}
+    {!receiptOpen && !selectedFinanceiroId && <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><div className="fac-inline-actions"><span className="fac-muted">{filteredFinanceiros.length} documentos</span><button className="fac-ghost-button" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div></div><div className="fac-financeiro-filters"><label><span>Data inicial</span><input max={financeiroDateTo || undefined} onChange={(event) => setFinanceiroDateFrom(event.target.value)} type="date" value={financeiroDateFrom}/></label><label><span>Data final</span><input min={financeiroDateFrom || undefined} onChange={(event) => setFinanceiroDateTo(event.target.value)} type="date" value={financeiroDateTo}/></label><label className="fac-financeiro-annulled-filter"><input checked={showAnnulledFinanceiros} onChange={(event) => setShowAnnulledFinanceiros(event.target.checked)} type="checkbox"/><span>Mostrar anulados</span></label></div><ColumnSelector columns={financeiroColumns.columns} open={financeiroColumnsOpen} onMove={financeiroColumns.moveColumn} onReset={financeiroColumns.resetColumns} onToggle={financeiroColumns.toggleColumn}/><table className="fac-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{pagedFinanceiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td key={column.key}>{financeiroColumnValue(documento, column.key, openFinancialDetail)}</td>)}</tr>)}{!loading && filteredFinanceiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length}>Sem documentos financeiros para mostrar neste período.</td></tr>}</tbody></table>{filteredFinanceiros.length > 0 && <div className="fac-list-pagination fac-financeiros-pagination"><span>{filteredFinanceiros.length} {filteredFinanceiros.length === 1 ? "documento" : "documentos"}</span><Paginator first={financeirosPage * financeirosPageSize} onPageChange={(event) => { setFinanceirosPage(event.page); setFinanceirosPageSize(event.rows); }} rows={financeirosPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filteredFinanceiros.length}/></div>}</section>}
 
     {!receiptOpen && selectedFinanceiroId && <section className="fac-panel fac-section-panel fac-financial-detail fac-documents-detail">
       <div className="fac-financial-detail-heading">
@@ -612,7 +655,7 @@ export default function PendentesView() {
     </section>}
 
     {!receiptOpen && !selectedFinanceiroId && <>
-    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Pendentes</p><h2>Conta corrente em aberto e liquidada</h2></div><div className="fac-inline-actions"><input className="fac-list-search" onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar pendente, cliente ou estado" type="search" value={search}/><span className="fac-muted">{filteredPendentes.length} registos</span><button className="fac-ghost-button" onClick={() => setPendenteColumnsOpen((current) => !current)} type="button">Colunas ({pendenteColumns.visibleColumns.length})</button></div></div><ColumnSelector columns={pendenteColumns.columns} open={pendenteColumnsOpen} onMove={pendenteColumns.moveColumn} onReset={pendenteColumns.resetColumns} onToggle={pendenteColumns.toggleColumn}/><table className="fac-table"><thead><tr>{pendenteColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{filteredPendentes.map((item) => <tr key={item.id}>{pendenteColumns.visibleColumns.map((column) => <td key={column.key}>{pendenteColumnValue(item, column.key)}</td>)}</tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={pendenteColumns.visibleColumns.length}>Sem pendentes para mostrar.</td></tr>}</tbody></table></section>
+    <section className="fac-panel fac-section-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Pendentes</p><h2>Conta corrente em aberto e liquidada</h2></div><div className="fac-inline-actions"><input className="fac-list-search" onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar pendente, cliente ou estado" type="search" value={search}/><select aria-label="Filtrar por vencimento" className="fac-pendentes-due-filter" onChange={(event) => setDueFilter(event.target.value as "all" | "overdue" | "not-overdue")} value={dueFilter}><option value="all">Vencidos e não vencidos</option><option value="overdue">Vencidos</option><option value="not-overdue">Não vencidos</option></select><label className="fac-pendentes-settled-filter"><input checked={excludeSettled} onChange={(event) => setExcludeSettled(event.target.checked)} type="checkbox"/><span>Excluir totalmente liquidados</span></label><span className="fac-muted">{filteredPendentes.length} registos</span><button className="fac-ghost-button" onClick={() => setPendenteColumnsOpen((current) => !current)} type="button">Colunas ({pendenteColumns.visibleColumns.length})</button></div></div><ColumnSelector columns={pendenteColumns.columns} open={pendenteColumnsOpen} onMove={pendenteColumns.moveColumn} onReset={pendenteColumns.resetColumns} onToggle={pendenteColumns.toggleColumn}/><table className="fac-table"><thead><tr>{pendenteColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{pagedPendentes.map((item) => <tr key={item.id}>{pendenteColumns.visibleColumns.map((column) => <td key={column.key}>{pendenteColumnValue(item, column.key)}</td>)}</tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={pendenteColumns.visibleColumns.length}>Sem pendentes para mostrar.</td></tr>}</tbody></table>{filteredPendentes.length > 0 && <div className="fac-pendentes-summary"><PendingSummary label="Subtotal da página" values={subtotalPendentes}/><PendingSummary label="Total filtrado" values={totalFilteredPendentes}/></div>}{filteredPendentes.length > 0 && <div className="fac-list-pagination fac-pendentes-pagination"><span>{filteredPendentes.length} {filteredPendentes.length === 1 ? "registo" : "registos"}</span><Paginator first={pendentesPage * pendentesPageSize} onPageChange={(event) => { setPendentesPage(event.page); setPendentesPageSize(event.rows); }} rows={pendentesPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filteredPendentes.length}/></div>}</section>
     </>}
   </>;
 }
@@ -620,6 +663,8 @@ export default function PendentesView() {
 function emptyReceiptForm(): ReceiptForm { return { clienteId: "", moedaId: "", tipoDocumentoId: "", serie: "", dataEmissao: todayIso(), valorRecebido: "", mPagamentoId: "", emissorId: getAuthSession()?.codigo ?? "", observacoes: "" }; }
 function receiptFormKey(form: ReceiptForm) { return JSON.stringify({ clienteId: form.clienteId, moedaId: form.moedaId, tipoDocumentoId: form.tipoDocumentoId, serie: form.serie, dataEmissao: form.dataEmissao, valorRecebido: form.valorRecebido, mPagamentoId: form.mPagamentoId, observacoes: form.observacoes.trim() }); }
 function openPendentesForClient(pendentes: Pendente[], clienteId: number) { return clienteId ? pendentes.filter((item) => item.clienteId === clienteId && Number(item.valorPendente) > 0) : []; }
+function summarizePendentes(items: Pendente[]) { const byCurrency = new Map<string, { count: number; original: number; pending: number }>(); items.forEach((item) => { const current = byCurrency.get(item.moedaId) ?? { count: 0, original: 0, pending: 0 }; current.count += 1; current.original += Number(item.valorDocumento); current.pending += Number(item.valorPendente); byCurrency.set(item.moedaId, current); }); return Array.from(byCurrency.entries()); }
+function PendingSummary({ label, values }: { label: string; values: Array<[string, { count: number; original: number; pending: number }]> }) { return <section><h3>{label}</h3>{values.map(([currency, totals]) => <div className="fac-pendentes-summary-row" key={currency}><span>{totals.count} {totals.count === 1 ? "registo" : "registos"} · {currency}</span><dl><div><dt>Original</dt><dd>{money(totals.original)} {currency}</dd></div><div><dt>Pendente</dt><dd>{money(totals.pending)} {currency}</dd></div></dl></div>)}</section>; }
 function validPaymentMode(modos: MPagamento[], mPagamentoId?: string | null) { return mPagamentoId && modos.some((modo) => modo.id === mPagamentoId) ? mPagamentoId : ""; }
 function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations) { if (!form.clienteId) return "Seleciona o cliente."; if (!form.moedaId) return "Seleciona a moeda."; if (!form.tipoDocumentoId) return "Seleciona o tipo de documento financeiro."; if (!form.serie) return "Seleciona a série."; if (!form.dataEmissao) return "A data de emissão é obrigatória."; if (!form.mPagamentoId) return "Confirma o modo de pagamento."; const target = round6(Number(form.valorRecebido)); if (!Number.isFinite(target) || target <= 0) return "O valor recebido deve ser positivo."; const total = round6(sum(pendentes.map((item) => Number(allocations[item.id] || 0)))); if (total <= 0) return "Distribui o recebimento por pelo menos um pendente."; if (round6(target - total) !== 0) return "O valor recebido e a distribuição pelos pendentes não coincidem."; return null; }
 function estado(item: Pendente) { if (Number(item.valorPendente) <= 0) return "LIQUIDADO"; if (item.dataVencimento < todayIso()) return "VENCIDO"; if (Number(item.valorPendente) < Number(item.valorDocumento)) return "PARCIAL"; return "ABERTO"; }
@@ -635,6 +680,7 @@ function money(value: number) { return Number(value || 0).toLocaleString("pt-PT"
 function sum(values: number[]) { return values.reduce((total, value) => total + Number(value || 0), 0); }
 function round6(value: number) { return Math.round((value + Number.EPSILON) * 1_000_000) / 1_000_000; }
 function todayIso() { const now = new Date(); const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000); return local.toISOString().slice(0, 10); }
+function currentYearStartIso() { return `${todayIso().slice(0, 4)}-01-01`; }
 function blankToNull(value: string) { return value.trim() || null; }
 function Field({ children, label }: { children: React.ReactNode; label: string }) { return <label className="fac-field"><span>{label}</span>{children}</label>; }
 async function fetchJson<T>(url: string): Promise<T> { const response = await apiFetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
