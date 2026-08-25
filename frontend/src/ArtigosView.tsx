@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Paginator } from "primereact/paginator";
 import { useLocation } from "react-router-dom";
 import { apiFetch, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
@@ -94,6 +95,9 @@ export default function ArtigosView() {
   const [tiposIva, setTiposIva] = useState<TipoTaxaIva[]>([]);
   const [selectedCodigo, setSelectedCodigo] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [excludeInactive, setExcludeInactive] = useState(false);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingCodigo, setEditingCodigo] = useState<string | null>(null);
   const [columnEditorOpen, setColumnEditorOpen] = useState(false);
@@ -192,13 +196,25 @@ export default function ArtigosView() {
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return artigos;
-    return artigos.filter((artigo) =>
-      [artigo.codigo, artigo.descricao, artigo.abreviatura, artigo.codigoIdentificacao]
+    return artigos.filter((artigo) => {
+      if (excludeInactive && artigo.inativo) return false;
+      if (!term) return true;
+      return [artigo.codigo, artigo.descricao, artigo.abreviatura, artigo.codigoIdentificacao]
         .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term))
-    );
-  }, [artigos, search]);
+        .some((value) => String(value).toLowerCase().includes(term));
+    });
+  }, [artigos, excludeInactive, search]);
+
+  const pagedArtigos = filtered.slice(page * pageSize, (page + 1) * pageSize);
+
+  useEffect(() => {
+    setPage(0);
+  }, [excludeInactive, search]);
+
+  useEffect(() => {
+    const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
+    if (page > lastPage) setPage(lastPage);
+  }, [filtered.length, page, pageSize]);
 
   const selected = artigos.find((artigo) => artigo.codigo === selectedCodigo) ?? null;
   const familiaNome = familias.find((familia) => familia.id === selected?.familiaId)?.descricao ?? "-";
@@ -315,23 +331,31 @@ export default function ArtigosView() {
 
       <section className="fac-list-toolbar fac-articles-toolbar">
         <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código, descrição ou identificação" type="search" value={search} />
-        <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button>{canManage && <button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button>}</div>
+        <div className="fac-inline-actions">
+          <label className="fac-articles-active-filter"><input checked={excludeInactive} onChange={(event) => setExcludeInactive(event.target.checked)} type="checkbox" /><span>Excluir inativos</span></label>
+          <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button>
+          {canManage && <button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button>}
+        </div>
       </section>
 
       <section className="fac-content-grid fac-articles-content-grid">
         <article className="fac-panel fac-panel-main fac-articles-table-panel">
           <ColumnSelector columns={artigoColumns.columns} open={columnEditorOpen} onMove={artigoColumns.moveColumn} onReset={artigoColumns.resetColumns} onToggle={artigoColumns.toggleColumn} />
-          <table className="fac-table">
-            <thead><tr>{artigoColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead>
+          <table className="fac-table fac-articles-table">
+            <thead><tr>{artigoColumns.visibleColumns.map((column) => <th className={column.key === "pvp" ? "fac-article-number" : undefined} key={column.key}>{column.label}</th>)}</tr></thead>
             <tbody>
-              {filtered.map((artigo) => (
+              {pagedArtigos.map((artigo) => (
                 <tr className={artigo.codigo === selectedCodigo ? "fac-row-selected" : ""} key={artigo.codigo} onClick={() => setSelectedCodigo(artigo.codigo)}>
-                  {artigoColumns.visibleColumns.map((column) => <td key={column.key}>{artigoColumnValue(artigo, column.key, familias)}</td>)}
+                  {artigoColumns.visibleColumns.map((column) => <td className={column.key === "pvp" ? "fac-article-number" : undefined} key={column.key}>{artigoColumnValue(artigo, column.key, familias)}</td>)}
                 </tr>
               ))}
               {!loading && filtered.length === 0 && <tr><td colSpan={artigoColumns.visibleColumns.length}>Sem artigos para mostrar.</td></tr>}
             </tbody>
           </table>
+          {filtered.length > 0 && <div className="fac-list-pagination fac-articles-pagination">
+            <span>{filtered.length} {filtered.length === 1 ? "artigo" : "artigos"}{excludeInactive ? ` de ${artigos.length}` : ""}</span>
+            <Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filtered.length} />
+          </div>}
         </article>
 
         <aside className="fac-panel fac-detail fac-articles-detail-card">

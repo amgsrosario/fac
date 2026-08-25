@@ -590,6 +590,21 @@ button:disabled {
   margin: 0;
 }
 
+.fac-articles-hero {
+  align-items: center;
+  padding: 20px 22px;
+}
+
+.fac-articles-hero .fac-hero-card {
+  border-color: #dfe5dc;
+  padding: 15px 17px;
+  background: var(--fac-product-soft);
+}
+
+.fac-articles-hero .fac-hero-card strong {
+  font-size: 18px;
+}
+
 .fac-clients-header-main,
 .fac-documents-header-main {
   display: grid;
@@ -658,6 +673,99 @@ button:disabled {
 .fac-clients-detail-top h2,
 .fac-documents-detail-top h2 {
   margin-top: 0;
+}
+
+.fac-detail.fac-articles-detail-top {
+  padding: 20px 22px;
+  border-color: #dfe5dc;
+  background: #fff;
+}
+
+.fac-detail.fac-articles-detail-top h2 {
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.fac-detail.fac-articles-detail-top dl {
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin: 10px 0 14px;
+}
+
+.fac-detail.fac-articles-detail-top dl div {
+  display: grid;
+  grid-template-columns: minmax(82px, 0.8fr) minmax(0, 1.2fr);
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  padding: 7px 0;
+}
+
+.fac-detail.fac-articles-detail-top dt {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fac-detail.fac-articles-detail-top dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.fac-detail.fac-articles-detail-top dl div:nth-child(6) dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fac-detail.fac-articles-detail-top button {
+  margin-top: 4px;
+}
+
+.fac-articles-table thead th {
+  border-bottom-color: #d9e1e4;
+  background: #f7f9fa;
+  color: var(--fac-petrol);
+}
+
+.fac-articles-table tbody tr:hover {
+  background: #f4f7f3;
+}
+
+.fac-articles-table tbody tr.fac-row-selected,
+.fac-articles-table tbody tr.fac-row-selected:hover {
+  box-shadow: inset 3px 0 0 var(--fac-gold);
+  background: var(--fac-client-soft);
+}
+
+.fac-articles-table .fac-article-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fac-articles-active-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  color: var(--fac-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.fac-articles-active-filter input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--fac-petrol);
+}
+
+.fac-articles-pagination {
+  margin-top: 12px;
 }
 
 .fac-articles-content-grid,
