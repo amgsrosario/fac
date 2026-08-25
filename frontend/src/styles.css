@@ -872,6 +872,42 @@ button:disabled {
   font-size: 13px;
 }
 
+.fac-current-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.fac-current-account-actions label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--fac-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.fac-current-account-table th:nth-child(n + 5),
+.fac-current-account-table tbody td:nth-child(n + 5),
+.fac-current-account-table tfoot td {
+  text-align: right;
+}
+
+.fac-current-account-table tfoot th,
+.fac-current-account-table tfoot td {
+  border-top: 2px solid var(--fac-border);
+  border-bottom: 0;
+  padding: 13px 10px;
+  background: var(--fac-bg);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fac-current-account-pagination {
+  margin-top: 12px;
+}
+
 .fac-panel {
   padding: 22px;
 }
@@ -2488,6 +2524,12 @@ button:disabled {
   .fac-list-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .fac-current-account-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .fac-financial-detail .fac-documents-detail-title {

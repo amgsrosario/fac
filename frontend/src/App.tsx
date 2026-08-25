@@ -316,6 +316,8 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   const [clientePage, setClientePage] = useState(0);
   const [clientePageSize, setClientePageSize] = useState(20);
   const clienteRequestRef = useRef(0);
+  const clienteSelectionRequestRef = useRef(0);
+  const contaCorrenteRequestRef = useRef(0);
   const [clienteEditorOpen, setClienteEditorOpen] = useState(false);
   const [editingClienteId, setEditingClienteId] = useState<number | null>(null);
   const [clienteForm, setClienteForm] = useState<ClienteForm>(emptyClienteForm);
@@ -371,16 +373,52 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   }
 
   async function loadContaCorrente(clienteId: number) {
+    const requestId = ++contaCorrenteRequestRef.current;
     setClientesLoading(true);
     setError(null);
     try {
       const diagnostico = await fetchJson<ContaCorrenteDiagnostico>(`/api/pendentes/conta-corrente/clientes/${clienteId}/diagnostico`);
-      setContaCorrente(diagnostico);
+      if (requestId === contaCorrenteRequestRef.current) setContaCorrente(diagnostico);
     } catch (err) {
+      if (requestId !== contaCorrenteRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Não foi possível carregar a conta corrente.");
       setContaCorrente(null);
     } finally {
-      setClientesLoading(false);
+      if (requestId === contaCorrenteRequestRef.current) setClientesLoading(false);
+    }
+  }
+
+  async function selectDashboardCliente(clienteId: number) {
+    selectView("Clientes");
+    const requestId = ++clienteSelectionRequestRef.current;
+    clienteRequestRef.current += 1;
+    setClientesLoading(true);
+    setError(null);
+    try {
+      const cliente = await fetchJson<Cliente>(`/api/clientes/${clienteId}`);
+      if (requestId !== clienteSelectionRequestRef.current) return;
+      setClientes((current) => {
+        const currentContent = current?.content ?? [];
+        const existingIndex = currentContent.findIndex((item) => item.id === cliente.id);
+        const content = existingIndex >= 0
+          ? currentContent.map((item) => item.id === cliente.id ? cliente : item)
+          : [...currentContent, cliente].sort((left, right) =>
+              left.nome.localeCompare(right.nome, "pt", { sensitivity: "base" }) || left.id - right.id
+            );
+        return {
+          content,
+          totalElements: current?.totalElements ?? 1,
+          totalPages: current?.totalPages ?? 1,
+          number: current?.number ?? 0,
+          size: current?.size ?? clientePageSize
+        };
+      });
+      setSelectedClienteId(cliente.id);
+    } catch (err) {
+      if (requestId !== clienteSelectionRequestRef.current) return;
+      setError(err instanceof Error ? err.message : "Não foi possível abrir o cliente.");
+    } finally {
+      if (requestId === clienteSelectionRequestRef.current) setClientesLoading(false);
     }
   }
 
@@ -670,6 +708,12 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   }, [mobileDrawerOpen]);
 
   function selectView(view: ViewKey) {
+    if (view === "Clientes") {
+      clienteSelectionRequestRef.current += 1;
+      contaCorrenteRequestRef.current += 1;
+      setSelectedClienteId(null);
+      setContaCorrente(null);
+    }
     setActiveView(view);
     if (view === "Dashboard") {
       navigate("/");
@@ -945,6 +989,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             onDataFim={setDashboardEnd}
             onDataInicio={setDashboardStart}
             onNavigate={selectView}
+            onSelectCliente={selectDashboardCliente}
             onRefresh={() => loadDashboard()}
           />
         )}
@@ -965,6 +1010,7 @@ type DashboardViewProps = {
   onDataFim: (value: string) => void;
   onDataInicio: (value: string) => void;
   onNavigate: (view: ViewKey) => void;
+  onSelectCliente: (clienteId: number) => void;
   onRefresh: () => void;
 };
 
@@ -978,6 +1024,7 @@ function DashboardView({
   onDataFim,
   onDataInicio,
   onNavigate,
+  onSelectCliente,
   onRefresh
 }: DashboardViewProps) {
   const maxEvolution = Math.max(1, ...(data?.evolucao.flatMap((point) => [Number(point.vendas), Number(point.recebimentos)]) ?? [0]));
@@ -1031,7 +1078,7 @@ function DashboardView({
           <div className="fac-panel-header"><div><p className="fac-eyebrow">Posição atual</p><h2 id="dashboard-clients-title">Clientes com maior saldo</h2></div></div>
           {loading ? <p className="fac-empty-state">A carregar saldos...</p> : data?.clientesComMaiorSaldo.length ? <div className="fac-dashboard-client-list">
             {data.clientesComMaiorSaldo.map((cliente) => <article className="fac-dashboard-client-row" key={cliente.clienteId}>
-              <button className="fac-table-link" onClick={() => onNavigate("Clientes")} title={cliente.clienteNome} type="button"><span>{cliente.clienteNome}</span></button>
+              <button className="fac-table-link" onClick={() => onSelectCliente(cliente.clienteId)} title={cliente.clienteNome} type="button"><span>{cliente.clienteNome}</span></button>
               <div className="fac-dashboard-client-meta"><span>#{cliente.clienteId}</span><span>mais antigo {datePt(cliente.vencimentoMaisAntigo)}</span><span className="fac-dashboard-client-count">{cliente.documentosPendentes} documentos</span><strong>{money(cliente.saldo)} {data.moedaId}</strong></div>
             </article>)}
           </div> : <p className="fac-empty-state">Não existem clientes com valores em aberto.</p>}
@@ -1128,6 +1175,35 @@ function ClientesView({
   const [columnEditorOpen, setColumnEditorOpen] = useState(false);
   const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
   const [columns, setColumns] = useState<ClienteColumn[]>(loadClientColumns);
+  const [contaPage, setContaPage] = useState(0);
+  const [contaPageSize, setContaPageSize] = useState(10);
+  const [contaApenasNaoLiquidados, setContaApenasNaoLiquidados] = useState(false);
+
+  const contaDocumentos = contaCorrente?.documentos ?? [];
+  const contaDocumentosFiltrados = useMemo(() => contaApenasNaoLiquidados
+    ? contaDocumentos.filter((documento) => Number(documento.valorPendente) > 0)
+    : contaDocumentos, [contaApenasNaoLiquidados, contaCorrente]);
+  const contaDocumentosPagina = contaDocumentosFiltrados.slice(contaPage * contaPageSize, (contaPage + 1) * contaPageSize);
+  const contaTotais = useMemo(() => {
+    const porMoeda = new Map<string, { total: number; recebido: number; pendente: number }>();
+    contaDocumentosFiltrados.forEach((documento) => {
+      const total = porMoeda.get(documento.moedaId) ?? { total: 0, recebido: 0, pendente: 0 };
+      total.total += Number(documento.valorDocumento);
+      total.recebido += Number(documento.valorRecebidoAtivo);
+      total.pendente += Number(documento.valorPendente);
+      porMoeda.set(documento.moedaId, total);
+    });
+    return Array.from(porMoeda.entries());
+  }, [contaDocumentosFiltrados]);
+
+  useEffect(() => {
+    setContaPage(0);
+  }, [selectedClienteId, contaApenasNaoLiquidados]);
+
+  useEffect(() => {
+    const lastPage = Math.max(0, Math.ceil(contaDocumentosFiltrados.length / contaPageSize) - 1);
+    if (contaPage > lastPage) setContaPage(lastPage);
+  }, [contaDocumentosFiltrados.length, contaPage, contaPageSize]);
 
   useEffect(() => {
     window.localStorage.setItem(CLIENT_COLUMNS_STORAGE, JSON.stringify(columns));
@@ -1424,10 +1500,13 @@ function ClientesView({
             <p className="fac-eyebrow">Conta corrente</p>
             <h2>{contaCorrente?.clienteNome ?? selectedCliente?.nome ?? "Sem cliente"}</h2>
           </div>
-          <span className="fac-muted">{loading ? "A carregar..." : `${contaCorrente?.documentos.length ?? 0} documentos`}</span>
+          <div className="fac-current-account-actions">
+            <label><input checked={contaApenasNaoLiquidados} onChange={(event) => setContaApenasNaoLiquidados(event.target.checked)} type="checkbox" /> <span>Apenas não liquidados</span></label>
+            <span className="fac-muted">{loading ? "A carregar..." : contaApenasNaoLiquidados ? `${contaDocumentosFiltrados.length} de ${contaDocumentos.length} documentos` : `${contaDocumentos.length} documentos`}</span>
+          </div>
         </div>
 
-        <table className="fac-table">
+        <div className="fac-table-scroll"><table className="fac-table fac-current-account-table">
           <thead>
             <tr>
               <th>Documento</th>
@@ -1440,7 +1519,7 @@ function ClientesView({
             </tr>
           </thead>
           <tbody>
-            {(contaCorrente?.documentos ?? []).map((documento) => (
+            {contaDocumentosPagina.map((documento) => (
               <tr key={documento.pendenteId}>
                 <td>{referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento)}</td>
                 <td><span className="fac-status">{documento.estado}</span></td>
@@ -1451,13 +1530,18 @@ function ClientesView({
                 <td>{money(documento.valorPendente)} {documento.moedaId}</td>
               </tr>
             ))}
-            {!loading && (contaCorrente?.documentos.length ?? 0) === 0 && (
+            {!loading && contaDocumentosFiltrados.length === 0 && (
               <tr>
-                <td colSpan={7}>Sem documentos na conta corrente.</td>
+                <td colSpan={7}>{contaApenasNaoLiquidados ? "Sem documentos por liquidar." : "Sem documentos na conta corrente."}</td>
               </tr>
             )}
           </tbody>
-        </table>
+          {contaTotais.length > 0 && <tfoot>{contaTotais.map(([moedaId, totais]) => <tr key={moedaId}><th colSpan={4}>Totais ({moedaId})</th><td>{money(totais.total)} {moedaId}</td><td>{money(totais.recebido)} {moedaId}</td><td>{money(totais.pendente)} {moedaId}</td></tr>)}</tfoot>}
+        </table></div>
+        {contaDocumentosFiltrados.length > 0 && <div className="fac-list-pagination fac-current-account-pagination">
+          <span>{contaDocumentosFiltrados.length} {contaDocumentosFiltrados.length === 1 ? "documento" : "documentos"}</span>
+          <Paginator first={contaPage * contaPageSize} onPageChange={(event) => { setContaPage(event.page); setContaPageSize(event.rows); }} rows={contaPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={contaDocumentosFiltrados.length} />
+        </div>}
       </section>
     </>
   );
