@@ -987,9 +987,7 @@ function DashboardView({
         <div>
           <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Alentejo Sabores, Lda. · Demonstração" : "Ambiente de trabalho"}</p>
           <h2>Visão geral da atividade</h2>
-          <p>
-            Acompanha documentos, clientes e recebimentos num único espaço de trabalho.
-          </p>
+          <p>Resumo da atividade comercial e financeira.</p>
         </div>
         <div className="fac-hero-card">
           <span>Estado do sistema</span>
@@ -1169,10 +1167,8 @@ function ClientesView({
           <section className="fac-hero fac-clients-hero">
             <div>
               <p className="fac-eyebrow">Clientes</p>
-              <h2>Consulta simples com conta corrente integrada</h2>
-              <p>
-                Consulta clientes e acompanha a respetiva conta corrente num único local.
-              </p>
+              <h2>Clientes e conta corrente</h2>
+              <p>Clientes e respetiva conta corrente.</p>
             </div>
           </section>
 

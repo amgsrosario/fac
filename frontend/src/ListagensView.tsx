@@ -398,7 +398,7 @@ export default function ListagensView() {
 
   return <>
     <section className="fac-hero">
-      <div><p className="fac-eyebrow">Listagens</p><h2>Consulta transversal dos dados do FAC</h2><p>Escolhe uma fonte, define as colunas necessárias e consulta cabeçalhos ou linhas sem interferir com a operação diária.</p></div>
+      <div><p className="fac-eyebrow">Listagens</p><h2>Dados comerciais e financeiros</h2><p>Consulta dos dados comerciais e financeiros.</p></div>
       <div className="fac-hero-card"><span>Fonte atual</span><strong>{SOURCES.find((item) => item.key === source)?.label}</strong><small>{loading ? "A carregar..." : source === "extratoCliente" ? extratos ? `${extratos.reduce((total, extrato) => total + extrato.moedas.reduce((subtotal, moeda) => subtotal + moeda.movimentos.length, 0), 0)} movimentos` : "A aguardar consulta" : `${isRemoteCommercialSource(source) ? totalElements : rows.length} registos`}</small></div>
     </section>
 

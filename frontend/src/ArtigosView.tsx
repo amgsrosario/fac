@@ -287,7 +287,7 @@ export default function ArtigosView() {
         <div>
           <p className="fac-eyebrow">Artigos</p>
           <h2>Catálogo de artigos</h2>
-          <p>Consulta, cria e edita apenas os dados necessários para usar artigos nas linhas dos documentos.</p>
+          <p>Artigos e serviços.</p>
         </div>
         <div className="fac-hero-card">
           <span>Catálogo</span>

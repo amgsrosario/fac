@@ -508,7 +508,7 @@ export default function PendentesView() {
     {message && <p className="fac-message">{message}</p>}
 
     <section className="fac-hero">
-      <div><p className="fac-eyebrow">Tesouraria</p><h2>Recebimentos por cliente</h2><p>Consulta recebimentos emitidos, abre o detalhe de cada recibo e cria novos recebimentos a partir dos pendentes.</p></div>
+      <div><p className="fac-eyebrow">Tesouraria</p><h2>Recebimentos por cliente</h2><p>Recebimentos emitidos e valores pendentes.</p></div>
       <div className="fac-hero-card"><span>Saldo em aberto</span><strong>{money(sum(abertas.map((item) => item.valorPendente)))} EUR</strong><small>{abertas.length} pendentes ativos</small></div>
     </section>
 

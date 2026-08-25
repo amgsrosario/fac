@@ -567,7 +567,7 @@ export default function DocumentosView() {
             <div>
               <p className="fac-eyebrow">Documentos comerciais</p>
               <h2>Consulta de documentos</h2>
-              <p>Pesquisa, seleciona e abre documentos comerciais para consulta ou edição de rascunhos.</p>
+              <p>Documentos comerciais emitidos e em rascunho.</p>
             </div>
           </section>
 
