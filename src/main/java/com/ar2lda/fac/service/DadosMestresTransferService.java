@@ -32,6 +32,7 @@ import com.ar2lda.fac.repository.TransporteRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.openxml4j.util.ZipSecureFile;
@@ -547,7 +548,39 @@ public class DadosMestresTransferService {
     }
 
     private ExportedFile exportRows(String baseName, String formato, List<String> headers, List<Map<String, String>> rows) {
-        return "xlsx".equals(formato) ? exportXlsx(baseName, headers, rows) : exportCsv(baseName, headers, rows);
+        return switch (formato) {
+            case "pdf" -> exportPdf(baseName, headers, rows);
+            case "xlsx" -> exportXlsx(baseName, headers, rows);
+            default -> exportCsv(baseName, headers, rows);
+        };
+    }
+
+    private ExportedFile exportPdf(String baseName, List<String> headers, List<Map<String, String>> rows) {
+        String title = headers == CLIENTE_HEADERS ? "Clientes" : headers == ARTIGO_HEADERS ? "Artigos" : "Dados";
+        List<String> visibleHeaders = headers == CLIENTE_HEADERS
+                ? List.of("nome", "nif", "email", "tel", "localidade", "paisId", "moedaId", "rivaId", "inativo")
+                : headers == ARTIGO_HEADERS
+                    ? List.of("codigo", "descricao", "tipoArtigo", "unidade", "familiaId", "ivaVendaId", "pvp", "retencao", "inativo")
+                    : headers;
+        StringBuilder tableHeaders = new StringBuilder();
+        visibleHeaders.forEach(header -> tableHeaders.append("<th>").append(html(header)).append("</th>"));
+        StringBuilder tableRows = new StringBuilder();
+        for (Map<String, String> row : rows) {
+            tableRows.append("<tr>");
+            visibleHeaders.forEach(header -> tableRows.append("<td>").append(html(row.get(header))).append("</td>"));
+            tableRows.append("</tr>");
+        }
+        String html = "<html><head><meta charset='UTF-8'/><style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial;font-size:8pt;color:#38434d}h1{font-size:17pt}table{width:100%;border-collapse:collapse;-fs-table-paginate:paginate}th{background:#f2f3f1;text-align:left;padding:5px;border-bottom:1px solid #bbb}td{padding:5px;border-bottom:1px solid #ddd}tr{page-break-inside:avoid}</style></head><body><h1>" + title + "</h1><p>" + rows.size() + " registos</p><table><thead><tr>" + tableHeaders + "</tr></thead><tbody>" + tableRows + "</tbody></table></body></html>";
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.useFastMode();
+            builder.withHtmlContent(html, null);
+            builder.toStream(out);
+            builder.run();
+            return new ExportedFile(baseName + ".pdf", "application/pdf", out.toByteArray());
+        } catch (Exception exception) {
+            throw new IllegalStateException("Erro ao gerar PDF", exception);
+        }
     }
 
     private ExportedFile exportCsv(String baseName, List<String> headers, List<Map<String, String>> rows) {
@@ -793,7 +826,12 @@ public class DadosMestresTransferService {
     private String normalizedExportFormat(String formato) {
         if (formato == null || formato.isBlank() || "csv".equalsIgnoreCase(formato)) return "csv";
         if ("xlsx".equalsIgnoreCase(formato)) return "xlsx";
+        if ("pdf".equalsIgnoreCase(formato)) return "pdf";
         throw new BadRequestException("Formato de exportação não suportado");
+    }
+
+    private String html(String value) {
+        return Objects.toString(value, "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
     public record ExportedFile(String filename, String mediaType, byte[] content) {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Paginator } from "primereact/paginator";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getAuthSession, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
@@ -162,6 +163,8 @@ export default function DocumentosView() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [linhas, setLinhas] = useState<LinhaDocumento[]>([]);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [linesLoading, setLinesLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -469,6 +472,16 @@ export default function DocumentosView() {
         .some((value) => value.toLowerCase().includes(term))
     );
   }, [documentos, search]);
+  const pagedDocumentos = filtered.slice(page * pageSize, (page + 1) * pageSize);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
+
+  useEffect(() => {
+    const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
+    if (page > lastPage) setPage(lastPage);
+  }, [filtered.length, page, pageSize]);
 
   const selected = documentos.find((documento) => documento.id === selectedId) ?? null;
   const emitted = documentos.filter((documento) => documento.estado === "EMITIDO" && !documento.anulado).length;
@@ -615,7 +628,7 @@ export default function DocumentosView() {
           <table className="fac-table">
             <thead><tr>{documentoColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead>
             <tbody>
-              {filtered.map((documento) => (
+              {pagedDocumentos.map((documento) => (
                 <tr className={documento.id === selectedId ? "fac-row-selected" : ""} key={documento.id} onClick={() => navigate(`/documentos/${documento.id}`)}>
                   {documentoColumns.visibleColumns.map((column) => <td key={column.key}>{documentoColumnValue(documento, column.key)}</td>)}
                 </tr>
@@ -623,6 +636,7 @@ export default function DocumentosView() {
               {!loading && filtered.length === 0 && <tr><td colSpan={documentoColumns.visibleColumns.length}>Sem documentos para mostrar.</td></tr>}
             </tbody>
           </table>
+          {filtered.length > 0 && <div className="fac-list-pagination"><span>{filtered.length} {filtered.length === 1 ? "documento" : "documentos"}</span><Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filtered.length}/></div>}
         </article>
 
         <aside className="fac-panel fac-detail fac-documents-detail-card">

@@ -95,7 +95,8 @@ export default function ArtigosView() {
   const [tiposIva, setTiposIva] = useState<TipoTaxaIva[]>([]);
   const [selectedCodigo, setSelectedCodigo] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [excludeInactive, setExcludeInactive] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState<"pdf" | "xlsx" | null>(null);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -197,19 +198,40 @@ export default function ArtigosView() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return artigos.filter((artigo) => {
-      if (excludeInactive && artigo.inativo) return false;
+      if (!showInactive && artigo.inativo) return false;
       if (!term) return true;
       return [artigo.codigo, artigo.descricao, artigo.abreviatura, artigo.codigoIdentificacao]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(term));
     });
-  }, [artigos, excludeInactive, search]);
+  }, [artigos, showInactive, search]);
 
   const pagedArtigos = filtered.slice(page * pageSize, (page + 1) * pageSize);
 
   useEffect(() => {
     setPage(0);
-  }, [excludeInactive, search]);
+  }, [showInactive, search]);
+
+  async function exportArtigos(formato: "pdf" | "xlsx") {
+    setExportingFormat(formato);
+    try {
+      const params = new URLSearchParams({ formato });
+      if (!showInactive) params.set("ativos", "true");
+      const response = await apiFetch(`/api/exportacoes/artigos?${params}`);
+      if (!response.ok) throw new Error(`Erro HTTP ${response.status}`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filenameFromDisposition(response.headers.get("Content-Disposition")) ?? `artigos.${formato}`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Não foi possível exportar os artigos.");
+    } finally {
+      setExportingFormat(null);
+    }
+  }
 
   useEffect(() => {
     const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
@@ -332,7 +354,9 @@ export default function ArtigosView() {
       <section className="fac-list-toolbar fac-articles-toolbar">
         <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código, descrição ou identificação" type="search" value={search} />
         <div className="fac-inline-actions">
-          <label className="fac-articles-active-filter"><input checked={excludeInactive} onChange={(event) => setExcludeInactive(event.target.checked)} type="checkbox" /><span>Excluir inativos</span></label>
+          <label className="fac-articles-active-filter"><input checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} type="checkbox" /><span>Mostrar inativos</span></label>
+          <button className="fac-soft-button" disabled={exportingFormat !== null} onClick={() => exportArtigos("pdf")} type="button">{exportingFormat === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button>
+          <button className="fac-soft-button" disabled={exportingFormat !== null} onClick={() => exportArtigos("xlsx")} type="button">{exportingFormat === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
           <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button>
           {canManage && <button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button>}
         </div>
@@ -353,7 +377,7 @@ export default function ArtigosView() {
             </tbody>
           </table>
           {filtered.length > 0 && <div className="fac-list-pagination fac-articles-pagination">
-            <span>{filtered.length} {filtered.length === 1 ? "artigo" : "artigos"}{excludeInactive ? ` de ${artigos.length}` : ""}</span>
+            <span>{filtered.length} {filtered.length === 1 ? "artigo" : "artigos"}{!showInactive ? ` de ${artigos.length}` : ""}</span>
             <Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filtered.length} />
           </div>}
         </article>
@@ -484,6 +508,11 @@ function normalizeCode(value: string) {
 function blankToNull(value: string) {
   const trimmed = value.trim();
   return trimmed || null;
+}
+
+function filenameFromDisposition(disposition: string | null) {
+  const match = disposition?.match(/filename="?([^";]+)"?/i);
+  return match?.[1] ?? null;
 }
 
 function firstActiveIva(tiposIva: TipoTaxaIva[]) {

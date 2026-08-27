@@ -315,6 +315,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   const [clienteSearch, setClienteSearch] = useState("");
   const [clientePage, setClientePage] = useState(0);
   const [clientePageSize, setClientePageSize] = useState(20);
+  const [clienteMostrarInativos, setClienteMostrarInativos] = useState(false);
   const clienteRequestRef = useRef(0);
   const clienteSelectionRequestRef = useRef(0);
   const contaCorrenteRequestRef = useRef(0);
@@ -358,6 +359,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     try {
       const params = new URLSearchParams({ page: String(pageNumber), size: String(pageSize), sort: "nome,asc" });
       if (search.trim()) params.set("search", search.trim());
+      if (!clienteMostrarInativos) params.set("inativo", "false");
       const page = await fetchPage<Cliente>(`/api/clientes?${params}`);
       if (requestId !== clienteRequestRef.current) return;
       setClientes(page);
@@ -611,7 +613,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     if (shellView !== "Clientes") return;
     const timeout = window.setTimeout(() => loadClientes(0, clienteSearch, clientePageSize), 300);
     return () => window.clearTimeout(timeout);
-  }, [clienteSearch]);
+  }, [clienteSearch, clienteMostrarInativos]);
 
   useEffect(() => {
     if (!embeddedContent) {
@@ -777,11 +779,11 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     return true;
   }
 
-  const metrics = [
+  const metrics: Array<{ label: string; value: string; tone: string; alignStart?: boolean }> = [
     { label: "Vendas no período", value: `${money(dashboardData?.vendas ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "product" },
     { label: "Recebimentos no período", value: `${money(dashboardData?.recebimentos ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "treasury" },
     { label: "Valores em aberto", value: `${money(dashboardData?.valorEmAberto ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "client" },
-    { label: "Documentos vencidos", value: `${dashboardData?.documentosVencidos.quantidade ?? 0} · ${money(dashboardData?.documentosVencidos.valor ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "document" }
+    { label: "Documentos vencidos", value: `${dashboardData?.documentosVencidos.quantidade ?? 0} ${money(dashboardData?.documentosVencidos.valor ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "document", alignStart: true }
   ];
 
   return (
@@ -933,6 +935,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             page={clientePage}
             pageSize={clientePageSize}
             search={clienteSearch}
+            mostrarInativos={clienteMostrarInativos}
             totalElements={clientes?.totalElements ?? 0}
             notice={clienteNotice}
             editorMessage={editorMessage}
@@ -953,6 +956,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             onOpenEditor={openClienteEditor}
             onPageChange={(page, size) => { setClientePageSize(size); loadClientes(page, clienteSearch, size); }}
             onSearch={setClienteSearch}
+            onMostrarInativos={setClienteMostrarInativos}
             onSaveCliente={editingClienteId ? updateCliente : createCliente}
             onSelectCliente={setSelectedClienteId}
           />
@@ -1006,7 +1010,7 @@ type DashboardViewProps = {
   dataInicio: string;
   error: string | null;
   loading: boolean;
-  metrics: { label: string; value: string; tone: string }[];
+  metrics: { label: string; value: string; tone: string; alignStart?: boolean }[];
   onDataFim: (value: string) => void;
   onDataInicio: (value: string) => void;
   onNavigate: (view: ViewKey) => void;
@@ -1052,7 +1056,7 @@ function DashboardView({
 
       <section className="fac-metrics" aria-label="Indicadores">
         {metrics.map((metric) => (
-          <article className={`fac-metric ${metric.tone}`} key={metric.label}>
+          <article className={`fac-metric ${metric.tone}${metric.alignStart ? " fac-metric-align-start" : ""}`} key={metric.label}>
             <span>{metric.label}</span>
             <strong>{loading || error ? "-" : metric.value}</strong>
           </article>
@@ -1119,6 +1123,7 @@ type ClientesViewProps = {
   page: number;
   pageSize: number;
   search: string;
+  mostrarInativos: boolean;
   totalElements: number;
   notice: string | null;
   editorMessage: string | null;
@@ -1139,6 +1144,7 @@ type ClientesViewProps = {
   onOpenEditor: () => void;
   onPageChange: (page: number, size: number) => void;
   onSearch: (value: string) => void;
+  onMostrarInativos: (value: boolean) => void;
   onSaveCliente: () => void;
   onSelectCliente: (clienteId: number) => void;
 };
@@ -1149,6 +1155,7 @@ function ClientesView({
   page,
   pageSize,
   search,
+  mostrarInativos,
   totalElements,
   notice,
   editorMessage,
@@ -1169,6 +1176,7 @@ function ClientesView({
   onOpenEditor,
   onPageChange,
   onSearch,
+  onMostrarInativos,
   onSaveCliente,
   onSelectCliente
 }: ClientesViewProps) {
@@ -1178,6 +1186,28 @@ function ClientesView({
   const [contaPage, setContaPage] = useState(0);
   const [contaPageSize, setContaPageSize] = useState(10);
   const [contaApenasNaoLiquidados, setContaApenasNaoLiquidados] = useState(false);
+  const [exportingClientes, setExportingClientes] = useState<"pdf" | "xlsx" | null>(null);
+
+  async function exportarClientes(formato: "pdf" | "xlsx") {
+    setExportingClientes(formato);
+    try {
+      const params = new URLSearchParams({ formato });
+      if (!mostrarInativos) params.set("ativos", "true");
+      const response = await apiFetch(`/api/exportacoes/clientes?${params}`);
+      if (!response.ok) throw new Error(`Erro HTTP ${response.status}`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filenameFromDisposition(response.headers.get("Content-Disposition")) ?? `clientes.${formato}`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (exportError) {
+      window.alert(exportError instanceof Error ? exportError.message : "Não foi possível exportar os clientes.");
+    } finally {
+      setExportingClientes(null);
+    }
+  }
 
   const contaDocumentos = contaCorrente?.documentos ?? [];
   const contaDocumentosFiltrados = useMemo(() => contaApenasNaoLiquidados
@@ -1295,20 +1325,19 @@ function ClientesView({
         </aside>
       </section>
 
+      <section className={`fac-list-toolbar fac-clients-toolbar ${editorOpen ? "fac-hidden" : ""}`}>
+        <input aria-label="Pesquisar clientes" onChange={(event) => onSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onSearch(""); }} placeholder="Pesquisar por código, nome, NIF ou email" type="search" value={search} />
+        <div className="fac-inline-actions">
+          <label className="fac-listing-checkbox"><input checked={mostrarInativos} onChange={(event) => onMostrarInativos(event.target.checked)} type="checkbox"/><span>Mostrar inativos</span></label>
+          <button className="fac-soft-button" disabled={exportingClientes !== null} onClick={() => exportarClientes("pdf")} type="button">{exportingClientes === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button>
+          <button className="fac-soft-button" disabled={exportingClientes !== null} onClick={() => exportarClientes("xlsx")} type="button">{exportingClientes === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
+          <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({visibleColumns.length})</button>
+          {canManage && <button className="fac-primary-button" onClick={onOpenEditor} type="button">Novo cliente</button>}
+        </div>
+      </section>
+
       <section className={`fac-content-grid fac-clients-content-grid ${editorOpen ? "fac-hidden" : ""}`}>
         <article className="fac-panel fac-panel-main fac-clients-table-panel">
-          <div className="fac-panel-header">
-            <div>
-              <p className="fac-eyebrow">Consulta</p>
-              <h2>Clientes</h2>
-            </div>
-            <div className="fac-inline-actions">
-              <input aria-label="Pesquisar clientes" className="fac-list-search" onChange={(event) => onSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onSearch(""); }} placeholder="Pesquisar por código, nome, NIF ou email" type="search" value={search} />
-              <button className="fac-ghost-button" disabled={!search} onClick={() => onSearch("")} type="button">Limpar</button>
-              <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({visibleColumns.length})</button>
-              {canManage && <button className="fac-primary-button" onClick={onOpenEditor} type="button">Novo cliente</button>}
-            </div>
-          </div>
 
           {columnEditorOpen && <div className="fac-column-editor">
             <div className="fac-column-editor-header">
@@ -1859,6 +1888,11 @@ function blankToNull(value: string) {
 
 function numberOrNull(value: string) {
   return value ? Number(value) : null;
+}
+
+function filenameFromDisposition(disposition: string | null) {
+  const match = disposition?.match(/filename="?([^";]+)"?/i);
+  return match?.[1] ?? null;
 }
 
 function money(value: number) {

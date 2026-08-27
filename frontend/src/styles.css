@@ -557,6 +557,10 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+.fac-metric.fac-metric-align-start strong {
+  text-align: left;
+}
+
 .fac-content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 330px;
@@ -1923,6 +1927,17 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.fac-table-outside-controls {
+  margin-bottom: 18px;
+}
+
+.fac-pendentes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .fac-list-toolbar input {
   width: min(480px, 100%);
   border: 1px solid var(--fac-border);
@@ -2874,7 +2889,8 @@ button:disabled {
   .fac-inline-actions,
   .fac-financial-actions,
   .fac-form-footer,
-  .fac-list-toolbar {
+  .fac-list-toolbar,
+  .fac-pendentes-toolbar {
     align-items: stretch;
     flex-direction: column;
   }

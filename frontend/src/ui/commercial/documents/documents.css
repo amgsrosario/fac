@@ -586,6 +586,7 @@
 
 .fac-draft-lines-table tr.active-line td {
   background: color-mix(in srgb, var(--fac-accent) 7%, var(--fac-surface));
+  border-bottom: 1px solid color-mix(in srgb, var(--fac-accent) 45%, var(--fac-border));
   border-top-color: color-mix(in srgb, var(--fac-accent) 45%, var(--fac-border));
 }
 
