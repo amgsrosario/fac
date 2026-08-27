@@ -159,7 +159,7 @@ public class DocumentoComercialPdfService {
                 </tr></table></div>
                 %s
                 <table class="top"><tr>
-                  <td class="company">%s<strong>%s</strong><br />NIF %s<br />%s<br />%s<br /><span class="muted">%s %s %s</span></td>
+                  <td class="company">%s%s</td>
                   <td class="doc-title"><h1>%s</h1><strong>%s %s/%s</strong><br /><span class="muted">Emitido em %s</span><br /><span class="muted">Vencimento %s</span></td>
                 </tr></table>
 
@@ -195,9 +195,7 @@ public class DocumentoComercialPdfService {
                 esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
                 esc(documento.clienteNome()), esc(documento.clienteNif()),
                 anulada,
-                logo(empresa), esc(empresa.nome()), esc(empresa.nif()), address(empresa.morada(), empresa.morada1()),
-                esc(joinPostal(empresa.codPostal(), empresa.localidade())), esc(empresa.email()), esc(empresa.web()),
-                hasText(empresa.telefone()) ? " · Tel. " + esc(empresa.telefone()) : "",
+                logo(empresa), companyHeader(empresa),
                 esc(documento.tipoDocumentoDescricao()), esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(),
                 date(documento.dataEmissao()), date(documento.dataVencimento()),
                 esc(documento.clienteNome()), esc(documento.clienteNif()), address(documento.clienteMorada(), documento.clienteMorada1()),
@@ -226,6 +224,25 @@ public class DocumentoComercialPdfService {
         }
         return "<img class=\"logo\" src=\"data:" + esc(empresa.logoMediaType()) + ";base64,"
                 + Base64.getEncoder().encodeToString(empresa.logo()) + "\" alt=\"Logotipo\" />";
+    }
+
+    private String companyHeader(EmitenteFiscalSnapshotDto empresa) {
+        return "<strong>" + esc(empresa.nome()) + "</strong>"
+                + line(empresa.morada(), null)
+                + line(empresa.morada1(), null)
+                + line(empresa.codPostal(), null)
+                + line(empresa.localidade(), null)
+                + line(empresa.nif(), "NIF")
+                + line(money(empresa.capitalSocial()) + " €", "Capital social")
+                + line(empresa.matriculaRegistoComercial(), "Matricula Registo Comercial")
+                + line(empresa.email(), null);
+    }
+
+    private String line(String value, String label) {
+        if (!hasText(value)) {
+            return "";
+        }
+        return "<br />" + (label == null ? "" : esc(label) + " ") + esc(value);
     }
 
     private String renderLinha(LinhaDocumentoComercialDto linha) {

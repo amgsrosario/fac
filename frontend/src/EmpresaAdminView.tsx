@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "./api";
 
 type Empresa = {
+  id?: number;
   nome: string;
   nomeComercial?: string;
   nif: string;
@@ -27,6 +28,10 @@ type Empresa = {
   logotipoMediaType?: string;
   atualizadoEm?: string;
   atualizadoPor?: string;
+  codigoDistrito?: string;
+  codigoConcelho?: string;
+  concelho?: string;
+  freguesiaNome?: string;
 };
 
 const emptyEmpresa: Empresa = {
@@ -190,10 +195,22 @@ async function fetchEmpresa(): Promise<Empresa> {
 }
 
 async function sendEmpresa(body: Empresa): Promise<Empresa> {
+  const {
+    id: _id,
+    temLogotipo: _temLogotipo,
+    logotipoMediaType: _logotipoMediaType,
+    atualizadoEm: _atualizadoEm,
+    atualizadoPor: _atualizadoPor,
+    codigoDistrito: _codigoDistrito,
+    codigoConcelho: _codigoConcelho,
+    concelho: _concelho,
+    freguesiaNome: _freguesiaNome,
+    ...payload
+  } = body;
   const response = await apiFetch("/api/empresa", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
+    body: JSON.stringify(payload)
   });
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();

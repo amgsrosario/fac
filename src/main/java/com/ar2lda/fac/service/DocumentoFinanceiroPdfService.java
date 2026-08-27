@@ -112,7 +112,7 @@ public class DocumentoFinanceiroPdfService {
                 %s
                 %s
                 <table class="top"><tr>
-                  <td class="company"><strong>%s</strong><br />NIF %s<br />%s<br />%s<br /><span class="muted">%s %s</span></td>
+                  <td class="company">%s</td>
                   <td class="doc-title"><h1>%s</h1><strong>%s %s/%s</strong><br /><span class="muted">Emitido em %s</span></td>
                 </tr></table>
 
@@ -130,7 +130,7 @@ public class DocumentoFinanceiroPdfService {
                 </body></html>
                 """.formatted(
                 demoLabel(), anulada,
-                esc(empresa.nome()), esc(empresa.nif()), address(empresa.morada(), empresa.morada1()), esc(joinPostal(empresa.codPostalId(), empresa.localidade())), esc(empresa.email()), esc(empresa.web()),
+                companyHeader(empresa),
                 "Recibo", esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
                 esc(cliente.nome()), esc(cliente.nif()), address(cliente.morada(), cliente.morada1()), esc(joinPostal(cliente.codPostalId(), cliente.localidade())),
                 esc(documento.moedaId()), value(documento.mPagamentoId()), documento.dataHoraOperacao() == null ? "-" : esc(documento.dataHoraOperacao().toString()),
@@ -145,6 +145,25 @@ public class DocumentoFinanceiroPdfService {
 
     private String demoLabel() {
         return demoEnabled ? "<div class=\"demo-label\">Versão de demonstração</div>" : "";
+    }
+
+    private String companyHeader(EmpresaDto empresa) {
+        return "<strong>" + esc(empresa.nome()) + "</strong>"
+                + line(empresa.morada(), null)
+                + line(empresa.morada1(), null)
+                + line(empresa.codPostalId(), null)
+                + line(empresa.localidade(), null)
+                + line(empresa.nif(), "NIF")
+                + line(money(empresa.capitalSocial()) + " €", "Capital social")
+                + line(empresa.matriculaRegistoComercial(), "Matricula Registo Comercial")
+                + line(empresa.email(), null);
+    }
+
+    private String line(String value, String label) {
+        if (!hasText(value)) {
+            return "";
+        }
+        return "<br />" + (label == null ? "" : esc(label) + " ") + esc(value);
     }
 
     private String td(String text, String cssClass) {
