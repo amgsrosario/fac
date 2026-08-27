@@ -7,6 +7,7 @@ import com.ar2lda.fac.controller.dto.ListagemLinhaFinanceiraDto;
 import com.ar2lda.fac.controller.dto.PendentesListagemDto;
 import com.ar2lda.fac.reporting.pendentes.PendentesExcelExporter;
 import com.ar2lda.fac.reporting.pendentes.PendentesPdfExporter;
+import com.ar2lda.fac.reporting.listagens.ListagemTabularExporter;
 import com.ar2lda.fac.service.ListagensService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
@@ -48,6 +50,7 @@ public class ListagensController {
     private final ListagensService service;
     private final PendentesPdfExporter pendentesPdfExporter;
     private final PendentesExcelExporter pendentesExcelExporter;
+    private final ListagemTabularExporter listagemTabularExporter;
 
     @GetMapping("/documentos-comerciais")
     public Page<ListagemDocumentoComercialDto> documentosComerciais(
@@ -55,9 +58,10 @@ public class ListagensController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
             @RequestParam(required = false) Long clienteId,
             @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(defaultValue = "false") boolean mostrarAnulados,
             Pageable pageable
     ) {
-        return service.documentosComerciais(dataInicial, dataFinal, clienteId, clienteIds,
+        return service.documentosComerciais(dataInicial, dataFinal, clienteId, clienteIds, mostrarAnulados,
                 validatedPageable(pageable, DOCUMENTO_COMERCIAL_SORTS));
     }
 
@@ -69,9 +73,10 @@ public class ListagensController {
             @RequestParam(required = false) String artigoId,
             @RequestParam(required = false) List<Long> clienteIds,
             @RequestParam(required = false) List<String> artigoIds,
+            @RequestParam(defaultValue = "false") boolean mostrarTexto,
             Pageable pageable
     ) {
-        return service.linhasComerciais(dataInicial, dataFinal, clienteId, clienteIds, artigoId, artigoIds,
+        return service.linhasComerciais(dataInicial, dataFinal, clienteId, clienteIds, artigoId, artigoIds, mostrarTexto,
                 validatedPageable(pageable, LINHA_COMERCIAL_SORTS));
     }
 
@@ -81,9 +86,10 @@ public class ListagensController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
             @RequestParam(required = false) Long clienteId,
             @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(defaultValue = "false") boolean mostrarAnulados,
             Pageable pageable
     ) {
-        return service.documentosFinanceiros(dataInicial, dataFinal, clienteId, clienteIds, pageable);
+        return service.documentosFinanceiros(dataInicial, dataFinal, clienteId, clienteIds, mostrarAnulados, pageable);
     }
 
     @GetMapping("/linhas-financeiras")
@@ -103,6 +109,25 @@ public class ListagensController {
             @RequestParam(defaultValue = "false") boolean apenasVencidos
     ) {
         return service.pendentes(clienteIds, apenasVencidos);
+    }
+
+    @GetMapping("/{source}/exportar/{format}")
+    public ResponseEntity<byte[]> exportarListagem(
+            @PathVariable String source,
+            @PathVariable String format,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
+            @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(required = false) List<String> artigoIds,
+            @RequestParam(defaultValue = "false") boolean mostrarAnulados,
+            @RequestParam(defaultValue = "false") boolean mostrarTexto
+    ) {
+        if (!Set.of("documentos-comerciais", "linhas-comerciais", "documentos-financeiros", "linhas-financeiras").contains(source)
+                || !Set.of("pdf", "xlsx").contains(format)) {
+            throw new ResponseStatusException(BAD_REQUEST, "Exportacao nao suportada");
+        }
+        var file = listagemTabularExporter.export(source, format, dataInicial, dataFinal, clienteIds, artigoIds, mostrarAnulados, mostrarTexto);
+        return download(file.filename(), file.mediaType(), file.content());
     }
 
     @GetMapping("/pendentes-a-data")

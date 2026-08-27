@@ -51,42 +51,57 @@ public class ListagensService {
 
     @Transactional(readOnly = true)
     public Page<ListagemDocumentoComercialDto> documentosComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, Pageable pageable) {
-        return documentosComerciais(dataInicial, dataFinal, clienteId, null, pageable);
+        return documentosComerciais(dataInicial, dataFinal, clienteId, null, false, pageable);
     }
 
     @Transactional(readOnly = true)
     public Page<ListagemDocumentoComercialDto> documentosComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, Pageable pageable) {
+        return documentosComerciais(dataInicial, dataFinal, clienteId, clienteIds, false, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ListagemDocumentoComercialDto> documentosComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, boolean mostrarAnulados, Pageable pageable) {
         List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
         boolean filtrarClientes = !filtroClientes.isEmpty();
-        return documentoComercialRepository.findAnaliticos(dataInicial, dataFinal, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), pageable)
+        return documentoComercialRepository.findAnaliticos(dataInicial, dataFinal, mostrarAnulados, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), pageable)
                 .map(this::toDocumentoComercialDto);
     }
 
     @Transactional(readOnly = true)
     public Page<ListagemLinhaComercialDto> linhasComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, String artigoId, Pageable pageable) {
-        return linhasComerciais(dataInicial, dataFinal, clienteId, null, artigoId, null, pageable);
+        return linhasComerciais(dataInicial, dataFinal, clienteId, null, artigoId, null, false, pageable);
     }
 
     @Transactional(readOnly = true)
     public Page<ListagemLinhaComercialDto> linhasComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, String artigoId, List<String> artigoIds, Pageable pageable) {
+        return linhasComerciais(dataInicial, dataFinal, clienteId, clienteIds, artigoId, artigoIds, false, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ListagemLinhaComercialDto> linhasComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, String artigoId, List<String> artigoIds, boolean mostrarTexto, Pageable pageable) {
         List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
         boolean filtrarClientes = !filtroClientes.isEmpty();
         List<String> filtroArtigos = filtroStrings(artigoId, artigoIds);
         boolean filtrarArtigos = !filtroArtigos.isEmpty();
-        return linhaDocumentoComercialRepository.findAnaliticas(dataInicial, dataFinal, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), filtrarArtigos, filtrarArtigos ? filtroArtigos : List.of("__NO_ARTIGO__"), pageable)
+        return linhaDocumentoComercialRepository.findAnaliticas(dataInicial, dataFinal, mostrarTexto, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), filtrarArtigos, filtrarArtigos ? filtroArtigos : List.of("__NO_ARTIGO__"), pageable)
                 .map(this::toLinhaComercialDto);
     }
 
     @Transactional(readOnly = true)
     public Page<DocumentoFinanceiroDto> documentosFinanceiros(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, Pageable pageable) {
-        return documentosFinanceiros(dataInicial, dataFinal, clienteId, null, pageable);
+        return documentosFinanceiros(dataInicial, dataFinal, clienteId, null, false, pageable);
     }
 
     @Transactional(readOnly = true)
     public Page<DocumentoFinanceiroDto> documentosFinanceiros(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, Pageable pageable) {
+        return documentosFinanceiros(dataInicial, dataFinal, clienteId, clienteIds, false, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DocumentoFinanceiroDto> documentosFinanceiros(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, boolean mostrarAnulados, Pageable pageable) {
         List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
         boolean filtrarClientes = !filtroClientes.isEmpty();
-        return documentoFinanceiroRepository.findAnaliticos(dataInicial, dataFinal, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), pageable)
+        return documentoFinanceiroRepository.findAnaliticos(dataInicial, dataFinal, mostrarAnulados, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), pageable)
                 .map(this::toDocumentoFinanceiroDto);
     }
 

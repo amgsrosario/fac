@@ -22,11 +22,13 @@ public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFi
             from DocumentoFinanceiro d
             where d.dataEmissao >= :dataInicial
               and d.dataEmissao <= :dataFinal
+              and (:mostrarAnulados = true or d.anulado = false)
               and (:filtrarClientes = false or d.cliente.id in :clienteIds)
             """)
     Page<DocumentoFinanceiro> findAnaliticos(
             @Param("dataInicial") LocalDate dataInicial,
             @Param("dataFinal") LocalDate dataFinal,
+            @Param("mostrarAnulados") boolean mostrarAnulados,
             @Param("filtrarClientes") boolean filtrarClientes,
             @Param("clienteIds") Collection<Long> clienteIds,
             Pageable pageable

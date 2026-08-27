@@ -22,6 +22,8 @@ public interface LinhaDocumentoComercialRepository extends JpaRepository<LinhaDo
             select l
             from LinhaDocumentoComercial l
             where l.documentoComercial.estado <> com.ar2lda.fac.model.EstadoDocumentoComercial.RASCUNHO
+              and l.documentoComercial.anulado = false
+              and (:mostrarTexto = true or l.tipoLinha <> com.ar2lda.fac.model.TipoLinhaDocumento.TEXTO)
               and l.documentoComercial.dataEmissao >= :dataInicial
               and l.documentoComercial.dataEmissao <= :dataFinal
               and (:filtrarClientes = false or l.documentoComercial.cliente.id in :clienteIds)
@@ -30,6 +32,7 @@ public interface LinhaDocumentoComercialRepository extends JpaRepository<LinhaDo
     Page<LinhaDocumentoComercial> findAnaliticas(
             @Param("dataInicial") LocalDate dataInicial,
             @Param("dataFinal") LocalDate dataFinal,
+            @Param("mostrarTexto") boolean mostrarTexto,
             @Param("filtrarClientes") boolean filtrarClientes,
             @Param("clienteIds") Collection<Long> clienteIds,
             @Param("filtrarArtigos") boolean filtrarArtigos,

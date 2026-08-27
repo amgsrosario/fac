@@ -493,6 +493,15 @@ class DocumentoComercialControllerTests {
                         .param("clienteId", String.valueOf(cliente.getId()))
                         .param("size", "20"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("clienteId", String.valueOf(cliente.getId()))
+                        .param("mostrarTexto", "true")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2));
 
         mockMvc.perform(get("/listagens/linhas-comerciais")
@@ -507,7 +516,7 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
-    void listagensAnaliticasIncluemAnuladosEEndpointOperacionalMantemRascunhos() throws Exception {
+    void listagensAnaliticasExcluemAnuladosPorDefeitoEPermitemIncluiLos() throws Exception {
         String rascunhoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-05");
         String emitidoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-06");
         String anuladoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-07");
@@ -530,9 +539,26 @@ class DocumentoComercialControllerTests {
                         .param("dataFinal", "2026-12-31")
                         .param("size", "20"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].documento.estado").value("EMITIDO"));
+
+        mockMvc.perform(get("/listagens/documentos-comerciais")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("mostrarAnulados", "true")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2))
                 .andExpect(jsonPath("$.content[*].documento.estado",
                         org.hamcrest.Matchers.containsInAnyOrder("EMITIDO", "ANULADO")));
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].documento.estado").value("EMITIDO"));
 
         mockMvc.perform(get("/documentos-comerciais")
                         .param("size", "20"))
@@ -2012,6 +2038,29 @@ class DocumentoComercialControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.anulado").value(true))
                 .andExpect(jsonPath("$.atcud").value(atcudDocumentoFinanceiro));
+
+        mockMvc.perform(get("/listagens/documentos-financeiros")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        mockMvc.perform(get("/listagens/documentos-financeiros")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("mostrarAnulados", "true")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].anulado").value(true));
+
+        mockMvc.perform(get("/listagens/linhas-financeiras")
+                        .param("dataInicial", "2026-01-01")
+                        .param("dataFinal", "2026-12-31")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
 
         Long documentoFinanceiroId = documentoId(financeiroLocation);
         org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())

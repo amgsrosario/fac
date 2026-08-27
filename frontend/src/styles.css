@@ -1028,6 +1028,15 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.fac-listing-outside-controls > .fac-panel-header {
+  margin-bottom: 10px;
+}
+
+.fac-listing-outside-controls > .fac-panel-header .fac-ghost-button {
+  min-width: 118px;
+  white-space: nowrap;
+}
+
 .fac-balance-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1096,11 +1105,10 @@ button:disabled {
   grid-template-columns: minmax(260px, 1.6fr) repeat(2, minmax(150px, .7fr)) repeat(4, auto);
   gap: 10px;
   align-items: end;
-  margin: 16px 0 18px;
-  padding: 14px;
-  border: 1px solid var(--fac-border);
-  border-radius: 16px;
-  background: var(--fac-sidebar);
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .fac-listing-filters {
@@ -1108,11 +1116,42 @@ button:disabled {
   grid-template-columns: repeat(2, minmax(150px, .6fr)) minmax(220px, 1fr) minmax(220px, 1fr);
   gap: 10px;
   align-items: end;
-  margin: 16px 0 18px;
-  padding: 14px;
-  border: 1px solid var(--fac-border);
-  border-radius: 16px;
-  background: var(--fac-sidebar);
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.fac-listing-filters.with-checkbox {
+  grid-template-columns: minmax(150px, .55fr) minmax(150px, .55fr) minmax(300px, 1.25fr) auto;
+}
+
+.fac-listing-filters.with-article-checkbox {
+  grid-template-columns: minmax(135px, .45fr) minmax(135px, .45fr) minmax(240px, 1fr) minmax(240px, 1fr) auto;
+}
+
+.fac-listing-filters.with-exports {
+  grid-template-columns: minmax(135px, .5fr) minmax(135px, .5fr) minmax(260px, 1fr) minmax(230px, auto);
+}
+
+.fac-listing-filters.with-checkbox.with-exports {
+  grid-template-columns: minmax(130px, .45fr) minmax(130px, .45fr) minmax(240px, 1fr) auto minmax(230px, auto);
+}
+
+.fac-listing-filters.with-article-checkbox.with-exports {
+  grid-template-columns: minmax(125px, .4fr) minmax(125px, .4fr) minmax(210px, .85fr) minmax(210px, .85fr) auto minmax(230px, auto);
+}
+
+.fac-listing-export-actions {
+  align-self: end;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.fac-listing-export-actions .fac-soft-button {
+  min-height: 42px;
+  white-space: nowrap;
 }
 
 .fac-extrato-filters label {
@@ -1127,6 +1166,37 @@ button:disabled {
   min-width: 0;
   flex-direction: column;
   gap: 6px;
+}
+
+.fac-listing-filters .fac-listing-checkbox {
+  align-self: end;
+  display: inline-flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.fac-listing-filters .fac-listing-checkbox input {
+  width: 16px;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+  height: 16px;
+  accent-color: var(--fac-petrol);
+}
+
+.fac-listing-search {
+  width: min(320px, 100%);
+  min-height: 42px;
+  border: 1px solid var(--fac-border);
+  border-radius: 14px;
+  padding: 9px 12px;
+  color: var(--fac-text);
+  background: var(--fac-surface);
 }
 
 .fac-filter-field {
@@ -1325,7 +1395,7 @@ button:disabled {
 .fac-extrato-filters input,
 .fac-extrato-filters select,
 .fac-pendentes-filters > label input,
-.fac-listing-filters > label input,
+.fac-listing-filters > label:not(.fac-listing-checkbox) input,
 .fac-listing-filters select {
   width: 100%;
   min-height: 42px;
@@ -1337,9 +1407,31 @@ button:disabled {
 }
 
 .fac-pendentes-filters {
-  display: grid;
-  gap: 12px;
-  margin-bottom: 16px;
+  display: flex;
+  flex: 1 1 640px;
+  align-items: end;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+}
+
+.fac-pendentes-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 16px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.fac-pendentes-filters > .fac-filter-field {
+  flex: 1 1 320px;
+}
+
+.fac-pendentes-filters > label:not(.fac-pendentes-checkbox) {
+  flex: 0 1 190px;
 }
 
 .fac-pendentes-filters label {
@@ -1392,7 +1484,8 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: -4px 0 16px;
+  flex: 0 0 auto;
+  margin: 0;
 }
 
 .fac-selected-chips {
@@ -2754,6 +2847,20 @@ button:disabled {
   .fac-grid-two,
   .fac-emission-summary {
     grid-template-columns: 1fr;
+  }
+
+  .fac-listing-filters.with-checkbox {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-listing-filters.with-exports,
+  .fac-listing-filters.with-checkbox.with-exports,
+  .fac-listing-filters.with-article-checkbox.with-exports {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-listing-export-actions {
+    justify-content: flex-start;
   }
 
   .fac-metrics {
