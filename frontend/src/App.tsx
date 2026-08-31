@@ -779,11 +779,15 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
     return true;
   }
 
-  const metrics: Array<{ label: string; value: string; tone: string; alignStart?: boolean }> = [
-    { label: "Vendas no período", value: `${money(dashboardData?.vendas ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "product" },
-    { label: "Recebimentos no período", value: `${money(dashboardData?.recebimentos ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "treasury" },
-    { label: "Valores em aberto", value: `${money(dashboardData?.valorEmAberto ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "client" },
-    { label: "Documentos vencidos", value: `${dashboardData?.documentosVencidos.quantidade ?? 0} ${money(dashboardData?.documentosVencidos.valor ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`, tone: "document", alignStart: true }
+  const metrics: Array<{ detail?: string; label: string; value: string }> = [
+    { label: "Vendas no período", value: `${dashboardMoney(dashboardData?.vendas ?? 0)} ${dashboardData?.moedaId ?? "EUR"}` },
+    { label: "Recebimentos no período", value: `${dashboardMoney(dashboardData?.recebimentos ?? 0)} ${dashboardData?.moedaId ?? "EUR"}` },
+    { label: "Valores em aberto", value: `${dashboardMoney(dashboardData?.valorEmAberto ?? 0)} ${dashboardData?.moedaId ?? "EUR"}` },
+    {
+      detail: documentsLabel(dashboardData?.documentosVencidos.quantidade ?? 0),
+      label: "Documentos vencidos",
+      value: `${dashboardMoney(dashboardData?.documentosVencidos.valor ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`
+    }
   ];
 
   return (
@@ -1004,7 +1008,7 @@ type DashboardViewProps = {
   dataInicio: string;
   error: string | null;
   loading: boolean;
-  metrics: { label: string; value: string; tone: string; alignStart?: boolean }[];
+  metrics: { detail?: string; label: string; value: string }[];
   onDataFim: (value: string) => void;
   onDataInicio: (value: string) => void;
   onNavigate: (view: ViewKey) => void;
@@ -1032,14 +1036,14 @@ function DashboardView({
         <label><span>Data inicial</span><input max={dataFim} onChange={(event) => onDataInicio(event.target.value)} type="date" value={dataInicio}/></label>
         <label><span>Data final</span><input min={dataInicio} onChange={(event) => onDataFim(event.target.value)} type="date" value={dataFim}/></label>
         <button className="fac-soft-button" disabled={loading || !dataInicio || !dataFim || dataInicio > dataFim} onClick={onRefresh} type="button">Atualizar</button>
-        <span>Vendas e recebimentos usam o período. Saldos e vencidos mostram a posição atual.</span>
       </section>
 
-      <section className="fac-metrics" aria-label="Indicadores">
+      <section className="fac-dashboard-metrics" aria-label="Indicadores">
         {metrics.map((metric) => (
-          <article className={`fac-metric ${metric.tone}${metric.alignStart ? " fac-metric-align-start" : ""}`} key={metric.label}>
+          <article className="fac-dashboard-metric" key={metric.label}>
             <span>{metric.label}</span>
             <strong>{loading || error ? "-" : metric.value}</strong>
+            {metric.detail && <small>{loading || error ? "" : metric.detail}</small>}
           </article>
         ))}
       </section>
@@ -1052,8 +1056,8 @@ function DashboardView({
           {loading ? <p className="fac-empty-state">A carregar evolução...</p> : data?.evolucao.length ? <div className="fac-dashboard-chart" role="img" aria-label="Evolução temporal de vendas e recebimentos">
             {data.evolucao.map((point) => <div className="fac-dashboard-chart-row" key={point.periodo}>
               <span>{dashboardPeriodLabel(point.periodo)}</span>
-              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar sales" style={{ width: `${Math.max(0, Number(point.vendas)) / maxEvolution * 100}%` }}/></div><strong>{money(point.vendas)}</strong></div>
-              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar receipts" style={{ width: `${Math.max(0, Number(point.recebimentos)) / maxEvolution * 100}%` }}/></div><strong>{money(point.recebimentos)}</strong></div>
+              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar sales" style={{ width: `${Math.max(0, Number(point.vendas)) / maxEvolution * 100}%` }}/></div><strong>{dashboardMoney(point.vendas)}</strong></div>
+              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar receipts" style={{ width: `${Math.max(0, Number(point.recebimentos)) / maxEvolution * 100}%` }}/></div><strong>{dashboardMoney(point.recebimentos)}</strong></div>
             </div>)}
             <footer className="fac-dashboard-legend"><span><i className="sales"/>Vendas</span><span><i className="receipts"/>Recebimentos</span></footer>
           </div> : <p className="fac-empty-state">Sem vendas ou recebimentos no período selecionado.</p>}
@@ -1064,7 +1068,7 @@ function DashboardView({
           {loading ? <p className="fac-empty-state">A carregar saldos...</p> : data?.clientesComMaiorSaldo.length ? <div className="fac-dashboard-client-list">
             {data.clientesComMaiorSaldo.map((cliente) => <article className="fac-dashboard-client-row" key={cliente.clienteId}>
               <button className="fac-table-link" onClick={() => onSelectCliente(cliente.clienteId)} title={cliente.clienteNome} type="button"><span>{cliente.clienteNome}</span></button>
-              <div className="fac-dashboard-client-meta"><span>#{cliente.clienteId}</span><span>mais antigo {datePt(cliente.vencimentoMaisAntigo)}</span><span className="fac-dashboard-client-count">{cliente.documentosPendentes} documentos</span><strong>{money(cliente.saldo)} {data.moedaId}</strong></div>
+              <div className="fac-dashboard-client-meta"><span>#{cliente.clienteId}</span><span>mais antigo {datePt(cliente.vencimentoMaisAntigo)}</span><span className="fac-dashboard-client-count">{documentsLabel(cliente.documentosPendentes)}</span><strong>{dashboardMoney(cliente.saldo)} {data.moedaId}</strong></div>
             </article>)}
           </div> : <p className="fac-empty-state">Não existem clientes com valores em aberto.</p>}
         </section>
@@ -1860,6 +1864,19 @@ function money(value: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+}
+
+function dashboardMoney(value: number) {
+  const [whole, decimal] = money(value).split(",");
+  return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ")},${decimal}`;
+}
+
+function integer(value: number) {
+  return Math.round(Number(value || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function documentsLabel(value: number) {
+  return `${integer(value)} ${Number(value) === 1 ? "documento" : "documentos"}`;
 }
 
 function referencia(tipo: string, serie: string, numero: number | null) {

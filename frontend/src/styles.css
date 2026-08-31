@@ -1246,6 +1246,50 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.fac-dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 18px;
+  border-block: 1px solid var(--fac-border);
+  background: var(--fac-surface);
+}
+
+.fac-dashboard-metric {
+  display: grid;
+  min-width: 0;
+  padding: 13px 18px;
+}
+
+.fac-dashboard-metric + .fac-dashboard-metric {
+  border-left: 1px solid var(--fac-border);
+}
+
+.fac-dashboard-metric > span,
+.fac-dashboard-metric > small {
+  color: var(--fac-text-muted);
+  font-size: 12px;
+}
+
+.fac-dashboard-metric > span {
+  margin-bottom: 5px;
+  font-weight: 700;
+}
+
+.fac-dashboard-metric > strong {
+  overflow-wrap: anywhere;
+  color: var(--fac-petrol);
+  font-size: 20px;
+  line-height: 1.25;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fac-dashboard-metric > small {
+  min-height: 15px;
+  margin-top: 2px;
+  text-align: right;
+}
+
 .fac-dashboard-period {
   display: flex;
   align-items: end;
@@ -1267,12 +1311,6 @@ button:disabled {
   padding: 0 10px;
   background: var(--fac-bg);
   color: var(--fac-text);
-}
-
-.fac-dashboard-period > span {
-  margin-left: auto;
-  color: var(--fac-text-muted);
-  font-size: 13px;
 }
 
 .fac-dashboard-grid {
@@ -3336,6 +3374,18 @@ button:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .fac-dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fac-dashboard-metric:nth-child(3) {
+    border-left: 0;
+  }
+
+  .fac-dashboard-metric:nth-child(n + 3) {
+    border-top: 1px solid var(--fac-border);
+  }
+
   .fac-topbar,
   .fac-panel-header {
     align-items: stretch;
@@ -3643,6 +3693,30 @@ button:disabled {
   .fac-dashboard-period {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .fac-dashboard-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fac-dashboard-metric {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 4px 12px;
+    padding-inline: 12px;
+  }
+
+  .fac-dashboard-metric + .fac-dashboard-metric {
+    border-top: 1px solid var(--fac-border);
+    border-left: 0;
+  }
+
+  .fac-dashboard-metric > span {
+    margin-bottom: 0;
+  }
+
+  .fac-dashboard-metric > small {
+    grid-column: 2;
   }
 
   .fac-dashboard-period > span {
