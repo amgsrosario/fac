@@ -55,12 +55,12 @@ export default function LoginView({ onAuthenticated }: Props) {
   }
 
   return <main className="fac-login-shell"><section className="fac-login-card">
-    <div className="fac-login-brand"><div className="fac-brand-mark">FAC</div><div><strong>FAC</strong><span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Ambiente de demonstração" : "Gestão comercial e faturação"}</span></div></div>
-    <div className="fac-login-intro"><p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Ambiente de demonstração" : "Entrada segura"}</p><h1>Bem-vindo ao FAC</h1><p>Identifica-te para aceder aos clientes, documentos e recebimentos.</p></div>
+    <div className="fac-login-brand"><span className="fac-brand-logo fac-login-logo"><img alt="TUULI AIR" src="/tuuli-air-logo-compact.png" /></span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" && <span className="fac-demo-label">Ambiente de demonstração</span>}</div>
+    <div className="fac-login-intro"><h1>Bem-vindo ao TUULI AIR</h1></div>
     {message && <p className="fac-message" role="alert">{message}</p>}
     <form action="" className="fac-login-form" noValidate onSubmit={login}>
       <label className="fac-field"><span>Utilizador ou email</span><input autoComplete="username" autoFocus onChange={(event) => setUsername(event.target.value)} value={username} /></label>
-      <label className="fac-field"><span>Password</span><input autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} onKeyDown={submitOnPasswordEnter} type="password" value={password} /></label>
+      <label className="fac-field"><span>Palavra-passe</span><input autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} onKeyDown={submitOnPasswordEnter} type="password" value={password} /></label>
       <button className="fac-primary-button" disabled={loading} onClick={login} type="button">{loading ? "A validar..." : "Entrar"}</button>
     </form>
   </section></main>;

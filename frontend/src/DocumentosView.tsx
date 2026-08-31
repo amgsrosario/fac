@@ -3,6 +3,7 @@ import { Paginator } from "primereact/paginator";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, getAuthSession, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
+import { EntityDetailOverlay } from "./EntityContext";
 
 type Page<T> = {
   content: T[];
@@ -14,7 +15,7 @@ const DOCUMENTO_COLUMNS: ConfigurableColumn[] = [
   { key: "cliente", label: "Cliente", visible: true },
   { key: "nif", label: "NIF", visible: false },
   { key: "emissao", label: "Emissão", visible: true },
-  { key: "vencimento", label: "Vencimento", visible: false },
+  { key: "vencimento", label: "Vencimento", visible: true },
   { key: "moeda", label: "Moeda", visible: false },
   { key: "bruto", label: "Bruto", visible: false },
   { key: "desconto", label: "Desconto", visible: false },
@@ -22,7 +23,7 @@ const DOCUMENTO_COLUMNS: ConfigurableColumn[] = [
   { key: "total", label: "Total", visible: true },
   { key: "estado", label: "Estado", visible: true },
   { key: "impresso", label: "Impresso", visible: false },
-  { key: "liquidado", label: "Liquidado", visible: false }
+  { key: "liquidado", label: "Liquidado", visible: true }
 ];
 
 type DocumentoComercial = {
@@ -161,6 +162,8 @@ export default function DocumentosView() {
   const navigate = useNavigate();
   const [documentos, setDocumentos] = useState<DocumentoComercial[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const detailTriggerRef = useRef<HTMLButtonElement>(null);
   const [linhas, setLinhas] = useState<LinhaDocumento[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -478,6 +481,8 @@ export default function DocumentosView() {
     setPage(0);
   }, [search]);
 
+  useEffect(() => setDetailOpen(false), [selectedId]);
+
   useEffect(() => {
     const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
     if (page > lastPage) setPage(lastPage);
@@ -574,44 +579,10 @@ export default function DocumentosView() {
       {notice && <p className="fac-editor-message">{notice}</p>}
       {message && <p className="fac-message">{message}</p>}
 
-      <section className="fac-documents-header-grid">
-        <div className="fac-documents-header-main">
-          <section className="fac-hero fac-documents-hero">
-            <div>
-              <p className="fac-eyebrow">Documentos comerciais</p>
-              <h2>Consulta de documentos</h2>
-              <p>Documentos comerciais emitidos e em rascunho.</p>
-            </div>
-          </section>
-
-          <section className="fac-metrics fac-header-metrics" aria-label="Indicadores de documentos">
-            <article className="fac-metric document"><span>Emitidos ativos</span><strong>{emitted}</strong></article>
-            <article className="fac-metric product"><span>Rascunhos</span><strong>{drafts}</strong></article>
-            <article className="fac-metric treasury"><span>Anulados</span><strong>{annulled}</strong></article>
-            <article className="fac-metric client"><span>Total carregado</span><strong>{documentos.length}</strong></article>
-          </section>
-        </div>
-
-        <aside className="fac-panel fac-detail fac-documents-detail-top">
-          <p className="fac-eyebrow">Documento selecionado</p>
-          <h2>{selected ? reference(selected) : "Sem documento"}</h2>
-          <dl>
-            <div><dt>Cliente</dt><dd>{selected?.clienteNome ?? "-"}</dd></div>
-            <div><dt>NIF</dt><dd>{selected?.clienteNif ?? "-"}</dd></div>
-            <div><dt>Estado</dt><dd>{selected ? documentState(selected) : "-"}</dd></div>
-            <div><dt>Emissão</dt><dd>{selected ? datePt(selected.dataEmissao) : "-"}</dd></div>
-            <div><dt>Vencimento</dt><dd>{selected?.dataVencimento ? datePt(selected.dataVencimento) : "-"}</dd></div>
-            <div><dt>Total</dt><dd>{selected ? `${money(selected.valorTotal)} ${selected.moedaId}` : "-"}</dd></div>
-            <div><dt>Liquidado</dt><dd>{selected?.liquidado ? "Sim" : "Não"}</dd></div>
-            {selected?.estado === "ANULADO" && <><div><dt>Motivo da anulação</dt><dd>{selected.motivoAnulacao ?? "-"}</dd></div><div><dt>Anulado em</dt><dd>{selected.dataHoraAnulacao ? new Date(selected.dataHoraAnulacao).toLocaleString("pt-PT") : "-"}</dd></div><div><dt>Anulado por</dt><dd>{selected.anuladoPorNome ?? selected.anuladoPorUtilizadorId ?? "-"}</dd></div></>}
-          </dl>
-          {selected && !selectedIsDraft && <button className="fac-primary-button" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Consultar documento</button>}
-          {selectedIsDraft && canEdit && <button className="fac-primary-button" disabled={loading} onClick={() => selected && navigate(`/documentos/${selected.id}`)} type="button">Editar rascunho</button>}
-          {selectedIsDraft && canEmit && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
-          {selectedIsDraft && canDeleteDraft && <button className="fac-link-danger" disabled={loading} onClick={() => setDeleteOpen(true)} type="button">Eliminar rascunho</button>}
-          {(selected?.estado === "EMITIDO" || selected?.estado === "ANULADO") && canPdf && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
-          {selected?.estado === "EMITIDO" && canAnnul && <button className="fac-link-danger" disabled={loading} onClick={() => { setAnnulReason(""); setAnnulOpen(true); }} type="button">Anular documento</button>}
-        </aside>
+      <section aria-label="Indicadores da listagem" className="fac-collection-context">
+        <div className="fac-collection-metric"><span>Emitidos ativos</span><strong>{integer(emitted)}</strong></div>
+        <div className="fac-collection-metric"><span>Rascunhos</span><strong>{integer(drafts)}</strong></div>
+        <div className="fac-collection-metric"><span>Anulados</span><strong>{integer(annulled)}</strong></div>
       </section>
 
       <section className="fac-list-toolbar">
@@ -622,15 +593,41 @@ export default function DocumentosView() {
         </div>
       </section>
 
+      {selected && <section aria-label={`Documento selecionado: ${reference(selected)}`} className="fac-document-selection-bar">
+        <div className="fac-document-selection-summary">
+          <strong>{reference(selected)}</strong>
+          <span className="fac-document-selection-client">{selected.clienteNome}</span>
+          <span className="fac-document-selection-value">{money(selected.valorTotal)} {selected.moedaId}</span>
+          <span>{selected.dataVencimento ? `Venc. ${datePt(selected.dataVencimento)}` : "Sem vencimento"}</span>
+          <span className={`fac-document-state ${selected.estado.toLowerCase()}`}>
+            {selected.estado === "RASCUNHO" ? "Rasc." : selected.estado === "ANULADO" ? "Anulado" : "Emitido"}
+          </span>
+        </div>
+        <div className="fac-document-selection-actions">
+          {!selectedIsDraft && <button className="fac-context-action" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Consultar</button>}
+          {selectedIsDraft && canEdit && <button className="fac-context-action" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Editar</button>}
+          {(selected.estado === "EMITIDO" || selected.estado === "ANULADO") && canPdf && <button aria-label={`Abrir PDF de ${reference(selected)}`} className="fac-context-action" disabled={loading} onClick={() => openPdf(selected.id)} title="Abrir PDF" type="button">PDF</button>}
+          <button className="fac-context-action" disabled={loading} onClick={() => setDetailOpen(true)} ref={detailTriggerRef} type="button">Detalhe</button>
+          {((selectedIsDraft && (canEmit || canDeleteDraft)) || (selected.estado === "EMITIDO" && canAnnul)) && <details className="fac-context-menu">
+            <summary aria-label={`Mais ações para ${reference(selected)}`} title="Mais ações">⋯</summary>
+            <div className="fac-context-menu-items">
+              {selectedIsDraft && canEmit && <button disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
+              {selectedIsDraft && canDeleteDraft && <button className="danger" disabled={loading} onClick={() => setDeleteOpen(true)} type="button">Eliminar rascunho</button>}
+              {selected.estado === "EMITIDO" && canAnnul && <button className="danger" disabled={loading} onClick={() => { setAnnulReason(""); setAnnulOpen(true); }} type="button">Anular documento</button>}
+            </div>
+          </details>}
+        </div>
+      </section>}
+
       <section className="fac-content-grid fac-documents-content-grid">
         <article className="fac-panel fac-panel-main fac-documents-table-panel">
           <ColumnSelector columns={documentoColumns.columns} open={columnEditorOpen} onMove={documentoColumns.moveColumn} onReset={documentoColumns.resetColumns} onToggle={documentoColumns.toggleColumn} />
           <table className="fac-table">
-            <thead><tr>{documentoColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead>
+            <thead><tr>{documentoColumns.visibleColumns.map((column) => <th className={documentoColumnClass(column.key)} key={column.key}>{column.label}</th>)}</tr></thead>
             <tbody>
               {pagedDocumentos.map((documento) => (
-                <tr className={documento.id === selectedId ? "fac-row-selected" : ""} key={documento.id} onClick={() => navigate(`/documentos/${documento.id}`)}>
-                  {documentoColumns.visibleColumns.map((column) => <td key={column.key}>{documentoColumnValue(documento, column.key)}</td>)}
+                <tr className={documento.id === selectedId ? "fac-row-selected" : ""} key={documento.id} onClick={() => setSelectedId(documento.id)}>
+                  {documentoColumns.visibleColumns.map((column) => <td className={documentoColumnClass(column.key)} key={column.key}>{documentoColumnValue(documento, column.key)}</td>)}
                 </tr>
               ))}
               {!loading && filtered.length === 0 && <tr><td colSpan={documentoColumns.visibleColumns.length}>Sem documentos para mostrar.</td></tr>}
@@ -639,27 +636,37 @@ export default function DocumentosView() {
           {filtered.length > 0 && <div className="fac-list-pagination"><span>{filtered.length} {filtered.length === 1 ? "documento" : "documentos"}</span><Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filtered.length}/></div>}
         </article>
 
-        <aside className="fac-panel fac-detail fac-documents-detail-card">
-          <p className="fac-eyebrow">Documento selecionado</p>
-          <h2>{selected ? reference(selected) : "Sem documento"}</h2>
-          <dl>
-            <div><dt>Cliente</dt><dd>{selected?.clienteNome ?? "-"}</dd></div>
-            <div><dt>NIF</dt><dd>{selected?.clienteNif ?? "-"}</dd></div>
-            <div><dt>Estado</dt><dd>{selected ? documentState(selected) : "-"}</dd></div>
-            <div><dt>Emissão</dt><dd>{selected ? datePt(selected.dataEmissao) : "-"}</dd></div>
-            <div><dt>Vencimento</dt><dd>{selected?.dataVencimento ? datePt(selected.dataVencimento) : "-"}</dd></div>
-            <div><dt>Total</dt><dd>{selected ? `${money(selected.valorTotal)} ${selected.moedaId}` : "-"}</dd></div>
-            <div><dt>Liquidado</dt><dd>{selected?.liquidado ? "Sim" : "Não"}</dd></div>
-            {selected?.estado === "ANULADO" && <><div><dt>Motivo da anulação</dt><dd>{selected.motivoAnulacao ?? "-"}</dd></div><div><dt>Anulado em</dt><dd>{selected.dataHoraAnulacao ? new Date(selected.dataHoraAnulacao).toLocaleString("pt-PT") : "-"}</dd></div><div><dt>Anulado por</dt><dd>{selected.anuladoPorNome ?? selected.anuladoPorUtilizadorId ?? "-"}</dd></div></>}
-          </dl>
-          {selected && !selectedIsDraft && <button className="fac-primary-button" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Consultar documento</button>}
-          {selectedIsDraft && canEdit && <button className="fac-primary-button" disabled={loading} onClick={() => selected && navigate(`/documentos/${selected.id}`)} type="button">Editar rascunho</button>}
-          {selectedIsDraft && canEmit && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
-          {selectedIsDraft && canDeleteDraft && <button className="fac-link-danger" disabled={loading} onClick={() => setDeleteOpen(true)} type="button">Eliminar rascunho</button>}
-          {(selected?.estado === "EMITIDO" || selected?.estado === "ANULADO") && canPdf && <button className="fac-gold-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
-          {selected?.estado === "EMITIDO" && canAnnul && <button className="fac-link-danger" disabled={loading} onClick={() => { setAnnulReason(""); setAnnulOpen(true); }} type="button">Anular documento</button>}
-        </aside>
       </section>
+
+      <EntityDetailOverlay labelledBy="fac-document-detail-title" onClose={() => setDetailOpen(false)} open={detailOpen && Boolean(selected)} returnFocusRef={detailTriggerRef}>
+        {selected && <div id="fac-document-detail">
+          <p className="fac-eyebrow">Documento</p>
+          <h2 id="fac-document-detail-title">{reference(selected)}</h2>
+          <dl className="fac-entity-detail-rows">
+            <div><dt>Cliente</dt><dd>{selected.clienteNome}</dd></div>
+            <div><dt>NIF</dt><dd>{selected.clienteNif}</dd></div>
+            <div><dt>Estado</dt><dd>{documentState(selected)}</dd></div>
+            <div><dt>Emissão</dt><dd>{datePt(selected.dataEmissao)}</dd></div>
+            <div><dt>Vencimento</dt><dd>{selected.dataVencimento ? datePt(selected.dataVencimento) : "-"}</dd></div>
+            <div><dt>Moeda</dt><dd>{selected.moedaId}</dd></div>
+            <div><dt>Bruto</dt><dd>{money(selected.valorBruto)} {selected.moedaId}</dd></div>
+            <div><dt>Desconto</dt><dd>{money(selected.valorDesconto)} {selected.moedaId}</dd></div>
+            <div><dt>IVA</dt><dd>{money(selected.valorIvaTotal)} {selected.moedaId}</dd></div>
+            <div><dt>Total</dt><dd>{money(selected.valorTotal)} {selected.moedaId}</dd></div>
+            <div><dt>Liquidado</dt><dd>{selected.liquidado ? "Sim" : "Não"}</dd></div>
+            <div><dt>Impresso</dt><dd>{selected.impresso ? "Sim" : "Não"}</dd></div>
+            {selected.estado === "ANULADO" && <><div><dt>Motivo da anulação</dt><dd>{selected.motivoAnulacao ?? "-"}</dd></div><div><dt>Anulado em</dt><dd>{selected.dataHoraAnulacao ? new Date(selected.dataHoraAnulacao).toLocaleString("pt-PT") : "-"}</dd></div><div><dt>Anulado por</dt><dd>{selected.anuladoPorNome ?? selected.anuladoPorUtilizadorId ?? "-"}</dd></div></>}
+          </dl>
+          <div className="fac-entity-detail-actions">
+            {!selectedIsDraft && <button className="fac-soft-button" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Consultar documento</button>}
+            {selectedIsDraft && canEdit && <button className="fac-soft-button" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Editar rascunho</button>}
+            {selectedIsDraft && canEmit && <button className="fac-gold-button" disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
+            {(selected.estado === "EMITIDO" || selected.estado === "ANULADO") && canPdf && <button className="fac-soft-button" disabled={loading} onClick={() => openPdf(selected.id)} type="button">Abrir PDF</button>}
+            {selectedIsDraft && canDeleteDraft && <button className="fac-link-danger" disabled={loading} onClick={() => setDeleteOpen(true)} type="button">Eliminar rascunho</button>}
+            {selected.estado === "EMITIDO" && canAnnul && <button className="fac-link-danger" disabled={loading} onClick={() => { setAnnulReason(""); setAnnulOpen(true); }} type="button">Anular documento</button>}
+          </div>
+        </div>}
+      </EntityDetailOverlay>
 
       {annulOpen && selected && <div className="fac-dialog-backdrop" role="presentation"><div aria-labelledby="annul-title" aria-modal="true" className="fac-dialog" role="dialog"><h2 id="annul-title">Anular {reference(selected)}</h2><p>O documento e os dados fiscais originais serão preservados. Esta operação é definitiva.</p><label className="fac-field"><span>Motivo da anulação</span><textarea autoFocus maxLength={500} onChange={(event) => setAnnulReason(event.target.value)} value={annulReason} /></label><small>{annulReason.trim().length}/500 (mínimo 5)</small><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading} onClick={() => setAnnulOpen(false)} type="button">Cancelar</button><button className="fac-link-danger" disabled={loading || annulReason.trim().length < 5} onClick={annulDocument} type="button">{loading ? "A anular..." : "Confirmar anulação"}</button></div></div></div>}
 
@@ -747,11 +754,22 @@ function documentoColumnValue(documento: DocumentoComercial, key: string) {
     case "desconto": return money(documento.valorDesconto);
     case "iva": return money(documento.valorIvaTotal);
     case "total": return `${money(documento.valorTotal)} ${documento.moedaId}`;
-    case "estado": return <span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documentState(documento)}</span>;
+    case "estado": return <span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documentTableState(documento)}</span>;
     case "impresso": return documento.impresso ? "Sim" : "Não";
     case "liquidado": return documento.liquidado ? "Sim" : "Não";
     default: return "-";
   }
+}
+
+function documentoColumnClass(key: string) {
+  if (["bruto", "desconto", "iva", "total"].includes(key)) return `fac-numeric fac-document-col-${key}`;
+  if (["estado", "impresso", "liquidado", "moeda"].includes(key)) return `fac-document-col-compact fac-document-col-${key}`;
+  return `fac-document-col-${key}`;
+}
+
+function documentTableState(documento: DocumentoComercial) {
+  if (documento.anulado) return "Anulado";
+  return documento.estado === "RASCUNHO" ? "Rasc." : "Emitido";
 }
 
 function documentState(documento: DocumentoComercial) {
@@ -765,6 +783,10 @@ function datePt(value: string) {
 
 function money(value: number) {
   return Number(value || 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function integer(value: number) {
+  return Number(value || 0).toLocaleString("pt-PT", { maximumFractionDigits: 0 });
 }
 
 function decimal(value: number) {

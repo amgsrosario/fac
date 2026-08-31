@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Paginator } from "primereact/paginator";
 import { useLocation } from "react-router-dom";
 import { apiFetch, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
+import { EntityDetailOverlay } from "./EntityContext";
 
 type Page<T> = {
   content: T[];
@@ -94,6 +95,8 @@ export default function ArtigosView() {
   const [familias, setFamilias] = useState<Familia[]>([]);
   const [tiposIva, setTiposIva] = useState<TipoTaxaIva[]>([]);
   const [selectedCodigo, setSelectedCodigo] = useState<string | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const detailTriggerRef = useRef<HTMLButtonElement>(null);
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [exportingFormat, setExportingFormat] = useState<"pdf" | "xlsx" | null>(null);
@@ -241,6 +244,8 @@ export default function ArtigosView() {
   const selected = artigos.find((artigo) => artigo.codigo === selectedCodigo) ?? null;
   const familiaNome = familias.find((familia) => familia.id === selected?.familiaId)?.descricao ?? "-";
 
+  useEffect(() => setDetailOpen(false), [selectedCodigo]);
+
   function change<K extends keyof ArtigoForm>(field: K, value: ArtigoForm[K]) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -320,35 +325,31 @@ export default function ArtigosView() {
     <>
       {notice && <p className="fac-editor-message">{notice}</p>}
       {message && <p className="fac-message">{message}</p>}
-      <section className="fac-articles-header-grid">
-        <section className="fac-hero fac-articles-hero">
-        <div>
-          <p className="fac-eyebrow">Artigos</p>
-          <h2>Catálogo de artigos</h2>
-          <p>Artigos e serviços.</p>
-        </div>
-        <div className="fac-hero-card">
-          <span>Catálogo</span>
-          <strong>{loading ? "A carregar..." : `${artigos.length} artigos`}</strong>
-          <small>{artigos.filter((artigo) => artigo.inativo).length} inativos</small>
-        </div>
-      </section>
-
-      <aside className="fac-panel fac-detail fac-articles-detail-top">
-        <p className="fac-eyebrow">Ficha comercial</p>
-        <h2>{selected?.codigo ?? "Sem artigo"}</h2>
-        <dl>
-          <div><dt>Descrição</dt><dd>{selected?.descricao ?? "-"}</dd></div>
-          <div><dt>Tipo</dt><dd>{selected ? tipoArtigoLabel(selected.tipoArtigo) : "-"}</dd></div>
-          <div><dt>Família</dt><dd>{familiaNome}</dd></div>
-          <div><dt>Unidade</dt><dd>{selected?.unidade ?? "-"}</dd></div>
-          <div><dt>IVA venda</dt><dd>{selected?.ivaVendaId ?? "-"}</dd></div>
-          <div><dt>PVP</dt><dd>{selected ? money(selected.pvp) : "-"}</dd></div>
-          <div><dt>Retenção</dt><dd>{selected?.retencao ? "Sim" : "Não"}</dd></div>
-        </dl>
-        {!selected && <p className="fac-muted">Selecione um artigo para consultar os respetivos dados.</p>}
-        {canManage && <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openEdit(selected)} type="button">Editar artigo</button>}
-        </aside>
+      <section aria-label="Artigo selecionado" className="fac-entity-context fac-article-context">
+        {selected ? <>
+          <div className="fac-entity-context-main">
+            <strong>{selected.descricao}</strong>
+            <span>Código {selected.codigo} · IVA {selected.ivaVendaId} · {selected.inativo ? "Inativo" : "Ativo"}</span>
+          </div>
+          <div className="fac-article-context-metrics" aria-label="Indicadores do catálogo">
+            <div className="fac-entity-context-value">
+              <span>Preço</span>
+              <strong>{money(selected.pvp)} EUR</strong>
+            </div>
+            <div className="fac-entity-context-value">
+              <span>Catálogo</span>
+              <strong>{artigos.length} artigos</strong>
+            </div>
+            <div className="fac-entity-context-value">
+              <span>Inativos</span>
+              <strong>{artigos.filter((artigo) => artigo.inativo).length}</strong>
+            </div>
+          </div>
+          <div className="fac-entity-context-actions">
+            <button aria-controls="fac-article-detail" aria-expanded={detailOpen} className="fac-ghost-button" onClick={() => setDetailOpen(true)} ref={detailTriggerRef} type="button">Ver detalhe</button>
+            {canManage && <button className="fac-primary-button" onClick={() => openEdit(selected)} type="button">Editar</button>}
+          </div>
+        </> : <span className="fac-muted">Selecione um artigo para consultar o respetivo contexto.</span>}
       </section>
 
       <section className="fac-list-toolbar fac-articles-toolbar">
@@ -382,21 +383,25 @@ export default function ArtigosView() {
           </div>}
         </article>
 
-        <aside className="fac-panel fac-detail fac-articles-detail-card">
-          <p className="fac-eyebrow">Ficha comercial</p>
-          <h2>{selected?.codigo ?? "Sem artigo"}</h2>
-          <dl>
-            <div><dt>Descrição</dt><dd>{selected?.descricao ?? "-"}</dd></div>
-            <div><dt>Tipo</dt><dd>{selected ? tipoArtigoLabel(selected.tipoArtigo) : "-"}</dd></div>
-            <div><dt>Família</dt><dd>{familiaNome}</dd></div>
-            <div><dt>Unidade</dt><dd>{selected?.unidade ?? "-"}</dd></div>
-            <div><dt>IVA venda</dt><dd>{selected?.ivaVendaId ?? "-"}</dd></div>
-            <div><dt>PVP</dt><dd>{selected ? money(selected.pvp) : "-"}</dd></div>
-            <div><dt>Retenção</dt><dd>{selected?.retencao ? "Sim" : "Não"}</dd></div>
-          </dl>
-          {canManage && <button className="fac-primary-button" disabled={!selected} onClick={() => selected && openEdit(selected)} type="button">Editar artigo</button>}
-        </aside>
       </section>
+
+      <EntityDetailOverlay labelledBy="fac-article-detail-title" onClose={() => setDetailOpen(false)} open={detailOpen && Boolean(selected)} returnFocusRef={detailTriggerRef}>
+        {selected && <div id="fac-article-detail">
+          <p className="fac-eyebrow">Artigo</p>
+          <h2 id="fac-article-detail-title">{selected.descricao}</h2>
+          <dl className="fac-entity-detail-rows">
+            <div><dt>Código</dt><dd>{selected.codigo}</dd></div>
+            <div><dt>Tipo</dt><dd>{tipoArtigoLabel(selected.tipoArtigo)}</dd></div>
+            <div><dt>Família</dt><dd>{familiaNome}</dd></div>
+            <div><dt>Unidade</dt><dd>{selected.unidade}</dd></div>
+            <div><dt>IVA venda</dt><dd>{selected.ivaVendaId}</dd></div>
+            <div><dt>PVP</dt><dd>{money(selected.pvp)} EUR</dd></div>
+            <div><dt>Retenção</dt><dd>{selected.retencao ? "Sim" : "Não"}</dd></div>
+            <div><dt>Estado</dt><dd>{selected.inativo ? "Inativo" : "Ativo"}</dd></div>
+            {selected.observacoes && <div><dt>Observações</dt><dd>{selected.observacoes}</dd></div>}
+          </dl>
+        </div>}
+      </EntityDetailOverlay>
     </>
   );
 }

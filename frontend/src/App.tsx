@@ -12,6 +12,7 @@ import EmpresaAdminView from "./EmpresaAdminView";
 import AdminUtilizadoresView from "./AdminUtilizadoresView";
 import ImportExportView from "./ImportExportView";
 import { GlobalSearch } from "./GlobalSearch";
+import { EntityDetailOverlay } from "./EntityContext";
 import { apiFetch, AuthSession, responseError } from "./api";
 
 type Page<T> = {
@@ -236,7 +237,7 @@ const menuGroups: MenuGroup[] = [
 ];
 
 const adminMenuItems: MenuItem[] = [
-  { label: "Configuracao", hint: "Base FAC" },
+  { label: "Configuracao", hint: "Parâmetros gerais" },
   { label: "Auditoria", hint: "Rastreabilidade" },
   { label: "ImportExport", hint: "Dados mestres" }
 ];
@@ -757,7 +758,6 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             type="button"
           >
             <span>{menuLabel(item.label)}</span>
-            <small>{item.hint}</small>
           </button>
         ))}
       </section>
@@ -801,7 +801,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
           <i aria-hidden="true" className="pi pi-bars" />
         </button>
         <div className="fac-mobile-title">
-          <strong>FAC</strong>
+          <span className="fac-mobile-logo"><img alt="TUULI AIR" src="/tuuli-air-logo-compact.png" /></span>
           <span>{viewTitle(shellView)}</span>
         </div>
         <div className="fac-mobile-actions">
@@ -832,11 +832,8 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         >
           <div className="fac-mobile-drawer-header">
             <div className="fac-brand">
-              <div className="fac-brand-mark">FAC</div>
-              <div>
-                <strong>FAC</strong>
-                <span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Ambiente de demonstração" : "Gestão comercial e faturação"}</span>
-              </div>
+              <span className="fac-brand-logo"><img alt="TUULI AIR" src="/tuuli-air-logo-compact.png" /></span>
+              {import.meta.env.VITE_FAC_DEMO_MODE === "true" && <span className="fac-demo-label">Ambiente de demonstração</span>}
             </div>
             <button aria-label="Fechar menu" className="fac-mobile-drawer-close" onClick={() => closeMobileDrawer()} type="button">
               <i aria-hidden="true" className="pi pi-times" />
@@ -871,11 +868,8 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 
       <aside className="fac-sidebar">
         <div className="fac-brand">
-          <div className="fac-brand-mark">FAC</div>
-          <div>
-            <strong>FAC</strong>
-            <span>{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Ambiente de demonstração" : "Gestão comercial e faturação"}</span>
-          </div>
+          <span className="fac-brand-logo"><img alt="TUULI AIR" src="/tuuli-air-logo-compact.png" /></span>
+          {import.meta.env.VITE_FAC_DEMO_MODE === "true" && <span className="fac-demo-label">Ambiente de demonstração</span>}
         </div>
 
         <nav className="fac-menu" aria-label="Navegação principal">
@@ -886,7 +880,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       <section className="fac-workspace">
         <header className="fac-topbar">
           <div>
-            <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "FAC · Ambiente de demonstração" : "FAC · Gestão comercial e faturação"}</p>
+            {import.meta.env.VITE_FAC_DEMO_MODE === "true" && <p className="fac-eyebrow">Ambiente de demonstração</p>}
             <h1>{viewTitle(shellView)}</h1>
           </div>
           <div className="fac-topbar-actions">
@@ -1034,19 +1028,6 @@ function DashboardView({
   const maxEvolution = Math.max(1, ...(data?.evolucao.flatMap((point) => [Number(point.vendas), Number(point.recebimentos)]) ?? [0]));
   return (
     <>
-      <section className="fac-hero">
-        <div>
-          <p className="fac-eyebrow">{import.meta.env.VITE_FAC_DEMO_MODE === "true" ? "Alentejo Sabores, Lda. · Demonstração" : "Ambiente de trabalho"}</p>
-          <h2>Visão geral da atividade</h2>
-          <p>Resumo da atividade comercial e financeira.</p>
-        </div>
-        <div className="fac-hero-card">
-          <span>Estado do sistema</span>
-          <strong>{loading ? "A carregar..." : error ? "Com erro" : "Operacional"}</strong>
-          <small>{error ?? "Serviços disponíveis"}</small>
-        </div>
-      </section>
-
       <section className="fac-dashboard-period" aria-label="Período do dashboard">
         <label><span>Data inicial</span><input max={dataFim} onChange={(event) => onDataInicio(event.target.value)} type="date" value={dataInicio}/></label>
         <label><span>Data final</span><input min={dataInicio} onChange={(event) => onDataFim(event.target.value)} type="date" value={dataFim}/></label>
@@ -1187,6 +1168,8 @@ function ClientesView({
   const [contaPageSize, setContaPageSize] = useState(10);
   const [contaApenasNaoLiquidados, setContaApenasNaoLiquidados] = useState(false);
   const [exportingClientes, setExportingClientes] = useState<"pdf" | "xlsx" | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const detailTriggerRef = useRef<HTMLButtonElement>(null);
 
   async function exportarClientes(formato: "pdf" | "xlsx") {
     setExportingClientes(formato);
@@ -1228,6 +1211,7 @@ function ClientesView({
 
   useEffect(() => {
     setContaPage(0);
+    setDetailOpen(false);
   }, [selectedClienteId, contaApenasNaoLiquidados]);
 
   useEffect(() => {
@@ -1271,58 +1255,35 @@ function ClientesView({
   return (
     <>
       {notice && !editorOpen && <p className="fac-editor-message">{notice}</p>}
-      <section className={`fac-clients-header-grid ${editorOpen ? "fac-hidden" : ""}`}>
-        <div className="fac-clients-header-main">
-          <section className="fac-hero fac-clients-hero">
-            <div>
-              <p className="fac-eyebrow">Clientes</p>
-              <h2>Clientes e conta corrente</h2>
-              <p>Clientes e respetiva conta corrente.</p>
-            </div>
-          </section>
-
-          <section className="fac-metrics fac-header-metrics" aria-label="Indicadores de cliente">
-            <article className="fac-metric client">
+      <section className={`fac-entity-context fac-client-context ${editorOpen ? "fac-hidden" : ""}`} aria-label="Cliente selecionado">
+        {selectedCliente ? <>
+          <div className="fac-entity-context-main">
+            <strong>{selectedCliente.nome}</strong>
+            <span>Código {selectedCliente.id} · NIF {selectedCliente.nif}{selectedCliente.localidade ? ` · ${selectedCliente.localidade}` : ""}</span>
+          </div>
+          <div className="fac-client-context-metrics" aria-label="Indicadores do cliente">
+            <div className="fac-entity-context-value">
               <span>Saldo pendente</span>
               <strong>{contaResumo ? `${money(contaResumo.valorPendente)} ${contaResumo.moedaId}` : "-"}</strong>
-            </article>
-            <article className="fac-metric document">
+            </div>
+            <div className="fac-entity-context-value">
+              <span>Total de negócios</span>
+              <strong>{contaResumo ? `${money(contaResumo.valorDocumento)} ${contaResumo.moedaId}` : "-"}</strong>
+            </div>
+            <div className="fac-entity-context-value">
               <span>Documentos</span>
               <strong>{contaResumo?.documentos ?? 0}</strong>
-            </article>
-            <article className="fac-metric treasury">
-              <span>Recebido ativo</span>
-              <strong>{contaResumo ? `${money(contaResumo.valorRecebidoAtivo)} ${contaResumo.moedaId}` : "-"}</strong>
-            </article>
-            <article className="fac-metric product">
+            </div>
+            <div className="fac-entity-context-value">
               <span>Vencidos</span>
               <strong>{contaResumo?.vencidos ?? 0}</strong>
-            </article>
-          </section>
-        </div>
-
-        <aside className="fac-panel fac-detail fac-clients-detail-top">
-          <p className="fac-eyebrow">Ficha resumida</p>
-          <h2>{selectedCliente?.nome ?? "Sem cliente"}</h2>
-          <dl>
-            <div><dt>Código</dt><dd>{selectedCliente?.id ?? "-"}</dd></div>
-            <div><dt>NIF</dt><dd>{selectedCliente?.nif ?? "-"}</dd></div>
-            <div><dt>Morada</dt><dd>{selectedCliente?.morada ?? "-"}</dd></div>
-            <div><dt>Localidade</dt><dd>{selectedCliente?.localidade ?? "-"}</dd></div>
-            <div><dt>Código postal</dt><dd>{selectedCliente?.codPostalId ?? "-"}</dd></div>
-            <div><dt>País</dt><dd>{selectedCliente?.paisId ?? "-"}</dd></div>
-            <div><dt>Moeda</dt><dd>{selectedCliente?.moedaId ?? "-"}</dd></div>
-            <div><dt>Regime IVA</dt><dd>{selectedCliente?.rivaId ?? "-"}</dd></div>
-          </dl>
-          {canManage && <button
-            className="fac-primary-button"
-            disabled={!selectedCliente || loading}
-            onClick={() => selectedCliente && onEditCliente(selectedCliente.id)}
-            type="button"
-          >
-            Editar cliente
-          </button>}
-        </aside>
+            </div>
+          </div>
+          <div className="fac-entity-context-actions">
+            <button aria-controls="fac-client-detail" aria-expanded={detailOpen} className="fac-ghost-button" onClick={() => setDetailOpen(true)} ref={detailTriggerRef} type="button">Ver detalhe</button>
+            {canManage && <button className="fac-primary-button" disabled={loading} onClick={() => onEditCliente(selectedCliente.id)} type="button">Editar</button>}
+          </div>
+        </> : <span className="fac-muted">Selecione um cliente para consultar o respetivo contexto.</span>}
       </section>
 
       <section className={`fac-list-toolbar fac-clients-toolbar ${editorOpen ? "fac-hidden" : ""}`}>
@@ -1384,29 +1345,28 @@ function ClientesView({
           </div>
         </article>
 
-        <aside className="fac-panel fac-detail fac-clients-detail-card">
-          <p className="fac-eyebrow">Ficha resumida</p>
-          <h2>{selectedCliente?.nome ?? "Sem cliente"}</h2>
-          <dl>
-            <div><dt>Código</dt><dd>{selectedCliente?.id ?? "-"}</dd></div>
-            <div><dt>NIF</dt><dd>{selectedCliente?.nif ?? "-"}</dd></div>
-            <div><dt>Morada</dt><dd>{selectedCliente?.morada ?? "-"}</dd></div>
-            <div><dt>Localidade</dt><dd>{selectedCliente?.localidade ?? "-"}</dd></div>
-            <div><dt>Código postal</dt><dd>{selectedCliente?.codPostalId ?? "-"}</dd></div>
-            <div><dt>País</dt><dd>{selectedCliente?.paisId ?? "-"}</dd></div>
-            <div><dt>Moeda</dt><dd>{selectedCliente?.moedaId ?? "-"}</dd></div>
-            <div><dt>Regime IVA</dt><dd>{selectedCliente?.rivaId ?? "-"}</dd></div>
-          </dl>
-          {canManage && <button
-            className="fac-primary-button"
-            disabled={!selectedCliente || loading}
-            onClick={() => selectedCliente && onEditCliente(selectedCliente.id)}
-            type="button"
-          >
-            Editar cliente
-          </button>}
-        </aside>
       </section>
+
+      <EntityDetailOverlay labelledBy="fac-client-detail-title" onClose={() => setDetailOpen(false)} open={detailOpen && Boolean(selectedCliente)} returnFocusRef={detailTriggerRef}>
+        {selectedCliente && <div id="fac-client-detail">
+          <p className="fac-eyebrow">Cliente</p>
+          <h2 id="fac-client-detail-title">{selectedCliente.nome}</h2>
+          <dl className="fac-entity-detail-rows">
+            <div><dt>Código</dt><dd>{selectedCliente.id}</dd></div>
+            <div><dt>NIF</dt><dd>{selectedCliente.nif}</dd></div>
+            <div><dt>Morada</dt><dd>{selectedCliente.morada ?? "-"}</dd></div>
+            <div><dt>Morada adicional</dt><dd>{selectedCliente.morada1 ?? "-"}</dd></div>
+            <div><dt>Código postal</dt><dd>{selectedCliente.codPostalId ?? "-"}</dd></div>
+            <div><dt>Localidade</dt><dd>{selectedCliente.localidade ?? "-"}</dd></div>
+            <div><dt>País</dt><dd>{selectedCliente.paisId ?? "-"}</dd></div>
+            <div><dt>Moeda</dt><dd>{selectedCliente.moedaId ?? "-"}</dd></div>
+            <div><dt>Regime IVA</dt><dd>{selectedCliente.rivaId ?? "-"}</dd></div>
+            <div><dt>Email</dt><dd>{selectedCliente.email ?? "-"}</dd></div>
+            <div><dt>Telefone</dt><dd>{selectedCliente.tel ?? selectedCliente.tm ?? "-"}</dd></div>
+            <div><dt>Estado</dt><dd>{selectedCliente.inativo ? "Inativo" : "Ativo"}</dd></div>
+          </dl>
+        </div>}
+      </EntityDetailOverlay>
 
       {editorOpen && (
         <section className="fac-panel fac-section-panel">
