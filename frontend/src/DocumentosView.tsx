@@ -575,7 +575,7 @@ export default function DocumentosView() {
   }
 
   return (
-    <>
+    <div className="fac-documents-v2">
       {notice && <p className="fac-editor-message">{notice}</p>}
       {message && <p className="fac-message">{message}</p>}
 
@@ -586,7 +586,10 @@ export default function DocumentosView() {
       </section>
 
       <section className="fac-list-toolbar">
-        <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar documento, cliente, NIF ou estado" type="search" value={search} />
+        <label className="fac-documents-search">
+          <i aria-hidden="true" className="pi pi-search" />
+          <input aria-label="Pesquisar documentos" onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar documento, cliente, NIF ou estado" type="search" value={search} />
+        </label>
         <div className="fac-inline-actions">
           <button className="fac-soft-button" disabled={loading} onClick={loadDocumentos} type="button">Atualizar lista</button>
           <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({documentoColumns.visibleColumns.length})</button>{canCreate && <button className="fac-primary-button" disabled={loading} onClick={openDraftEditor} type="button">Novo documento</button>}</div>
@@ -609,7 +612,7 @@ export default function DocumentosView() {
           {(selected.estado === "EMITIDO" || selected.estado === "ANULADO") && canPdf && <button aria-label={`Abrir PDF de ${reference(selected)}`} className="fac-context-action" disabled={loading} onClick={() => openPdf(selected.id)} title="Abrir PDF" type="button">PDF</button>}
           <button className="fac-context-action" disabled={loading} onClick={() => setDetailOpen(true)} ref={detailTriggerRef} type="button">Detalhe</button>
           {((selectedIsDraft && (canEmit || canDeleteDraft)) || (selected.estado === "EMITIDO" && canAnnul)) && <details className="fac-context-menu">
-            <summary aria-label={`Mais ações para ${reference(selected)}`} title="Mais ações">⋯</summary>
+            <summary aria-haspopup="menu" aria-label={`Mais ações para ${reference(selected)}`} title="Mais ações"><span>Mais</span><i aria-hidden="true" className="pi pi-chevron-down" /></summary>
             <div className="fac-context-menu-items">
               {selectedIsDraft && canEmit && <button disabled={loading} onClick={openEmission} type="button">Conferir e emitir</button>}
               {selectedIsDraft && canDeleteDraft && <button className="danger" disabled={loading} onClick={() => setDeleteOpen(true)} type="button">Eliminar rascunho</button>}
@@ -697,7 +700,7 @@ export default function DocumentosView() {
         </section>
       )}
 
-    </>
+    </div>
   );
 }
 
@@ -782,7 +785,10 @@ function datePt(value: string) {
 }
 
 function money(value: number) {
-  return Number(value || 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const [whole, decimal] = Number(value || 0)
+    .toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .split(",");
+  return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ")},${decimal}`;
 }
 
 function integer(value: number) {

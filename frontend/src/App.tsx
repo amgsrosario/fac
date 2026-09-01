@@ -791,7 +791,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   ];
 
   return (
-    <main className="fac-shell">
+    <main className={`fac-shell${shellView === "Documentos" ? " fac-shell-documents-v2" : ""}`}>
       <header className="fac-mobile-topbar">
         <button
           aria-controls="fac-mobile-drawer"
@@ -881,7 +881,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         </nav>
       </aside>
 
-      <section className="fac-workspace">
+      <section className={`fac-workspace${shellView === "Documentos" ? " fac-workspace-documents-v2" : ""}`}>
         <header className="fac-topbar">
           <div>
             {import.meta.env.VITE_FAC_DEMO_MODE === "true" && <p className="fac-eyebrow">Ambiente de demonstração</p>}

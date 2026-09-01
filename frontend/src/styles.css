@@ -3892,6 +3892,500 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* TUULI Visual v2 experiment 01: Documents only. */
+.fac-workspace-documents-v2 > .fac-topbar {
+  align-items: flex-start;
+  margin-bottom: 42px;
+}
+
+.fac-workspace-documents-v2 > .fac-topbar h1 {
+  font-size: clamp(2rem, 3vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+.fac-shell-documents-v2 .fac-sidebar .fac-menu-section p {
+  color: var(--tuuli-text-secondary);
+  font-weight: 400;
+}
+
+.fac-shell-documents-v2 .fac-sidebar .fac-menu button {
+  color: var(--tuuli-text-secondary);
+  font-weight: 400;
+}
+
+.fac-shell-documents-v2 .fac-sidebar .fac-menu button.active,
+.fac-shell-documents-v2 .fac-sidebar .fac-menu button:hover {
+  color: var(--tuuli-blue-hover);
+  font-weight: 400;
+}
+
+.fac-documents-v2 {
+  --documents-v2-line: color-mix(in srgb, var(--fac-border) 72%, transparent);
+}
+
+.fac-documents-v2 .fac-collection-context {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 190px));
+  align-items: end;
+  gap: 0;
+  margin: 0 0 34px;
+  border: 0;
+  padding: 0;
+}
+
+.fac-documents-v2 .fac-collection-metric {
+  display: grid;
+  gap: 7px;
+  padding: 0 26px;
+}
+
+.fac-documents-v2 .fac-collection-metric:first-child {
+  padding-left: 0;
+}
+
+.fac-documents-v2 .fac-collection-metric + .fac-collection-metric {
+  border-left: 1px solid var(--documents-v2-line);
+}
+
+.fac-documents-v2 .fac-collection-metric span {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.fac-documents-v2 .fac-collection-metric strong {
+  font-size: 1.65rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.fac-documents-v2 .fac-list-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 480px) 1fr;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 26px;
+}
+
+.fac-documents-v2 .fac-documents-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  border-color: var(--documents-v2-line);
+}
+
+.fac-documents-v2 .fac-documents-search > i {
+  position: absolute;
+  left: 12px;
+  z-index: 1;
+  color: var(--fac-text-muted);
+  font-size: 0.82rem;
+  pointer-events: none;
+}
+
+.fac-documents-v2 .fac-documents-search > input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--documents-v2-line);
+  border-radius: 4px;
+  padding: 9px 12px 9px 34px;
+  background: color-mix(in srgb, var(--fac-surface) 72%, var(--fac-bg));
+  color: var(--fac-text);
+  font: inherit;
+  font-weight: 400;
+  outline: none;
+}
+
+.fac-documents-v2 .fac-documents-search > input::placeholder {
+  color: color-mix(in srgb, var(--fac-text-muted) 78%, transparent);
+}
+
+.fac-documents-v2 .fac-documents-search > input:focus {
+  border-color: var(--tuuli-border-focus);
+  box-shadow: var(--fac-focus-ring);
+}
+
+.fac-documents-v2 .fac-list-toolbar > .fac-inline-actions {
+  justify-content: flex-end;
+}
+
+.fac-documents-v2 .fac-list-toolbar .fac-inline-actions {
+  align-items: center;
+  flex-direction: row;
+  gap: 6px;
+}
+
+.fac-documents-v2 .fac-list-toolbar .fac-soft-button,
+.fac-documents-v2 .fac-list-toolbar .fac-ghost-button,
+.fac-documents-v2 .fac-list-toolbar .fac-primary-button {
+  min-height: 38px;
+  border-radius: 4px;
+  padding: 8px 11px;
+  font-weight: 400;
+}
+
+.fac-documents-v2 .fac-list-toolbar > .fac-inline-actions > .fac-inline-actions {
+  margin-left: 5px;
+  border-left: 1px solid var(--documents-v2-line);
+  padding-left: 11px;
+}
+
+.fac-documents-v2 .fac-list-toolbar .fac-soft-button,
+.fac-documents-v2 .fac-list-toolbar .fac-ghost-button {
+  border-color: transparent;
+  background: transparent;
+}
+
+.fac-documents-v2 .fac-list-toolbar .fac-soft-button:hover,
+.fac-documents-v2 .fac-list-toolbar .fac-ghost-button:hover {
+  border-color: var(--documents-v2-line);
+}
+
+.fac-documents-v2 .fac-document-selection-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  border-top: 1px solid var(--documents-v2-line);
+  border-bottom: 0;
+  padding: 14px 0 15px;
+  background: transparent;
+}
+
+.fac-documents-v2 .fac-document-selection-summary {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.fac-documents-v2 .fac-document-selection-summary > * + *::before {
+  margin-inline: 5px;
+}
+
+.fac-documents-v2 .fac-document-selection-client {
+  flex: 1 1 260px;
+  max-width: min(42vw, 500px);
+  color: var(--tuuli-text-secondary);
+  font-size: 13.5px;
+}
+
+.fac-documents-v2 .fac-document-selection-summary strong,
+.fac-documents-v2 .fac-document-selection-value,
+.fac-documents-v2 .fac-document-state {
+  font-weight: 400;
+}
+
+.fac-documents-v2 .fac-document-selection-summary strong {
+  color: var(--tuuli-text-primary);
+  font-size: 14.5px;
+}
+
+.fac-documents-v2 .fac-document-selection-value {
+  color: var(--tuuli-text-primary);
+  font-size: 14.5px;
+  white-space: nowrap;
+}
+
+.fac-documents-v2 .fac-document-state {
+  font-size: 12.5px;
+  letter-spacing: 0.045em;
+}
+
+.fac-documents-v2 .fac-document-selection-actions {
+  gap: 2px;
+}
+
+.fac-documents-v2 .fac-context-action,
+.fac-documents-v2 .fac-context-menu summary {
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.fac-documents-v2 .fac-context-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: auto;
+  min-height: 30px;
+}
+
+.fac-documents-v2 .fac-context-menu summary .pi {
+  font-size: 9px;
+}
+
+.fac-documents-v2 .fac-context-menu-items {
+  border-radius: 4px;
+  box-shadow: 0 12px 28px rgb(25 39 48 / 10%);
+}
+
+.fac-documents-v2 .fac-documents-content-grid {
+  display: block;
+}
+
+.fac-documents-v2 .fac-documents-table-panel {
+  overflow-x: auto;
+  border: 0;
+  border-top: 1px solid var(--documents-v2-line);
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.fac-documents-v2 .fac-table {
+  min-width: 840px;
+  font-size: 14px;
+}
+
+.fac-documents-v2 .fac-table th,
+.fac-documents-v2 .fac-table td {
+  border-bottom-color: var(--documents-v2-line);
+  padding: 8px 10px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.fac-documents-v2 .fac-table td {
+  font-size: 14px;
+}
+
+.fac-documents-v2 .fac-table th {
+  color: var(--tuuli-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.045em;
+}
+
+.fac-documents-v2 .fac-table tbody tr {
+  transition: background-color 120ms ease;
+}
+
+.fac-documents-v2 .fac-table tbody tr:hover {
+  background: color-mix(in srgb, var(--tuuli-surface-hover) 55%, transparent);
+}
+
+.fac-documents-v2 .fac-table tbody tr.fac-row-selected,
+.fac-documents-v2 .fac-table tbody tr.fac-row-selected:hover {
+  background: color-mix(in srgb, var(--tuuli-surface-selected) 58%, transparent);
+  box-shadow: inset 2px 0 0 var(--tuuli-blue);
+}
+
+.fac-documents-v2 .fac-table td.fac-document-col-documento,
+.fac-documents-v2 .fac-table td.fac-document-col-total {
+  color: var(--tuuli-text-primary);
+  font-weight: 400;
+}
+
+.fac-documents-v2 .fac-table td.fac-document-col-cliente,
+.fac-documents-v2 .fac-table td.fac-document-col-emissao,
+.fac-documents-v2 .fac-table td.fac-document-col-vencimento,
+.fac-documents-v2 .fac-table td.fac-document-col-liquidado {
+  font-weight: 400;
+  color: var(--tuuli-text-secondary);
+}
+
+.fac-documents-v2 .fac-table td.fac-document-col-cliente {
+  line-height: 1.16;
+}
+
+.fac-documents-v2 .fac-table .fac-document-col-total {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fac-documents-v2 .fac-table .fac-status {
+  border: 0;
+  padding-inline: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.fac-documents-v2 .fac-list-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid var(--documents-v2-line);
+  padding: 12px 0 0;
+  color: var(--fac-text-muted);
+  font-size: 0.78rem;
+}
+
+.fac-documents-v2 .fac-list-pagination [data-pc-name="paginator"] {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 400;
+}
+
+.fac-documents-v2 .fac-list-pagination [data-pc-name="paginator"] button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  min-height: 30px;
+  border: 0;
+  border-radius: 3px;
+  padding: 4px 7px;
+  color: var(--fac-text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.fac-documents-v2 .fac-list-pagination [data-pc-name="paginator"] button:hover:not(:disabled),
+.fac-documents-v2 .fac-list-pagination [data-pc-name="paginator"] button:focus-visible {
+  color: var(--tuuli-blue-hover);
+  background: var(--tuuli-surface-hover);
+  outline: none;
+}
+
+.fac-documents-v2 .fac-list-pagination [data-pc-name="paginator"] button[aria-current="true"],
+.fac-documents-v2 .fac-list-pagination [data-pc-name="paginator"] button.p-highlight {
+  color: var(--tuuli-text-inverse);
+  background: var(--tuuli-blue);
+}
+
+.fac-documents-v2 .fac-list-pagination [data-pc-name="paginator"] button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.fac-documents-v2 .fac-list-pagination [data-pc-name="paginator"] [data-pc-name="dropdown"] {
+  min-height: 30px;
+  border: 0;
+  border-radius: 3px;
+  color: var(--fac-text-muted);
+  background: transparent;
+  font-size: 0.76rem;
+}
+
+.fac-documents-v2 .fac-entity-detail {
+  border-radius: 5px;
+  padding: 26px;
+  box-shadow: 0 20px 56px rgb(25 39 48 / 14%);
+}
+
+.fac-documents-v2 .fac-entity-detail .fac-eyebrow {
+  font-weight: 500;
+}
+
+.fac-documents-v2 .fac-entity-detail h2 {
+  font-weight: 600;
+}
+
+.fac-documents-v2 .fac-entity-detail-rows dt,
+.fac-documents-v2 .fac-entity-detail-rows dd {
+  font-weight: 400;
+}
+
+.fac-documents-v2 .fac-entity-detail-rows dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.fac-documents-v2 .fac-entity-detail-actions button {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+@media (max-width: 1100px) {
+  .fac-workspace-documents-v2 > .fac-topbar {
+    margin-bottom: 32px;
+  }
+
+  .fac-documents-v2 .fac-list-toolbar {
+    grid-template-columns: minmax(230px, 1fr) auto;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 767px) {
+  .fac-documents-v2 .fac-collection-context {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 26px;
+  }
+
+  .fac-documents-v2 .fac-collection-metric {
+    gap: 5px;
+    padding-inline: 14px;
+  }
+
+  .fac-documents-v2 .fac-collection-metric strong {
+    font-size: 1.4rem;
+  }
+
+  .fac-documents-v2 .fac-list-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .fac-documents-v2 .fac-list-toolbar > .fac-inline-actions {
+    justify-content: space-between;
+  }
+
+  .fac-documents-v2 .fac-list-toolbar > .fac-inline-actions > .fac-inline-actions {
+    margin-left: auto;
+  }
+
+  .fac-documents-v2 .fac-document-selection-bar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding-block: 12px;
+  }
+
+  .fac-documents-v2 .fac-document-selection-actions {
+    width: 100%;
+  }
+
+  .fac-documents-v2 .fac-context-menu {
+    margin-left: auto;
+  }
+
+  .fac-documents-v2 .fac-table {
+    min-width: 780px;
+  }
+
+  .fac-documents-v2 .fac-entity-detail {
+    border-radius: 5px 5px 0 0;
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fac-documents-v2 .fac-collection-metric {
+    padding-inline: 10px;
+  }
+
+  .fac-documents-v2 .fac-collection-metric span {
+    font-size: 0.62rem;
+    letter-spacing: 0.035em;
+  }
+
+  .fac-documents-v2 .fac-list-toolbar .fac-soft-button,
+  .fac-documents-v2 .fac-list-toolbar .fac-ghost-button,
+  .fac-documents-v2 .fac-list-toolbar .fac-primary-button {
+    padding-inline: 8px;
+    font-size: 0.76rem;
+  }
+
+  .fac-documents-v2 .fac-document-selection-summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .fac-documents-v2 .fac-list-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 .fac-table-sort {
   align-items: center;
   background: transparent;
