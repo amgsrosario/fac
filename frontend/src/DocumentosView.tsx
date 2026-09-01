@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch, getAuthSession, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 import { EntityDetailOverlay } from "./EntityContext";
+import { decimal, integer, money } from "./ui/tuuli/format";
 
 type Page<T> = {
   content: T[];
@@ -575,29 +576,29 @@ export default function DocumentosView() {
   }
 
   return (
-    <div className="fac-documents-v2">
+    <div className="tuuli-v2-page tuuli-grammar-document-collection">
       {notice && <p className="fac-editor-message">{notice}</p>}
       {message && <p className="fac-message">{message}</p>}
 
-      <section aria-label="Indicadores da listagem" className="fac-collection-context">
-        <div className="fac-collection-metric"><span>Emitidos ativos</span><strong>{integer(emitted)}</strong></div>
-        <div className="fac-collection-metric"><span>Rascunhos</span><strong>{integer(drafts)}</strong></div>
-        <div className="fac-collection-metric"><span>Anulados</span><strong>{integer(annulled)}</strong></div>
+      <section aria-label="Indicadores da listagem" className="fac-collection-context tuuli-metric-group">
+        <div className="fac-collection-metric tuuli-metric"><span>Emitidos ativos</span><strong>{integer(emitted)}</strong></div>
+        <div className="fac-collection-metric tuuli-metric"><span>Rascunhos</span><strong>{integer(drafts)}</strong></div>
+        <div className="fac-collection-metric tuuli-metric"><span>Anulados</span><strong>{integer(annulled)}</strong></div>
       </section>
 
-      <section className="fac-list-toolbar">
-        <label className="fac-documents-search">
+      <section className="fac-list-toolbar tuuli-toolbar">
+        <label className="fac-documents-search tuuli-search">
           <i aria-hidden="true" className="pi pi-search" />
           <input aria-label="Pesquisar documentos" onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar documento, cliente, NIF ou estado" type="search" value={search} />
         </label>
         <div className="fac-inline-actions">
-          <button className="fac-soft-button" disabled={loading} onClick={loadDocumentos} type="button">Atualizar lista</button>
-          <div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({documentoColumns.visibleColumns.length})</button>{canCreate && <button className="fac-primary-button" disabled={loading} onClick={openDraftEditor} type="button">Novo documento</button>}</div>
+          <button className="fac-soft-button tuuli-tool-action" disabled={loading} onClick={loadDocumentos} type="button">Atualizar lista</button>
+          <div className="fac-inline-actions"><button className="fac-ghost-button tuuli-tool-action" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({documentoColumns.visibleColumns.length})</button>{canCreate && <button className="fac-primary-button tuuli-primary-action" disabled={loading} onClick={openDraftEditor} type="button">Novo documento</button>}</div>
         </div>
       </section>
 
-      {selected && <section aria-label={`Documento selecionado: ${reference(selected)}`} className="fac-document-selection-bar">
-        <div className="fac-document-selection-summary">
+      {selected && <section aria-label={`Documento selecionado: ${reference(selected)}`} className="fac-document-selection-bar tuuli-context-bar">
+        <div className="fac-document-selection-summary tuuli-context-summary">
           <strong>{reference(selected)}</strong>
           <span className="fac-document-selection-client">{selected.clienteNome}</span>
           <span className="fac-document-selection-value">{money(selected.valorTotal)} {selected.moedaId}</span>
@@ -606,7 +607,7 @@ export default function DocumentosView() {
             {selected.estado === "RASCUNHO" ? "Rasc." : selected.estado === "ANULADO" ? "Anulado" : "Emitido"}
           </span>
         </div>
-        <div className="fac-document-selection-actions">
+        <div className="fac-document-selection-actions tuuli-context-actions">
           {!selectedIsDraft && <button className="fac-context-action" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Consultar</button>}
           {selectedIsDraft && canEdit && <button className="fac-context-action" disabled={loading} onClick={() => navigate(`/documentos/${selected.id}`)} type="button">Editar</button>}
           {(selected.estado === "EMITIDO" || selected.estado === "ANULADO") && canPdf && <button aria-label={`Abrir PDF de ${reference(selected)}`} className="fac-context-action" disabled={loading} onClick={() => openPdf(selected.id)} title="Abrir PDF" type="button">PDF</button>}
@@ -623,20 +624,20 @@ export default function DocumentosView() {
       </section>}
 
       <section className="fac-content-grid fac-documents-content-grid">
-        <article className="fac-panel fac-panel-main fac-documents-table-panel">
+        <article className="fac-panel fac-panel-main fac-documents-table-panel tuuli-table-surface">
           <ColumnSelector columns={documentoColumns.columns} open={columnEditorOpen} onMove={documentoColumns.moveColumn} onReset={documentoColumns.resetColumns} onToggle={documentoColumns.toggleColumn} />
-          <table className="fac-table">
+          <table className="fac-table tuuli-table">
             <thead><tr>{documentoColumns.visibleColumns.map((column) => <th className={documentoColumnClass(column.key)} key={column.key}>{column.label}</th>)}</tr></thead>
             <tbody>
               {pagedDocumentos.map((documento) => (
-                <tr className={documento.id === selectedId ? "fac-row-selected" : ""} key={documento.id} onClick={() => setSelectedId(documento.id)}>
+                <tr className={documento.id === selectedId ? "fac-row-selected tuuli-table-row-selected" : ""} key={documento.id} onClick={() => setSelectedId(documento.id)}>
                   {documentoColumns.visibleColumns.map((column) => <td className={documentoColumnClass(column.key)} key={column.key}>{documentoColumnValue(documento, column.key)}</td>)}
                 </tr>
               ))}
               {!loading && filtered.length === 0 && <tr><td colSpan={documentoColumns.visibleColumns.length}>Sem documentos para mostrar.</td></tr>}
             </tbody>
           </table>
-          {filtered.length > 0 && <div className="fac-list-pagination"><span>{filtered.length} {filtered.length === 1 ? "documento" : "documentos"}</span><Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filtered.length}/></div>}
+          {filtered.length > 0 && <div className="fac-list-pagination tuuli-pagination"><span>{filtered.length} {filtered.length === 1 ? "documento" : "documentos"}</span><Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filtered.length}/></div>}
         </article>
 
       </section>
@@ -765,9 +766,11 @@ function documentoColumnValue(documento: DocumentoComercial, key: string) {
 }
 
 function documentoColumnClass(key: string) {
-  if (["bruto", "desconto", "iva", "total"].includes(key)) return `fac-numeric fac-document-col-${key}`;
-  if (["estado", "impresso", "liquidado", "moeda"].includes(key)) return `fac-document-col-compact fac-document-col-${key}`;
-  return `fac-document-col-${key}`;
+  const tone = ["documento", "bruto", "desconto", "iva", "total"].includes(key) ? "tuuli-cell-primary" : "tuuli-cell-secondary";
+  const numeric = ["bruto", "desconto", "iva", "total"].includes(key) ? " fac-numeric tuuli-cell-numeric" : "";
+  const compact = ["estado", "impresso", "liquidado", "moeda"].includes(key) ? " fac-document-col-compact" : "";
+  const status = key === "estado" ? " tuuli-status" : "";
+  return `${tone}${numeric}${compact}${status} fac-document-col-${key}`;
 }
 
 function documentTableState(documento: DocumentoComercial) {
@@ -782,21 +785,6 @@ function documentState(documento: DocumentoComercial) {
 
 function datePt(value: string) {
   return value ? value.split("-").reverse().join("/") : "-";
-}
-
-function money(value: number) {
-  const [whole, decimal] = Number(value || 0)
-    .toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    .split(",");
-  return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ")},${decimal}`;
-}
-
-function integer(value: number) {
-  return Number(value || 0).toLocaleString("pt-PT", { maximumFractionDigits: 0 });
-}
-
-function decimal(value: number) {
-  return Number(value || 0).toLocaleString("pt-PT", { maximumFractionDigits: 6 });
 }
 
 function validateDraft(form: DraftForm) {

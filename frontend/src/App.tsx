@@ -13,6 +13,7 @@ import AdminUtilizadoresView from "./AdminUtilizadoresView";
 import ImportExportView from "./ImportExportView";
 import { GlobalSearch } from "./GlobalSearch";
 import { EntityDetailOverlay } from "./EntityContext";
+import { integer as tuuliInteger, money as tuuliMoney } from "./ui/tuuli/format";
 import { apiFetch, AuthSession, responseError } from "./api";
 
 type Page<T> = {
@@ -791,7 +792,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   ];
 
   return (
-    <main className={`fac-shell${shellView === "Documentos" ? " fac-shell-documents-v2" : ""}`}>
+    <main className={`fac-shell${shellView === "Documentos" ? " fac-shell-documents-v2" : ""}${shellView === "Documentos" || shellView === "Clientes" ? " fac-shell-tuuli-v2" : ""}`}>
       <header className="fac-mobile-topbar">
         <button
           aria-controls="fac-mobile-drawer"
@@ -881,11 +882,11 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         </nav>
       </aside>
 
-      <section className={`fac-workspace${shellView === "Documentos" ? " fac-workspace-documents-v2" : ""}`}>
+      <section className={`fac-workspace${shellView === "Documentos" ? " fac-workspace-documents-v2" : ""}${shellView === "Documentos" || shellView === "Clientes" ? " fac-workspace-tuuli-v2" : ""}${shellView === "Clientes" ? " fac-workspace-tuuli-entity-list" : ""}`}>
         <header className="fac-topbar">
           <div>
             {import.meta.env.VITE_FAC_DEMO_MODE === "true" && <p className="fac-eyebrow">Ambiente de demonstração</p>}
-            <h1>{viewTitle(shellView)}</h1>
+            <h1 className={shellView === "Documentos" || shellView === "Clientes" ? "tuuli-page-title" : undefined}>{viewTitle(shellView)}</h1>
           </div>
           <div className="fac-topbar-actions">
             {visibleAdminMenuItems.length > 0 && (
@@ -1257,52 +1258,52 @@ function ClientesView({
   const visibleColumns = columns.filter((column) => column.visible);
 
   return (
-    <>
+    <div className="tuuli-v2-page tuuli-grammar-entity-list">
       {notice && !editorOpen && <p className="fac-editor-message">{notice}</p>}
-      <section className={`fac-entity-context fac-client-context ${editorOpen ? "fac-hidden" : ""}`} aria-label="Cliente selecionado">
+      <section className={`fac-entity-context fac-client-context tuuli-entity-context ${editorOpen ? "fac-hidden" : ""}`} aria-label="Cliente selecionado">
         {selectedCliente ? <>
-          <div className="fac-entity-context-main">
+          <div className="fac-entity-context-main tuuli-entity-primary">
             <strong>{selectedCliente.nome}</strong>
             <span>Código {selectedCliente.id} · NIF {selectedCliente.nif}{selectedCliente.localidade ? ` · ${selectedCliente.localidade}` : ""}</span>
           </div>
-          <div className="fac-client-context-metrics" aria-label="Indicadores do cliente">
-            <div className="fac-entity-context-value">
+          <div className="fac-client-context-metrics tuuli-metric-group tuuli-entity-metrics" aria-label="Indicadores do cliente">
+            <div className="fac-entity-context-value tuuli-metric">
               <span>Saldo pendente</span>
-              <strong>{contaResumo ? `${money(contaResumo.valorPendente)} ${contaResumo.moedaId}` : "-"}</strong>
+              <strong>{contaResumo ? `${tuuliMoney(contaResumo.valorPendente)} ${contaResumo.moedaId}` : "-"}</strong>
             </div>
-            <div className="fac-entity-context-value">
+            <div className="fac-entity-context-value tuuli-metric">
               <span>Total de negócios</span>
-              <strong>{contaResumo ? `${money(contaResumo.valorDocumento)} ${contaResumo.moedaId}` : "-"}</strong>
+              <strong>{contaResumo ? `${tuuliMoney(contaResumo.valorDocumento)} ${contaResumo.moedaId}` : "-"}</strong>
             </div>
-            <div className="fac-entity-context-value">
+            <div className="fac-entity-context-value tuuli-metric">
               <span>Documentos</span>
-              <strong>{contaResumo?.documentos ?? 0}</strong>
+              <strong>{tuuliInteger(contaResumo?.documentos ?? 0)}</strong>
             </div>
-            <div className="fac-entity-context-value">
+            <div className="fac-entity-context-value tuuli-metric">
               <span>Vencidos</span>
-              <strong>{contaResumo?.vencidos ?? 0}</strong>
+              <strong>{tuuliInteger(contaResumo?.vencidos ?? 0)}</strong>
             </div>
           </div>
-          <div className="fac-entity-context-actions">
-            <button aria-controls="fac-client-detail" aria-expanded={detailOpen} className="fac-ghost-button" onClick={() => setDetailOpen(true)} ref={detailTriggerRef} type="button">Ver detalhe</button>
-            {canManage && <button className="fac-primary-button" disabled={loading} onClick={() => onEditCliente(selectedCliente.id)} type="button">Editar</button>}
+          <div className="fac-entity-context-actions tuuli-context-actions">
+            <button aria-controls="fac-client-detail" aria-expanded={detailOpen} className="fac-ghost-button tuuli-tool-action" onClick={() => setDetailOpen(true)} ref={detailTriggerRef} type="button">Ver detalhe</button>
+            {canManage && <button className="fac-primary-button tuuli-primary-action" disabled={loading} onClick={() => onEditCliente(selectedCliente.id)} type="button">Editar</button>}
           </div>
         </> : <span className="fac-muted">Selecione um cliente para consultar o respetivo contexto.</span>}
       </section>
 
-      <section className={`fac-list-toolbar fac-clients-toolbar ${editorOpen ? "fac-hidden" : ""}`}>
-        <input aria-label="Pesquisar clientes" onChange={(event) => onSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onSearch(""); }} placeholder="Pesquisar por código, nome, NIF ou email" type="search" value={search} />
+      <section className={`fac-list-toolbar fac-clients-toolbar tuuli-toolbar ${editorOpen ? "fac-hidden" : ""}`}>
+        <label className="tuuli-search"><i aria-hidden="true" className="pi pi-search" /><input aria-label="Pesquisar clientes" onChange={(event) => onSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onSearch(""); }} placeholder="Pesquisar por código, nome, NIF ou email" type="search" value={search} /></label>
         <div className="fac-inline-actions">
           <label className="fac-listing-checkbox"><input checked={mostrarInativos} onChange={(event) => onMostrarInativos(event.target.checked)} type="checkbox"/><span>Mostrar inativos</span></label>
-          <button className="fac-soft-button" disabled={exportingClientes !== null} onClick={() => exportarClientes("pdf")} type="button">{exportingClientes === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button>
-          <button className="fac-soft-button" disabled={exportingClientes !== null} onClick={() => exportarClientes("xlsx")} type="button">{exportingClientes === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
-          <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({visibleColumns.length})</button>
-          {canManage && <button className="fac-primary-button" onClick={onOpenEditor} type="button">Novo cliente</button>}
+          <button className="fac-soft-button tuuli-tool-action" disabled={exportingClientes !== null} onClick={() => exportarClientes("pdf")} type="button">{exportingClientes === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button>
+          <button className="fac-soft-button tuuli-tool-action" disabled={exportingClientes !== null} onClick={() => exportarClientes("xlsx")} type="button">{exportingClientes === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
+          <button className="fac-ghost-button tuuli-tool-action" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({visibleColumns.length})</button>
+          {canManage && <button className="fac-primary-button tuuli-primary-action" onClick={onOpenEditor} type="button">Novo cliente</button>}
         </div>
       </section>
 
       <section className={`fac-content-grid fac-clients-content-grid ${editorOpen ? "fac-hidden" : ""}`}>
-        <article className="fac-panel fac-panel-main fac-clients-table-panel">
+        <article className="fac-panel fac-panel-main fac-clients-table-panel tuuli-table-surface">
 
           {columnEditorOpen && <div className="fac-column-editor">
             <div className="fac-column-editor-header">
@@ -1320,20 +1321,20 @@ function ClientesView({
             </div>
           </div>}
 
-          <table className="fac-table">
+          <table className="fac-table tuuli-table">
             <thead>
               <tr>
-                {visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}
+                {visibleColumns.map((column) => <th className={clientColumnClass(column.key)} key={column.key}>{column.label}</th>)}
               </tr>
             </thead>
             <tbody>
               {clientes.map((cliente) => (
                 <tr
-                  className={cliente.id === selectedClienteId ? "fac-row-selected" : ""}
+                  className={cliente.id === selectedClienteId ? "fac-row-selected tuuli-table-row-selected" : ""}
                   key={cliente.id}
                   onClick={() => onSelectCliente(cliente.id)}
                 >
-                  {visibleColumns.map((column) => <td key={column.key}>{clientColumnValue(cliente, column.key)}</td>)}
+                  {visibleColumns.map((column) => <td className={clientColumnClass(column.key)} key={column.key}>{clientColumnValue(cliente, column.key)}</td>)}
                 </tr>
               ))}
               {!loading && !error && clientes.length === 0 && (
@@ -1343,7 +1344,7 @@ function ClientesView({
               )}
             </tbody>
           </table>
-          <div className="fac-list-pagination">
+          <div className="fac-list-pagination tuuli-pagination">
             <span>{search ? `${clientes.length} de ${totalElements}` : totalElements} {totalElements === 1 ? "cliente" : "clientes"}</span>
             <Paginator first={page * pageSize} onPageChange={(event) => onPageChange(event.page, event.rows)} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={totalElements} />
           </div>
@@ -1487,19 +1488,19 @@ function ClientesView({
         </section>
       )}
 
-      <section className={`fac-panel fac-section-panel ${editorOpen ? "fac-hidden" : ""}`}>
-        <div className="fac-panel-header">
+      <section className={`fac-panel fac-section-panel tuuli-section ${editorOpen ? "fac-hidden" : ""}`}>
+        <div className="fac-panel-header tuuli-section-header">
           <div>
-            <p className="fac-eyebrow">Conta corrente</p>
-            <h2>{contaCorrente?.clienteNome ?? selectedCliente?.nome ?? "Sem cliente"}</h2>
+            <p className="fac-eyebrow tuuli-section-kicker">Conta corrente</p>
+            <h2 className="tuuli-section-title">{contaCorrente?.clienteNome ?? selectedCliente?.nome ?? "Sem cliente"}</h2>
           </div>
           <div className="fac-current-account-actions">
-            <label><input checked={contaApenasNaoLiquidados} onChange={(event) => setContaApenasNaoLiquidados(event.target.checked)} type="checkbox" /> <span>Apenas não liquidados</span></label>
-            <span className="fac-muted">{loading ? "A carregar..." : contaApenasNaoLiquidados ? `${contaDocumentosFiltrados.length} de ${contaDocumentos.length} documentos` : `${contaDocumentos.length} documentos`}</span>
+            <label className="tuuli-inline-control"><input checked={contaApenasNaoLiquidados} onChange={(event) => setContaApenasNaoLiquidados(event.target.checked)} type="checkbox" /><span>Apenas não liquidados</span></label>
+            <span className="fac-muted tuuli-meta">{loading ? "A carregar..." : contaApenasNaoLiquidados ? `${contaDocumentosFiltrados.length} de ${contaDocumentos.length} documentos` : `${contaDocumentos.length} documentos`}</span>
           </div>
         </div>
 
-        <div className="fac-table-scroll"><table className="fac-table fac-current-account-table">
+        <div className="fac-table-scroll tuuli-table-surface"><table className="fac-table fac-current-account-table tuuli-table">
           <thead>
             <tr>
               <th>Documento</th>
@@ -1514,13 +1515,13 @@ function ClientesView({
           <tbody>
             {contaDocumentosPagina.map((documento) => (
               <tr key={documento.pendenteId}>
-                <td>{referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento)}</td>
-                <td><span className="fac-status">{documento.estado}</span></td>
-                <td>{datePt(documento.dataDocumento)}</td>
-                <td>{datePt(documento.dataVencimento)}</td>
-                <td>{money(documento.valorDocumento)} {documento.moedaId}</td>
-                <td>{money(documento.valorRecebidoAtivo)} {documento.moedaId}</td>
-                <td>{money(documento.valorPendente)} {documento.moedaId}</td>
+                <td className="tuuli-cell-primary">{referencia(documento.tipoDocumentoId, documento.serie, documento.numeroDocumento)}</td>
+                <td><span className={`fac-status tuuli-status tuuli-status-${documento.estado.toLocaleLowerCase("pt-PT")}`}>{statusLabel(documento.estado)}</span></td>
+                <td className="tuuli-cell-secondary">{datePt(documento.dataDocumento)}</td>
+                <td className="tuuli-cell-secondary">{datePt(documento.dataVencimento)}</td>
+                <td className="tuuli-cell-primary tuuli-cell-numeric">{tuuliMoney(documento.valorDocumento)} {documento.moedaId}</td>
+                <td className="tuuli-cell-secondary tuuli-cell-numeric">{tuuliMoney(documento.valorRecebidoAtivo)} {documento.moedaId}</td>
+                <td className="tuuli-cell-primary tuuli-cell-numeric">{tuuliMoney(documento.valorPendente)} {documento.moedaId}</td>
               </tr>
             ))}
             {!loading && contaDocumentosFiltrados.length === 0 && (
@@ -1529,14 +1530,14 @@ function ClientesView({
               </tr>
             )}
           </tbody>
-          {contaTotais.length > 0 && <tfoot>{contaTotais.map(([moedaId, totais]) => <tr key={moedaId}><th colSpan={4}>Totais ({moedaId})</th><td>{money(totais.total)} {moedaId}</td><td>{money(totais.recebido)} {moedaId}</td><td>{money(totais.pendente)} {moedaId}</td></tr>)}</tfoot>}
+          {contaTotais.length > 0 && <tfoot className="tuuli-table-footer">{contaTotais.map(([moedaId, totais]) => <tr key={moedaId}><th colSpan={4}>Totais ({moedaId})</th><td className="tuuli-cell-primary tuuli-cell-numeric">{tuuliMoney(totais.total)} {moedaId}</td><td className="tuuli-cell-primary tuuli-cell-numeric">{tuuliMoney(totais.recebido)} {moedaId}</td><td className="tuuli-cell-primary tuuli-cell-numeric">{tuuliMoney(totais.pendente)} {moedaId}</td></tr>)}</tfoot>}
         </table></div>
-        {contaDocumentosFiltrados.length > 0 && <div className="fac-list-pagination fac-current-account-pagination">
+        {contaDocumentosFiltrados.length > 0 && <div className="fac-list-pagination fac-current-account-pagination tuuli-pagination">
           <span>{contaDocumentosFiltrados.length} {contaDocumentosFiltrados.length === 1 ? "documento" : "documentos"}</span>
           <Paginator first={contaPage * contaPageSize} onPageChange={(event) => { setContaPage(event.page); setContaPageSize(event.rows); }} rows={contaPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={contaDocumentosFiltrados.length} />
         </div>}
       </section>
-    </>
+    </div>
   );
 }
 
@@ -1866,6 +1867,12 @@ function money(value: number) {
   });
 }
 
+function clientColumnClass(key: ClienteColumnKey) {
+  if (key === "nome") return "tuuli-cell-primary";
+  if (key === "estado") return "tuuli-cell-secondary tuuli-status";
+  return "tuuli-cell-secondary";
+}
+
 function dashboardMoney(value: number) {
   const [whole, decimal] = money(value).split(",");
   return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ")},${decimal}`;
@@ -1888,6 +1895,11 @@ function datePt(value?: string) {
     return "-";
   }
   return value.split("-").reverse().join("/");
+}
+
+function statusLabel(value: string) {
+  const normalized = value.toLocaleLowerCase("pt-PT");
+  return normalized.charAt(0).toLocaleUpperCase("pt-PT") + normalized.slice(1);
 }
 
 function viewFromNavigationState(state: unknown): ViewKey | null {

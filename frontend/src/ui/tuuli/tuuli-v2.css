@@ -1,0 +1,821 @@
+.tuuli-v2-page {
+  --tuuli-screen-line: var(--tuuli-divider);
+  color: var(--tuuli-text-secondary);
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+  line-height: var(--tuuli-line-normal);
+}
+
+.fac-topbar .tuuli-page-title {
+  color: var(--tuuli-text-primary);
+  font-size: var(--tuuli-font-page-title);
+  font-weight: var(--tuuli-weight-title);
+  line-height: 1.08;
+}
+
+.fac-workspace-tuuli-v2 > .fac-topbar {
+  align-items: flex-start;
+  margin-bottom: 42px;
+}
+
+.fac-workspace-tuuli-entity-list > .fac-topbar {
+  margin-bottom: 30px;
+}
+
+.fac-shell-tuuli-v2 .fac-sidebar .fac-menu-section p,
+.fac-shell-tuuli-v2 .fac-sidebar .fac-menu button {
+  color: var(--tuuli-text-secondary);
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.fac-shell-tuuli-v2 .fac-sidebar .fac-menu button.active,
+.fac-shell-tuuli-v2 .fac-sidebar .fac-menu button:hover {
+  color: var(--tuuli-blue-hover);
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-section {
+  border: 0;
+  border-top: 1px solid var(--tuuli-screen-line);
+  border-radius: 0;
+  padding: var(--tuuli-space-section) 0 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tuuli-section-header {
+  align-items: flex-end;
+  margin-bottom: var(--tuuli-space-medium);
+}
+
+.tuuli-section-kicker {
+  margin-bottom: 7px;
+  color: var(--tuuli-blue);
+  font-size: var(--tuuli-font-table-header);
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+}
+
+.tuuli-section .tuuli-section-title {
+  color: var(--tuuli-text-primary);
+  font-size: 20px;
+  font-weight: var(--tuuli-weight-normal);
+  line-height: 1.25;
+}
+
+.tuuli-inline-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tuuli-text-secondary);
+  font-size: 13px;
+  font-weight: var(--tuuli-weight-normal);
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tuuli-inline-control input {
+  width: 14px;
+  height: 14px;
+  min-height: 14px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--tuuli-blue);
+}
+
+.tuuli-meta {
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-metric-group {
+  display: grid;
+  align-items: end;
+  gap: 0;
+  border: 0;
+  padding: 0;
+}
+
+.tuuli-metric {
+  display: grid;
+  gap: 7px;
+}
+
+.tuuli-metric + .tuuli-metric {
+  border-left: 1px solid var(--tuuli-screen-line);
+}
+
+.tuuli-metric > span {
+  color: var(--tuuli-text-muted);
+  font-size: 0.7rem;
+  font-weight: var(--tuuli-weight-anchor);
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.tuuli-metric > strong {
+  color: var(--tuuli-text-primary);
+  font-size: 1.65rem;
+  font-weight: var(--tuuli-weight-anchor);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.tuuli-toolbar {
+  display: grid;
+  align-items: center;
+}
+
+.tuuli-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+}
+
+.tuuli-search > i {
+  position: absolute;
+  left: 12px;
+  z-index: 1;
+  color: var(--tuuli-text-muted);
+  font-size: 0.82rem;
+  pointer-events: none;
+}
+
+.tuuli-search > input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--tuuli-screen-line);
+  border-radius: var(--tuuli-radius-sm);
+  padding: 9px 12px 9px 34px;
+  color: var(--tuuli-text-secondary);
+  background: color-mix(in srgb, var(--tuuli-surface) 72%, var(--tuuli-bg));
+  font: inherit;
+  font-weight: var(--tuuli-weight-normal);
+  outline: none;
+}
+
+.tuuli-search > input::placeholder {
+  color: color-mix(in srgb, var(--tuuli-text-muted) 78%, transparent);
+}
+
+.tuuli-search > input:focus {
+  border-color: var(--tuuli-border-focus);
+  box-shadow: var(--fac-focus-ring);
+}
+
+.tuuli-tool-action,
+.tuuli-primary-action {
+  min-height: 38px;
+  border-radius: var(--tuuli-radius-sm);
+  padding: 8px 11px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-tool-action {
+  border-color: transparent;
+  background: transparent;
+}
+
+.tuuli-tool-action:hover {
+  border-color: var(--tuuli-screen-line);
+}
+
+.tuuli-primary-action {
+  border-color: var(--tuuli-blue);
+  color: var(--tuuli-text-inverse);
+  background: var(--tuuli-blue);
+}
+
+.tuuli-context-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  border-top: 1px solid var(--tuuli-screen-line);
+  border-bottom: 0;
+  padding: 14px 0 15px;
+  background: transparent;
+}
+
+.tuuli-context-summary,
+.tuuli-context-actions {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.tuuli-context-summary {
+  gap: 0;
+  overflow: hidden;
+  color: var(--tuuli-text-muted);
+  font-size: 13px;
+  font-weight: var(--tuuli-weight-normal);
+  white-space: nowrap;
+}
+
+.tuuli-context-summary > * {
+  min-width: 0;
+}
+
+.tuuli-context-summary > * + *::before {
+  margin-inline: 5px;
+  color: var(--tuuli-border-strong);
+  content: "\00b7";
+}
+
+.tuuli-context-actions {
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.tuuli-table-surface {
+  overflow-x: auto;
+  border: 0;
+  border-top: 1px solid var(--tuuli-screen-line);
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tuuli-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--tuuli-font-content);
+}
+
+.tuuli-table th,
+.tuuli-table td {
+  border-bottom: 1px solid var(--tuuli-screen-line);
+  padding: 8px 10px;
+  font-weight: var(--tuuli-weight-normal);
+  line-height: var(--tuuli-line-compact);
+}
+
+.tuuli-table th {
+  color: var(--tuuli-text-secondary);
+  font-size: var(--tuuli-font-table-header);
+  letter-spacing: var(--tuuli-tracking-technical);
+}
+
+.tuuli-table td {
+  font-size: var(--tuuli-font-content);
+}
+
+.tuuli-table tbody tr {
+  transition: background-color 120ms ease;
+}
+
+.tuuli-table tbody tr:hover {
+  background: color-mix(in srgb, var(--tuuli-surface-hover) 55%, transparent);
+}
+
+.tuuli-table tbody tr.tuuli-table-row-selected,
+.tuuli-table tbody tr.tuuli-table-row-selected:hover {
+  background: color-mix(in srgb, var(--tuuli-surface-selected) 58%, transparent);
+  box-shadow: inset 2px 0 0 var(--tuuli-blue);
+}
+
+.tuuli-cell-primary {
+  color: var(--tuuli-text-primary);
+}
+
+.tuuli-cell-secondary {
+  color: var(--tuuli-text-secondary);
+}
+
+.tuuli-cell-numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tuuli-status,
+.tuuli-table .fac-status {
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-table .tuuli-status-liquidado {
+  color: var(--tuuli-success);
+}
+
+.tuuli-table .tuuli-status-vencido {
+  color: var(--tuuli-warning);
+}
+
+.tuuli-table .tuuli-status-anulado {
+  color: var(--tuuli-error);
+}
+
+.tuuli-v2-page .tuuli-table .tuuli-table-footer th,
+.tuuli-v2-page .tuuli-table .tuuli-table-footer td {
+  border-top: 1px solid var(--tuuli-border-strong);
+  border-bottom: 0;
+  padding: 11px 10px;
+  color: var(--tuuli-text-primary);
+  background: transparent;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-v2-page .tuuli-table tfoot th,
+.tuuli-v2-page .tuuli-table tfoot td {
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+  font-variant-numeric: tabular-nums;
+}
+
+.tuuli-table .fac-status {
+  border: 0;
+  padding-inline: 0;
+  background: transparent;
+}
+
+.tuuli-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid var(--tuuli-screen-line);
+  padding: 12px 0 0;
+  color: var(--tuuli-text-muted);
+  font-size: 0.78rem;
+}
+
+.tuuli-pagination [data-pc-name="paginator"] {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-pagination [data-pc-name="paginator"] button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  min-height: 30px;
+  border: 0;
+  border-radius: 3px;
+  padding: 4px 7px;
+  color: var(--tuuli-text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.tuuli-pagination [data-pc-name="paginator"] button:hover:not(:disabled),
+.tuuli-pagination [data-pc-name="paginator"] button:focus-visible {
+  color: var(--tuuli-blue-hover);
+  background: var(--tuuli-surface-hover);
+  outline: none;
+}
+
+.tuuli-pagination [data-pc-name="paginator"] button[aria-current="true"],
+.tuuli-pagination [data-pc-name="paginator"] button.p-highlight {
+  color: var(--tuuli-text-inverse);
+  background: var(--tuuli-blue);
+}
+
+.tuuli-pagination [data-pc-name="paginator"] button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tuuli-pagination [data-pc-name="paginator"] [data-pc-name="dropdown"] {
+  min-height: 30px;
+  border: 0;
+  border-radius: 3px;
+  color: var(--tuuli-text-muted);
+  background: transparent;
+  font-size: 0.76rem;
+}
+
+.tuuli-grammar-document-collection .tuuli-metric-group {
+  grid-template-columns: repeat(3, minmax(120px, 190px));
+  margin: 0 0 34px;
+}
+
+.tuuli-grammar-document-collection .tuuli-metric {
+  padding: 0 26px;
+}
+
+.tuuli-grammar-document-collection .tuuli-metric:first-child {
+  padding-left: 0;
+}
+
+.tuuli-grammar-document-collection .tuuli-toolbar {
+  grid-template-columns: minmax(260px, 480px) 1fr;
+  gap: 28px;
+  margin-bottom: 26px;
+}
+
+.tuuli-grammar-document-collection .tuuli-toolbar > .fac-inline-actions {
+  justify-content: flex-end;
+}
+
+.tuuli-grammar-document-collection .tuuli-toolbar .fac-inline-actions {
+  align-items: center;
+  flex-direction: row;
+  gap: 6px;
+}
+
+.tuuli-grammar-document-collection .tuuli-toolbar > .fac-inline-actions > .fac-inline-actions {
+  margin-left: 5px;
+  border-left: 1px solid var(--tuuli-screen-line);
+  padding-left: 11px;
+}
+
+.tuuli-grammar-document-collection .fac-document-selection-client {
+  flex: 1 1 260px;
+  max-width: min(42vw, 500px);
+  color: var(--tuuli-text-secondary);
+  font-size: 13.5px;
+}
+
+.tuuli-grammar-document-collection .fac-document-selection-summary strong,
+.tuuli-grammar-document-collection .fac-document-selection-value,
+.tuuli-grammar-document-collection .fac-document-state {
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-grammar-document-collection .fac-document-selection-summary strong,
+.tuuli-grammar-document-collection .fac-document-selection-value {
+  color: var(--tuuli-text-primary);
+  font-size: 14.5px;
+}
+
+.tuuli-grammar-document-collection .fac-document-selection-value {
+  white-space: nowrap;
+}
+
+.tuuli-grammar-document-collection .fac-document-state {
+  font-size: 12.5px;
+  letter-spacing: var(--tuuli-tracking-technical);
+}
+
+.tuuli-grammar-document-collection .fac-context-action,
+.tuuli-grammar-document-collection .fac-context-menu summary {
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-grammar-document-collection .fac-context-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: auto;
+  min-height: 30px;
+}
+
+.tuuli-grammar-document-collection .fac-context-menu summary .pi {
+  font-size: 9px;
+}
+
+.tuuli-grammar-document-collection .fac-context-menu-items {
+  border-radius: 4px;
+  box-shadow: 0 12px 28px rgb(25 39 48 / 10%);
+}
+
+.tuuli-grammar-document-collection .fac-documents-content-grid {
+  display: block;
+}
+
+.tuuli-grammar-document-collection .tuuli-table {
+  min-width: 840px;
+}
+
+.tuuli-grammar-document-collection .fac-document-col-cliente {
+  line-height: 1.16;
+}
+
+.tuuli-grammar-document-collection .fac-entity-detail {
+  border-radius: 5px;
+  padding: 26px;
+  box-shadow: 0 20px 56px rgb(25 39 48 / 14%);
+}
+
+.tuuli-grammar-document-collection .fac-entity-detail .fac-eyebrow {
+  font-weight: var(--tuuli-weight-anchor);
+}
+
+.tuuli-grammar-document-collection .fac-entity-detail h2 {
+  font-weight: var(--tuuli-weight-title);
+}
+
+.tuuli-grammar-document-collection .fac-entity-detail-rows dt,
+.tuuli-grammar-document-collection .fac-entity-detail-rows dd {
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-grammar-document-collection .fac-entity-detail-rows dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.tuuli-grammar-document-collection .fac-entity-detail-actions button {
+  border-radius: 4px;
+  font-weight: var(--tuuli-weight-anchor);
+}
+
+.tuuli-grammar-entity-list .tuuli-entity-context {
+  grid-template-columns: minmax(250px, 1.2fr) minmax(390px, 1fr) auto;
+  align-items: end;
+  gap: 22px;
+  margin: 0 0 26px;
+  border-block: 1px solid var(--tuuli-screen-line);
+  padding: 14px 0;
+}
+
+.tuuli-entity-primary {
+  display: grid;
+  min-width: 0;
+  gap: var(--tuuli-space-micro);
+}
+
+.tuuli-entity-primary strong {
+  color: var(--tuuli-text-primary);
+  font-size: 15px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-entity-primary span {
+  color: var(--tuuli-text-secondary);
+  font-size: 13px;
+}
+
+.tuuli-entity-metrics {
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: 10px 26px;
+}
+
+.tuuli-entity-metrics .tuuli-metric {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  border: 0;
+  padding: 0;
+}
+
+.tuuli-entity-metrics .tuuli-metric > span {
+  color: var(--tuuli-text-muted);
+  font-size: 11px;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+}
+
+.tuuli-entity-metrics .tuuli-metric > strong {
+  color: var(--tuuli-text-primary);
+  font-size: 14px;
+  font-weight: var(--tuuli-weight-normal);
+  line-height: var(--tuuli-line-compact);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tuuli-grammar-entity-list .tuuli-toolbar {
+  grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.tuuli-grammar-entity-list .tuuli-toolbar > .fac-inline-actions {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.tuuli-grammar-entity-list .fac-listing-checkbox {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  color: var(--tuuli-text-secondary);
+  font-size: 13px;
+  font-weight: var(--tuuli-weight-normal);
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tuuli-grammar-entity-list .fac-listing-checkbox input {
+  width: 14px;
+  height: 14px;
+  min-height: 14px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--tuuli-blue);
+}
+
+.tuuli-grammar-entity-list .fac-clients-content-grid {
+  display: block;
+}
+
+.tuuli-grammar-entity-list .fac-clients-table-panel .tuuli-table {
+  min-width: 1000px;
+}
+
+.tuuli-grammar-entity-list .fac-entity-detail {
+  border-radius: 5px;
+  padding: 26px;
+  box-shadow: 0 20px 56px rgb(25 39 48 / 14%);
+}
+
+.tuuli-grammar-entity-list .fac-entity-detail .fac-eyebrow {
+  font-weight: var(--tuuli-weight-anchor);
+}
+
+.tuuli-grammar-entity-list .fac-entity-detail h2 {
+  font-weight: var(--tuuli-weight-title);
+}
+
+.tuuli-grammar-entity-list .fac-entity-detail-rows dt,
+.tuuli-grammar-entity-list .fac-entity-detail-rows dd {
+  font-weight: var(--tuuli-weight-normal);
+}
+
+@media (max-width: 1100px) {
+  .fac-workspace-tuuli-v2 > .fac-topbar {
+    margin-bottom: 32px;
+  }
+
+  .fac-workspace-tuuli-entity-list > .fac-topbar {
+    margin-bottom: 24px;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-toolbar {
+    grid-template-columns: minmax(230px, 1fr) auto;
+    gap: 18px;
+  }
+
+  .tuuli-grammar-entity-list .tuuli-entity-context {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .tuuli-grammar-entity-list .tuuli-entity-metrics {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .tuuli-grammar-entity-list .tuuli-context-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .tuuli-grammar-entity-list .tuuli-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .tuuli-grammar-entity-list .tuuli-toolbar > .fac-inline-actions {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .tuuli-grammar-entity-list .tuuli-toolbar > .fac-inline-actions > button {
+    width: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .tuuli-grammar-document-collection .tuuli-metric-group {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 26px;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-metric {
+    gap: 5px;
+    padding-inline: 14px;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-metric > strong {
+    font-size: 1.4rem;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-toolbar > .fac-inline-actions {
+    justify-content: space-between;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-toolbar > .fac-inline-actions > .fac-inline-actions {
+    margin-left: auto;
+  }
+
+  .tuuli-context-bar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding-block: 12px;
+  }
+
+  .tuuli-context-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .tuuli-grammar-document-collection .fac-context-menu {
+    margin-left: auto;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-table {
+    min-width: 780px;
+  }
+
+  .tuuli-grammar-document-collection .fac-entity-detail {
+    border-radius: 5px 5px 0 0;
+    padding: 24px 20px;
+  }
+
+  .tuuli-grammar-entity-list .tuuli-entity-context {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .tuuli-grammar-entity-list .tuuli-entity-metrics,
+  .tuuli-grammar-entity-list .tuuli-context-actions {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .tuuli-grammar-entity-list .tuuli-context-actions {
+    width: 100%;
+  }
+
+  .tuuli-grammar-entity-list .fac-entity-detail {
+    border-radius: 5px 5px 0 0;
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tuuli-grammar-document-collection .tuuli-metric {
+    padding-inline: 10px;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-metric > span {
+    font-size: 0.62rem;
+    letter-spacing: 0.035em;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-tool-action,
+  .tuuli-grammar-document-collection .tuuli-primary-action {
+    padding-inline: 8px;
+    font-size: 0.76rem;
+  }
+
+  .tuuli-context-summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    width: 100%;
+    column-gap: 9px;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .tuuli-context-summary > * + *::before {
+    display: none;
+  }
+
+  .tuuli-grammar-document-collection .fac-document-selection-client {
+    max-width: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tuuli-context-summary > span:not(.fac-document-selection-client):not(.fac-document-selection-value):not(.fac-document-state) {
+    display: none;
+  }
+
+  .tuuli-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tuuli-entity-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tuuli-grammar-entity-list .tuuli-toolbar > .fac-inline-actions {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--tuuli-space-small);
+  }
+
+  .tuuli-grammar-entity-list .tuuli-toolbar > .fac-inline-actions > button {
+    width: auto;
+  }
+}

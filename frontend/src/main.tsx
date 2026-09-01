@@ -13,6 +13,7 @@ import "primeicons/primeicons.css";
 import "./ui/fac/theme/fac-tokens.css";
 import "./ui/fac/theme/fac-prime.css";
 import "./styles.css";
+import "./ui/tuuli/tuuli-v2.css";
 
 const uiMode = import.meta.env.VITE_FAC_UI_MODE === "commercial" ? "commercial" : "legacy";
 

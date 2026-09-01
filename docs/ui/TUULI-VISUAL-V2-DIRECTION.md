@@ -15,7 +15,7 @@
 
 **Mais ar. Menos mobiliário.**
 
-A Visual v2 deve começar como experiência controlada no ecrã `Documentos` e não deve ser aplicada transversalmente sem validação visual.
+A Visual v2 foi validada primeiro em `Documentos` e depois em `Clientes`. A aplicação a novos módulos continua a exigir validação visual e funcional própria.
 
 As decisões funcionais consolidadas na Visual v1 permanecem válidas e não fazem parte desta exploração.
 
@@ -27,3 +27,68 @@ As decisões funcionais consolidadas na Visual v1 permanecem válidas e não faz
 - Os cabeçalhos usam uma escala própria de sinalização: `12px / 400`, tracking `0.045em` e cor secundária.
 
 **Uma linha é um sistema tipográfico único.**
+
+## Sistema visual
+
+### Tokens
+
+Os tokens centrais vivem em `frontend/src/ui/fac/theme/fac-tokens.css`. A camada Visual v2 consolida uma escala pequena para tipografia, texto, superfícies, linhas, geometria e espaço. Os nomes técnicos `fac-*` podem coexistir com tokens `tuuli-*` quando a sua alteração não acrescenta valor funcional.
+
+### Tipografia
+
+- `400`: estado normal.
+- `500`: âncora secundária, apenas quando necessária.
+- `600`: grandes âncoras, como o título de página.
+- `700`: evitar.
+
+**Hierarquia por cor, escala, posição e espaço antes de font-weight.**
+
+### Primitivas
+
+A infraestrutura reutilizável vive em `frontend/src/ui/tuuli/tuuli-v2.css` e inclui página, métricas, pesquisa, toolbar, contexto, tabela, células semânticas, estado e paginação. `EntityDetailOverlay` continua a ser a primitiva partilhada para slide-over e bottom sheet.
+
+As primitivas são classes semânticas pequenas. Não incluem componentes específicos como linhas de Documentos.
+
+### Regras de tabela
+
+- Uma linha usa uma escala tipográfica única por defeito.
+- Conteúdo principal e secundário distinguem-se por cor.
+- Números distinguem-se por alinhamento, `tabular-nums` e `nowrap` quando apropriado.
+- Estados distinguem-se semanticamente, sem depender de bold.
+- Cabeçalhos mantêm escala própria de sinalização.
+
+### Regras numéricas
+
+Os helpers em `frontend/src/ui/tuuli/format.ts` usam locale `pt-PT`. Valores monetários preservam separadores de milhares e vírgula decimal; células numéricas alinham à direita e usam `tabular-nums`.
+
+### Ações e pesquisa
+
+Ações secundárias usam peso `400`, baixa ornamentação e hover subtil. A ação principal usa azul TUULI sem depender de bold. A pesquisa usa borda subtil, fundo leve, ícone discreto e focus TUULI.
+
+### Espaço e contexto
+
+O espaço organiza a hierarquia antes de caixas adicionais. Barras de contexto apresentam seleção e ações imediatas sem competir com a tabela; ações menos frequentes ou destrutivas podem viver num menu explícito.
+
+### Gramáticas de ecrã
+
+- **Listagem simples:** título, indicadores opcionais, toolbar e tabela.
+- **Entidade + listagem:** título, contexto da entidade, indicadores/contexto, toolbar, tabela e detalhe temporário.
+- **Coleção documental:** título, indicadores da coleção, toolbar, contexto da seleção, tabela e overlay.
+- **Analítico:** título, filtros, indicadores e painéis analíticos.
+
+As gramáticas são regras de composição, não componentes rígidos.
+
+**Documentos é a primeira implementação oficial e referência, não um template literal.**
+
+**Clientes é a segunda implementação oficial e valida a gramática Entidade + listagem.**
+
+A Conta Corrente de Clientes é uma subestrutura tabular da mesma gramática: preserva escala tipográfica única por linha, hierarquia semântica por cor e alinhamento, totais discretos e paginação comum.
+
+**Consistência visual não significa comportamento funcional idêntico.**
+
+### Classificação da implementação de referência
+
+- **Global TUULI:** tokens, tipografia, cores, espaço, pesquisa, ações, tabela, numeração e overlay.
+- **Gramática:** métricas da coleção, toolbar, contexto da seleção, tabela e detalhe temporário.
+- **Específica de Documentos:** colunas, larguras mínimas, estados documentais, permissões e ações por estado.
+- **Legado:** o bloco CSS histórico `.fac-documents-v2`, mantido inativo até uma remoção isolada e verificável.

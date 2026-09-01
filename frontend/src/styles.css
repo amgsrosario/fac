@@ -3899,7 +3899,7 @@ button:disabled {
   margin-bottom: 42px;
 }
 
-.fac-workspace-documents-v2 > .fac-topbar h1 {
+.fac-workspace-documents-v2 > .fac-topbar h1:not(.tuuli-page-title) {
   font-size: clamp(2rem, 3vw, 2.75rem);
   font-weight: 600;
   line-height: 1.08;

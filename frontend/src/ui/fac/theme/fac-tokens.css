@@ -23,6 +23,22 @@
   --tuuli-radius-card: 14px;
   --tuuli-shadow-subtle: 0 10px 28px rgba(31, 52, 72, 0.08);
   --tuuli-space-base: 1rem;
+  --tuuli-font-content: 14px;
+  --tuuli-font-table-header: 12px;
+  --tuuli-font-page-title: clamp(2rem, 3vw, 2.75rem);
+  --tuuli-weight-normal: 400;
+  --tuuli-weight-anchor: 500;
+  --tuuli-weight-title: 600;
+  --tuuli-tracking-technical: 0.045em;
+  --tuuli-line-normal: 1.5;
+  --tuuli-line-compact: 1.2;
+  --tuuli-space-micro: 4px;
+  --tuuli-space-small: 8px;
+  --tuuli-space-medium: 16px;
+  --tuuli-space-section: 32px;
+  --tuuli-space-page: 48px;
+  --tuuli-divider: color-mix(in srgb, var(--tuuli-border-soft) 72%, transparent);
+  --tuuli-overlay-backdrop: rgb(25 39 48 / 28%);
 
   --fac-bg: var(--tuuli-bg);
   --fac-surface: #FFFFFF;
