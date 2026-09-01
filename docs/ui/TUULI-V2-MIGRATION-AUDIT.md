@@ -21,11 +21,16 @@ Gramática validada: **Entidade + listagem**.
 
 ## Artigos
 
-Gramática provável: **Entidade + listagem**.
+Gramática validada: **Entidade + listagem**.
 
-- Rever toolbar, pesquisa, tabela, seleção, ficha comercial e estado Ativo/Inativo.
-- `articles.css` contém pesos `700` e badges de radius elevado.
-- Confirmar unidade, preço e IVA antes de aplicar regras numéricas comuns.
+- Terceira implementação oficial da Visual v2, migrada, validada e aprovada como baseline.
+- Contexto, pesquisa, toolbar, tabela, seleção, detalhe, estados e paginação reutilizam aproximadamente 95% do sistema comum.
+- Preço, peso e indicadores usam os helpers numéricos comuns.
+- A variante genérica `tuuli-entity-metrics-three` suporta contextos com três indicadores.
+- O único CSS específico relevante é a largura mínima da tabela, necessária ao domínio/layout de Artigos.
+- A validação visual e responsiva abrangeu desktop, 1100 px, 700 px e 393 px.
+- Os smoke tests de Documentos e Clientes foram aprovados sem regressões observadas.
+- A mudança efetiva para a página 2 não foi exercitada porque o conjunto atual contém apenas oito artigos; a implementação e os controlos de paginação foram preservados.
 
 ## Recebimentos
 

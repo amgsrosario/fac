@@ -173,6 +173,7 @@
   border-radius: var(--tuuli-radius-sm);
   padding: 8px 11px;
   font-weight: var(--tuuli-weight-normal);
+  white-space: nowrap;
 }
 
 .tuuli-tool-action {
@@ -311,6 +312,14 @@
 
 .tuuli-table .tuuli-status-anulado {
   color: var(--tuuli-error);
+}
+
+.tuuli-table .tuuli-status-ativo {
+  color: var(--tuuli-success);
+}
+
+.tuuli-table .tuuli-status-inativo {
+  color: var(--tuuli-text-muted);
 }
 
 .tuuli-v2-page .tuuli-table .tuuli-table-footer th,
@@ -555,6 +564,10 @@
   gap: 10px 26px;
 }
 
+.tuuli-entity-metrics-three {
+  grid-template-columns: repeat(3, minmax(100px, 1fr));
+}
+
 .tuuli-entity-metrics .tuuli-metric {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
@@ -618,6 +631,10 @@
 
 .tuuli-grammar-entity-list .fac-clients-table-panel .tuuli-table {
   min-width: 1000px;
+}
+
+.tuuli-grammar-entity-list .fac-articles-table-panel .tuuli-table {
+  min-width: 680px;
 }
 
 .tuuli-grammar-entity-list .fac-entity-detail {

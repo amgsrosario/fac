@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { apiFetch, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 import { EntityDetailOverlay } from "./EntityContext";
+import { decimal, integer, money } from "./ui/tuuli/format";
 
 type Page<T> = {
   content: T[];
@@ -322,62 +323,62 @@ export default function ArtigosView() {
   }
 
   return (
-    <>
+    <div className="tuuli-v2-page tuuli-grammar-entity-list">
       {notice && <p className="fac-editor-message">{notice}</p>}
       {message && <p className="fac-message">{message}</p>}
-      <section aria-label="Artigo selecionado" className="fac-entity-context fac-article-context">
+      <section aria-label="Artigo selecionado" className="fac-entity-context fac-article-context tuuli-entity-context">
         {selected ? <>
-          <div className="fac-entity-context-main">
+          <div className="fac-entity-context-main tuuli-entity-primary">
             <strong>{selected.descricao}</strong>
             <span>Código {selected.codigo} · IVA {selected.ivaVendaId} · {selected.inativo ? "Inativo" : "Ativo"}</span>
           </div>
-          <div className="fac-article-context-metrics" aria-label="Indicadores do catálogo">
-            <div className="fac-entity-context-value">
+          <div className="fac-article-context-metrics tuuli-metric-group tuuli-entity-metrics tuuli-entity-metrics-three" aria-label="Indicadores do catálogo">
+            <div className="fac-entity-context-value tuuli-metric">
               <span>Preço</span>
               <strong>{money(selected.pvp)} EUR</strong>
             </div>
-            <div className="fac-entity-context-value">
+            <div className="fac-entity-context-value tuuli-metric">
               <span>Catálogo</span>
-              <strong>{artigos.length} artigos</strong>
+              <strong>{integer(artigos.length)} artigos</strong>
             </div>
-            <div className="fac-entity-context-value">
+            <div className="fac-entity-context-value tuuli-metric">
               <span>Inativos</span>
-              <strong>{artigos.filter((artigo) => artigo.inativo).length}</strong>
+              <strong>{integer(artigos.filter((artigo) => artigo.inativo).length)}</strong>
             </div>
           </div>
-          <div className="fac-entity-context-actions">
-            <button aria-controls="fac-article-detail" aria-expanded={detailOpen} className="fac-ghost-button" onClick={() => setDetailOpen(true)} ref={detailTriggerRef} type="button">Ver detalhe</button>
-            {canManage && <button className="fac-primary-button" onClick={() => openEdit(selected)} type="button">Editar</button>}
+          <div className="fac-entity-context-actions tuuli-context-actions">
+            <button aria-controls="fac-article-detail" aria-expanded={detailOpen} className="fac-ghost-button tuuli-tool-action" onClick={() => setDetailOpen(true)} ref={detailTriggerRef} type="button">Ver detalhe</button>
+            {canManage && <button className="fac-primary-button tuuli-primary-action" onClick={() => openEdit(selected)} type="button">Editar</button>}
           </div>
         </> : <span className="fac-muted">Selecione um artigo para consultar o respetivo contexto.</span>}
       </section>
 
-      <section className="fac-list-toolbar fac-articles-toolbar">
-        <input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código, descrição ou identificação" type="search" value={search} />
+      <section className="fac-list-toolbar fac-articles-toolbar tuuli-toolbar">
+        <label className="tuuli-search"><i aria-hidden="true" className="pi pi-search" /><input aria-label="Pesquisar artigos" onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código, descrição ou identificação" type="search" value={search} /></label>
         <div className="fac-inline-actions">
-          <label className="fac-articles-active-filter"><input checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} type="checkbox" /><span>Mostrar inativos</span></label>
-          <button className="fac-soft-button" disabled={exportingFormat !== null} onClick={() => exportArtigos("pdf")} type="button">{exportingFormat === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button>
-          <button className="fac-soft-button" disabled={exportingFormat !== null} onClick={() => exportArtigos("xlsx")} type="button">{exportingFormat === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
-          <button className="fac-ghost-button" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button>
-          {canManage && <button className="fac-primary-button" onClick={openNew} type="button">Novo artigo</button>}
+          <label className="fac-listing-checkbox"><input checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} type="checkbox" /><span>Mostrar inativos</span></label>
+          <button className="fac-soft-button tuuli-tool-action" disabled={exportingFormat !== null} onClick={() => exportArtigos("pdf")} type="button">{exportingFormat === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button>
+          <button className="fac-soft-button tuuli-tool-action" disabled={exportingFormat !== null} onClick={() => exportArtigos("xlsx")} type="button">{exportingFormat === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
+          <button className="fac-ghost-button tuuli-tool-action" onClick={() => setColumnEditorOpen((current) => !current)} type="button">Colunas ({artigoColumns.visibleColumns.length})</button>
+          {canManage && <button className="fac-primary-button tuuli-primary-action" onClick={openNew} type="button">Novo artigo</button>}
         </div>
       </section>
 
       <section className="fac-content-grid fac-articles-content-grid">
-        <article className="fac-panel fac-panel-main fac-articles-table-panel">
+        <article className="fac-panel fac-panel-main fac-articles-table-panel tuuli-table-surface">
           <ColumnSelector columns={artigoColumns.columns} open={columnEditorOpen} onMove={artigoColumns.moveColumn} onReset={artigoColumns.resetColumns} onToggle={artigoColumns.toggleColumn} />
-          <table className="fac-table fac-articles-table">
-            <thead><tr>{artigoColumns.visibleColumns.map((column) => <th className={column.key === "pvp" ? "fac-article-number" : undefined} key={column.key}>{column.label}</th>)}</tr></thead>
+          <table className="fac-table fac-articles-table tuuli-table">
+            <thead><tr>{artigoColumns.visibleColumns.map((column) => <th className={artigoColumnClass(column.key)} key={column.key}>{column.label}</th>)}</tr></thead>
             <tbody>
               {pagedArtigos.map((artigo) => (
-                <tr className={artigo.codigo === selectedCodigo ? "fac-row-selected" : ""} key={artigo.codigo} onClick={() => setSelectedCodigo(artigo.codigo)}>
-                  {artigoColumns.visibleColumns.map((column) => <td className={column.key === "pvp" ? "fac-article-number" : undefined} key={column.key}>{artigoColumnValue(artigo, column.key, familias)}</td>)}
+                <tr className={artigo.codigo === selectedCodigo ? "fac-row-selected tuuli-table-row-selected" : ""} key={artigo.codigo} onClick={() => setSelectedCodigo(artigo.codigo)}>
+                  {artigoColumns.visibleColumns.map((column) => <td className={artigoColumnClass(column.key)} key={column.key}>{artigoColumnValue(artigo, column.key, familias)}</td>)}
                 </tr>
               ))}
               {!loading && filtered.length === 0 && <tr><td colSpan={artigoColumns.visibleColumns.length}>Sem artigos para mostrar.</td></tr>}
             </tbody>
           </table>
-          {filtered.length > 0 && <div className="fac-list-pagination fac-articles-pagination">
+          {filtered.length > 0 && <div className="fac-list-pagination fac-articles-pagination tuuli-pagination">
             <span>{filtered.length} {filtered.length === 1 ? "artigo" : "artigos"}{!showInactive ? ` de ${artigos.length}` : ""}</span>
             <Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filtered.length} />
           </div>}
@@ -395,14 +396,14 @@ export default function ArtigosView() {
             <div><dt>Família</dt><dd>{familiaNome}</dd></div>
             <div><dt>Unidade</dt><dd>{selected.unidade}</dd></div>
             <div><dt>IVA venda</dt><dd>{selected.ivaVendaId}</dd></div>
-            <div><dt>PVP</dt><dd>{money(selected.pvp)} EUR</dd></div>
+            <div><dt>PVP</dt><dd className="tuuli-cell-numeric">{money(selected.pvp)} EUR</dd></div>
             <div><dt>Retenção</dt><dd>{selected.retencao ? "Sim" : "Não"}</dd></div>
             <div><dt>Estado</dt><dd>{selected.inativo ? "Inativo" : "Ativo"}</dd></div>
             {selected.observacoes && <div><dt>Observações</dt><dd>{selected.observacoes}</dd></div>}
           </dl>
         </div>}
       </EntityDetailOverlay>
-    </>
+    </div>
   );
 }
 
@@ -415,12 +416,19 @@ function artigoColumnValue(artigo: Artigo, key: string, familias: Familia[]) {
     case "familia": return familias.find((familia) => familia.id === artigo.familiaId)?.descricao ?? artigo.familiaId;
     case "unidade": return artigo.unidade;
     case "ivaVenda": return artigo.ivaVendaId;
-    case "pvp": return money(artigo.pvp);
-    case "peso": return artigo.peso ?? 0;
+    case "pvp": return `${money(artigo.pvp)} EUR`;
+    case "peso": return decimal(artigo.peso ?? 0);
     case "retencao": return artigo.retencao ? "Sim" : "Não";
-    case "estado": return <span className="fac-status">{artigo.inativo ? "Inativo" : "Ativo"}</span>;
+    case "estado": return <span className={`fac-status tuuli-status tuuli-status-${artigo.inativo ? "inativo" : "ativo"}`}>{artigo.inativo ? "Inativo" : "Ativo"}</span>;
     default: return "-";
   }
+}
+
+function artigoColumnClass(key: string) {
+  if (key === "descricao") return "tuuli-cell-primary";
+  if (key === "pvp") return "fac-article-number tuuli-cell-primary tuuli-cell-numeric";
+  if (key === "peso") return "fac-article-number tuuli-cell-secondary tuuli-cell-numeric";
+  return "tuuli-cell-secondary";
 }
 
 function Field({ children, label }: { children: React.ReactNode; label: string }) {
@@ -526,8 +534,4 @@ function firstActiveIva(tiposIva: TipoTaxaIva[]) {
 
 function tipoArtigoLabel(tipo: TipoArtigo) {
   return tipo === "ARTIGO" ? "Artigo" : "Serviço";
-}
-
-function money(value: number) {
-  return Number(value || 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 6 });
 }
