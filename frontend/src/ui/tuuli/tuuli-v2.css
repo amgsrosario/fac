@@ -13,6 +13,10 @@
   line-height: 1.08;
 }
 
+.fac-workspace:has(.tuuli-receipts-page) > .fac-topbar h1 {
+  font-weight: var(--tuuli-weight-title);
+}
+
 .fac-workspace-tuuli-v2 > .fac-topbar {
   align-items: flex-start;
   margin-bottom: 42px;
@@ -2133,6 +2137,9 @@
 .tuuli-listings-results .fac-listing-filters,
 .tuuli-listings-results .fac-extrato-filters,
 .tuuli-listings-results .fac-pendentes-controls { margin-bottom: 18px; }
+.tuuli-listings-results .fac-extrato-filters label > span,
+.tuuli-listings-results .fac-listing-filters label > span,
+.tuuli-listings-results .fac-filter-field > span { font-weight: var(--tuuli-weight-normal); }
 .tuuli-listings-results .fac-listing-filters.with-checkbox { grid-template-columns: minmax(135px, .55fr) minmax(135px, .55fr) minmax(260px, 1.2fr) auto; }
 .tuuli-listings-results .fac-listing-filters.with-article-checkbox { grid-template-columns: minmax(125px, .45fr) minmax(125px, .45fr) minmax(210px, 1fr) minmax(210px, 1fr) auto; }
 .tuuli-listings-results-panel { overflow: visible; border-radius: 0; background: transparent; box-shadow: none; }

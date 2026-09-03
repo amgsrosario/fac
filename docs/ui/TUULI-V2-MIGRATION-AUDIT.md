@@ -71,3 +71,9 @@ Composição validada: **Entrada editorial**.
 - O botão Entrar permanece o único CTA principal e o autofill nativo é aceite sem hacks frágeis.
 - Autenticação, mensagens, focus e comportamento responsivo foram preservados.
 - Com o Login concluído, a migração transversal Visual v2 dos principais ecrãs operacionais está completa.
+
+## Fecho
+
+- Auditoria transversal concluída, sem regressões funcionais conhecidas.
+- As correções tipográficas finais de Recebimentos e Listagens foram aplicadas.
+- A TUULI Visual v2 fica consolidada nesta branch.

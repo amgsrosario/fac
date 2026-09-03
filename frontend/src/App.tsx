@@ -1860,13 +1860,6 @@ function filenameFromDisposition(disposition: string | null) {
   return match?.[1] ?? null;
 }
 
-function money(value: number) {
-  return Number(value || 0).toLocaleString("pt-PT", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-}
-
 function clientColumnClass(key: ClienteColumnKey) {
   if (key === "nome") return "tuuli-cell-primary";
   if (key === "estado") return "tuuli-cell-secondary tuuli-status";
