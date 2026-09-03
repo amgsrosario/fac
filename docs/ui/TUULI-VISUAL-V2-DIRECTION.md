@@ -90,6 +90,10 @@ Duas coleções relacionadas coexistem sem se tornarem dois cards; filtros e fer
 
 **Não esconder complexidade funcional. Organizar complexidade funcional.**
 
+**Dashboard é a implementação oficial da gramática Analítica.**
+
+Métricas e áreas analíticas podem ser definidas por espaço, títulos e divisores, sem cards pesados. Pouca densidade de dados não deve ser compensada com decoração; no mobile, preservar ar não significa acrescentar altura. Atalhos operacionais também podem existir como uma estrutura leve, sem cards.
+
 **Consistência visual não significa comportamento funcional idêntico.**
 
 ### Classificação da implementação de referência

@@ -44,11 +44,13 @@ Composição validada: **Híbrida transacional**.
 
 ## Dashboard
 
-Gramática: **Analítico**.
+Gramática validada: **Analítico**.
 
-- Rever métricas, grelhas, painéis, sombras, radius e pesos fortes sem converter painéis analíticos em tabelas.
-- Preservar hierarquia e comparação de dados; não aplicar literalmente a composição de Documentos.
-- Consolidar números apenas depois de confirmar unidades e escalas de cada indicador.
+- Quinta implementação oficial da Visual v2, com período, métricas, evolução, ranking de clientes e atalhos operacionais.
+- Métricas e áreas analíticas usam espaço, títulos e divisores em vez de widgets pesados.
+- A baixa densidade de dados é preservada sem decoração compensatória.
+- O mobile mantém a hierarquia e reduz altura desnecessária; os atalhos empilham sem cards.
+- A numeração usa os helpers comuns e mantém alinhamento e leitura imediata.
 
 ## Listagens
 

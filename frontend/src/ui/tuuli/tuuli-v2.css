@@ -345,6 +345,377 @@
   background: transparent;
 }
 
+/* Dashboard experiment: an analytical page with lighter, continuous sections. */
+.tuuli-dashboard-page {
+  display: grid;
+  gap: 0;
+}
+
+.fac-workspace-tuuli-dashboard > .fac-topbar {
+  margin-bottom: 30px;
+}
+
+.tuuli-dashboard-period {
+  align-items: end;
+  gap: 10px;
+  margin: 0 0 22px;
+}
+
+.tuuli-dashboard-period label {
+  gap: 5px;
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-dashboard-period input {
+  min-height: 38px;
+  border-color: var(--tuuli-screen-line);
+  border-radius: var(--tuuli-radius-sm);
+  color: var(--tuuli-text-secondary);
+  background: color-mix(in srgb, var(--tuuli-surface) 72%, var(--tuuli-bg));
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.tuuli-dashboard-period input:focus {
+  border-color: var(--tuuli-border-focus);
+  box-shadow: var(--fac-focus-ring);
+}
+
+.tuuli-dashboard-metrics {
+  margin: 0 0 38px;
+  border-block: 1px solid var(--tuuli-screen-line);
+  background: transparent;
+}
+
+.tuuli-dashboard-metrics .fac-dashboard-metric {
+  align-content: end;
+  gap: 7px;
+  min-height: 112px;
+  padding: 20px 22px;
+}
+
+.tuuli-dashboard-metrics .fac-dashboard-metric + .fac-dashboard-metric {
+  border-color: var(--tuuli-screen-line);
+}
+
+.tuuli-dashboard-metrics .fac-dashboard-metric > span {
+  margin: 0;
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+}
+
+.tuuli-dashboard-metrics .fac-dashboard-metric > strong {
+  overflow-wrap: normal;
+  color: var(--tuuli-text-primary);
+  font-size: 24px;
+  font-weight: var(--tuuli-weight-anchor);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.tuuli-dashboard-metrics .fac-dashboard-metric > small {
+  min-height: 14px;
+  margin: 0;
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-dashboard-page .fac-dashboard-grid {
+  grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr);
+  gap: 38px;
+  margin: 0 0 42px;
+}
+
+.tuuli-dashboard-section {
+  min-width: 0;
+  border: 0;
+  border-top: 1px solid var(--tuuli-screen-line);
+  border-radius: 0;
+  padding: 24px 0 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tuuli-dashboard-section .fac-panel-header {
+  margin-bottom: 22px;
+}
+
+.tuuli-dashboard-section .fac-eyebrow,
+.tuuli-dashboard-actions .fac-eyebrow {
+  margin-bottom: 7px;
+  color: var(--tuuli-blue);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+}
+
+.tuuli-dashboard-section .fac-panel-header h2,
+.tuuli-dashboard-actions .fac-panel-header h2 {
+  color: var(--tuuli-text-primary);
+  font-size: 20px;
+  font-weight: var(--tuuli-weight-normal);
+  line-height: 1.25;
+}
+
+.tuuli-dashboard-page .fac-dashboard-chart {
+  gap: 12px;
+}
+
+.tuuli-dashboard-page .fac-dashboard-chart-row {
+  grid-template-columns: 82px repeat(2, minmax(0, 1fr));
+  min-height: 31px;
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+}
+
+.tuuli-dashboard-page .fac-dashboard-series strong {
+  color: var(--tuuli-text-secondary);
+  font-size: 13px;
+  font-weight: var(--tuuli-weight-normal);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tuuli-dashboard-page .fac-dashboard-bar {
+  height: 6px;
+  border-radius: 2px;
+}
+
+.tuuli-dashboard-page .fac-dashboard-bar.sales {
+  background: var(--tuuli-blue);
+}
+
+.tuuli-dashboard-page .fac-dashboard-bar.receipts {
+  background: var(--tuuli-warning);
+}
+
+.tuuli-dashboard-page .fac-dashboard-legend {
+  margin: 3px 0 0;
+  color: var(--tuuli-text-muted);
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-dashboard-page .fac-dashboard-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+}
+
+.tuuli-dashboard-page .fac-dashboard-client-row {
+  gap: 8px;
+  border-color: var(--tuuli-screen-line);
+  padding: 13px 0;
+}
+
+.tuuli-dashboard-page .fac-dashboard-clients .fac-table-link {
+  color: var(--tuuli-blue);
+  font-size: 14px;
+  font-weight: var(--tuuli-weight-normal);
+  text-decoration: none;
+}
+
+.tuuli-dashboard-page .fac-dashboard-clients .fac-table-link:hover,
+.tuuli-dashboard-page .fac-dashboard-clients .fac-table-link:focus-visible {
+  color: var(--tuuli-blue-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tuuli-dashboard-page .fac-dashboard-client-meta {
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-dashboard-page .fac-dashboard-client-meta strong {
+  color: var(--tuuli-text-primary);
+  font-size: 14px;
+  font-weight: var(--tuuli-weight-anchor);
+  font-variant-numeric: tabular-nums;
+}
+
+.tuuli-dashboard-actions {
+  margin: 0 0 18px;
+  border: 0;
+  border-top: 1px solid var(--tuuli-screen-line);
+  border-radius: 0;
+  padding: 24px 0 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tuuli-dashboard-actions .fac-panel-header {
+  align-items: end;
+  margin-bottom: 4px;
+}
+
+.tuuli-dashboard-actions .fac-muted {
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-dashboard-actions .fac-dashboard-action-grid {
+  gap: 0;
+}
+
+.tuuli-dashboard-actions .fac-dashboard-action-grid button {
+  min-height: 86px;
+  border: 0;
+  border-radius: 0;
+  padding: 20px 18px;
+  color: var(--tuuli-text-secondary);
+  background: transparent;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-dashboard-actions .fac-dashboard-action-grid button + button {
+  border-left: 1px solid var(--tuuli-screen-line);
+}
+
+.tuuli-dashboard-actions .fac-dashboard-action-grid button:hover,
+.tuuli-dashboard-actions .fac-dashboard-action-grid button:focus-visible {
+  border-color: var(--tuuli-screen-line);
+  background: color-mix(in srgb, var(--tuuli-surface-hover) 60%, transparent);
+  outline: none;
+}
+
+.tuuli-dashboard-actions .fac-dashboard-action-grid button:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--tuuli-border-focus);
+}
+
+.tuuli-dashboard-actions .fac-dashboard-action-grid strong {
+  color: var(--tuuli-text-primary);
+  font-size: 15px;
+  font-weight: var(--tuuli-weight-anchor);
+}
+
+.tuuli-dashboard-actions .fac-dashboard-action-grid span {
+  color: var(--tuuli-text-muted);
+  font-size: 13px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+@media (max-width: 1100px) {
+  .tuuli-dashboard-page .fac-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .tuuli-dashboard-metrics .fac-dashboard-metric {
+    min-height: 96px;
+  }
+
+  .tuuli-dashboard-metrics .fac-dashboard-metric:nth-child(3) {
+    border-left: 0;
+  }
+
+  .tuuli-dashboard-metrics .fac-dashboard-metric:nth-child(n + 3) {
+    border-top-color: var(--tuuli-screen-line);
+  }
+}
+
+@media (max-width: 700px) {
+  .fac-workspace-tuuli-dashboard > .fac-topbar {
+    margin-bottom: 24px;
+  }
+
+  .tuuli-dashboard-period {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .tuuli-dashboard-period label,
+  .tuuli-dashboard-period input,
+  .tuuli-dashboard-period .tuuli-tool-action {
+    width: 100%;
+  }
+
+  .tuuli-dashboard-page .fac-dashboard-grid,
+  .tuuli-dashboard-metrics {
+    margin-bottom: 32px;
+  }
+
+  .tuuli-dashboard-actions .fac-panel-header {
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 430px) {
+  .tuuli-dashboard-period {
+    row-gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .tuuli-dashboard-period .tuuli-tool-action {
+    align-self: flex-start;
+    width: auto;
+    min-height: 32px;
+    margin-top: -2px;
+    padding: 4px 0;
+  }
+
+  .tuuli-dashboard-metrics {
+    margin-bottom: 20px;
+    border-bottom: 0;
+  }
+
+  .tuuli-dashboard-metrics .fac-dashboard-metric {
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 0;
+    gap: 1px 12px;
+    padding: 9px 8px;
+  }
+
+  .tuuli-dashboard-metrics .fac-dashboard-metric > strong {
+    font-size: 20px;
+  }
+
+  .tuuli-dashboard-page .fac-dashboard-grid {
+    gap: 28px;
+  }
+
+  .tuuli-dashboard-section,
+  .tuuli-dashboard-actions {
+    padding-top: 20px;
+  }
+
+  .tuuli-dashboard-page .fac-dashboard-chart-row {
+    grid-template-columns: 60px repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .tuuli-dashboard-page .fac-dashboard-series {
+    grid-template-columns: minmax(18px, 1fr) 58px;
+  }
+
+  .tuuli-dashboard-page .fac-dashboard-series strong {
+    font-size: 11px;
+  }
+
+  .tuuli-dashboard-actions .fac-dashboard-action-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tuuli-dashboard-actions .fac-dashboard-action-grid button {
+    min-height: 72px;
+    padding: 15px 8px;
+  }
+
+  .tuuli-dashboard-actions .fac-dashboard-action-grid button + button {
+    border-top: 1px solid var(--tuuli-screen-line);
+    border-left: 0;
+  }
+}
+
 /* Receipts list: transactional context and two collections in one page cadence. */
 .tuuli-receipts-page {
   display: grid;

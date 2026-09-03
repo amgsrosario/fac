@@ -781,18 +781,18 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   }
 
   const metrics: Array<{ detail?: string; label: string; value: string }> = [
-    { label: "Vendas no período", value: `${dashboardMoney(dashboardData?.vendas ?? 0)} ${dashboardData?.moedaId ?? "EUR"}` },
-    { label: "Recebimentos no período", value: `${dashboardMoney(dashboardData?.recebimentos ?? 0)} ${dashboardData?.moedaId ?? "EUR"}` },
-    { label: "Valores em aberto", value: `${dashboardMoney(dashboardData?.valorEmAberto ?? 0)} ${dashboardData?.moedaId ?? "EUR"}` },
+    { label: "Vendas no período", value: `${tuuliMoney(dashboardData?.vendas ?? 0)} ${dashboardData?.moedaId ?? "EUR"}` },
+    { label: "Recebimentos no período", value: `${tuuliMoney(dashboardData?.recebimentos ?? 0)} ${dashboardData?.moedaId ?? "EUR"}` },
+    { label: "Valores em aberto", value: `${tuuliMoney(dashboardData?.valorEmAberto ?? 0)} ${dashboardData?.moedaId ?? "EUR"}` },
     {
       detail: documentsLabel(dashboardData?.documentosVencidos.quantidade ?? 0),
       label: "Documentos vencidos",
-      value: `${dashboardMoney(dashboardData?.documentosVencidos.valor ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`
+      value: `${tuuliMoney(dashboardData?.documentosVencidos.valor ?? 0)} ${dashboardData?.moedaId ?? "EUR"}`
     }
   ];
 
   return (
-    <main className={`fac-shell${shellView === "Documentos" ? " fac-shell-documents-v2" : ""}${shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" ? " fac-shell-tuuli-v2" : ""}`}>
+    <main className={`fac-shell${shellView === "Documentos" ? " fac-shell-documents-v2" : ""}${shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" ? " fac-shell-tuuli-v2" : ""}`}>
       <header className="fac-mobile-topbar">
         <button
           aria-controls="fac-mobile-drawer"
@@ -882,11 +882,11 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         </nav>
       </aside>
 
-      <section className={`fac-workspace${shellView === "Documentos" ? " fac-workspace-documents-v2" : ""}${shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" ? " fac-workspace-tuuli-v2" : ""}${shellView === "Clientes" || shellView === "Artigos" ? " fac-workspace-tuuli-entity-list" : ""}`}>
+      <section className={`fac-workspace${shellView === "Documentos" ? " fac-workspace-documents-v2" : ""}${shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" ? " fac-workspace-tuuli-v2" : ""}${shellView === "Clientes" || shellView === "Artigos" ? " fac-workspace-tuuli-entity-list" : ""}${shellView === "Dashboard" ? " fac-workspace-tuuli-dashboard" : ""}`}>
         <header className="fac-topbar">
           <div>
             {import.meta.env.VITE_FAC_DEMO_MODE === "true" && <p className="fac-eyebrow">Ambiente de demonstração</p>}
-            <h1 className={shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" ? "tuuli-page-title" : undefined}>{viewTitle(shellView)}</h1>
+            <h1 className={shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" ? "tuuli-page-title" : undefined}>{viewTitle(shellView)}</h1>
           </div>
           <div className="fac-topbar-actions">
             {visibleAdminMenuItems.length > 0 && (
@@ -1032,14 +1032,14 @@ function DashboardView({
 }: DashboardViewProps) {
   const maxEvolution = Math.max(1, ...(data?.evolucao.flatMap((point) => [Number(point.vendas), Number(point.recebimentos)]) ?? [0]));
   return (
-    <>
-      <section className="fac-dashboard-period" aria-label="Período do dashboard">
+    <div className="tuuli-v2-page tuuli-dashboard-page">
+      <section className="fac-dashboard-period tuuli-dashboard-period" aria-label="Período do dashboard">
         <label><span>Data inicial</span><input max={dataFim} onChange={(event) => onDataInicio(event.target.value)} type="date" value={dataInicio}/></label>
         <label><span>Data final</span><input min={dataInicio} onChange={(event) => onDataFim(event.target.value)} type="date" value={dataFim}/></label>
-        <button className="fac-soft-button" disabled={loading || !dataInicio || !dataFim || dataInicio > dataFim} onClick={onRefresh} type="button">Atualizar</button>
+        <button className="fac-ghost-button tuuli-tool-action" disabled={loading || !dataInicio || !dataFim || dataInicio > dataFim} onClick={onRefresh} type="button">Atualizar</button>
       </section>
 
-      <section className="fac-dashboard-metrics" aria-label="Indicadores">
+      <section className="fac-dashboard-metrics tuuli-dashboard-metrics" aria-label="Indicadores">
         {metrics.map((metric) => (
           <article className="fac-dashboard-metric" key={metric.label}>
             <span>{metric.label}</span>
@@ -1052,30 +1052,30 @@ function DashboardView({
       {error && <section className="fac-panel fac-dashboard-error" role="alert"><strong>Não foi possível atualizar o dashboard.</strong><span>{error}</span><button className="fac-soft-button" onClick={onRefresh} type="button">Tentar novamente</button></section>}
 
       {!error && <div className="fac-dashboard-grid">
-        <section className="fac-panel fac-dashboard-evolution" aria-labelledby="dashboard-evolution-title">
+        <section className="fac-dashboard-evolution tuuli-dashboard-section" aria-labelledby="dashboard-evolution-title">
           <div className="fac-panel-header"><div><p className="fac-eyebrow">Fluxos do período</p><h2 id="dashboard-evolution-title">Evolução de vendas e recebimentos</h2></div></div>
           {loading ? <p className="fac-empty-state">A carregar evolução...</p> : data?.evolucao.length ? <div className="fac-dashboard-chart" role="img" aria-label="Evolução temporal de vendas e recebimentos">
             {data.evolucao.map((point) => <div className="fac-dashboard-chart-row" key={point.periodo}>
               <span>{dashboardPeriodLabel(point.periodo)}</span>
-              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar sales" style={{ width: `${Math.max(0, Number(point.vendas)) / maxEvolution * 100}%` }}/></div><strong>{dashboardMoney(point.vendas)}</strong></div>
-              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar receipts" style={{ width: `${Math.max(0, Number(point.recebimentos)) / maxEvolution * 100}%` }}/></div><strong>{dashboardMoney(point.recebimentos)}</strong></div>
+              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar sales" style={{ width: `${Math.max(0, Number(point.vendas)) / maxEvolution * 100}%` }}/></div><strong>{tuuliMoney(point.vendas)}</strong></div>
+              <div className="fac-dashboard-series"><div><i className="fac-dashboard-bar receipts" style={{ width: `${Math.max(0, Number(point.recebimentos)) / maxEvolution * 100}%` }}/></div><strong>{tuuliMoney(point.recebimentos)}</strong></div>
             </div>)}
             <footer className="fac-dashboard-legend"><span><i className="sales"/>Vendas</span><span><i className="receipts"/>Recebimentos</span></footer>
           </div> : <p className="fac-empty-state">Sem vendas ou recebimentos no período selecionado.</p>}
         </section>
 
-        <section className="fac-panel fac-dashboard-clients" aria-labelledby="dashboard-clients-title">
+        <section className="fac-dashboard-clients tuuli-dashboard-section" aria-labelledby="dashboard-clients-title">
           <div className="fac-panel-header"><div><p className="fac-eyebrow">Posição atual</p><h2 id="dashboard-clients-title">Clientes com maior saldo</h2></div></div>
           {loading ? <p className="fac-empty-state">A carregar saldos...</p> : data?.clientesComMaiorSaldo.length ? <div className="fac-dashboard-client-list">
             {data.clientesComMaiorSaldo.map((cliente) => <article className="fac-dashboard-client-row" key={cliente.clienteId}>
               <button className="fac-table-link" onClick={() => onSelectCliente(cliente.clienteId)} title={cliente.clienteNome} type="button"><span>{cliente.clienteNome}</span></button>
-              <div className="fac-dashboard-client-meta"><span>#{cliente.clienteId}</span><span>mais antigo {datePt(cliente.vencimentoMaisAntigo)}</span><span className="fac-dashboard-client-count">{documentsLabel(cliente.documentosPendentes)}</span><strong>{dashboardMoney(cliente.saldo)} {data.moedaId}</strong></div>
+              <div className="fac-dashboard-client-meta"><span>#{cliente.clienteId}</span><span>mais antigo {datePt(cliente.vencimentoMaisAntigo)}</span><span className="fac-dashboard-client-count">{documentsLabel(cliente.documentosPendentes)}</span><strong>{tuuliMoney(cliente.saldo)} {data.moedaId}</strong></div>
             </article>)}
           </div> : <p className="fac-empty-state">Não existem clientes com valores em aberto.</p>}
         </section>
       </div>}
 
-      <section className="fac-panel fac-dashboard-actions">
+      <section className="fac-dashboard-actions tuuli-dashboard-actions">
         <div className="fac-panel-header">
           <div>
             <p className="fac-eyebrow">Operação diária</p>
@@ -1099,7 +1099,7 @@ function DashboardView({
           </button>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 
@@ -1871,11 +1871,6 @@ function clientColumnClass(key: ClienteColumnKey) {
   if (key === "nome") return "tuuli-cell-primary";
   if (key === "estado") return "tuuli-cell-secondary tuuli-status";
   return "tuuli-cell-secondary";
-}
-
-function dashboardMoney(value: number) {
-  const [whole, decimal] = money(value).split(",");
-  return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ")},${decimal}`;
 }
 
 function integer(value: number) {
