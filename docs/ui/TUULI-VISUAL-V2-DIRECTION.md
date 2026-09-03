@@ -84,6 +84,12 @@ As gramáticas são regras de composição, não componentes rígidos.
 
 A Conta Corrente de Clientes é uma subestrutura tabular da mesma gramática: preserva escala tipográfica única por linha, hierarquia semântica por cor e alinhamento, totais discretos e paginação comum.
 
+**Recebimentos é uma implementação oficial de composição híbrida transacional.**
+
+Duas coleções relacionadas coexistem sem se tornarem dois cards; filtros e ferramentas podem ocupar duas linhas funcionais deliberadas. O detalhe documental reutiliza a linguagem existente, enquanto a distribuição usa um workspace transacional específico e validado. Este workspace não constitui, por enquanto, uma nova gramática global.
+
+**Não esconder complexidade funcional. Organizar complexidade funcional.**
+
 **Consistência visual não significa comportamento funcional idêntico.**
 
 ### Classificação da implementação de referência

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch, getAuthSession, hasPermission } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 import { EntityLookupField, type EntityLookupColumn, type EntityLookupSearchField } from "./ui/fac/components/EntityLookup";
+import { money as formatMoney } from "./ui/tuuli/format";
 
 type Page<T> = { content: T[]; totalElements: number };
 type Pendente = {
@@ -332,7 +333,7 @@ export default function PendentesView() {
       firstAllocation?.focus();
       firstAllocation?.select();
     });
-    setMessage(remaining > 0 ? `Ficam ${money(remaining)} ${form.moedaId} por distribuir porque o valor recebido excede os pendentes disponíveis.` : null);
+    setMessage(remaining > 0 ? `Ficam ${formatMoney(remaining)} ${form.moedaId} por distribuir porque o valor recebido excede os pendentes disponíveis.` : null);
   }
 
   function handleReceiptKeyDown(event: React.KeyboardEvent<HTMLElement>) {
@@ -425,7 +426,7 @@ export default function PendentesView() {
     }
     const cliente = clientes.find((item) => item.id === Number(form.clienteId));
     const pdfMessage = postAction === "PDF" ? " O PDF será aberto após a emissão." : "";
-    if (!window.confirm(`Confirmar a emissão deste recibo de ${money(receiptTarget)} ${form.moedaId} para ${cliente?.nome ?? form.clienteId}? Após a emissão, o documento deixa de poder ser editado.${pdfMessage}`)) return;
+    if (!window.confirm(`Confirmar a emissão deste recibo de ${formatMoney(receiptTarget)} ${form.moedaId} para ${cliente?.nome ?? form.clienteId}? Após a emissão, o documento deixa de poder ser editado.${pdfMessage}`)) return;
     receiptSubmittingRef.current = true;
     setReceiptSubmitting(true);
     setLoading(true);
@@ -450,7 +451,7 @@ export default function PendentesView() {
       });
       closeReceipt();
       setCreatedReceipt(created);
-      setNotice(`${financialReference(created)} emitido por ${money(created.valorPagamentoLiquido)} ${created.moedaId}. Pendentes atualizados.`);
+      setNotice(`${financialReference(created)} emitido por ${formatMoney(created.valorPagamentoLiquido)} ${created.moedaId}. Pendentes atualizados.`);
       await loadTesouraria();
       await openFinancialDetail(created);
       if (postAction === "PDF") {
@@ -572,42 +573,75 @@ export default function PendentesView() {
     {notice && <div className="fac-editor-message"><p>{notice}</p>{createdReceipt && <div className="fac-inline-actions"><button className="fac-gold-button" disabled={loading} onClick={() => openFinancialPdf(createdReceipt)} type="button">Abrir PDF</button><button className="fac-soft-button" disabled={loading} onClick={() => openFinancialDetail(createdReceipt)} type="button">Ver detalhe</button></div>}</div>}
     {message && <p className="fac-message">{message}</p>}
 
-    <section className="fac-hero">
-      <div><p className="fac-eyebrow">Tesouraria</p><h2>Recebimentos por cliente</h2><p>Recebimentos emitidos e valores pendentes.</p></div>
-      <div className="fac-hero-card"><span>Saldo em aberto</span><strong>{money(sum(abertas.map((item) => item.valorPendente)))} EUR</strong><small>{abertas.length} pendentes ativos</small></div>
-    </section>
-
-    {!receiptOpen && !selectedFinanceiroId && <section className="fac-panel fac-section-panel fac-receipt-action-panel"><div className="fac-panel-header"><div><p className="fac-eyebrow">Novo recebimento</p><h2>Liquidar pendentes</h2><p className="fac-muted">Cria um recibo a partir dos documentos em aberto selecionados.</p></div><div className="fac-inline-actions"><button className="fac-soft-button" disabled={loading} onClick={loadTesouraria} type="button">Atualizar</button>{canManageTreasury && <button className="fac-primary-button" disabled={loading || clientesComPendentes.length === 0} onClick={openReceipt} ref={newReceiptButtonRef} type="button">Novo recebimento</button>}</div></div></section>}
-
-    {!receiptOpen && !selectedFinanceiroId && <>
-      <section className="fac-table-outside-controls">
-        <div className="fac-panel-header"><div><p className="fac-eyebrow">Documentos financeiros</p><h2>Recebimentos emitidos</h2></div><div className="fac-inline-actions"><span className="fac-muted">{filteredFinanceiros.length} documentos</span><button className="fac-ghost-button" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div></div>
-        <div className="fac-financeiro-filters"><label><span>Data inicial</span><input max={financeiroDateTo || undefined} onChange={(event) => setFinanceiroDateFrom(event.target.value)} type="date" value={financeiroDateFrom}/></label><label><span>Data final</span><input min={financeiroDateFrom || undefined} onChange={(event) => setFinanceiroDateTo(event.target.value)} type="date" value={financeiroDateTo}/></label><label className="fac-financeiro-annulled-filter"><input checked={showAnnulledFinanceiros} onChange={(event) => setShowAnnulledFinanceiros(event.target.checked)} type="checkbox"/><span>Mostrar anulados</span></label></div>
-      </section>
-      <section className="fac-panel fac-section-panel"><ColumnSelector columns={financeiroColumns.columns} open={financeiroColumnsOpen} onMove={financeiroColumns.moveColumn} onReset={financeiroColumns.resetColumns} onToggle={financeiroColumns.toggleColumn}/><table className="fac-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{pagedFinanceiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td key={column.key}>{financeiroColumnValue(documento, column.key, openFinancialDetail)}</td>)}</tr>)}{!loading && filteredFinanceiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length}>Sem documentos financeiros para mostrar neste período.</td></tr>}</tbody></table>{filteredFinanceiros.length > 0 && <div className="fac-list-pagination fac-financeiros-pagination"><span>{filteredFinanceiros.length} {filteredFinanceiros.length === 1 ? "documento" : "documentos"}</span><Paginator first={financeirosPage * financeirosPageSize} onPageChange={(event) => { setFinanceirosPage(event.page); setFinanceirosPageSize(event.rows); }} rows={financeirosPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filteredFinanceiros.length}/></div>}</section>
-    </>}
-
-    {!receiptOpen && selectedFinanceiroId && <section className="fac-panel fac-section-panel fac-financial-detail fac-documents-detail">
-      <div className="fac-financial-detail-heading">
-        <div className="fac-documents-detail-title">
-          <div>
-            <p className="fac-eyebrow">Recibo</p>
-            <h2 id="financial-detail-heading" tabIndex={-1}>{selectedFinanceiro ? financialReference(selectedFinanceiro) : "A carregar recebimento..."}</h2>
-            {selectedFinanceiro && <p className="fac-muted">Emitido em {datePt(selectedFinanceiro.dataEmissao)}</p>}
-          </div>
-          {selectedFinanceiro && <span aria-label={`Estado do recibo: ${selectedReceiptStatus}`} className={`fac-status ${selectedFinanceiro.anulado ? "danger" : ""}`}>{selectedReceiptStatus}</span>}
+    {!receiptOpen && !selectedFinanceiroId && <div className="tuuli-v2-page tuuli-receipts-page">
+      <section className="tuuli-receipts-context" aria-label="Contexto de recebimentos">
+        <div className="tuuli-metric">
+          <span>Saldo em aberto</span>
+          <strong>{formatMoney(sum(abertas.map((item) => item.valorPendente)))} EUR</strong>
+          <small>{abertas.length} pendentes ativos</small>
         </div>
-        <div className="fac-documents-actions fac-financial-actions">
-          <button className="fac-ghost-button" onClick={closeFinancialDetail} type="button">Voltar à listagem</button>
-          {selectedFinanceiro && hasPermission("DOCUMENTO_OBTER_PDF") && <button className="fac-gold-button" disabled={loading || detailLoading} onClick={() => openFinancialPdf(selectedFinanceiro)} type="button">Abrir PDF</button>}
-          {selectedFinanceiro && canAnnul && !selectedFinanceiro.anulado && <button className="fac-link-danger" disabled={loading || detailLoading} onClick={() => annulFinancial(selectedFinanceiro)} type="button">Anular recibo</button>}
+        <div className="tuuli-receipts-page-actions">
+          <button className="fac-ghost-button tuuli-tool-action" disabled={loading} onClick={loadTesouraria} type="button">Atualizar</button>
+          {canManageTreasury && <button className="fac-primary-button tuuli-primary-action" disabled={loading || clientesComPendentes.length === 0} onClick={openReceipt} ref={newReceiptButtonRef} type="button">Novo recebimento</button>}
+        </div>
+      </section>
+
+      <section className="tuuli-receipts-section">
+        <h2>Recebimentos emitidos</h2>
+        <div className="tuuli-toolbar tuuli-receipts-toolbar tuuli-receipts-issued-toolbar">
+          <div className="tuuli-receipts-date-filters">
+            <label><span>Data inicial</span><input max={financeiroDateTo || undefined} onChange={(event) => setFinanceiroDateFrom(event.target.value)} type="date" value={financeiroDateFrom}/></label>
+            <label><span>Data final</span><input min={financeiroDateFrom || undefined} onChange={(event) => setFinanceiroDateTo(event.target.value)} type="date" value={financeiroDateTo}/></label>
+            <label className="tuuli-inline-control"><input checked={showAnnulledFinanceiros} onChange={(event) => setShowAnnulledFinanceiros(event.target.checked)} type="checkbox"/><span>Mostrar anulados</span></label>
+          </div>
+          <div className="tuuli-receipts-toolbar-actions"><span className="tuuli-meta">{filteredFinanceiros.length} documentos</span><button className="fac-ghost-button tuuli-tool-action" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div>
+        </div>
+        <ColumnSelector columns={financeiroColumns.columns} open={financeiroColumnsOpen} onMove={financeiroColumns.moveColumn} onReset={financeiroColumns.resetColumns} onToggle={financeiroColumns.toggleColumn}/>
+        <div className="tuuli-table-surface tuuli-receipts-table-surface"><table className="tuuli-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th className={receiptColumnClass(column.key)} key={column.key}>{column.label}</th>)}</tr></thead><tbody>{pagedFinanceiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td className={receiptColumnClass(column.key)} key={column.key}>{financeiroColumnValue(documento, column.key, openFinancialDetail)}</td>)}</tr>)}{!loading && filteredFinanceiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length}>Sem documentos financeiros para mostrar neste período.</td></tr>}</tbody></table></div>
+        {filteredFinanceiros.length > 0 && <div className="tuuli-pagination"><span>{filteredFinanceiros.length} {filteredFinanceiros.length === 1 ? "documento" : "documentos"}</span><Paginator first={financeirosPage * financeirosPageSize} onPageChange={(event) => { setFinanceirosPage(event.page); setFinanceirosPageSize(event.rows); }} rows={financeirosPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filteredFinanceiros.length}/></div>}
+      </section>
+
+      <section className="tuuli-receipts-section tuuli-receipts-current-account">
+        <h2>Conta corrente em aberto e liquidada</h2>
+        <div className="tuuli-toolbar tuuli-receipts-toolbar tuuli-receipts-current-toolbar">
+          <div className="tuuli-receipts-filter-group">
+            <label className="tuuli-search"><i aria-hidden="true" className="pi pi-search"/><input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar pendente, cliente ou estado" type="search" value={search}/></label>
+            <select aria-label="Filtrar por vencimento" className="tuuli-receipts-select" onChange={(event) => setDueFilter(event.target.value as "all" | "overdue" | "not-overdue")} value={dueFilter}><option value="all">Vencidos e não vencidos</option><option value="overdue">Vencidos</option><option value="not-overdue">Não vencidos</option></select>
+            <label className="tuuli-inline-control"><input checked={excludeSettled} onChange={(event) => setExcludeSettled(event.target.checked)} type="checkbox"/><span>Excluir totalmente liquidados</span></label>
+          </div>
+          <div className="tuuli-receipts-toolbar-actions">
+            <div className="tuuli-receipts-export-actions"><button className="fac-ghost-button tuuli-tool-action" disabled={exportingPendentes !== null} onClick={() => exportPendentes("pdf")} type="button">{exportingPendentes === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button><button className="fac-ghost-button tuuli-tool-action" disabled={exportingPendentes !== null} onClick={() => exportPendentes("xlsx")} type="button">{exportingPendentes === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button></div>
+            <div className="tuuli-receipts-meta-actions"><span className="tuuli-meta">{filteredPendentes.length} registos</span><button className="fac-ghost-button tuuli-tool-action" onClick={() => setPendenteColumnsOpen((current) => !current)} type="button">Colunas ({pendenteColumns.visibleColumns.length})</button></div>
+          </div>
+        </div>
+        <ColumnSelector columns={pendenteColumns.columns} open={pendenteColumnsOpen} onMove={pendenteColumns.moveColumn} onReset={pendenteColumns.resetColumns} onToggle={pendenteColumns.toggleColumn}/>
+        <div className="tuuli-table-surface tuuli-receipts-table-surface"><table className="tuuli-table"><thead><tr>{pendenteColumns.visibleColumns.map((column) => <th className={pendingColumnClass(column.key)} key={column.key}>{column.label}</th>)}</tr></thead><tbody>{pagedPendentes.map((item) => <tr key={item.id}>{pendenteColumns.visibleColumns.map((column) => <td className={pendingColumnClass(column.key)} key={column.key}>{pendenteColumnValue(item, column.key)}</td>)}</tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={pendenteColumns.visibleColumns.length}>Sem pendentes para mostrar.</td></tr>}</tbody></table></div>
+        {filteredPendentes.length > 0 && <div className="tuuli-receipts-summary"><PendingSummary label="Subtotal da página" values={subtotalPendentes}/><PendingSummary label="Total filtrado" values={totalFilteredPendentes}/></div>}
+        {filteredPendentes.length > 0 && <div className="tuuli-pagination"><span>{filteredPendentes.length} {filteredPendentes.length === 1 ? "registo" : "registos"}</span><Paginator first={pendentesPage * pendentesPageSize} onPageChange={(event) => { setPendentesPage(event.page); setPendentesPageSize(event.rows); }} rows={pendentesPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filteredPendentes.length}/></div>}
+      </section>
+    </div>}
+
+    {!receiptOpen && selectedFinanceiroId && <section className="tuuli-v2-page tuuli-receipt-detail">
+      <div className="tuuli-receipt-detail-heading">
+        <div className="tuuli-receipt-detail-title">
+          <div>
+            <p className="tuuli-receipt-detail-kicker">Recibo</p>
+            <h2 id="financial-detail-heading" tabIndex={-1}>{selectedFinanceiro ? financialReference(selectedFinanceiro) : "A carregar recebimento..."}</h2>
+            {selectedFinanceiro && <p>Emitido em {datePt(selectedFinanceiro.dataEmissao)}</p>}
+          </div>
+          {selectedFinanceiro && <span aria-label={`Estado do recibo: ${selectedReceiptStatus}`} className={`tuuli-status ${selectedFinanceiro.anulado ? "tuuli-status-anulado" : "tuuli-status-ativo"}`}>{selectedReceiptStatus}</span>}
+        </div>
+        <div className="tuuli-receipt-detail-actions">
+          <button className="fac-ghost-button tuuli-tool-action" onClick={closeFinancialDetail} type="button">Voltar à listagem</button>
+          {selectedFinanceiro && hasPermission("DOCUMENTO_OBTER_PDF") && <button className="fac-ghost-button tuuli-tool-action" disabled={loading || detailLoading} onClick={() => openFinancialPdf(selectedFinanceiro)} type="button">Abrir PDF</button>}
+          {selectedFinanceiro && canAnnul && !selectedFinanceiro.anulado && <button className="fac-link-danger tuuli-receipt-danger-action" disabled={loading || detailLoading} onClick={() => annulFinancial(selectedFinanceiro)} type="button">Anular recibo</button>}
         </div>
       </div>
       {detailLoading && <p className="fac-muted">A carregar detalhe do recibo...</p>}
       {selectedFinanceiro && <>
-        <section>
-          <h3 className="fac-financial-section-title">Identificação</h3>
-          <dl className="fac-documents-definition fac-financial-definition">
+        <section className="tuuli-receipt-detail-section">
+          <h3>Identificação</h3>
+          <dl className="tuuli-receipt-identification">
             <div><dt>Cliente</dt><dd>{selectedCliente ? selectedCliente.nome : selectedFinanceiro.clienteId}</dd></div>
             {selectedCliente?.nif && <div><dt>NIF</dt><dd>{selectedCliente.nif}</dd></div>}
             <div><dt>Tipo</dt><dd>{selectedFinanceiro.tipoDocumentoId}</dd></div>
@@ -619,28 +653,28 @@ export default function PendentesView() {
             <div><dt>Operação</dt><dd>{dateTimePt(selectedFinanceiro.dataHoraOperacao)}</dd></div>
           </dl>
         </section>
-        <section>
-          <h3 className="fac-financial-section-title">Resumo financeiro</h3>
-          <div className="fac-documents-totals fac-financial-summary" aria-label="Resumo financeiro do recibo">
-            <div><span>Valor recebido</span><strong>{money(selectedFinanceiro.valorPagamentoLiquido)} {selectedFinanceiro.moedaId}</strong></div>
-            <div><span>Distribuído</span><strong>{money(selectedAppliedTotal)} {selectedFinanceiro.moedaId}</strong></div>
-            <div><span>Diferença</span><strong>{money(selectedReceiptDifference)} {selectedFinanceiro.moedaId}</strong></div>
-            <div className="fac-documents-total-final"><span>Estado</span><strong>{selectedReceiptStatus}</strong></div>
+        <section className="tuuli-receipt-detail-section">
+          <h3>Resumo financeiro</h3>
+          <div className="tuuli-receipt-financial-summary" aria-label="Resumo financeiro do recibo">
+            <div><span>Valor recebido</span><strong>{formatMoney(selectedFinanceiro.valorPagamentoLiquido)} {selectedFinanceiro.moedaId}</strong></div>
+            <div><span>Distribuído</span><strong>{formatMoney(selectedAppliedTotal)} {selectedFinanceiro.moedaId}</strong></div>
+            <div><span>Diferença</span><strong>{formatMoney(selectedReceiptDifference)} {selectedFinanceiro.moedaId}</strong></div>
+            <div><span>Estado</span><strong className={selectedFinanceiro.anulado ? "tuuli-status-anulado" : "tuuli-status-ativo"}>{selectedReceiptStatus}</strong></div>
           </div>
         </section>
-        <section className="fac-financial-lines">
-          <div className="fac-panel-header compact"><div><p className="fac-eyebrow">Documentos liquidados</p><h3>Documentos comerciais associados</h3></div><span className="fac-muted">{selectedFinanceiro.linhas?.length ?? 0} linhas</span></div>
-          <div className="fac-table-scroll">
-            <table className="fac-table"><thead><tr><th>Documento</th><th>Emissão</th><th>Vencimento</th><th>Valor original</th><th>Saldo anterior</th><th>Valor liquidado</th><th>Saldo posterior</th></tr></thead><tbody>{(selectedFinanceiro.linhas ?? []).map((linha) => { const documentoComercialId = pendenteById.get(linha.pendenteId)?.documentoComercialId; return <tr key={linha.id}><td>{documentoComercialId ? <button className="fac-table-link" onClick={() => navigate(`/documentos/${documentoComercialId}`)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(`/documentos/${documentoComercialId}`); } }} type="button">{lineReference(linha)}</button> : lineReference(linha)}</td><td>{datePt(linha.dataDocumento)}</td><td>{datePt(linha.dataVencimento)}</td><td className="fac-amount">{money(linha.valorDocumento)} {linha.moedaId}</td><td className="fac-amount">{money(linha.valorPendenteAntes)} {linha.moedaId}</td><td className="fac-amount">{money(linha.valorALiquidar)} {linha.moedaId}</td><td className="fac-amount">{money(linha.novoValorPendente)} {linha.moedaId}</td></tr>; })}{(!selectedFinanceiro.linhas || selectedFinanceiro.linhas.length === 0) && <tr><td colSpan={7}>Sem documentos liquidados.</td></tr>}</tbody></table>
+        <section className="tuuli-receipt-detail-section tuuli-receipt-lines">
+          <div className="tuuli-receipt-lines-heading"><div><p>Documentos liquidados</p><h3>Documentos comerciais associados</h3></div><span className="tuuli-meta">{selectedFinanceiro.linhas?.length ?? 0} linhas</span></div>
+          <div className="tuuli-table-surface tuuli-receipt-lines-table">
+            <table className="tuuli-table"><thead><tr><th className="tuuli-cell-primary">Documento</th><th className="tuuli-cell-secondary">Emissão</th><th className="tuuli-cell-secondary">Vencimento</th><th className="tuuli-cell-numeric tuuli-cell-secondary">Valor original</th><th className="tuuli-cell-numeric tuuli-cell-secondary">Saldo anterior</th><th className="tuuli-cell-numeric tuuli-cell-primary">Valor liquidado</th><th className="tuuli-cell-numeric tuuli-cell-primary">Saldo posterior</th></tr></thead><tbody>{(selectedFinanceiro.linhas ?? []).map((linha) => { const documentoComercialId = pendenteById.get(linha.pendenteId)?.documentoComercialId; return <tr key={linha.id}><td className="tuuli-cell-primary">{documentoComercialId ? <button className="fac-table-link tuuli-receipt-link" onClick={() => navigate(`/documentos/${documentoComercialId}`)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(`/documentos/${documentoComercialId}`); } }} type="button">{lineReference(linha)}</button> : lineReference(linha)}</td><td className="tuuli-cell-secondary">{datePt(linha.dataDocumento)}</td><td className="tuuli-cell-secondary">{datePt(linha.dataVencimento)}</td><td className="tuuli-cell-numeric tuuli-cell-secondary">{formatMoney(linha.valorDocumento)} {linha.moedaId}</td><td className="tuuli-cell-numeric tuuli-cell-secondary">{formatMoney(linha.valorPendenteAntes)} {linha.moedaId}</td><td className="tuuli-cell-numeric tuuli-cell-primary">{formatMoney(linha.valorALiquidar)} {linha.moedaId}</td><td className="tuuli-cell-numeric tuuli-cell-primary">{formatMoney(linha.novoValorPendente)} {linha.moedaId}</td></tr>; })}{(!selectedFinanceiro.linhas || selectedFinanceiro.linhas.length === 0) && <tr><td colSpan={7}>Sem documentos liquidados.</td></tr>}</tbody></table>
           </div>
         </section>
-        {selectedFinanceiro.observacoes && <section><h3 className="fac-financial-section-title">Observações</h3><p className="fac-financial-observations">{selectedFinanceiro.observacoes}</p></section>}
+        {selectedFinanceiro.observacoes && <section className="tuuli-receipt-detail-section"><h3>Observações</h3><p className="tuuli-receipt-observations">{selectedFinanceiro.observacoes}</p></section>}
       </>}
     </section>}
 
-    {receiptOpen && <section aria-label="Novo recebimento" className="fac-panel fac-section-panel fac-emission-panel" onKeyDown={handleReceiptKeyDown} ref={receiptEditorRef}>
-      <div className="fac-panel-header"><div><p className="fac-eyebrow">Novo documento financeiro</p><h2>Distribuir recebimento</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" disabled={loading || receiptSubmitting} onClick={backToReceiptList} type="button">Voltar à listagem</button><button className="fac-gold-button" disabled={!canIssueReceipt} onClick={() => issueReceipt("DETAIL")} type="button">{issueButtonLabel}</button><button className="fac-primary-button" disabled={!canIssueReceipt} onClick={() => issueReceipt("PDF")} type="button">{issuePdfButtonLabel}</button></div></div>
-      <div className="fac-form-grid">
+    {receiptOpen && <section aria-label="Novo recebimento" className="tuuli-v2-page tuuli-receipt-workspace" onKeyDown={handleReceiptKeyDown} ref={receiptEditorRef}>
+      <div className="tuuli-receipt-workspace-heading"><div><p>Novo documento financeiro</p><h2>Distribuir recebimento</h2></div><div className="tuuli-receipt-workspace-actions"><button className="fac-ghost-button tuuli-tool-action" disabled={loading || receiptSubmitting} onClick={backToReceiptList} type="button">Voltar à listagem</button><button className="fac-primary-button tuuli-primary-action" disabled={!canIssueReceipt} onClick={() => issueReceipt("DETAIL")} type="button">{issueButtonLabel}</button><button className="fac-ghost-button tuuli-tool-action" disabled={!canIssueReceipt} onClick={() => issueReceipt("PDF")} type="button">{issuePdfButtonLabel}</button></div></div>
+      <div className="fac-form-grid tuuli-receipt-workspace-fields">
         <EntityLookupField<Cliente>
           autoFocusRequest={clientFocusRequest}
           columns={CLIENT_LOOKUP_COLUMNS}
@@ -670,22 +704,18 @@ export default function PendentesView() {
         <Field label="Emissor"><input disabled value={getAuthSession()?.nome ?? "Utilizador autenticado"}/></Field>
       </div>
 
-      <div className="fac-receipt-totals"><div><span>Total pendente do cliente</span><strong>{money(totalPendenteCliente)} {form.moedaId || "EUR"}</strong></div><div><span>Valor recebido</span><strong>{money(receiptTarget)} {form.moedaId}</strong></div><div><span>Distribuído</span><strong>{money(allocatedTotal)} {form.moedaId}</strong></div><div className={difference === 0 && receiptTarget > 0 ? "balanced" : "unbalanced"}><span>Diferença</span><strong>{money(difference)} {form.moedaId}</strong></div></div>
-      <div className="fac-inline-actions"><button className="fac-soft-button" disabled={!form.valorRecebido || !form.moedaId} onClick={distributeReceipt} type="button">Distribuir por antiguidade</button><button className="fac-ghost-button" disabled={allocatedTotal === 0} onClick={clearAllocations} type="button">Limpar distribuição</button></div>
+      <div className="tuuli-receipt-workspace-summary"><div><span>Total pendente do cliente</span><strong>{formatMoney(totalPendenteCliente)} {form.moedaId || "EUR"}</strong></div><div><span>Valor recebido</span><strong>{formatMoney(receiptTarget)} {form.moedaId}</strong></div><div><span>Distribuído</span><strong>{formatMoney(allocatedTotal)} {form.moedaId}</strong></div><div className={difference === 0 ? "balanced" : "unbalanced"}><span>Diferença</span><strong>{formatMoney(difference)} {form.moedaId}</strong></div></div>
+      <div className="tuuli-receipt-distribution-heading"><div><p>Documentos pendentes</p><h3>Distribuição do recebimento</h3></div><div className="tuuli-receipt-distribution-tools"><button className="fac-ghost-button tuuli-tool-action" disabled={!form.valorRecebido || !form.moedaId} onClick={distributeReceipt} type="button">Distribuir por antiguidade</button><button className="fac-ghost-button tuuli-tool-action" disabled={allocatedTotal === 0} onClick={clearAllocations} type="button">Limpar distribuição</button></div></div>
 
-      <table className="fac-table fac-allocation-table"><thead><tr><th>Documento</th><th>Emissão</th><th>Vencimento</th><th>Valor original</th><th>Pendente antes</th><th>Valor a liquidar</th><th>Novo pendente</th></tr></thead><tbody>
-        {receiptPendentes.map((pendente) => { const amount = round6(Number(allocations[pendente.id] || 0)); return <tr aria-label={`${referencia(pendente)}: clicar para atribuir ou limpar o valor a liquidar`} className={`fac-allocation-row ${amount > 0 ? "allocated" : ""}`} key={pendente.id} onClick={(event) => { if (!(event.target as HTMLElement).closest("input, button, select, textarea")) toggleAllocation(pendente); }}><td>{referencia(pendente)}</td><td>{datePt(pendente.dataDocumento)}</td><td>{datePt(pendente.dataVencimento)}</td><td>{money(pendente.valorDocumento)} {pendente.moedaId}</td><td>{money(pendente.valorPendente)} {pendente.moedaId}</td><td><input aria-label={`Valor a liquidar de ${referencia(pendente)}`} className="fac-table-input" max={pendente.valorPendente} min="0" onChange={(event) => changeAllocation(pendente, event.target.value)} onKeyDown={(event) => handleAllocationInputKeyDown(event, pendente)} step="0.000001" type="number" value={allocations[pendente.id] ?? ""}/></td><td>{money(round6(pendente.valorPendente - amount))} {pendente.moedaId}</td></tr>; })}
+      <div className="tuuli-table-surface tuuli-receipt-allocation-surface"><table className="tuuli-table fac-allocation-table"><thead><tr><th>Documento</th><th>Emissão</th><th>Vencimento</th><th>Valor original</th><th>Pendente antes</th><th>Valor a liquidar</th><th>Novo pendente</th></tr></thead><tbody>
+        {receiptPendentes.map((pendente) => { const amount = round6(Number(allocations[pendente.id] || 0)); return <tr aria-label={`${referencia(pendente)}: clicar para atribuir ou limpar o valor a liquidar`} className={`fac-allocation-row ${amount > 0 ? "allocated" : ""}`} key={pendente.id} onClick={(event) => { if (!(event.target as HTMLElement).closest("input, button, select, textarea")) toggleAllocation(pendente); }}><td className="tuuli-cell-primary">{referencia(pendente)}</td><td className="tuuli-cell-secondary">{datePt(pendente.dataDocumento)}</td><td className="tuuli-cell-secondary">{datePt(pendente.dataVencimento)}</td><td className="tuuli-cell-numeric tuuli-cell-secondary">{formatMoney(pendente.valorDocumento)} {pendente.moedaId}</td><td className="tuuli-cell-numeric tuuli-cell-secondary">{formatMoney(pendente.valorPendente)} {pendente.moedaId}</td><td className="tuuli-cell-numeric tuuli-cell-primary"><input aria-label={`Valor a liquidar de ${referencia(pendente)}`} className="tuuli-allocation-input" max={pendente.valorPendente} min="0" onChange={(event) => changeAllocation(pendente, event.target.value)} onKeyDown={(event) => handleAllocationInputKeyDown(event, pendente)} step="0.000001" type="number" value={allocations[pendente.id] ?? ""}/></td><td className="tuuli-cell-numeric tuuli-cell-primary">{formatMoney(round6(pendente.valorPendente - amount))} {pendente.moedaId}</td></tr>; })}
         {form.clienteId && form.moedaId && receiptPendentes.length === 0 && <tr><td colSpan={7}>Este cliente não tem pendentes em aberto nesta moeda.</td></tr>}
-      </tbody></table>
+      </tbody></table></div>
 
-      <div className="fac-form-grid"><Field label="Observações"><textarea maxLength={250} onChange={(event) => setForm((current) => ({ ...current, observacoes: event.target.value }))} value={form.observacoes}/></Field></div>
-      <div className="fac-form-footer"><span className="fac-muted">O recibo só pode ser emitido quando o valor recebido estiver totalmente distribuído pelos pendentes.</span></div>
+      <div className="tuuli-receipt-workspace-notes"><Field label="Observações"><textarea maxLength={250} onChange={(event) => setForm((current) => ({ ...current, observacoes: event.target.value }))} value={form.observacoes}/></Field></div>
+      <p className="tuuli-receipt-workspace-guidance">O recibo só pode ser emitido quando o valor recebido estiver totalmente distribuído pelos pendentes.</p>
     </section>}
 
-    {!receiptOpen && !selectedFinanceiroId && <>
-    <section className="fac-table-outside-controls"><div className="fac-panel-header"><div><p className="fac-eyebrow">Pendentes</p><h2>Conta corrente em aberto e liquidada</h2></div></div><div className="fac-pendentes-toolbar"><input className="fac-list-search" onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar pendente, cliente ou estado" type="search" value={search}/><div className="fac-inline-actions"><select aria-label="Filtrar por vencimento" className="fac-pendentes-due-filter" onChange={(event) => setDueFilter(event.target.value as "all" | "overdue" | "not-overdue")} value={dueFilter}><option value="all">Vencidos e não vencidos</option><option value="overdue">Vencidos</option><option value="not-overdue">Não vencidos</option></select><label className="fac-pendentes-settled-filter"><input checked={excludeSettled} onChange={(event) => setExcludeSettled(event.target.checked)} type="checkbox"/><span>Excluir totalmente liquidados</span></label><button className="fac-soft-button" disabled={exportingPendentes !== null} onClick={() => exportPendentes("pdf")} type="button">{exportingPendentes === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button><button className="fac-soft-button" disabled={exportingPendentes !== null} onClick={() => exportPendentes("xlsx")} type="button">{exportingPendentes === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button><span className="fac-muted">{filteredPendentes.length} registos</span><button className="fac-ghost-button" onClick={() => setPendenteColumnsOpen((current) => !current)} type="button">Colunas ({pendenteColumns.visibleColumns.length})</button></div></div></section>
-    <section className="fac-panel fac-section-panel"><ColumnSelector columns={pendenteColumns.columns} open={pendenteColumnsOpen} onMove={pendenteColumns.moveColumn} onReset={pendenteColumns.resetColumns} onToggle={pendenteColumns.toggleColumn}/><table className="fac-table"><thead><tr>{pendenteColumns.visibleColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{pagedPendentes.map((item) => <tr key={item.id}>{pendenteColumns.visibleColumns.map((column) => <td key={column.key}>{pendenteColumnValue(item, column.key)}</td>)}</tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={pendenteColumns.visibleColumns.length}>Sem pendentes para mostrar.</td></tr>}</tbody></table>{filteredPendentes.length > 0 && <div className="fac-pendentes-summary"><PendingSummary label="Subtotal da página" values={subtotalPendentes}/><PendingSummary label="Total filtrado" values={totalFilteredPendentes}/></div>}{filteredPendentes.length > 0 && <div className="fac-list-pagination fac-pendentes-pagination"><span>{filteredPendentes.length} {filteredPendentes.length === 1 ? "registo" : "registos"}</span><Paginator first={pendentesPage * pendentesPageSize} onPageChange={(event) => { setPendentesPage(event.page); setPendentesPageSize(event.rows); }} rows={pendentesPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filteredPendentes.length}/></div>}</section>
-    </>}
   </>;
 }
 
@@ -693,19 +723,20 @@ function emptyReceiptForm(): ReceiptForm { return { clienteId: "", moedaId: "", 
 function receiptFormKey(form: ReceiptForm) { return JSON.stringify({ clienteId: form.clienteId, moedaId: form.moedaId, tipoDocumentoId: form.tipoDocumentoId, serie: form.serie, dataEmissao: form.dataEmissao, valorRecebido: form.valorRecebido, mPagamentoId: form.mPagamentoId, observacoes: form.observacoes.trim() }); }
 function openPendentesForClient(pendentes: Pendente[], clienteId: number) { return clienteId ? pendentes.filter((item) => item.clienteId === clienteId && Number(item.valorPendente) > 0) : []; }
 function summarizePendentes(items: Pendente[]) { const byCurrency = new Map<string, { count: number; original: number; pending: number }>(); items.forEach((item) => { const current = byCurrency.get(item.moedaId) ?? { count: 0, original: 0, pending: 0 }; current.count += 1; current.original += Number(item.valorDocumento); current.pending += Number(item.valorPendente); byCurrency.set(item.moedaId, current); }); return Array.from(byCurrency.entries()); }
-function PendingSummary({ label, values }: { label: string; values: Array<[string, { count: number; original: number; pending: number }]> }) { return <section><h3>{label}</h3>{values.map(([currency, totals]) => <div className="fac-pendentes-summary-row" key={currency}><span>{totals.count} {totals.count === 1 ? "registo" : "registos"} · {currency}</span><dl><div><dt>Original</dt><dd>{money(totals.original)} {currency}</dd></div><div><dt>Pendente</dt><dd>{money(totals.pending)} {currency}</dd></div></dl></div>)}</section>; }
+function PendingSummary({ label, values }: { label: string; values: Array<[string, { count: number; original: number; pending: number }]> }) { return <section><h3>{label}</h3>{values.map(([currency, totals]) => <div className="tuuli-receipts-summary-row" key={currency}><span>{totals.count} {totals.count === 1 ? "registo" : "registos"} · {currency}</span><dl><div><dt>Original</dt><dd>{formatMoney(totals.original)} {currency}</dd></div><div><dt>Pendente</dt><dd>{formatMoney(totals.pending)} {currency}</dd></div></dl></div>)}</section>; }
 function validPaymentMode(modos: MPagamento[], mPagamentoId?: string | null) { return mPagamentoId && modos.some((modo) => modo.id === mPagamentoId) ? mPagamentoId : ""; }
 function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations) { if (!form.clienteId) return "Seleciona o cliente."; if (!form.moedaId) return "Seleciona a moeda."; if (!form.tipoDocumentoId) return "Seleciona o tipo de documento financeiro."; if (!form.serie) return "Seleciona a série."; if (!form.dataEmissao) return "A data de emissão é obrigatória."; if (!form.mPagamentoId) return "Confirma o modo de pagamento."; const target = round6(Number(form.valorRecebido)); if (!Number.isFinite(target) || target <= 0) return "O valor recebido deve ser positivo."; const total = round6(sum(pendentes.map((item) => Number(allocations[item.id] || 0)))); if (total <= 0) return "Distribui o recebimento por pelo menos um pendente."; if (round6(target - total) !== 0) return "O valor recebido e a distribuição pelos pendentes não coincidem."; return null; }
 function estado(item: Pendente) { if (Number(item.valorPendente) <= 0) return "LIQUIDADO"; if (item.dataVencimento < todayIso()) return "VENCIDO"; if (Number(item.valorPendente) < Number(item.valorDocumento)) return "PARCIAL"; return "ABERTO"; }
 function referencia(item: Pendente) { return `${item.tipoDocumentoId} ${item.serieDocumento}/${item.numeroDocumento}`; }
-function pendenteColumnValue(item: Pendente, key: string) { switch (key) { case "documento": return referencia(item); case "cliente": return item.clienteId; case "emissao": return datePt(item.dataDocumento); case "vencimento": return datePt(item.dataVencimento); case "moeda": return item.moedaId; case "original": return `${money(item.valorDocumento)} ${item.moedaId}`; case "pendente": return `${money(item.valorPendente)} ${item.moedaId}`; case "estado": return <span className="fac-status">{estado(item)}</span>; default: return "-"; } }
-function financeiroColumnValue(documento: DocumentoFinanceiro, key: string, onOpen: (documento: DocumentoFinanceiro) => void) { switch (key) { case "documento": return <button className="fac-table-link" onClick={() => onOpen(documento)} type="button">{financialReference(documento)}</button>; case "cliente": return documento.clienteId; case "data": return datePt(documento.dataEmissao); case "modo": return documento.mPagamentoId; case "moeda": return documento.moedaId; case "liquido": return `${money(documento.valorPagamentoLiquido)} ${documento.moedaId}`; case "emissor": return documento.emissorId; case "estado": return <span className={`fac-status ${documento.anulado ? "danger" : ""}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span>; default: return "-"; } }
+function pendenteColumnValue(item: Pendente, key: string) { switch (key) { case "documento": return referencia(item); case "cliente": return item.clienteId; case "emissao": return datePt(item.dataDocumento); case "vencimento": return datePt(item.dataVencimento); case "moeda": return item.moedaId; case "original": return `${formatMoney(item.valorDocumento)} ${item.moedaId}`; case "pendente": return `${formatMoney(item.valorPendente)} ${item.moedaId}`; case "estado": return <span className={`fac-status tuuli-status-${estado(item).toLowerCase()}`}>{estado(item)}</span>; default: return "-"; } }
+function financeiroColumnValue(documento: DocumentoFinanceiro, key: string, onOpen: (documento: DocumentoFinanceiro) => void) { switch (key) { case "documento": return <button className="fac-table-link tuuli-receipt-link" onClick={() => onOpen(documento)} type="button">{financialReference(documento)}</button>; case "cliente": return documento.clienteId; case "data": return datePt(documento.dataEmissao); case "modo": return documento.mPagamentoId; case "moeda": return documento.moedaId; case "liquido": return `${formatMoney(documento.valorPagamentoLiquido)} ${documento.moedaId}`; case "emissor": return documento.emissorId; case "estado": return <span className={`fac-status ${documento.anulado ? "tuuli-status-anulado" : "tuuli-status-ativo"}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span>; default: return "-"; } }
+function receiptColumnClass(key: string) { return [key === "documento" || key === "liquido" ? "tuuli-cell-primary" : "tuuli-cell-secondary", key === "liquido" ? "tuuli-cell-numeric" : ""].filter(Boolean).join(" "); }
+function pendingColumnClass(key: string) { return [key === "documento" || key === "original" || key === "pendente" ? "tuuli-cell-primary" : "tuuli-cell-secondary", key === "original" || key === "pendente" ? "tuuli-cell-numeric" : ""].filter(Boolean).join(" "); }
 function financialReference(documento: DocumentoFinanceiro) { return `${documento.tipoDocumentoId} ${documento.serie}/${documento.numeroDocumento}`; }
 function receiptStatusLabel(documento: DocumentoFinanceiro) { return documento.anulado ? "Anulado" : "Emitido"; }
 function lineReference(linha: LinhaFinanceira) { return `${linha.tipoDocumentoId} ${linha.serieDocumento}/${linha.numeroDocumento}`; }
 function datePt(value: string) { return value ? value.split("-").reverse().join("/") : "-"; }
 function dateTimePt(value?: string | null) { return value ? new Date(value).toLocaleString("pt-PT") : "-"; }
-function money(value: number) { return Number(value || 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function sum(values: number[]) { return values.reduce((total, value) => total + Number(value || 0), 0); }
 function round6(value: number) { return Math.round((value + Number.EPSILON) * 1_000_000) / 1_000_000; }
 function todayIso() { const now = new Date(); const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000); return local.toISOString().slice(0, 10); }

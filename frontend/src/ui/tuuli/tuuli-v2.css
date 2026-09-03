@@ -345,6 +345,906 @@
   background: transparent;
 }
 
+/* Receipts list: transactional context and two collections in one page cadence. */
+.tuuli-receipts-page {
+  display: grid;
+  gap: 42px;
+}
+
+.tuuli-receipts-context {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid var(--tuuli-screen-line);
+  padding: 2px 0 18px;
+}
+
+.tuuli-receipts-context .tuuli-metric {
+  gap: 5px;
+}
+
+.tuuli-receipts-context .tuuli-metric > strong {
+  font-size: 1.5rem;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-receipts-context .tuuli-metric > small {
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-receipts-page-actions,
+.tuuli-receipts-toolbar-actions,
+.tuuli-receipts-date-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tuuli-receipts-section {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+}
+
+.tuuli-receipts-section > h2 {
+  margin: 0;
+  color: var(--tuuli-text-primary);
+  font-size: 1.2rem;
+  font-weight: var(--tuuli-weight-anchor);
+  letter-spacing: 0;
+}
+
+.tuuli-receipts-toolbar {
+  min-height: 42px;
+  gap: 12px;
+}
+
+.tuuli-receipts-issued-toolbar {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.tuuli-receipts-current-toolbar {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 7px;
+}
+
+.tuuli-receipts-filter-group,
+.tuuli-receipts-export-actions,
+.tuuli-receipts-meta-actions {
+  display: flex;
+  align-items: center;
+}
+
+.tuuli-receipts-filter-group {
+  min-width: 0;
+  gap: 10px;
+}
+
+.tuuli-receipts-filter-group .tuuli-search {
+  flex: 1 1 340px;
+  min-width: 230px;
+  max-width: 520px;
+}
+
+.tuuli-receipts-export-actions {
+  gap: 2px;
+}
+
+.tuuli-receipts-meta-actions {
+  gap: 12px;
+}
+
+.tuuli-receipts-current-toolbar > .tuuli-receipts-toolbar-actions {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.tuuli-receipt-link {
+  color: var(--tuuli-blue);
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.tuuli-receipt-link:hover {
+  color: var(--tuuli-blue-hover);
+  text-decoration: underline;
+}
+
+.tuuli-receipt-link:focus-visible {
+  border-radius: 2px;
+  box-shadow: var(--fac-focus-ring);
+  color: var(--tuuli-blue-hover);
+  outline: none;
+  text-decoration: underline;
+}
+
+.tuuli-receipts-date-filters > label:not(.tuuli-inline-control) {
+  display: grid;
+  gap: 4px;
+  color: var(--tuuli-text-muted);
+  font-size: 11px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-receipts-date-filters input[type="date"],
+.tuuli-receipts-select {
+  min-height: 38px;
+  border: 1px solid var(--tuuli-screen-line);
+  border-radius: var(--tuuli-radius-sm);
+  padding: 7px 10px;
+  color: var(--tuuli-text-secondary);
+  background: color-mix(in srgb, var(--tuuli-surface) 72%, var(--tuuli-bg));
+  font: inherit;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-receipts-date-filters input[type="date"]:focus,
+.tuuli-receipts-select:focus {
+  border-color: var(--tuuli-border-focus);
+  box-shadow: var(--fac-focus-ring);
+  outline: none;
+}
+
+.tuuli-receipts-toolbar .tuuli-inline-control {
+  white-space: nowrap;
+}
+
+.tuuli-receipts-table-surface .tuuli-table {
+  min-width: 720px;
+}
+
+.tuuli-receipts-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--tuuli-border-strong);
+  border-bottom: 1px solid var(--tuuli-screen-line);
+}
+
+.tuuli-receipts-summary > section {
+  min-width: 0;
+  padding: 13px 16px 14px 0;
+}
+
+.tuuli-receipts-summary > section + section {
+  border-left: 1px solid var(--tuuli-screen-line);
+  padding-left: 16px;
+}
+
+.tuuli-receipts-summary h3 {
+  margin: 0 0 9px;
+  color: var(--tuuli-text-muted);
+  font-size: 11px;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+  text-transform: uppercase;
+}
+
+.tuuli-receipts-summary-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+
+.tuuli-receipts-summary-row > span {
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+}
+
+.tuuli-receipts-summary-row dl {
+  display: flex;
+  gap: 28px;
+  margin: 0;
+}
+
+.tuuli-receipts-summary-row dl div {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+.tuuli-receipts-summary-row dt {
+  color: var(--tuuli-text-muted);
+  font-size: 11px;
+}
+
+.tuuli-receipts-summary-row dd {
+  margin: 0;
+  color: var(--tuuli-text-primary);
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .tuuli-receipts-current-toolbar .tuuli-receipts-toolbar-actions {
+    grid-column: auto;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 700px) {
+  .tuuli-receipts-page {
+    gap: 34px;
+  }
+
+  .tuuli-receipts-context,
+  .tuuli-receipts-issued-toolbar,
+  .tuuli-receipts-current-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .tuuli-receipts-context {
+    display: grid;
+  }
+
+  .tuuli-receipts-page-actions {
+    justify-content: flex-start;
+  }
+
+  .tuuli-receipts-date-filters {
+    flex-wrap: wrap;
+  }
+
+  .tuuli-receipts-toolbar-actions,
+  .tuuli-receipts-current-toolbar .tuuli-receipts-toolbar-actions {
+    grid-column: auto;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .tuuli-receipts-filter-group {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tuuli-receipts-filter-group .tuuli-search {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .tuuli-receipts-meta-actions {
+    margin-left: 0;
+  }
+
+  .tuuli-receipts-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .tuuli-receipts-summary > section + section {
+    border-top: 1px solid var(--tuuli-screen-line);
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .tuuli-receipts-page {
+    gap: 28px;
+  }
+
+  .tuuli-receipts-context {
+    gap: 15px;
+    padding-bottom: 15px;
+  }
+
+  .tuuli-receipts-context .tuuli-metric > strong {
+    font-size: 1.3rem;
+  }
+
+  .tuuli-receipts-section {
+    gap: 11px;
+  }
+
+  .tuuli-receipts-date-filters > label:not(.tuuli-inline-control) {
+    flex: 1 1 130px;
+  }
+
+  .tuuli-receipts-date-filters input[type="date"] {
+    width: 100%;
+  }
+
+  .tuuli-receipts-summary-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tuuli-receipts-summary-row dl {
+    justify-content: space-between;
+  }
+
+  .tuuli-receipts-toolbar-actions {
+    display: grid;
+    width: 100%;
+    gap: 5px;
+  }
+
+  .tuuli-receipts-export-actions,
+  .tuuli-receipts-meta-actions {
+    justify-content: flex-start;
+  }
+
+  .tuuli-receipts-meta-actions {
+    gap: 16px;
+  }
+}
+
+/* Receipt detail: a continuous technical document, separate from the list grammar. */
+.tuuli-receipt-detail {
+  display: grid;
+  gap: 36px;
+}
+
+.tuuli-receipt-detail-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 24px;
+  border-bottom: 1px solid var(--tuuli-screen-line);
+  padding: 4px 0 20px;
+}
+
+.tuuli-receipt-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+}
+
+.tuuli-receipt-detail-kicker,
+.tuuli-receipt-lines-heading p {
+  margin: 0 0 6px;
+  color: var(--tuuli-text-muted);
+  font-size: 11px;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+  text-transform: uppercase;
+}
+
+.tuuli-receipt-detail-title h2 {
+  margin: 0;
+  color: var(--tuuli-text-primary);
+  font-size: 1.75rem;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.tuuli-receipt-detail-title > div > p:last-child {
+  margin: 7px 0 0;
+  color: var(--tuuli-text-muted);
+  font-size: 13px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-receipt-detail-title > .tuuli-status {
+  align-self: end;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.tuuli-receipt-detail .tuuli-status-ativo {
+  color: var(--tuuli-success);
+}
+
+.tuuli-receipt-detail .tuuli-status-anulado {
+  color: var(--tuuli-error);
+}
+
+.tuuli-receipt-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.tuuli-receipt-danger-action {
+  min-height: 38px;
+  border: 0;
+  padding: 8px 11px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-receipt-detail-section {
+  display: grid;
+  gap: 17px;
+  min-width: 0;
+}
+
+.tuuli-receipt-detail-section > h3,
+.tuuli-receipt-lines-heading h3 {
+  margin: 0;
+  color: var(--tuuli-text-primary);
+  font-size: 1.05rem;
+  font-weight: var(--tuuli-weight-anchor);
+  letter-spacing: 0;
+}
+
+.tuuli-receipt-identification {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px 34px;
+  margin: 0;
+  border-top: 1px solid var(--tuuli-screen-line);
+  padding-top: 18px;
+}
+
+.tuuli-receipt-identification > div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tuuli-receipt-identification dt,
+.tuuli-receipt-financial-summary span {
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+  text-transform: uppercase;
+}
+
+.tuuli-receipt-identification dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--tuuli-text-primary);
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+  line-height: var(--tuuli-line-body);
+}
+
+.tuuli-receipt-financial-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--tuuli-border-strong);
+  border-bottom: 1px solid var(--tuuli-screen-line);
+}
+
+.tuuli-receipt-financial-summary > div {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 15px 18px 16px 0;
+}
+
+.tuuli-receipt-financial-summary > div + div {
+  border-left: 1px solid var(--tuuli-screen-line);
+  padding-left: 18px;
+}
+
+.tuuli-receipt-financial-summary strong {
+  color: var(--tuuli-text-primary);
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tuuli-receipt-lines {
+  gap: 13px;
+}
+
+.tuuli-receipt-lines-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.tuuli-receipt-lines-table .tuuli-table {
+  min-width: 900px;
+}
+
+.tuuli-receipt-observations {
+  margin: 0;
+  border-top: 1px solid var(--tuuli-screen-line);
+  padding-top: 16px;
+  color: var(--tuuli-text-secondary);
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+  line-height: var(--tuuli-line-body);
+}
+
+@media (max-width: 1100px) {
+  .tuuli-receipt-identification {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .tuuli-receipt-detail {
+    gap: 30px;
+  }
+
+  .tuuli-receipt-detail-heading {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .tuuli-receipt-detail-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .tuuli-receipt-financial-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tuuli-receipt-financial-summary > div:nth-child(3) {
+    border-top: 1px solid var(--tuuli-screen-line);
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .tuuli-receipt-financial-summary > div:nth-child(4) {
+    border-top: 1px solid var(--tuuli-screen-line);
+  }
+}
+
+@media (max-width: 430px) {
+  .tuuli-receipt-detail {
+    gap: 26px;
+  }
+
+  .tuuli-receipt-detail-title {
+    align-items: end;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .tuuli-receipt-detail-title h2 {
+    font-size: 1.45rem;
+  }
+
+  .tuuli-receipt-detail-actions {
+    gap: 0;
+  }
+
+  .tuuli-receipt-identification {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+
+  .tuuli-receipt-financial-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .tuuli-receipt-financial-summary > div,
+  .tuuli-receipt-financial-summary > div + div,
+  .tuuli-receipt-financial-summary > div:nth-child(3) {
+    border-top: 1px solid var(--tuuli-screen-line);
+    border-left: 0;
+    padding: 12px 0;
+  }
+
+  .tuuli-receipt-financial-summary > div:first-child {
+    border-top: 0;
+  }
+}
+
+/* Receipt distribution: a transaction workspace with the table at its centre. */
+.tuuli-receipt-workspace {
+  display: grid;
+  gap: 16px;
+}
+
+.tuuli-receipt-workspace-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 24px;
+  border-bottom: 1px solid var(--tuuli-screen-line);
+  padding: 2px 0 13px;
+}
+
+.tuuli-receipt-workspace-heading p,
+.tuuli-receipt-distribution-heading p {
+  margin: 0 0 6px;
+  color: var(--tuuli-blue);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+  text-transform: uppercase;
+}
+
+.tuuli-receipt-workspace-heading h2 {
+  margin: 0;
+  color: var(--tuuli-text-primary);
+  font-size: 1.65rem;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: 0;
+}
+
+.tuuli-receipt-workspace-actions,
+.tuuli-receipt-distribution-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.tuuli-receipt-workspace-actions button:disabled,
+.tuuli-receipt-distribution-tools button:disabled {
+  opacity: 0.48;
+}
+
+.tuuli-receipt-workspace-fields.fac-form-grid {
+  grid-template-columns: minmax(170px, 1.4fr) minmax(150px, 1.2fr) minmax(105px, 0.7fr) minmax(150px, 1fr) minmax(175px, 1.1fr);
+  gap: 11px 14px;
+  margin: 0;
+}
+
+.tuuli-receipt-workspace-fields > *:first-child {
+  grid-column: span 2;
+}
+
+.tuuli-receipt-workspace-fields .fac-field,
+.tuuli-receipt-workspace-notes .fac-field {
+  gap: 5px;
+}
+
+.tuuli-receipt-workspace-fields .fac-field > span,
+.tuuli-receipt-workspace-notes .fac-field > span,
+.tuuli-receipt-workspace-fields .fac-entity-lookup-field > span {
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+}
+
+.tuuli-receipt-workspace-fields input,
+.tuuli-receipt-workspace-fields select,
+.tuuli-receipt-workspace-fields .fac-entity-lookup-input,
+.tuuli-receipt-workspace-notes textarea {
+  min-height: 40px;
+  border-color: var(--tuuli-screen-line);
+  border-radius: var(--tuuli-radius-sm);
+  color: var(--tuuli-text-primary);
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.tuuli-receipt-workspace-fields input:focus,
+.tuuli-receipt-workspace-fields select:focus,
+.tuuli-receipt-workspace-notes textarea:focus {
+  border-color: var(--tuuli-border-focus);
+  box-shadow: var(--fac-focus-ring);
+  outline: none;
+}
+
+.tuuli-receipt-workspace-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--tuuli-border-strong);
+  border-bottom: 1px solid var(--tuuli-screen-line);
+}
+
+.tuuli-receipt-workspace-summary > div {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 16px 11px 0;
+}
+
+.tuuli-receipt-workspace-summary > div + div {
+  border-left: 1px solid var(--tuuli-screen-line);
+  padding-left: 16px;
+}
+
+.tuuli-receipt-workspace-summary span {
+  color: var(--tuuli-text-muted);
+  font-size: 11px;
+  font-weight: var(--tuuli-weight-normal);
+  letter-spacing: var(--tuuli-tracking-technical);
+  text-transform: uppercase;
+}
+
+.tuuli-receipt-workspace-summary strong {
+  color: var(--tuuli-text-primary);
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tuuli-receipt-workspace-summary .unbalanced strong {
+  color: var(--tuuli-warning);
+}
+
+.tuuli-receipt-workspace-summary .balanced strong {
+  color: var(--tuuli-text-primary);
+}
+
+.tuuli-receipt-distribution-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.tuuli-receipt-distribution-heading p {
+  color: var(--tuuli-text-muted);
+}
+
+.tuuli-receipt-distribution-heading h3 {
+  margin: 0;
+  color: var(--tuuli-text-primary);
+  font-size: 1.05rem;
+  font-weight: var(--tuuli-weight-anchor);
+  letter-spacing: 0;
+}
+
+.tuuli-receipt-allocation-surface {
+  margin-top: -12px;
+}
+
+.tuuli-receipt-allocation-surface .tuuli-table {
+  min-width: 900px;
+}
+
+.tuuli-receipt-allocation-surface .fac-allocation-row {
+  cursor: pointer;
+}
+
+.tuuli-receipt-allocation-surface .fac-allocation-row.allocated {
+  background: color-mix(in srgb, var(--tuuli-surface-selected) 50%, transparent);
+  box-shadow: inset 2px 0 0 var(--tuuli-blue);
+}
+
+.tuuli-allocation-input {
+  width: 112px;
+  min-height: 32px;
+  border: 1px solid var(--tuuli-screen-line);
+  border-radius: 3px;
+  padding: 5px 8px;
+  color: var(--tuuli-text-primary);
+  background: color-mix(in srgb, var(--tuuli-surface) 76%, var(--tuuli-bg));
+  font: inherit;
+  font-size: var(--tuuli-font-content);
+  font-weight: var(--tuuli-weight-normal);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.tuuli-allocation-input:focus {
+  border-color: var(--tuuli-border-focus);
+  box-shadow: var(--fac-focus-ring);
+  outline: none;
+}
+
+.tuuli-receipt-workspace-notes {
+  max-width: 760px;
+}
+
+.tuuli-receipt-workspace-notes textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+}
+
+.tuuli-receipt-workspace-guidance {
+  margin: -11px 0 0;
+  color: var(--tuuli-text-muted);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+  line-height: var(--tuuli-line-body);
+}
+
+@media (max-width: 1100px) {
+  .tuuli-receipt-workspace-fields.fac-form-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .tuuli-receipt-workspace {
+    gap: 20px;
+  }
+
+  .tuuli-receipt-workspace-heading {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .tuuli-receipt-workspace-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .tuuli-receipt-workspace-fields.fac-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tuuli-receipt-workspace-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tuuli-receipt-workspace-summary > div:nth-child(3) {
+    border-top: 1px solid var(--tuuli-screen-line);
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .tuuli-receipt-workspace-summary > div:nth-child(4) {
+    border-top: 1px solid var(--tuuli-screen-line);
+  }
+}
+
+@media (max-width: 430px) {
+  .tuuli-receipt-workspace {
+    gap: 17px;
+  }
+
+  .tuuli-receipt-workspace-heading {
+    padding-bottom: 13px;
+  }
+
+  .tuuli-receipt-workspace-heading h2 {
+    font-size: 1.4rem;
+  }
+
+  .tuuli-receipt-workspace-actions {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .tuuli-receipt-workspace-actions button:first-child {
+    grid-row: 1;
+  }
+
+  .tuuli-receipt-workspace-actions button:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .tuuli-receipt-workspace-actions button:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .tuuli-receipt-workspace-fields.fac-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+  }
+
+  .tuuli-receipt-workspace-fields > *:first-child,
+  .tuuli-receipt-workspace-fields > *:nth-child(3),
+  .tuuli-receipt-workspace-fields > *:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+
+  .tuuli-receipt-workspace-summary > div {
+    padding-block: 11px;
+  }
+
+  .tuuli-receipt-distribution-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tuuli-receipt-distribution-tools {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .tuuli-receipt-workspace-notes textarea {
+    min-height: 64px;
+  }
+}
+
 .tuuli-pagination {
   display: flex;
   align-items: center;

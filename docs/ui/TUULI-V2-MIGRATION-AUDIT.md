@@ -34,11 +34,13 @@ Gramática validada: **Entidade + listagem**.
 
 ## Recebimentos
 
-Gramática provável: **Listagem simples** com contexto transacional.
+Composição validada: **Híbrida transacional**.
 
-- Rever filtros, toolbar, tabela de pendentes, totais e ações de recebimento.
-- `PendentesView.tsx` mantém helper monetário local e concatenação direta de moedas.
-- Estados Aberto/Liquidado/Vencido exigem semântica funcional própria.
+- Quarta implementação oficial da Visual v2, abrangendo listagem, detalhe documental e workspace de distribuição.
+- Duas coleções relacionadas coexistem sem cards exteriores; a Conta Corrente usa duas linhas funcionais deliberadas para filtros e ferramentas.
+- Tabelas, paginação, estados e formatação monetária reutilizam as primitivas e helpers comuns.
+- O detalhe reutiliza a linguagem documental existente; o workspace organiza a complexidade da distribuição sem ser promovido a gramática global.
+- Estados Aberto/Liquidado/Vencido mantêm semântica funcional própria.
 
 ## Dashboard
 
