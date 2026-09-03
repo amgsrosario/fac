@@ -64,6 +64,10 @@ Composição validada: **Seletor de análise + listagem operacional**.
 
 ## Login
 
-- Não pertence às quatro gramáticas operacionais.
-- Rever apenas tokens de superfície, controlo, focus, radius e sombra numa tarefa própria.
-- Preservar simplicidade, identidade e fluxo de autenticação.
+Composição validada: **Entrada editorial**.
+
+- Implementação oficial da Visual v2, sem card exterior, border ou sombra dominante.
+- Marca e formulário usam alinhamento e espaço; título, labels e controlos seguem a disciplina tipográfica do interior.
+- O botão Entrar permanece o único CTA principal e o autofill nativo é aceite sem hacks frágeis.
+- Autenticação, mensagens, focus e comportamento responsivo foram preservados.
+- Com o Login concluído, a migração transversal Visual v2 dos principais ecrãs operacionais está completa.

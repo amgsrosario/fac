@@ -98,6 +98,10 @@ Métricas e áreas analíticas podem ser definidas por espaço, títulos e divis
 
 A seleção de perspetiva funciona como índice editorial e não deve dominar os dados selecionados. A configuração de visibilidade e ordem das colunas é uma ferramenta leve, baseada em linhas e divisores, não um painel de mini-cards. No mobile, todas as perspetivas permanecem acessíveis sem impor um dropdown. Esta composição continua contextual e não constitui uma gramática global rígida.
 
+**Login é a implementação oficial da entrada editorial TUULI Visual v2.**
+
+A autenticação não precisa de um card para ter estrutura: marca e formulário são ancorados por alinhamento, espaço e disciplina tipográfica. O único CTA mantém azul forte sem tornar toda a superfície pesada, e o autofill do browser não justifica CSS frágil. Com este baseline, a migração Visual v2 dos principais ecrãs operacionais fica completa.
+
 **Consistência visual não significa comportamento funcional idêntico.**
 
 ### Classificação da implementação de referência

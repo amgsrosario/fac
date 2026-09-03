@@ -375,25 +375,33 @@ button:disabled {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 32px;
-  background: linear-gradient(135deg, var(--tuuli-surface) 0%, var(--tuuli-bg) 62%);
+  padding: 28px;
+  background: var(--tuuli-bg);
 }
 
 .fac-login-card {
-  width: min(460px, 100%);
-  border: 1px solid var(--fac-border);
-  border-radius: var(--tuuli-radius-card);
-  padding: 38px;
-  background: var(--fac-surface);
-  box-shadow: var(--tuuli-shadow-subtle);
+  width: min(400px, 100%);
+  border: 0;
+  border-radius: 0;
+  padding: 12px 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .fac-login-card .fac-primary-button {
+  min-height: 42px;
+  border-radius: 6px;
+  padding-block: 9px;
+  font-size: 14px;
+  font-weight: 400;
   width: 100%;
 }
 
 .fac-login-intro h1 {
   color: var(--tuuli-text-primary);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .fac-field input:focus,
@@ -408,13 +416,13 @@ button:disabled {
 .fac-login-brand {
   display: grid;
   gap: 8px;
-  margin-bottom: 44px;
+  margin-bottom: 28px;
 }
 
 .fac-login-logo {
   justify-self: center;
-  width: 220px;
-  height: 102px;
+  width: 190px;
+  height: 88px;
 }
 
 .fac-login-brand div:last-child,
@@ -447,7 +455,7 @@ button:disabled {
 }
 
 .fac-login-intro h1 {
-  margin: 0 0 28px;
+  margin: 0 0 22px;
   color: var(--fac-petrol);
 }
 
@@ -459,13 +467,36 @@ button:disabled {
 
 .fac-login-form {
   display: grid;
-  gap: 18px;
-  margin-top: 20px;
+  gap: 14px;
+  margin-top: 0;
 }
 
 .fac-login-form button {
   width: 100%;
-  margin-top: 4px;
+  margin-top: 2px;
+}
+
+.fac-login-form .fac-field { gap: 6px; }
+.fac-login-form .fac-field > span {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.fac-login-form .fac-field input {
+  min-height: 42px;
+  border-radius: 6px;
+  padding: 9px 11px;
+  font-size: 14px;
+  font-weight: 400;
+  background: var(--fac-surface);
+}
+
+@media (max-width: 480px) {
+  .fac-login-shell { padding: 20px; }
+  .fac-login-card { width: 100%; }
+  .fac-login-logo { width: 176px; height: 82px; }
+  .fac-login-brand { margin-bottom: 24px; }
+  .fac-login-intro h1 { margin-bottom: 20px; font-size: 25px; }
 }
 
 .fac-current-user {
