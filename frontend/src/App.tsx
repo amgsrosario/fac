@@ -792,7 +792,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   ];
 
   return (
-    <main className={`fac-shell${shellView === "Documentos" ? " fac-shell-documents-v2" : ""}${shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" ? " fac-shell-tuuli-v2" : ""}`}>
+    <main className={`fac-shell${shellView === "Documentos" ? " fac-shell-documents-v2" : ""}${shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" || shellView === "Listagens" ? " fac-shell-tuuli-v2" : ""}`}>
       <header className="fac-mobile-topbar">
         <button
           aria-controls="fac-mobile-drawer"
@@ -882,11 +882,11 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         </nav>
       </aside>
 
-      <section className={`fac-workspace${shellView === "Documentos" ? " fac-workspace-documents-v2" : ""}${shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" ? " fac-workspace-tuuli-v2" : ""}${shellView === "Clientes" || shellView === "Artigos" ? " fac-workspace-tuuli-entity-list" : ""}${shellView === "Dashboard" ? " fac-workspace-tuuli-dashboard" : ""}`}>
+      <section className={`fac-workspace${shellView === "Documentos" ? " fac-workspace-documents-v2" : ""}${shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" || shellView === "Listagens" ? " fac-workspace-tuuli-v2" : ""}${shellView === "Clientes" || shellView === "Artigos" ? " fac-workspace-tuuli-entity-list" : ""}${shellView === "Dashboard" ? " fac-workspace-tuuli-dashboard" : ""}${shellView === "Listagens" ? " fac-workspace-tuuli-listings" : ""}`}>
         <header className="fac-topbar">
           <div>
             {import.meta.env.VITE_FAC_DEMO_MODE === "true" && <p className="fac-eyebrow">Ambiente de demonstração</p>}
-            <h1 className={shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" ? "tuuli-page-title" : undefined}>{viewTitle(shellView)}</h1>
+            <h1 className={shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" || shellView === "Listagens" ? "tuuli-page-title" : undefined}>{viewTitle(shellView)}</h1>
           </div>
           <div className="fac-topbar-actions">
             {visibleAdminMenuItems.length > 0 && (

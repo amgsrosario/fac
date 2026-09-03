@@ -2107,3 +2107,152 @@
     width: auto;
   }
 }
+
+/* Listagens: selector plus operational listing. */
+.fac-workspace-tuuli-listings > .fac-topbar { margin-bottom: 24px; }
+.tuuli-listings-page { display: grid; gap: 0; }
+.tuuli-listings-intro { padding: 0 0 18px; border-bottom: 1px solid var(--fac-border); }
+.tuuli-listings-lead { margin: 4px 0 0; color: var(--fac-text-muted); font-size: .92rem; }
+.tuuli-listings-selector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; padding: 12px 0 26px; }
+.tuuli-listings-selector button { position: relative; display: grid; min-width: 0; gap: 3px; border: 0; border-bottom: 1px solid var(--fac-border); border-radius: 0; padding: 12px 10px 12px 14px; color: var(--fac-text); background: transparent; text-align: left; cursor: pointer; }
+.tuuli-listings-selector button::before { position: absolute; inset: 8px auto 8px 0; width: 2px; background: transparent; content: ""; }
+.tuuli-listings-selector button:hover { background: color-mix(in srgb, var(--fac-client-soft) 45%, transparent); }
+.tuuli-listings-selector button.active { background: color-mix(in srgb, var(--fac-client-soft) 68%, transparent); }
+.tuuli-listings-selector button.active::before { background: var(--fac-blue); }
+.tuuli-listings-selector strong { font-size: .87rem; font-weight: 500; }
+.tuuli-listings-selector span { overflow: hidden; color: var(--fac-text-muted); font-size: .75rem; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.tuuli-listings-results { min-width: 0; }
+.tuuli-listings-results-header { display: grid; grid-template-columns: minmax(190px, auto) minmax(0, 1fr); align-items: end; gap: 28px; margin-bottom: 18px; }
+.tuuli-listings-results-header h2 { margin: 3px 0 0; font-size: 1.32rem; font-weight: 500; }
+.tuuli-listings-title-row { display: flex; align-items: baseline; gap: 14px; }
+.tuuli-listings-title-row > span { color: var(--fac-text-muted); font-size: .75rem; font-weight: 400; white-space: nowrap; }
+.tuuli-listings-results-header .fac-muted { margin: 5px 0 0; }
+.tuuli-listings-tools { display: flex; min-width: 0; align-items: center; justify-content: flex-end; gap: 8px; }
+.tuuli-listings-tools .tuuli-search { width: min(100%, 330px); margin-right: auto; }
+.tuuli-listings-tools .tuuli-tool-action { min-height: 42px; white-space: nowrap; }
+.tuuli-listings-results .fac-listing-filters,
+.tuuli-listings-results .fac-extrato-filters,
+.tuuli-listings-results .fac-pendentes-controls { margin-bottom: 18px; }
+.tuuli-listings-results .fac-listing-filters.with-checkbox { grid-template-columns: minmax(135px, .55fr) minmax(135px, .55fr) minmax(260px, 1.2fr) auto; }
+.tuuli-listings-results .fac-listing-filters.with-article-checkbox { grid-template-columns: minmax(125px, .45fr) minmax(125px, .45fr) minmax(210px, 1fr) minmax(210px, 1fr) auto; }
+.tuuli-listings-results-panel { overflow: visible; border-radius: 0; background: transparent; box-shadow: none; }
+.tuuli-listings-results-panel > .fac-table-scroll { overflow-x: auto; }
+.tuuli-listings-table { min-width: 880px; }
+.tuuli-listings-table th { font-size: .75rem; font-weight: 400; letter-spacing: .025em; }
+.tuuli-listings-table td { height: auto; padding-block: 12px; font-size: .875rem; font-weight: 400; line-height: 1.35; }
+.tuuli-listings-table .tuuli-numeric { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tuuli-listings-results-panel > .tuuli-pagination { margin-top: 18px; }
+
+.tuuli-listings-page .fac-column-editor {
+  margin: 4px 0 24px;
+  padding: 18px 0 8px;
+  border: 0;
+  border-top: 1px solid var(--fac-border);
+  border-bottom: 1px solid var(--fac-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.tuuli-listings-page .fac-column-editor-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 14px;
+}
+
+.tuuli-listings-page .fac-column-editor-header strong {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.tuuli-listings-page .fac-column-editor-header span {
+  font-size: .78rem;
+  font-weight: 400;
+}
+
+.tuuli-listings-page .fac-column-editor-header .fac-ghost-button {
+  min-height: 36px;
+  padding: 6px 10px;
+  border-color: transparent;
+  font-weight: 400;
+}
+
+.tuuli-listings-page .fac-column-list {
+  column-gap: 28px;
+  row-gap: 0;
+}
+
+.tuuli-listings-page .fac-column-item {
+  min-height: 46px;
+  padding: 7px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--fac-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.tuuli-listings-page .fac-column-item label {
+  min-width: 0;
+  gap: 9px;
+  font-size: .875rem;
+  font-weight: 400;
+}
+
+.tuuli-listings-page .fac-column-item input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--fac-blue);
+}
+
+.tuuli-listings-page .fac-column-order { gap: 2px; }
+.tuuli-listings-page .fac-column-order button {
+  width: 30px;
+  min-height: 30px;
+  border-color: transparent;
+  border-radius: 4px;
+  color: color-mix(in srgb, var(--fac-text-muted) 55%, var(--fac-text));
+  background: transparent;
+  font-weight: 400;
+}
+
+.tuuli-listings-page .fac-column-order button:disabled { opacity: .28; }
+
+.tuuli-listings-page .fac-column-order button:hover:not(:disabled),
+.tuuli-listings-page .fac-column-order button:focus-visible {
+  border-color: var(--fac-border);
+  color: var(--fac-text);
+  background: var(--fac-client-soft);
+}
+
+.tuuli-listings-page .fac-column-item label:focus-within {
+  color: var(--fac-blue);
+}
+
+@media (max-width: 1100px) {
+  .tuuli-listings-selector { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tuuli-listings-results-header { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .tuuli-listings-tools { justify-content: flex-start; flex-wrap: wrap; }
+}
+
+@media (max-width: 700px) {
+  .tuuli-listings-selector { grid-template-columns: minmax(0, 1fr); padding-bottom: 22px; }
+  .tuuli-listings-selector button { padding-block: 10px; }
+  .tuuli-listings-results .fac-listing-filters,
+  .tuuli-listings-results .fac-listing-filters.with-checkbox,
+  .tuuli-listings-results .fac-listing-filters.with-article-checkbox { grid-template-columns: minmax(0, 1fr); }
+  .tuuli-listings-page .fac-column-list { grid-template-columns: minmax(0, 1fr); }
+  .tuuli-listings-page .fac-column-editor-header { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+}
+
+@media (max-width: 480px) {
+  .fac-workspace-tuuli-listings > .fac-topbar { margin-bottom: 20px; }
+  .tuuli-listings-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; row-gap: 8px; }
+  .tuuli-listings-tools .tuuli-search { grid-column: 1 / -1; width: 100%; }
+  .tuuli-listings-tools .tuuli-tool-action { width: 100%; padding-inline: 8px; font-size: .78rem; }
+  .tuuli-listings-table { min-width: 760px; }
+  .tuuli-listings-page .fac-column-editor { padding-top: 14px; }
+  .tuuli-listings-page .fac-column-editor-header { gap: 10px; }
+  .tuuli-listings-page .fac-column-editor-header .fac-ghost-button { padding-inline: 6px; }
+}

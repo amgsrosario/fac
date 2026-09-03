@@ -54,11 +54,13 @@ Gramática validada: **Analítico**.
 
 ## Listagens
 
-Gramática provável: **Listagem simples** ou **Analítico**, conforme o relatório.
+Composição validada: **Seletor de análise + listagem operacional**.
 
-- Rever filtros, exportações, toolbars, tabelas e paginação por tipo de listagem.
-- Existem estilos locais de tabela e formatação monetária repetida.
-- Distinguir controlos de consulta de ações operacionais antes da migração.
+- Sexta implementação oficial da Visual v2, com índice editorial das sete perspetivas e listagem operacional em primeiro plano.
+- Filtros e ferramentas formam grupos funcionais distintos; no mobile, a pesquisa ocupa a largura total e as quatro ações permanecem visíveis numa grelha 2 x 2.
+- Tabela, paginação, estados e formatação numérica reutilizam primitivas e helpers comuns.
+- O editor de Colunas apresenta visibilidade e ordem como linhas leves, sem painel administrativo ou mini-cards, preservando preferências e lógica existentes.
+- A composição é uma solução contextual validada e não uma nova gramática global rígida.
 
 ## Login
 

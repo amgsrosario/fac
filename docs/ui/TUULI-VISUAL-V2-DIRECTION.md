@@ -94,6 +94,10 @@ Duas coleções relacionadas coexistem sem se tornarem dois cards; filtros e fer
 
 Métricas e áreas analíticas podem ser definidas por espaço, títulos e divisores, sem cards pesados. Pouca densidade de dados não deve ser compensada com decoração; no mobile, preservar ar não significa acrescentar altura. Atalhos operacionais também podem existir como uma estrutura leve, sem cards.
 
+**Listagens e análise é uma implementação oficial da composição Seletor de análise + listagem operacional.**
+
+A seleção de perspetiva funciona como índice editorial e não deve dominar os dados selecionados. A configuração de visibilidade e ordem das colunas é uma ferramenta leve, baseada em linhas e divisores, não um painel de mini-cards. No mobile, todas as perspetivas permanecem acessíveis sem impor um dropdown. Esta composição continua contextual e não constitui uma gramática global rígida.
+
 **Consistência visual não significa comportamento funcional idêntico.**
 
 ### Classificação da implementação de referência

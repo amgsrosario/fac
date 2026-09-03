@@ -5,6 +5,7 @@ import { apiFetch } from "./api";
 import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./ColumnSelector";
 import { currentYearDateRange } from "./dateFilters";
 import { MultiSelectFilter, MultiSelectOption } from "./MultiSelectFilter";
+import { decimal as tuuliDecimal, money as tuuliMoney } from "./ui/tuuli/format";
 
 type Page<T> = { content: T[]; totalElements: number; totalPages?: number };
 type SortDirection = "asc" | "desc";
@@ -439,25 +440,38 @@ export default function ListagensView() {
     return base.filter((row) => searchText(source, row).includes(term));
   }, [source, pendentes, comerciais, linhasComerciais, financeiros, linhasFinanceiras, search]);
 
-  return <>
-    <section className="fac-hero">
-      <div><p className="fac-eyebrow">Listagens</p><h2>Dados comerciais e financeiros</h2><p>Consulta dos dados comerciais e financeiros.</p></div>
-      <div className="fac-hero-card"><span>Fonte atual</span><strong>{SOURCES.find((item) => item.key === source)?.label}</strong><small>{loading ? "A carregar..." : source === "extratoCliente" ? extratos ? `${extratos.reduce((total, extrato) => total + extrato.moedas.reduce((subtotal, moeda) => subtotal + moeda.movimentos.length, 0), 0)} movimentos` : "A aguardar consulta" : `${isRemoteCommercialSource(source) ? totalElements : rows.length} registos`}</small></div>
+  const currentSource = SOURCES.find((item) => item.key === source);
+  const resultCount = loading ? "A carregar..." : source === "extratoCliente"
+    ? extratos ? `${extratos.reduce((total, extrato) => total + extrato.moedas.reduce((subtotal, moeda) => subtotal + moeda.movimentos.length, 0), 0)} movimentos` : "A aguardar consulta"
+    : `${isRemoteCommercialSource(source) ? totalElements : rows.length} registos`;
+  const listingExport = source === "comerciais" || source === "linhasComerciais" || source === "financeiros" || source === "linhasFinanceiras";
+  const exportingFormat = isPendentesSource(source) ? exportingPendentesFormat : exportingListingFormat;
+  const exportCurrent = isPendentesSource(source) ? exportarPendentes : listingExport ? exportarListagem : null;
+
+  return <div className="tuuli-v2-page tuuli-listings-page">
+    <section className="tuuli-listings-intro">
+      <p className="fac-eyebrow">Análise</p>
+      <p className="tuuli-listings-lead">Escolha a informação que pretende consultar.</p>
     </section>
 
-    <section className="fac-report-source-grid">
+    <nav aria-label="Tipo de análise" className="tuuli-listings-selector">
       {SOURCES.map((item, index) => <button className={item.key === source ? "active" : ""} disabled={!item.key} key={`${item.label}-${index}`} onClick={() => item.key && changeSource(item.key)} type="button"><strong>{item.label}</strong><span>{item.description}</span></button>)}
-    </section>
+    </nav>
 
-    <section className="fac-listing-outside-controls">
-      <div className="fac-panel-header"><div><p className="fac-eyebrow">{SOURCES.find((item) => item.key === source)?.label}</p><h2>{source === "pendentesAData" ? "Situação dos valores por receber" : "Dados disponíveis"}</h2>{source === "pendentesAData" && <p className="fac-muted">Consulta os valores que se encontravam pendentes na data selecionada, incluindo documentos vencidos e nao vencidos.</p>}</div><div className="fac-inline-actions">{source !== "extratoCliente" && <input className="fac-listing-search" onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar nesta listagem" type="search" value={search}/>}<button className="fac-ghost-button" onClick={() => setColumnsOpen((current) => !current)} type="button">Colunas ({configured.visibleColumns.length})</button><button className="fac-soft-button" disabled={loading} onClick={() => source === "extratoCliente" ? consultarExtrato() : loadSource(source)} type="button">Atualizar</button></div></div>
+    <section className="tuuli-listings-results">
+      <header className="tuuli-listings-results-header">
+        <div><p className="fac-eyebrow">{currentSource?.label}</p><div className="tuuli-listings-title-row"><h2>{source === "pendentesAData" ? "Situação dos valores por receber" : "Dados disponíveis"}</h2><span>{resultCount}</span></div>{source === "pendentesAData" && <p className="fac-muted">Valores pendentes na data selecionada, vencidos e não vencidos.</p>}</div>
+        <div className="tuuli-listings-tools">
+          {source !== "extratoCliente" && <label className="tuuli-search"><i aria-hidden="true" className="pi pi-search"/><input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar nesta listagem" type="search" value={search}/></label>}
+          <button className="tuuli-tool-action" disabled={loading} onClick={() => source === "extratoCliente" ? consultarExtrato() : loadSource(source)} type="button">Atualizar</button>
+          {exportCurrent && <><button className="tuuli-tool-action" disabled={exportingFormat !== null} onClick={() => exportCurrent("pdf")} type="button">{exportingFormat === "pdf" ? "A gerar..." : "Exportar PDF"}</button><button className="tuuli-tool-action" disabled={exportingFormat !== null} onClick={() => exportCurrent("xlsx")} type="button">{exportingFormat === "xlsx" ? "A gerar..." : "Exportar Excel"}</button></>}
+          <button className="tuuli-tool-action" onClick={() => setColumnsOpen((current) => !current)} type="button">Colunas ({configured.visibleColumns.length})</button>
+        </div>
+      </header>
       {message && <p className="fac-message">{message}</p>}
-      {isPendentesSource(source) && <div className="fac-pendentes-controls"><PendentesFilters apenasVencidos={pendentesApenasVencidos} clientes={clientes} dataReferencia={source === "pendentesAData" ? pendentesDataReferencia : undefined} onApenasVencidos={setPendentesApenasVencidos} onChange={setPendentesClienteIds} onDataReferencia={setPendentesDataReferencia} selectedValues={pendentesClienteIds}/><div className="fac-pendentes-actions">
-        <button className="fac-soft-button" disabled={exportingPendentesFormat !== null} onClick={() => exportarPendentes("pdf")} type="button">{exportingPendentesFormat === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button>
-        <button className="fac-soft-button" disabled={exportingPendentesFormat !== null} onClick={() => exportarPendentes("xlsx")} type="button">{exportingPendentesFormat === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button>
-      </div></div>}
+      {isPendentesSource(source) && <div className="fac-pendentes-controls"><PendentesFilters apenasVencidos={pendentesApenasVencidos} clientes={clientes} dataReferencia={source === "pendentesAData" ? pendentesDataReferencia : undefined} onApenasVencidos={setPendentesApenasVencidos} onChange={setPendentesClienteIds} onDataReferencia={setPendentesDataReferencia} selectedValues={pendentesClienteIds}/></div>}
       {isPendentesSource(source) && <PendentesTotals totais={pendentesTotais}/>}
-      {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters artigos={artigos} clientes={clientes} dataFinal={dataFinal} dataInicial={dataInicial} exportingFormat={exportingListingFormat} mostrarAnulados={source === "comerciais" ? mostrarAnuladosComerciais : source === "financeiros" ? mostrarAnuladosFinanceiros : undefined} mostrarTexto={source === "linhasComerciais" ? mostrarTextoComercial : undefined} onArtigos={(values) => { setPage(0); setArtigoIds(values); }} onClientes={(values) => { setPage(0); setClienteIds(values); }} onDataFinal={(value) => { setPage(0); setDataFinal(value); }} onDataInicial={(value) => { setPage(0); setDataInicial(value); }} onExport={source === "comerciais" || source === "linhasComerciais" || source === "financeiros" || source === "linhasFinanceiras" ? exportarListagem : undefined} onMostrarAnulados={(value) => { setPage(0); if (source === "financeiros") setMostrarAnuladosFinanceiros(value); else setMostrarAnuladosComerciais(value); }} onMostrarTexto={(value) => { setPage(0); setMostrarTextoComercial(value); }} selectedArtigoIds={artigoIds} selectedClienteIds={clienteIds} showArtigo={source === "linhasComerciais"} />}
+      {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters artigos={artigos} clientes={clientes} dataFinal={dataFinal} dataInicial={dataInicial} mostrarAnulados={source === "comerciais" ? mostrarAnuladosComerciais : source === "financeiros" ? mostrarAnuladosFinanceiros : undefined} mostrarTexto={source === "linhasComerciais" ? mostrarTextoComercial : undefined} onArtigos={(values) => { setPage(0); setArtigoIds(values); }} onClientes={(values) => { setPage(0); setClienteIds(values); }} onDataFinal={(value) => { setPage(0); setDataFinal(value); }} onDataInicial={(value) => { setPage(0); setDataInicial(value); }} onMostrarAnulados={(value) => { setPage(0); if (source === "financeiros") setMostrarAnuladosFinanceiros(value); else setMostrarAnuladosComerciais(value); }} onMostrarTexto={(value) => { setPage(0); setMostrarTextoComercial(value); }} selectedArtigoIds={artigoIds} selectedClienteIds={clienteIds} showArtigo={source === "linhasComerciais"} />}
       {source === "extratoCliente" && <p className="fac-muted">Extrato calculado a partir dos documentos emitidos. Os documentos anulados não integram os movimentos contabilísticos e cada moeda é apresentada separadamente.</p>}
       {source === "extratoCliente" && <div className="fac-extrato-filters">
         <div className="fac-filter-field"><span>Clientes</span><MultiSelectFilter allLabel="Todos os clientes" options={clientesExtrato.map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}` }))} selectedValues={extratoClienteIds} onChange={(values) => { setExtratoClienteIds(values); setExtratos(null); }}/></div>
@@ -468,18 +482,18 @@ export default function ListagensView() {
         <button className="fac-soft-button" disabled={exportingPdf || exportingExcel} onClick={() => exportarExtrato("xlsx")} type="button">{exportingExcel ? "A gerar Excel..." : "Exportar Excel"}</button>
         <button className="fac-ghost-button" onClick={() => { const period = currentYearDateRange(); setExtratoClienteIds([]); setExtratoDataInicial(period.dataInicial); setExtratoDataFinal(period.dataFinal); setExtratos(null); setMessage(null); }} type="button">Limpar</button>
       </div>}
-    </section>
-    <section className="fac-panel fac-section-panel fac-listing-results-panel">
+      <section className="fac-listing-results-panel tuuli-table-surface">
       <ColumnSelector columns={configured.columns} open={columnsOpen} onMove={configured.moveColumn} onReset={configured.resetColumns} onToggle={configured.toggleColumn}/>
       {source === "extratoCliente" && <ExtratoTable extratos={extratos} loading={loading} columns={configured.visibleColumns}/>}
       {source !== "extratoCliente" &&
-      <div className="fac-table-scroll"><table className="fac-table"><thead><tr>{configured.visibleColumns.map((column) => <th aria-sort={sortKey === column.key && isRemoteCommercialSource(source) ? (sortDirection === "asc" ? "ascending" : "descending") : undefined} key={column.key}>{remoteSortField(source, column.key) ? <button className="fac-table-sort" onClick={() => changeSort(column.key)} type="button">{column.label}<span aria-hidden="true">{sortKey === column.key ? (sortDirection === "asc" ? " ↑" : " ↓") : ""}</span></button> : column.label}</th>)}</tr></thead><tbody>
-        {rows.map((row, index) => <tr key={rowKey(source, row, index)}>{configured.visibleColumns.map((column) => <td key={column.key}>{cellValue(source, row, column.key, navigate)}</td>)}</tr>)}
+      <div className="fac-table-scroll"><table className="fac-table tuuli-table tuuli-listings-table"><thead><tr>{configured.visibleColumns.map((column) => <th aria-sort={sortKey === column.key && isRemoteCommercialSource(source) ? (sortDirection === "asc" ? "ascending" : "descending") : undefined} className={numericColumn(column.key) ? "tuuli-numeric" : undefined} key={column.key}>{remoteSortField(source, column.key) ? <button className="fac-table-sort" onClick={() => changeSort(column.key)} type="button">{column.label}<span aria-hidden="true">{sortKey === column.key ? (sortDirection === "asc" ? " ↑" : " ↓") : ""}</span></button> : column.label}</th>)}</tr></thead><tbody>
+        {rows.map((row, index) => <tr key={rowKey(source, row, index)}>{configured.visibleColumns.map((column) => <td className={numericColumn(column.key) ? "tuuli-numeric" : undefined} key={column.key}>{cellValue(source, row, column.key, navigate)}</td>)}</tr>)}
         {!loading && rows.length === 0 && <tr><td colSpan={configured.visibleColumns.length}>{emptyMessage(source, pendentesClienteIds.length > 0)}</td></tr>}
       </tbody></table></div>}
-      {isRemoteCommercialSource(source) && <Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={totalElements}/>}
+      {isRemoteCommercialSource(source) && <div className="tuuli-pagination"><span>{totalElements} registos</span><Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={totalElements}/></div>}
+      </section>
     </section>
-  </>;
+  </div>;
 }
 
 function PendentesFilters({
@@ -534,14 +548,12 @@ function ListingFilters({
   clientes,
   dataFinal,
   dataInicial,
-  exportingFormat,
   mostrarAnulados,
   mostrarTexto,
   onArtigos,
   onClientes,
   onDataFinal,
   onDataInicial,
-  onExport,
   onMostrarAnulados,
   onMostrarTexto,
   selectedArtigoIds,
@@ -552,14 +564,12 @@ function ListingFilters({
   clientes: ClienteOption[];
   dataFinal: string;
   dataInicial: string;
-  exportingFormat: "pdf" | "xlsx" | null;
   mostrarAnulados?: boolean;
   mostrarTexto?: boolean;
   onArtigos: (values: string[]) => void;
   onClientes: (values: number[]) => void;
   onDataFinal: (value: string) => void;
   onDataInicial: (value: string) => void;
-  onExport?: (format: "pdf" | "xlsx") => void;
   onMostrarAnulados: (value: boolean) => void;
   onMostrarTexto: (value: boolean) => void;
   selectedArtigoIds: string[];
@@ -571,7 +581,7 @@ function ListingFilters({
   const selectedClientes = activeClientes.filter((cliente) => selectedClienteIds.includes(cliente.id));
   const selectedArtigos = activeArtigos.filter((artigo) => selectedArtigoIds.includes(artigo.codigo));
   return (
-    <div className={`fac-listing-filters ${mostrarAnulados !== undefined || mostrarTexto !== undefined ? "with-checkbox" : ""} ${showArtigo && mostrarTexto !== undefined ? "with-article-checkbox" : ""} ${onExport ? "with-exports" : ""}`}>
+    <div className={`fac-listing-filters ${mostrarAnulados !== undefined || mostrarTexto !== undefined ? "with-checkbox" : ""} ${showArtigo && mostrarTexto !== undefined ? "with-article-checkbox" : ""}`}>
       <label><span>Data inicial</span><input onChange={(event) => onDataInicial(event.target.value)} type="date" value={dataInicial} /></label>
       <label><span>Data final</span><input onChange={(event) => onDataFinal(event.target.value)} type="date" value={dataFinal} /></label>
       <div className="fac-filter-field">
@@ -584,7 +594,6 @@ function ListingFilters({
         <MultiSelectFilter<string> allLabel="Todos os artigos" emptyMessage="Sem artigos encontrados." label="artigo" onChange={onArtigos} options={artigoOptions(activeArtigos)} searchPlaceholder="Pesquisar artigos" selectedValues={selectedArtigoIds}/>
       </div>}
       {mostrarTexto !== undefined && <label className="fac-listing-checkbox"><input checked={mostrarTexto} onChange={(event) => onMostrarTexto(event.target.checked)} type="checkbox"/><span>Mostrar texto</span></label>}
-      {onExport && <div className="fac-listing-export-actions"><button className="fac-soft-button" disabled={exportingFormat !== null} onClick={() => onExport("pdf")} type="button">{exportingFormat === "pdf" ? "A gerar..." : "Exportar PDF"}</button><button className="fac-soft-button" disabled={exportingFormat !== null} onClick={() => onExport("xlsx")} type="button">{exportingFormat === "xlsx" ? "A gerar..." : "Exportar Excel"}</button></div>}
       {(selectedClientes.length > 0 || selectedArtigos.length > 0) && <div className="fac-selected-chips" aria-label="Filtros selecionados">
         {selectedClientes.map((cliente) => <button key={cliente.id} onClick={() => onClientes(selectedClienteIds.filter((id) => id !== cliente.id))} type="button">{cliente.nome} x</button>)}
         {selectedArtigos.map((artigo) => <button key={artigo.codigo} onClick={() => onArtigos(selectedArtigoIds.filter((id) => id !== artigo.codigo))} type="button">{artigo.descricao} x</button>)}
@@ -606,7 +615,7 @@ function ExtratoTable({ extratos, loading, columns }: { extratos: ExtratoCliente
     </header>
     {extrato.moedas.map((moeda) => <section className="fac-extrato-moeda" key={moeda.moedaId}>
       <div className="fac-extrato-moeda-title"><strong>{moeda.moedaId}</strong><span>{moeda.movimentos.length} movimentos no periodo</span></div>
-      <div className="fac-table-scroll"><table className="fac-table"><thead><tr>{columns.map((column) => <th key={column.key}>{column.label}</th>)}</tr></thead><tbody>
+      <div className="fac-table-scroll"><table className="fac-table tuuli-table tuuli-listings-table"><thead><tr>{columns.map((column) => <th className={numericColumn(column.key) ? "tuuli-numeric" : undefined} key={column.key}>{column.label}</th>)}</tr></thead><tbody>
         <ExtratoTotalRow className="fac-extrato-anterior" label="Anterior" moeda={moeda.moedaId} totals={moeda.anterior} columns={columns}/>
         {moeda.movimentos.map((movimento) => <tr key={`${movimento.origem}-${movimento.id}`}>{columns.map((column) => <td key={column.key}>{extratoMovementCell(movimento, moeda.moedaId, column.key)}</td>)}</tr>)}
         {moeda.movimentos.length === 0 && <tr><td className="fac-extrato-empty" colSpan={columns.length}>Sem movimentos no periodo selecionado.</td></tr>}
@@ -735,9 +744,12 @@ function artigoOptions(artigos: ArtigoOption[]): MultiSelectOption<string>[] {
     searchText: [artigo.codigo, artigo.descricao, artigo.unidade, artigo.familiaId, artigo.ivaVendaId].filter(Boolean).join(" ")
   }));
 }
-function money(value: number) { return Number(value || 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function money(value: number) { return tuuliMoney(value); }
 function moneyCell(value: number, moeda?: string) { return <span className="fac-money">{money(value)}{moeda ? ` ${moeda}` : ""}</span>; }
-function decimal(value: number) { return Number(value || 0).toLocaleString("pt-PT", { maximumFractionDigits: 6 }); }
+function numericColumn(key: string) {
+  return ["linha", "quantidade", "preco", "bruto", "desconto", "liquido", "iva", "retencao", "total", "taxaIva", "peso", "totalDocumento", "brutoLinha", "descontoLinha", "valorLinha", "totalRecebido", "valorDocumento", "pendenteAntes", "valorLiquidado", "recebidoLinha", "novoPendente", "liquidado", "recebido", "pendente", "debito", "credito", "saldo"].includes(key);
+}
+function decimal(value: number) { return tuuliDecimal(value); }
 function yesNo(value: boolean) { return value ? "Sim" : "Não"; }
 function statusComercial(d: DocumentoComercial) { return d.anulado ? "ANULADO" : d.estado; }
 
