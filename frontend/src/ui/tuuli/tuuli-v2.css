@@ -1,3 +1,38 @@
+.tuuli-splash {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: grid;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  overflow: hidden;
+  background: var(--tuuli-blue);
+  cursor: default;
+  opacity: 1;
+  transition: opacity var(--tuuli-splash-fade) ease;
+}
+
+.tuuli-splash.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tuuli-splash img {
+  display: block;
+  width: clamp(260px, 34vw, 520px);
+  max-width: calc(100vw - 48px);
+  height: auto;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tuuli-splash {
+    transition-duration: 1ms;
+  }
+}
+
 .tuuli-v2-page {
   --tuuli-screen-line: var(--tuuli-divider);
   color: var(--tuuli-text-secondary);

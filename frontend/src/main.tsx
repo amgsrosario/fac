@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { PrimeReactProvider } from "primereact/api";
 import App from "./App";
 import LoginView from "./LoginView";
+import TuuliSplash from "./TuuliSplash";
 import { AuthSession, clearAuthSession, getAuthSession } from "./api";
 import { CommercialApp } from "./ui/commercial";
 import DraftDocumentEditor from "./ui/commercial/documents/DraftDocumentEditor";
@@ -19,6 +20,7 @@ const uiMode = import.meta.env.VITE_FAC_UI_MODE === "commercial" ? "commercial" 
 
 function Root() {
   const [session, setSession] = useState<AuthSession | null>(() => getAuthSession());
+  const [showSplash, setShowSplash] = useState(true);
   const logout = () => {
     clearAuthSession();
     setSession(null);
@@ -29,6 +31,8 @@ function Root() {
     window.addEventListener("fac:unauthorized", unauthorized);
     return () => window.removeEventListener("fac:unauthorized", unauthorized);
   }, []);
+
+  if (showSplash) return <TuuliSplash onComplete={() => setShowSplash(false)} />;
 
   if (!session) return <LoginView onAuthenticated={setSession} />;
   return (
