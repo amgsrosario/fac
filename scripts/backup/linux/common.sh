@@ -98,7 +98,8 @@ verify_backup_file() {
 }
 
 read_metadata_checksum() {
-  local backup="$1" metadata="${backup%.backup}.metadata.json"
+  local backup="$1"
+  local metadata="${backup%.backup}.metadata.json"
   [[ -f "$metadata" ]] || die "metadados inexistentes: $metadata"
   sed -n 's/.*"sha256"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$metadata" | head -n1
 }
