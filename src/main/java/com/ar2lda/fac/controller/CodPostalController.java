@@ -2,7 +2,6 @@ package com.ar2lda.fac.controller;
 
 import com.ar2lda.fac.controller.dto.CodPostalCreateDto;
 import com.ar2lda.fac.controller.dto.CodPostalDto;
-import com.ar2lda.fac.controller.dto.CodPostalSearchDto;
 import com.ar2lda.fac.controller.dto.CodPostalUpdateDto;
 import com.ar2lda.fac.service.CodPostalService;
 import jakarta.validation.Valid;
@@ -29,14 +28,8 @@ public class CodPostalController implements GenericController {
     }
 
     @GetMapping
-    public Page<CodPostalDto> list(@RequestParam(defaultValue = "") String search, Pageable pageable) {
-        return service.list(search, pageable);
-    }
-
-    @GetMapping("/search")
-    public Page<CodPostalSearchDto> search(@RequestParam String q,
-                                           @RequestParam(defaultValue = "30") int limit) {
-        return service.search(q, limit);
+    public Page<CodPostalDto> list(Pageable pageable) {
+        return service.list(pageable);
     }
 
     @GetMapping("/{id}")

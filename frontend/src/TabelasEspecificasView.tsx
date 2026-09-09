@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "./api";
-import { FacInputText } from "./ui/fac";
 
 type Page<T> = { content: T[] };
 type Row = Record<string, unknown>;
@@ -119,7 +118,6 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
   const [rates, setRates] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [tableSearch, setTableSearch] = useState("");
   const isRiva = tableKey === "riva";
 
   useEffect(() => { load(); }, [tableKey]);
@@ -128,9 +126,7 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
     setLoading(true); setFeedback(null);
     try {
       const sortField = tableKey === "freguesias" ? "codigo" : tableKey === "series" ? "serie" : "id";
-      const params = new URLSearchParams({ page: "0", size: tableKey === "codpostal" ? "50" : "100", sort: `${sortField},asc` });
-      if (tableKey === "codpostal" && tableSearch.trim()) params.set("search", tableSearch.trim());
-      const [page, support] = await Promise.all([get<Page<Row>>(`${config.endpoint}?${params}`), loadOptions()]);
+      const [page, support] = await Promise.all([get<Page<Row>>(`${config.endpoint}?size=1000&sort=${sortField},asc`), loadOptions()]);
       setRows(page.content); setOptions((current) => ({ ...current, ...support })); reset();
     } catch (error) { setFeedback({ kind: "error", text: errorMessage(error) }); }
     finally { setLoading(false); }
@@ -141,9 +137,10 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
     if (isRiva) required.add("tiposTaxa");
     const result: Record<string, Option[]> = {};
     const staticOptions = new Set(["sinais", "areasGestao", "entidadesDocumento", "codigosFiscais"]);
-    await Promise.all([...required].filter((key) => !staticOptions.has(key!) && key !== "codigosPostais").map(async (key) => {
+    await Promise.all([...required].filter((key) => !staticOptions.has(key!)).map(async (key) => {
       const definitions: Record<string, [string, (row: Row) => Option]> = {
         tiposDocumento: ["/api/tipos-documento?size=500&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.descricao}` })],
+        codigosPostais: ["/api/codpostal?size=1000&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.nome}` })],
         paises: ["/api/paises?size=500&sort=nome,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.nome}` })],
         freguesias: ["/api/freguesias?size=1000&sort=nome,asc", (row) => ({ value: String(row.codigo), label: `${row.codigo} - ${row.nome}` })],
         tiposTaxa: ["/api/tipos-taxa-iva?size=100&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.descricao}` })]
@@ -202,7 +199,6 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
       {isRiva && <div className="fac-rate-grid"><p className="fac-muted">Taxas do regime</p>{rateOptions.map((option) => <label className="fac-field" key={option.value}><span>{option.label}</span><input min="0" onChange={(event) => setRates((current) => ({ ...current, [option.value]: event.target.value }))} step="0.01" type="number" value={rates[option.value] ?? ""}/></label>)}</div>}
       <div className="fac-form-footer"><span className="fac-muted">{editing ? `A editar ${config.rowId(editing)}` : "Novo registo"}</span><button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar"}</button></div>
     </div>
-    {tableKey === "codpostal" && <div className="fac-inline-actions"><FacInputText aria-label="Pesquisar códigos postais" onChange={(event) => setTableSearch(event.target.value)} placeholder="Pesquisar código ou localidade" value={tableSearch} /><button className="fac-ghost-button" onClick={load} type="button">Pesquisar</button></div>}
     <p className="fac-muted">A eliminação só é aceite para registos nunca utilizados.</p>
     <table className="fac-table"><thead><tr>{config.columns.map((column) => <th key={column.key}>{column.label}</th>)}<th>Ações</th></tr></thead><tbody>{rows.map((row) => <tr key={config.rowId(row)}>{config.columns.map((column) => <td key={column.key}>{display(column.key, row[column.key])}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => edit(row)} type="button">Editar</button><button className="fac-link-danger" disabled={loading} onClick={() => remove(row)} type="button">Eliminar</button></div></td></tr>)}{!loading && rows.length === 0 && <tr><td colSpan={config.columns.length + 1}>Sem registos.</td></tr>}</tbody></table>
   </section>;
@@ -210,26 +206,7 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
 
 function EditorField({ field: item, value, editing, options, onChange }: { field: Field; value: string | boolean; editing: boolean; options: Option[]; onChange: (value: string | boolean) => void }) {
   if (item.type === "checkbox") return <label className="fac-check-field"><input checked={Boolean(value)} onChange={(event) => onChange(event.target.checked)} type="checkbox"/><span>{item.label}</span></label>;
-  if (item.options === "codigosPostais") return <PostalCodeAdminField value={String(value ?? "")} onChange={onChange} disabled={Boolean(editing && item.createOnly)} />;
   return <label className="fac-field"><span>{item.label}{item.optionalOnUpdate && editing ? " (deixar vazio para manter)" : ""}</span>{item.type === "select" ? <select disabled={editing && item.createOnly} onChange={(event) => onChange(event.target.value)} value={String(value ?? "")}><option value="">Selecionar</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : <input disabled={editing && item.createOnly} maxLength={item.maxLength} min={item.type === "number" ? 0 : undefined} onChange={(event) => onChange(event.target.value)} step={item.type === "number" ? "1" : undefined} type={item.type ?? "text"} value={String(value ?? "")}/>}</label>;
-}
-
-function PostalCodeAdminField({ value, onChange, disabled }: { value: string; onChange: (value: string) => void; disabled: boolean }) {
-  const [query, setQuery] = useState(value);
-  const [results, setResults] = useState<{ codigoPostal: string; nome: string }[]>([]);
-  const [open, setOpen] = useState(false);
-  useEffect(() => setQuery(value), [value]);
-  useEffect(() => {
-    if (query.trim().length < 2 || disabled) { setResults([]); return; }
-    const timeout = window.setTimeout(async () => {
-      const response = await apiFetch(`/api/codpostal/search?q=${encodeURIComponent(query.trim())}&limit=30`);
-      if (!response.ok) return;
-      const page = await response.json() as { content: { codigoPostal: string; nome: string }[] };
-      setResults(page.content ?? []); setOpen(true);
-    }, 280);
-    return () => window.clearTimeout(timeout);
-  }, [query, disabled]);
-  return <label className="fac-field fac-postal-admin-field"><span>Código postal</span><input disabled={disabled} onBlur={() => window.setTimeout(() => setOpen(false), 150)} onChange={(event) => { setQuery(event.target.value); onChange(event.target.value); }} onFocus={() => results.length > 0 && setOpen(true)} value={query}/>{open && <div className="fac-postal-admin-results">{results.map((result) => <button key={result.codigoPostal} onMouseDown={(event) => event.preventDefault()} onClick={() => { setQuery(result.codigoPostal); onChange(result.codigoPostal); setOpen(false); }} type="button">{result.codigoPostal} — {result.nome}</button>)}</div>}</label>;
 }
 
 function display(key: string, value: unknown) { if (key === "taxas" && Array.isArray(value)) return value.map((taxa: Row) => `${taxa.tipoTaxaIvaId}: ${taxa.valor}%`).join(" | "); if (typeof value === "boolean") return key === "inativo" || key === "extinta" ? (value ? "Inativo" : "Ativo") : value ? "Sim" : "Não"; return value == null || value === "" ? "-" : String(value); }

@@ -68,6 +68,7 @@ type CatalogoNumero = {
 };
 
 type ClienteCatalogos = {
+  codPostais: CatalogoString[];
   paises: CatalogoString[];
   moedas: CatalogoString[];
   regimesIva: CatalogoString[];
@@ -135,6 +136,7 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
   const { showToast } = useFacToast();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [catalogos, setCatalogos] = useState<ClienteCatalogos>({
+    codPostais: [],
     paises: [],
     moedas: [],
     regimesIva: [],
@@ -187,8 +189,9 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
     setLoading(true);
     setError(null);
     try {
-      const [clientesPage, paisesPage, moedasPage, regimesIvaPage, modosPagamentoPage, prazosPagamentoPage, transportesPage] = await Promise.all([
+      const [clientesPage, codPostaisPage, paisesPage, moedasPage, regimesIvaPage, modosPagamentoPage, prazosPagamentoPage, transportesPage] = await Promise.all([
         fetchPage<Cliente>("/api/clientes?page=0&size=20&sort=nome,asc"),
+        fetchPage<CatalogoString>("/api/codpostal?size=300&sort=id,asc"),
         fetchPage<CatalogoString>("/api/paises?size=300&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
@@ -201,6 +204,7 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
       setPageSize(clientesPage.size);
       setTotalElements(clientesPage.totalElements);
       setCatalogos({
+        codPostais: codPostaisPage.content,
         paises: paisesPage.content,
         moedas: moedasPage.content,
         regimesIva: regimesIvaPage.content,
@@ -702,7 +706,7 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
       <FormSection title="Morada">
         <FacInputText label="Morada" maxLength={60} onChange={(event) => onChangeForm({ ...form, morada: event.target.value })} required value={form.morada} />
         <FacInputText label="Morada complementar" maxLength={60} onChange={(event) => onChangeForm({ ...form, morada1: event.target.value })} value={form.morada1} />
-        <PostalCodeAutocomplete value={form.codPostalId} onChange={(value) => onChangeForm({ ...form, codPostalId: value })} />
+        <FacSelect label="Código postal" onChange={(value) => onChangeForm({ ...form, codPostalId: value ?? "" })} options={catalogOptions(catalogos.codPostais)} value={form.codPostalId} />
         <FacInputText label="Localidade" maxLength={50} onChange={(event) => onChangeForm({ ...form, localidade: event.target.value })} value={form.localidade} />
         <FacSelect label="País" onChange={(value) => onChangeForm({ ...form, paisId: value ?? "" })} options={catalogOptions(catalogos.paises)} value={form.paisId} />
       </FormSection>
@@ -925,45 +929,6 @@ function toPayload(form: ClienteForm) {
 
 function catalogOptions<T extends { id: string | number; nome: string }>(items: T[]) {
   return items.map((item) => ({ label: `${item.id} - ${item.nome}`, value: String(item.id) }));
-}
-
-type PostalSearchResult = { codigoPostal: string; nome: string; concelho?: string; distrito?: string };
-
-function PostalCodeAutocomplete({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  const [query, setQuery] = useState(value);
-  const [results, setResults] = useState<PostalSearchResult[]>([]);
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => setQuery(value), [value]);
-
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (trimmed.length < 2) { setResults([]); setOpen(false); return; }
-    const timeout = window.setTimeout(async () => {
-      setLoading(true);
-      try {
-        const response = await apiFetch(`/api/codpostal/search?q=${encodeURIComponent(trimmed)}&limit=30`);
-        if (!response.ok) throw new Error("Não foi possível pesquisar códigos postais.");
-        const page = await response.json() as { content: PostalSearchResult[] };
-        setResults(page.content ?? []); setOpen(true);
-      } catch { setResults([]); setOpen(false); }
-      finally { setLoading(false); }
-    }, 280);
-    return () => window.clearTimeout(timeout);
-  }, [query]);
-
-  return <div className="fac-field-stack fac-postal-autocomplete">
-    <span>Código postal</span>
-    <FacInputText aria-autocomplete="list" aria-expanded={open} onBlur={() => window.setTimeout(() => setOpen(false), 150)} onChange={(event) => { setQuery(event.target.value); onChange(event.target.value); }} onFocus={() => results.length > 0 && setOpen(true)} role="combobox" value={query} />
-    {loading && <small className="fac-muted">A pesquisar...</small>}
-    {open && <div className="fac-postal-results" role="listbox">
-      {results.map((result) => <button key={result.codigoPostal} onMouseDown={(event) => event.preventDefault()} onClick={() => { onChange(result.codigoPostal); setQuery(result.codigoPostal); setOpen(false); }} role="option" type="button">
-        <strong>{result.codigoPostal}</strong><span>{result.nome}{result.concelho ? ` · ${result.concelho}` : ""}</span>
-      </button>)}
-      {results.length === 0 && !loading && <span className="fac-muted">Sem resultados.</span>}
-    </div>}
-  </div>;
 }
 
 function catalogName<T extends { id: string | number; nome: string }>(items: T[], value?: string | number | null) {

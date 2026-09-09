@@ -2,7 +2,6 @@ package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.CodPostalCreateDto;
 import com.ar2lda.fac.controller.dto.CodPostalDto;
-import com.ar2lda.fac.controller.dto.CodPostalSearchDto;
 import com.ar2lda.fac.controller.dto.CodPostalUpdateDto;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
@@ -32,19 +31,6 @@ public class CodPostalService {
         return repository.findAll(pageable).map(mapper::toDTO);
     }
 
-    public Page<CodPostalDto> list(String query, Pageable pageable) {
-        if (query == null || query.isBlank()) return list(pageable);
-        return repository.search(normalize(query), pageable).map(mapper::toDTO);
-    }
-
-    public Page<CodPostalSearchDto> search(String query, int limit) {
-        String normalized = normalize(query);
-        if (normalized.length() < 2) return Page.empty();
-        int boundedLimit = Math.max(1, Math.min(limit, 30));
-        return repository.search(normalized, Pageable.ofSize(boundedLimit))
-                .map(entity -> new CodPostalSearchDto(entity.getId(), entity.getNome(), entity.getConcelho(), entity.getDistrito()));
-    }
-
     public CodPostalDto getById(String id) {
         return mapper.toDTO(findEntityById(id));
     }
@@ -63,9 +49,5 @@ public class CodPostalService {
     private CodPostal findEntityById(String id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Código postal não encontrado: " + id));
-    }
-
-    private String normalize(String query) {
-        return query == null ? "" : query.trim();
     }
 }
