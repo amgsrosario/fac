@@ -95,7 +95,7 @@ class FlywaySchemaIntegrationTests {
                   and constraint_type = 'CHECK'
                 """, Integer.class);
 
-        assertThat(versao).isEqualTo(11);
+        assertThat(versao).isEqualTo(12);
         assertThat(colunasSnapshot).isEqualTo(2);
         assertThat(estruturasBlocoTres).isEqualTo(3);
         assertThat(estruturasMd28).isEqualTo(10);

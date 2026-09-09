@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "codpostal")
 @Getter
@@ -20,6 +23,21 @@ public class CodPostal {
     @Setter
     @ToString.Include
     private String nome;
+
+    @Column(length = 100)
+    @Setter
+    private String distrito;
+
+    @Column(length = 100)
+    @Setter
+    private String concelho;
+
+    @Column(length = 100)
+    @Setter
+    private String freguesia;
+
+    @OneToMany(mappedBy = "codPostal", fetch = FetchType.LAZY)
+    private List<CodPostalLocalidade> localidades = new ArrayList<>();
 
     public CodPostal() {}
 

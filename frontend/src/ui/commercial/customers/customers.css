@@ -8,6 +8,12 @@
   margin-bottom: var(--fac-space-4);
 }
 
+.fac-postal-autocomplete { position: relative; }
+.fac-postal-results { position: absolute; z-index: 20; top: 100%; left: 0; right: 0; display: grid; gap: 0.15rem; max-height: 18rem; overflow-y: auto; padding: 0.35rem; border: 1px solid var(--fac-border); border-radius: var(--fac-radius-md); background: var(--fac-surface); box-shadow: var(--fac-shadow-md); }
+.fac-postal-results button { display: grid; gap: 0.15rem; border: 0; border-radius: var(--fac-radius-sm); padding: 0.55rem 0.7rem; background: transparent; color: var(--fac-text); text-align: left; cursor: pointer; }
+.fac-postal-results button:hover, .fac-postal-results button:focus-visible { background: var(--fac-client-soft); }
+.fac-postal-results strong { color: var(--fac-petrol); }
+
 .fac-customers-header h1,
 .fac-customers-mobile-header h1 {
   margin: 0;

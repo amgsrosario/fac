@@ -13,7 +13,7 @@ public interface CodPostalMapper {
         if (entity == null) {
             return null;
         }
-        return new CodPostalDto(entity.getId(), entity.getNome());
+        return new CodPostalDto(entity.getId(), entity.getNome(), entity.getDistrito(), entity.getConcelho(), entity.getFreguesia());
     }
 
     default CodPostal fromCreateDTO(CodPostalCreateDto dto) {
