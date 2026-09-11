@@ -28,8 +28,9 @@ public class CodPostalController implements GenericController {
     }
 
     @GetMapping
-    public Page<CodPostalDto> list(Pageable pageable) {
-        return service.list(pageable);
+    public Page<CodPostalDto> list(@RequestParam(name = "search", required = false) String search,
+                                   Pageable pageable) {
+        return service.list(search, pageable);
     }
 
     @GetMapping("/{id}")

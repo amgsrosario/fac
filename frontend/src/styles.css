@@ -3262,6 +3262,157 @@ button:disabled {
   background: var(--fac-sidebar);
 }
 
+.fac-postal-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 480px) 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.fac-postal-toolbar input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm);
+  padding: 0 14px;
+  color: var(--fac-text);
+  background: var(--fac-surface);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.fac-postal-toolbar input:focus {
+  border-color: var(--tuuli-border-focus);
+  outline: 2px solid color-mix(in srgb, var(--tuuli-border-focus) 18%, transparent);
+  outline-offset: 1px;
+}
+
+.fac-postal-toolbar > span {
+  justify-self: end;
+  color: var(--fac-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fac-postal-table-wrap {
+  overflow-x: auto;
+}
+
+.fac-postal-table {
+  min-width: 620px;
+}
+
+.fac-postal-table th {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: var(--tuuli-tracking-technical);
+}
+
+.fac-postal-table td {
+  padding-block: 11px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.fac-postal-table th:first-child,
+.fac-postal-table td:first-child {
+  width: 150px;
+  white-space: nowrap;
+}
+
+.fac-postal-table th:last-child,
+.fac-postal-table td:last-child {
+  width: 180px;
+}
+
+.fac-postal-sort {
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.fac-postal-sort:hover,
+.fac-postal-sort:focus-visible {
+  color: var(--tuuli-blue-hover);
+  outline: none;
+}
+
+.fac-postal-pagination {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+  border-top: 1px solid var(--tuuli-divider);
+  padding-top: 12px;
+  color: var(--fac-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fac-postal-page-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fac-postal-page-controls > span {
+  min-width: 150px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.fac-postal-pagination > label {
+  display: flex;
+  justify-self: end;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.fac-postal-pagination select {
+  min-height: 34px;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--fac-radius-sm);
+  padding: 0 8px;
+  color: var(--fac-text);
+  background: var(--fac-surface);
+}
+
+@media (max-width: 700px) {
+  .fac-postal-toolbar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .fac-postal-toolbar input {
+    grid-column: 1 / -1;
+  }
+
+  .fac-postal-toolbar > span {
+    justify-self: start;
+  }
+
+  .fac-postal-pagination {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .fac-postal-page-controls {
+    justify-content: space-between;
+  }
+
+  .fac-postal-pagination > label {
+    justify-self: start;
+  }
+}
+
 @media (max-width: 800px) {
   .fac-config-nav,
   .fac-table-groups,

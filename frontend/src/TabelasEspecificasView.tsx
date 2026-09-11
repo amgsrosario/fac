@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "./api";
 
-type Page<T> = { content: T[] };
+type Page<T> = { content: T[]; number: number; size: number; totalElements: number; totalPages: number };
 type Row = Record<string, unknown>;
 type Values = Record<string, string | boolean>;
 type Option = { value: string; label: string };
@@ -119,8 +119,31 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const isRiva = tableKey === "riva";
+  const isPostal = tableKey === "codpostal";
+  const [postalSearch, setPostalSearch] = useState("");
+  const [postalDebouncedSearch, setPostalDebouncedSearch] = useState("");
+  const [postalPage, setPostalPage] = useState(0);
+  const [postalPageSize, setPostalPageSize] = useState(25);
+  const [postalSortField, setPostalSortField] = useState<"id" | "nome">("id");
+  const [postalSortDirection, setPostalSortDirection] = useState<"asc" | "desc">("asc");
+  const [postalTotalElements, setPostalTotalElements] = useState(0);
+  const [postalTotalPages, setPostalTotalPages] = useState(0);
+  const postalRequestRef = useRef(0);
 
-  useEffect(() => { load(); }, [tableKey]);
+  useEffect(() => { if (!isPostal) load(); }, [tableKey]);
+
+  useEffect(() => {
+    if (!isPostal) return;
+    const timeout = window.setTimeout(() => {
+      setPostalPage(0);
+      setPostalDebouncedSearch(postalSearch.trim());
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [isPostal, postalSearch]);
+
+  useEffect(() => {
+    if (isPostal) loadPostal();
+  }, [isPostal, postalDebouncedSearch, postalPage, postalPageSize, postalSortField, postalSortDirection]);
 
   async function load() {
     setLoading(true); setFeedback(null);
@@ -130,6 +153,30 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
       setRows(page.content); setOptions((current) => ({ ...current, ...support })); reset();
     } catch (error) { setFeedback({ kind: "error", text: errorMessage(error) }); }
     finally { setLoading(false); }
+  }
+
+  async function loadPostal() {
+    const requestId = ++postalRequestRef.current;
+    setLoading(true); setFeedback(null);
+    const params = new URLSearchParams({
+      page: String(postalPage),
+      size: String(postalPageSize),
+      sort: `${postalSortField},${postalSortDirection}`
+    });
+    if (postalDebouncedSearch) params.set("search", postalDebouncedSearch);
+    try {
+      const result = await get<Page<Row>>(`${config.endpoint}?${params}`);
+      if (requestId !== postalRequestRef.current) return;
+      setRows(result.content);
+      setPostalPage(result.number);
+      setPostalPageSize(result.size);
+      setPostalTotalElements(result.totalElements);
+      setPostalTotalPages(result.totalPages);
+    } catch (error) {
+      if (requestId === postalRequestRef.current) setFeedback({ kind: "error", text: errorMessage(error) });
+    } finally {
+      if (requestId === postalRequestRef.current) setLoading(false);
+    }
   }
 
   async function loadOptions() {
@@ -176,7 +223,8 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
       if (isRiva) payload.taxas = taxas;
       const response = await apiFetch(editing ? config.itemUrl(editing) : config.endpoint, { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!response.ok) throw new Error(await responseError(response));
-      await load(); setFeedback({ kind: "success", text: editing ? "Registo atualizado com sucesso." : "Registo criado com sucesso." });
+      if (isPostal) await loadPostal(); else await load();
+      setFeedback({ kind: "success", text: editing ? "Registo atualizado com sucesso." : "Registo criado com sucesso." });
     } catch (error) { setFeedback({ kind: "error", text: errorMessage(error) }); setLoading(false); }
   }
 
@@ -186,11 +234,21 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
     try {
       const response = await apiFetch(config.itemUrl(row), { method: "DELETE" });
       if (!response.ok) throw new Error(await responseError(response));
-      await load(); setFeedback({ kind: "success", text: "Registo eliminado com sucesso." });
+      if (isPostal) await loadPostal(); else await load();
+      setFeedback({ kind: "success", text: "Registo eliminado com sucesso." });
     } catch (error) { setFeedback({ kind: "error", text: `O registo não foi eliminado e permanece na tabela. ${errorMessage(error)}` }); setLoading(false); }
   }
 
   const rateOptions = useMemo(() => options.tiposTaxa ?? [], [options]);
+
+  function changePostalSort(fieldName: "id" | "nome") {
+    setPostalPage(0);
+    if (postalSortField === fieldName) setPostalSortDirection((current) => current === "asc" ? "desc" : "asc");
+    else {
+      setPostalSortField(fieldName);
+      setPostalSortDirection("asc");
+    }
+  }
 
   return <section className="fac-panel">
     <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabela</p><h2>{config.label}</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={onBack} type="button">Voltar</button><button className="fac-primary-button" onClick={reset} type="button">Novo registo</button></div></div>
@@ -200,7 +258,20 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
       <div className="fac-form-footer"><span className="fac-muted">{editing ? `A editar ${config.rowId(editing)}` : "Novo registo"}</span><button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar"}</button></div>
     </div>
     <p className="fac-muted">A eliminação só é aceite para registos nunca utilizados.</p>
-    <table className="fac-table"><thead><tr>{config.columns.map((column) => <th key={column.key}>{column.label}</th>)}<th>Ações</th></tr></thead><tbody>{rows.map((row) => <tr key={config.rowId(row)}>{config.columns.map((column) => <td key={column.key}>{display(column.key, row[column.key])}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => edit(row)} type="button">Editar</button><button className="fac-link-danger" disabled={loading} onClick={() => remove(row)} type="button">Eliminar</button></div></td></tr>)}{!loading && rows.length === 0 && <tr><td colSpan={config.columns.length + 1}>Sem registos.</td></tr>}</tbody></table>
+    {isPostal && <div className="fac-postal-toolbar" aria-label="Pesquisa de códigos postais">
+      <input aria-label="Pesquisar códigos postais" onChange={(event) => setPostalSearch(event.target.value)} placeholder="Pesquisar código ou localidade..." type="search" value={postalSearch} />
+      <span aria-live="polite">{loading ? "A carregar..." : recordCountLabel(postalTotalElements)}</span>
+    </div>}
+    <div className={isPostal ? "fac-postal-table-wrap" : undefined}><table className={`fac-table${isPostal ? " fac-postal-table" : ""}`}><thead><tr>{config.columns.map((column) => <th key={column.key}>{isPostal && (column.key === "id" || column.key === "nome") ? <button aria-label={`Ordenar por ${column.label}`} className="fac-postal-sort" onClick={() => changePostalSort(column.key as "id" | "nome")} type="button">{column.label}<span aria-hidden="true">{postalSortField === column.key ? (postalSortDirection === "asc" ? " ↑" : " ↓") : ""}</span></button> : column.label}</th>)}<th>Ações</th></tr></thead><tbody>{rows.map((row) => <tr key={config.rowId(row)}>{config.columns.map((column) => <td key={column.key}>{display(column.key, row[column.key])}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => edit(row)} type="button">Editar</button><button className="fac-link-danger" disabled={loading} onClick={() => remove(row)} type="button">Eliminar</button></div></td></tr>)}{!loading && rows.length === 0 && <tr><td colSpan={config.columns.length + 1}>{isPostal && postalDebouncedSearch ? `Sem resultados para “${postalDebouncedSearch}”.` : "Sem registos."}</td></tr>}</tbody></table></div>
+    {isPostal && <div className="fac-postal-pagination">
+      <span>{recordCountLabel(postalTotalElements)}</span>
+      <div className="fac-postal-page-controls">
+        <button className="fac-ghost-button" disabled={loading || postalPage === 0} onClick={() => setPostalPage((current) => current - 1)} type="button">Anterior</button>
+        <span>Página {postalTotalPages === 0 ? 0 : postalPage + 1} de {postalTotalPages.toLocaleString("pt-PT")}</span>
+        <button className="fac-ghost-button" disabled={loading || postalPage + 1 >= postalTotalPages} onClick={() => setPostalPage((current) => current + 1)} type="button">Seguinte</button>
+      </div>
+      <label><span>Por página</span><select onChange={(event) => { setPostalPage(0); setPostalPageSize(Number(event.target.value)); }} value={postalPageSize}><option value="25">25</option><option value="50">50</option></select></label>
+    </div>}
   </section>;
 }
 
@@ -210,6 +281,7 @@ function EditorField({ field: item, value, editing, options, onChange }: { field
 }
 
 function display(key: string, value: unknown) { if (key === "taxas" && Array.isArray(value)) return value.map((taxa: Row) => `${taxa.tipoTaxaIvaId}: ${taxa.valor}%`).join(" | "); if (typeof value === "boolean") return key === "inativo" || key === "extinta" ? (value ? "Inativo" : "Ativo") : value ? "Sim" : "Não"; return value == null || value === "" ? "-" : String(value); }
+function recordCountLabel(count: number) { return `${count.toLocaleString("pt-PT")} ${count === 1 ? "registo" : "registos"}`; }
 function blankToNull(value: string) { const trimmed = value.trim(); return trimmed || null; }
 async function get<T>(url: string): Promise<T> { const response = await apiFetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
 async function responseError(response: Response) { try { const payload = await response.json(); return payload.message || payload.error || `Erro HTTP ${response.status}`; } catch { return `Erro HTTP ${response.status}`; } }
