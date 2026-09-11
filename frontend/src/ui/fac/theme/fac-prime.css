@@ -15,6 +15,23 @@
   line-height: var(--fac-line-height-body);
 }
 
+input::placeholder,
+textarea::placeholder,
+.p-dropdown-label.p-placeholder,
+.p-multiselect-label.p-placeholder {
+  color: var(--tuuli-placeholder);
+  opacity: 1;
+}
+
+input:disabled::placeholder,
+textarea:disabled::placeholder,
+input[readonly]::placeholder,
+textarea[readonly]::placeholder,
+.fac-select.fac-disabled .p-placeholder,
+.p-disabled .p-placeholder {
+  color: var(--fac-disabled-text);
+}
+
 .fac-ui h1,
 .fac-ui h2,
 .fac-ui h3,

@@ -198,7 +198,8 @@
 }
 
 .tuuli-search > input::placeholder {
-  color: color-mix(in srgb, var(--tuuli-text-muted) 78%, transparent);
+  color: var(--tuuli-placeholder);
+  opacity: 1;
 }
 
 .tuuli-search > input:focus {

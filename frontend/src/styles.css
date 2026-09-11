@@ -4184,7 +4184,8 @@ button:disabled {
 }
 
 .fac-documents-v2 .fac-documents-search > input::placeholder {
-  color: color-mix(in srgb, var(--fac-text-muted) 78%, transparent);
+  color: var(--tuuli-placeholder);
+  opacity: 1;
 }
 
 .fac-documents-v2 .fac-documents-search > input:focus {
