@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "./api";
+import { useLocation, useParams } from "react-router-dom";
 import TabelasEspecificasView, { specificTables } from "./TabelasEspecificasView";
 
 type Page<T> = { content: T[] };
@@ -67,8 +68,11 @@ const tableCategories: TableCategory[] = [
 ];
 
 export default function TabelasView() {
+  const { tableKey } = useParams();
+  const location = useLocation();
+  const linkedTable = specificTables.find((table) => table.key === tableKey)?.key ?? null;
   const [active, setActive] = useState<Config | null>(null);
-  const [specificActive, setSpecificActive] = useState<(typeof specificTables)[number]["key"] | null>(null);
+  const [specificActive, setSpecificActive] = useState<(typeof specificTables)[number]["key"] | null>(linkedTable);
   const [rows, setRows] = useState<Row[]>([]);
   const [values, setValues] = useState<Values>({});
   const [editingId, setEditingId] = useState<string | number | null>(null);
@@ -158,7 +162,7 @@ export default function TabelasView() {
 
   if (specificActive) return <>
     <TableDirectory activeKey={activeKey} compact onSelect={selectTable} />
-    <TabelasEspecificasView onBack={() => setSpecificActive(null)} tableKey={specificActive} />
+    <TabelasEspecificasView key={specificActive} onBack={() => setSpecificActive(null)} startNew={Boolean(linkedTable && new URLSearchParams(location.search).get("mode") === "new")} tableKey={specificActive} />
   </>;
 
   if (!active) return <section className="fac-panel">

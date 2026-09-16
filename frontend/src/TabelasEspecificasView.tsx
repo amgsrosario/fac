@@ -62,7 +62,7 @@ const configs: Record<TableKey, Config> = {
   },
   armazens: {
     key: "armazens", label: "Armazéns", endpoint: "/api/armazens",
-    fields: [field("id", "Código", { required: true, maxLength: 3, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 100 }), field("morada", "Morada", { required: true, maxLength: 60 }), field("morada1", "Morada complementar", { maxLength: 60 }), field("codPostalId", "Código postal", { type: "select", required: true, options: "codigosPostais" }), field("localidade", "Localidade", { required: true, maxLength: 50 }), field("paisId", "País", { type: "select", required: true, options: "paises" }), field("freguesiaId", "Freguesia", { type: "select", options: "freguesias" })],
+    fields: [field("id", "Código", { required: true, maxLength: 3, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 100 }), field("morada", "Morada", { required: true, maxLength: 60 }), field("morada1", "Morada complementar", { maxLength: 60 }), field("codPostalId", "Código postal", { required: true }), field("localidade", "Localidade", { required: true, maxLength: 50 }), field("paisId", "País", { type: "select", required: true, options: "paises" }), field("freguesiaId", "Freguesia")],
     columns: [{ key: "id", label: "Código" }, { key: "nome", label: "Nome" }, { key: "localidade", label: "Localidade" }, { key: "paisId", label: "País" }],
     rowId: (row) => String(row.id), itemUrl: (row) => `/api/armazens/${encodeURIComponent(String(row.id))}`
   }
@@ -74,7 +74,7 @@ export const specificTables: { key: TableKey; label: string; group: string }[] =
   { key: "freguesias", label: "Freguesias", group: "Localização" }, { key: "armazens", label: "Armazéns", group: "Sistema" }
 ];
 
-export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey: TableKey; onBack: () => void }) {
+export default function TabelasEspecificasView({ tableKey, onBack, startNew = false }: { tableKey: TableKey; onBack: () => void; startNew?: boolean }) {
   const config = configs[tableKey];
   const [rows, setRows] = useState<Row[]>([]);
   const [values, setValues] = useState<Values>({});
@@ -120,6 +120,8 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const isRiva = tableKey === "riva";
   const isPostal = tableKey === "codpostal";
+  const isParish = tableKey === "freguesias";
+  const isWarehouse = tableKey === "armazens";
   const [postalSearch, setPostalSearch] = useState("");
   const [postalDebouncedSearch, setPostalDebouncedSearch] = useState("");
   const [postalPage, setPostalPage] = useState(0);
@@ -128,9 +130,23 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
   const [postalSortDirection, setPostalSortDirection] = useState<"asc" | "desc">("asc");
   const [postalTotalElements, setPostalTotalElements] = useState(0);
   const [postalTotalPages, setPostalTotalPages] = useState(0);
-  const postalRequestRef = useRef(0);
+  const [parishSearch, setParishSearch] = useState("");
+  const [parishDebouncedSearch, setParishDebouncedSearch] = useState("");
+  const [parishPage, setParishPage] = useState(0);
+  const [parishPageSize, setParishPageSize] = useState(25);
+  const [parishSortField, setParishSortField] = useState<"codigo" | "concelho" | "nome" | "extinta">("codigo");
+  const [parishSortDirection, setParishSortDirection] = useState<"asc" | "desc">("asc");
+  const [parishTotalElements, setParishTotalElements] = useState(0);
+  const [parishTotalPages, setParishTotalPages] = useState(0);
+  const [warehousePage, setWarehousePage] = useState(0);
+  const [warehousePageSize, setWarehousePageSize] = useState(25);
+  const [warehouseTotalElements, setWarehouseTotalElements] = useState(0);
+  const [warehouseTotalPages, setWarehouseTotalPages] = useState(0);
+  const rowsRequestRef = useRef(0);
 
-  useEffect(() => { if (!isPostal) load(); }, [tableKey]);
+  useEffect(() => { if (startNew) reset(); }, [startNew, tableKey]);
+
+  useEffect(() => { if (!isPostal && !isParish && !isWarehouse) load(); }, [tableKey]);
 
   useEffect(() => {
     if (!isPostal) return;
@@ -145,18 +161,40 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
     if (isPostal) loadPostal();
   }, [isPostal, postalDebouncedSearch, postalPage, postalPageSize, postalSortField, postalSortDirection]);
 
+  useEffect(() => {
+    if (!isParish) return;
+    const timeout = window.setTimeout(() => {
+      setParishPage(0);
+      setParishDebouncedSearch(parishSearch.trim());
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [isParish, parishSearch]);
+
+  useEffect(() => {
+    if (isParish) loadParishes();
+  }, [isParish, parishDebouncedSearch, parishPage, parishPageSize, parishSortField, parishSortDirection]);
+
+  useEffect(() => {
+    if (isWarehouse) loadWarehouses();
+  }, [isWarehouse, warehousePage, warehousePageSize]);
+
   async function load() {
+    const requestId = ++rowsRequestRef.current;
     setLoading(true); setFeedback(null);
     try {
       const sortField = tableKey === "freguesias" ? "codigo" : tableKey === "series" ? "serie" : "id";
       const [page, support] = await Promise.all([get<Page<Row>>(`${config.endpoint}?size=1000&sort=${sortField},asc`), loadOptions()]);
+      if (requestId !== rowsRequestRef.current) return;
       setRows(page.content); setOptions((current) => ({ ...current, ...support })); reset();
-    } catch (error) { setFeedback({ kind: "error", text: errorMessage(error) }); }
-    finally { setLoading(false); }
+    } catch (error) {
+      if (requestId === rowsRequestRef.current) setFeedback({ kind: "error", text: errorMessage(error) });
+    } finally {
+      if (requestId === rowsRequestRef.current) setLoading(false);
+    }
   }
 
   async function loadPostal() {
-    const requestId = ++postalRequestRef.current;
+    const requestId = ++rowsRequestRef.current;
     setLoading(true); setFeedback(null);
     const params = new URLSearchParams({
       page: String(postalPage),
@@ -166,16 +204,61 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
     if (postalDebouncedSearch) params.set("search", postalDebouncedSearch);
     try {
       const result = await get<Page<Row>>(`${config.endpoint}?${params}`);
-      if (requestId !== postalRequestRef.current) return;
+      if (requestId !== rowsRequestRef.current) return;
       setRows(result.content);
       setPostalPage(result.number);
       setPostalPageSize(result.size);
       setPostalTotalElements(result.totalElements);
       setPostalTotalPages(result.totalPages);
     } catch (error) {
-      if (requestId === postalRequestRef.current) setFeedback({ kind: "error", text: errorMessage(error) });
+      if (requestId === rowsRequestRef.current) setFeedback({ kind: "error", text: errorMessage(error) });
     } finally {
-      if (requestId === postalRequestRef.current) setLoading(false);
+      if (requestId === rowsRequestRef.current) setLoading(false);
+    }
+  }
+
+  async function loadParishes() {
+    const requestId = ++rowsRequestRef.current;
+    setLoading(true); setFeedback(null);
+    const params = new URLSearchParams({
+      page: String(parishPage),
+      size: String(parishPageSize),
+      sort: `${parishSortField},${parishSortDirection}`
+    });
+    if (parishDebouncedSearch) params.set("search", parishDebouncedSearch);
+    try {
+      const result = await get<Page<Row>>(`${config.endpoint}?${params}`);
+      if (requestId !== rowsRequestRef.current) return;
+      setRows(result.content);
+      setParishPage(result.number);
+      setParishPageSize(result.size);
+      setParishTotalElements(result.totalElements);
+      setParishTotalPages(result.totalPages);
+    } catch (error) {
+      if (requestId === rowsRequestRef.current) setFeedback({ kind: "error", text: errorMessage(error) });
+    } finally {
+      if (requestId === rowsRequestRef.current) setLoading(false);
+    }
+  }
+
+  async function loadWarehouses() {
+    const requestId = ++rowsRequestRef.current;
+    setLoading(true); setFeedback(null);
+    const params = new URLSearchParams({ page: String(warehousePage), size: String(warehousePageSize), sort: "id,asc" });
+    try {
+      const [result, support] = await Promise.all([get<Page<Row>>(`${config.endpoint}?${params}`), loadOptions()]);
+      if (requestId !== rowsRequestRef.current) return;
+      setRows(result.content);
+      setWarehousePage(result.number);
+      setWarehousePageSize(result.size);
+      setWarehouseTotalElements(result.totalElements);
+      setWarehouseTotalPages(result.totalPages);
+      setOptions((current) => ({ ...current, ...support }));
+      reset();
+    } catch (error) {
+      if (requestId === rowsRequestRef.current) setFeedback({ kind: "error", text: errorMessage(error) });
+    } finally {
+      if (requestId === rowsRequestRef.current) setLoading(false);
     }
   }
 
@@ -187,9 +270,7 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
     await Promise.all([...required].filter((key) => !staticOptions.has(key!)).map(async (key) => {
       const definitions: Record<string, [string, (row: Row) => Option]> = {
         tiposDocumento: ["/api/tipos-documento?size=500&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.descricao}` })],
-        codigosPostais: ["/api/codpostal?size=1000&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.nome}` })],
         paises: ["/api/paises?size=500&sort=nome,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.nome}` })],
-        freguesias: ["/api/freguesias?size=1000&sort=nome,asc", (row) => ({ value: String(row.codigo), label: `${row.codigo} - ${row.nome}` })],
         tiposTaxa: ["/api/tipos-taxa-iva?size=100&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.descricao}` })]
       };
       const definition = definitions[key!];
@@ -223,7 +304,7 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
       if (isRiva) payload.taxas = taxas;
       const response = await apiFetch(editing ? config.itemUrl(editing) : config.endpoint, { method: editing ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!response.ok) throw new Error(await responseError(response));
-      if (isPostal) await loadPostal(); else await load();
+      if (isPostal) await loadPostal(); else if (isParish) await loadParishes(); else if (isWarehouse) await loadWarehouses(); else await load();
       setFeedback({ kind: "success", text: editing ? "Registo atualizado com sucesso." : "Registo criado com sucesso." });
     } catch (error) { setFeedback({ kind: "error", text: errorMessage(error) }); setLoading(false); }
   }
@@ -234,7 +315,7 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
     try {
       const response = await apiFetch(config.itemUrl(row), { method: "DELETE" });
       if (!response.ok) throw new Error(await responseError(response));
-      if (isPostal) await loadPostal(); else await load();
+      if (isPostal) await loadPostal(); else if (isParish) await loadParishes(); else if (isWarehouse) await loadWarehouses(); else await load();
       setFeedback({ kind: "success", text: "Registo eliminado com sucesso." });
     } catch (error) { setFeedback({ kind: "error", text: `O registo não foi eliminado e permanece na tabela. ${errorMessage(error)}` }); setLoading(false); }
   }
@@ -250,27 +331,47 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
     }
   }
 
+  function changeParishSort(fieldName: "codigo" | "concelho" | "nome" | "extinta") {
+    setParishPage(0);
+    if (parishSortField === fieldName) setParishSortDirection((current) => current === "asc" ? "desc" : "asc");
+    else {
+      setParishSortField(fieldName);
+      setParishSortDirection("asc");
+    }
+  }
+
+  const isPagedCatalog = isPostal || isParish;
+  const isPagedTable = isPagedCatalog || isWarehouse;
+  const catalogSearch = isPostal ? postalSearch : parishSearch;
+  const catalogDebouncedSearch = isPostal ? postalDebouncedSearch : parishDebouncedSearch;
+  const catalogPage = isPostal ? postalPage : isParish ? parishPage : warehousePage;
+  const catalogPageSize = isPostal ? postalPageSize : isParish ? parishPageSize : warehousePageSize;
+  const catalogTotalElements = isPostal ? postalTotalElements : isParish ? parishTotalElements : warehouseTotalElements;
+  const catalogTotalPages = isPostal ? postalTotalPages : isParish ? parishTotalPages : warehouseTotalPages;
+
   return <section className="fac-panel">
     <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabela</p><h2>{config.label}</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={onBack} type="button">Voltar</button><button className="fac-primary-button" onClick={reset} type="button">Novo registo</button></div></div>
     {feedback && <p className={`fac-editor-message fac-editor-message-${feedback.kind}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.text}</p>}
-    <div className="fac-table-editor"><div className="fac-form-grid">{config.fields.map((item) => <EditorField field={item} key={item.key} options={options[item.options ?? ""] ?? []} editing={Boolean(editing)} value={values[item.key]} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />)}</div>
+    <div className="fac-table-editor"><div className="fac-form-grid">{config.fields.map((item) => tableKey === "armazens" && (item.key === "codPostalId" || item.key === "freguesiaId")
+      ? <ReferenceLookup field={item} key={item.key} value={String(values[item.key] ?? "")} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />
+      : <EditorField field={item} key={item.key} options={options[item.options ?? ""] ?? []} editing={Boolean(editing)} value={values[item.key]} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />)}</div>
       {isRiva && <div className="fac-rate-grid"><p className="fac-muted">Taxas do regime</p>{rateOptions.map((option) => <label className="fac-field" key={option.value}><span>{option.label}</span><input min="0" onChange={(event) => setRates((current) => ({ ...current, [option.value]: event.target.value }))} step="0.01" type="number" value={rates[option.value] ?? ""}/></label>)}</div>}
       <div className="fac-form-footer"><span className="fac-muted">{editing ? `A editar ${config.rowId(editing)}` : "Novo registo"}</span><button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar"}</button></div>
     </div>
-    <p className="fac-muted">A eliminação só é aceite para registos nunca utilizados.</p>
-    {isPostal && <div className="fac-postal-toolbar" aria-label="Pesquisa de códigos postais">
-      <input aria-label="Pesquisar códigos postais" onChange={(event) => setPostalSearch(event.target.value)} placeholder="Pesquisar código ou localidade..." type="search" value={postalSearch} />
-      <span aria-live="polite">{loading ? "A carregar..." : recordCountLabel(postalTotalElements)}</span>
+    <p className={`fac-muted${isPagedCatalog ? " fac-catalog-maintenance-note" : ""}`}>A eliminação só é aceite para registos nunca utilizados.</p>
+    {isPagedCatalog && <div className="fac-postal-toolbar" aria-label={isPostal ? "Pesquisa de códigos postais" : "Pesquisa de freguesias"}>
+      <input aria-label={isPostal ? "Pesquisar códigos postais" : "Pesquisar freguesias"} onChange={(event) => isPostal ? setPostalSearch(event.target.value) : setParishSearch(event.target.value)} placeholder={isPostal ? "Pesquisar código ou localidade..." : "Pesquisar código, freguesia ou concelho..."} type="search" value={catalogSearch} />
+      <span aria-live="polite">{loading ? "A carregar..." : recordCountLabel(catalogTotalElements)}</span>
     </div>}
-    <div className={isPostal ? "fac-postal-table-wrap" : undefined}><table className={`fac-table${isPostal ? " fac-postal-table" : ""}`}><thead><tr>{config.columns.map((column) => <th key={column.key}>{isPostal && (column.key === "id" || column.key === "nome") ? <button aria-label={`Ordenar por ${column.label}`} className="fac-postal-sort" onClick={() => changePostalSort(column.key as "id" | "nome")} type="button">{column.label}<span aria-hidden="true">{postalSortField === column.key ? (postalSortDirection === "asc" ? " ↑" : " ↓") : ""}</span></button> : column.label}</th>)}<th>Ações</th></tr></thead><tbody>{rows.map((row) => <tr key={config.rowId(row)}>{config.columns.map((column) => <td key={column.key}>{display(column.key, row[column.key])}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => edit(row)} type="button">Editar</button><button className="fac-link-danger" disabled={loading} onClick={() => remove(row)} type="button">Eliminar</button></div></td></tr>)}{!loading && rows.length === 0 && <tr><td colSpan={config.columns.length + 1}>{isPostal && postalDebouncedSearch ? `Sem resultados para “${postalDebouncedSearch}”.` : "Sem registos."}</td></tr>}</tbody></table></div>
-    {isPostal && <div className="fac-postal-pagination">
-      <span>{recordCountLabel(postalTotalElements)}</span>
+    <div className={isPagedCatalog ? "fac-postal-table-wrap" : undefined}><table className={`fac-table${isPagedCatalog ? " fac-postal-table" : ""}`}><thead><tr>{config.columns.map((column) => <th key={column.key}>{isPostal && (column.key === "id" || column.key === "nome") ? <button aria-label={`Ordenar por ${column.label}`} className="fac-postal-sort" onClick={() => changePostalSort(column.key as "id" | "nome")} type="button">{column.label}<span aria-hidden="true">{postalSortField === column.key ? (postalSortDirection === "asc" ? " ↑" : " ↓") : ""}</span></button> : isParish ? <button aria-label={`Ordenar por ${column.label}`} className="fac-postal-sort" onClick={() => changeParishSort(column.key as "codigo" | "concelho" | "nome" | "extinta")} type="button">{column.label}<span aria-hidden="true">{parishSortField === column.key ? (parishSortDirection === "asc" ? " ↑" : " ↓") : ""}</span></button> : column.label}</th>)}<th>Ações</th></tr></thead><tbody>{rows.map((row) => <tr key={config.rowId(row)}>{config.columns.map((column) => <td key={column.key}>{display(column.key, row[column.key])}</td>)}<td><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={() => edit(row)} type="button">Editar</button><button className="fac-link-danger" disabled={loading} onClick={() => remove(row)} type="button">Eliminar</button></div></td></tr>)}{!loading && rows.length === 0 && <tr><td colSpan={config.columns.length + 1}>{isPagedCatalog && catalogDebouncedSearch ? `Sem resultados para “${catalogDebouncedSearch}”.` : "Sem registos."}</td></tr>}</tbody></table></div>
+    {isPagedTable && <div className="fac-postal-pagination">
+      <span>{recordCountLabel(catalogTotalElements)}</span>
       <div className="fac-postal-page-controls">
-        <button className="fac-ghost-button" disabled={loading || postalPage === 0} onClick={() => setPostalPage((current) => current - 1)} type="button">Anterior</button>
-        <span>Página {postalTotalPages === 0 ? 0 : postalPage + 1} de {postalTotalPages.toLocaleString("pt-PT")}</span>
-        <button className="fac-ghost-button" disabled={loading || postalPage + 1 >= postalTotalPages} onClick={() => setPostalPage((current) => current + 1)} type="button">Seguinte</button>
+        <button className="fac-ghost-button" disabled={loading || catalogPage === 0} onClick={() => isPostal ? setPostalPage((current) => current - 1) : isParish ? setParishPage((current) => current - 1) : setWarehousePage((current) => current - 1)} type="button">Anterior</button>
+        <span>Página {catalogTotalPages === 0 ? 0 : catalogPage + 1} de {catalogTotalPages.toLocaleString("pt-PT")}</span>
+        <button className="fac-ghost-button" disabled={loading || catalogPage + 1 >= catalogTotalPages} onClick={() => isPostal ? setPostalPage((current) => current + 1) : isParish ? setParishPage((current) => current + 1) : setWarehousePage((current) => current + 1)} type="button">Seguinte</button>
       </div>
-      <label><span>Por página</span><select onChange={(event) => { setPostalPage(0); setPostalPageSize(Number(event.target.value)); }} value={postalPageSize}><option value="25">25</option><option value="50">50</option></select></label>
+      <label><span>Por página</span><select onChange={(event) => { const size = Number(event.target.value); if (isPostal) { setPostalPage(0); setPostalPageSize(size); } else if (isParish) { setParishPage(0); setParishPageSize(size); } else { setWarehousePage(0); setWarehousePageSize(size); } }} value={catalogPageSize}><option value="25">25</option><option value="50">50</option></select></label>
     </div>}
   </section>;
 }
@@ -278,6 +379,54 @@ export default function TabelasEspecificasView({ tableKey, onBack }: { tableKey:
 function EditorField({ field: item, value, editing, options, onChange }: { field: Field; value: string | boolean; editing: boolean; options: Option[]; onChange: (value: string | boolean) => void }) {
   if (item.type === "checkbox") return <label className="fac-check-field"><input checked={Boolean(value)} onChange={(event) => onChange(event.target.checked)} type="checkbox"/><span>{item.label}</span></label>;
   return <label className="fac-field"><span>{item.label}{item.optionalOnUpdate && editing ? " (deixar vazio para manter)" : ""}</span>{item.type === "select" ? <select disabled={editing && item.createOnly} onChange={(event) => onChange(event.target.value)} value={String(value ?? "")}><option value="">Selecionar</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : <input disabled={editing && item.createOnly} maxLength={item.maxLength} min={item.type === "number" ? 0 : undefined} onChange={(event) => onChange(event.target.value)} step={item.type === "number" ? "1" : undefined} type={item.type ?? "text"} value={String(value ?? "")}/>}</label>;
+}
+
+function ReferenceLookup({ field, value, onChange }: { field: Field; value: string; onChange: (value: string) => void }) {
+  const postal = field.key === "codPostalId";
+  const endpoint = postal ? "/api/codpostal" : "/api/freguesias";
+  const target = postal ? "codpostal" : "freguesias";
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Option[]>([]);
+  const [open, setOpen] = useState(false);
+  const requestRef = useRef(0);
+  const selectedRef = useRef("");
+
+  useEffect(() => {
+    const requestId = ++requestRef.current;
+    if (!value) {
+      if (selectedRef.current) setQuery("");
+      selectedRef.current = "";
+      return;
+    }
+    selectedRef.current = value;
+    get<Row>(`${endpoint}/${encodeURIComponent(value)}`).then((row) => {
+      if (requestId === requestRef.current) setQuery(postal ? `${row.id} · ${row.nome}` : `${row.codigo} · ${row.nome}`);
+    }).catch(() => { if (requestId === requestRef.current) setQuery(value); });
+  }, [value, endpoint, postal]);
+
+  useEffect(() => {
+    if (!open || !query.trim()) { setResults([]); return; }
+    const requestId = ++requestRef.current;
+    const timeout = window.setTimeout(async () => {
+      const params = new URLSearchParams({ search: query.trim(), page: "0", size: "10", sort: postal ? "id,asc" : "codigo,asc" });
+      try {
+        const page = await get<Page<Row>>(`${endpoint}?${params}`);
+        if (requestId === requestRef.current) setResults(page.content.map((row) => ({
+          value: String(postal ? row.id : row.codigo), label: `${postal ? row.id : row.codigo} · ${row.nome}`
+        })));
+      } catch { if (requestId === requestRef.current) setResults([]); }
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [query, open, endpoint, postal]);
+
+  return <div className="fac-field fac-reference-lookup">
+    <span>{field.label}</span>
+    <div className="fac-reference-lookup-row">
+      <input aria-label={field.label} autoComplete="off" onBlur={() => window.setTimeout(() => setOpen(false), 150)} onChange={(event) => { selectedRef.current = ""; setQuery(event.target.value); onChange(""); setOpen(true); }} onFocus={() => setOpen(true)} placeholder={postal ? "Pesquisar código postal ou localidade..." : "Pesquisar código, freguesia ou concelho..."} type="search" value={query} />
+      <a aria-label={postal ? "Gerir códigos postais" : "Gerir freguesias"} href={`/configuracao/tabelas/${target}`} rel="noopener noreferrer" target="_blank" title={postal ? "Gerir códigos postais" : "Gerir freguesias"}><i aria-hidden="true" className="pi pi-external-link" /></a>
+    </div>
+    {open && results.length > 0 && <div className="fac-reference-lookup-results">{results.map((result) => <button key={result.value} onMouseDown={(event) => event.preventDefault()} onClick={() => { onChange(result.value); setQuery(result.label); setOpen(false); }} type="button">{result.label}</button>)}</div>}
+  </div>;
 }
 
 function display(key: string, value: unknown) { if (key === "taxas" && Array.isArray(value)) return value.map((taxa: Row) => `${taxa.tipoTaxaIvaId}: ${taxa.valor}%`).join(" | "); if (typeof value === "boolean") return key === "inativo" || key === "extinta" ? (value ? "Inativo" : "Ativo") : value ? "Sim" : "Não"; return value == null || value === "" ? "-" : String(value); }

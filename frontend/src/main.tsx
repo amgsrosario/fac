@@ -43,6 +43,7 @@ function Root() {
         <Route element={<App currentUser={session} embeddedContent={<DraftDocumentEditor currentUser={session} embedded onLogout={logout} />} initialView="Documentos" onLogout={logout} />} path="/documentos/novo" />
         <Route element={<App currentUser={session} embeddedContent={<DraftDocumentEditor currentUser={session} embedded onLogout={logout} />} initialView="Documentos" onLogout={logout} />} path="/documentos/:id" />
         <Route element={<App currentUser={session} initialView="Clientes" onLogout={logout} />} path="/clientes" />
+        <Route element={<App currentUser={session} initialView="Configuracao" onLogout={logout} />} path="/configuracao/tabelas/:tableKey" />
         <Route element={<App currentUser={session} initialView="Artigos" onLogout={logout} />} path="/artigos" />
         <Route element={<App currentUser={session} initialView="Tesouraria" onLogout={logout} />} path="/recebimentos" />
         <Route element={<App currentUser={session} initialView="Listagens" onLogout={logout} />} path="/listagens" />

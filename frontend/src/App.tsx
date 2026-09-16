@@ -1580,7 +1580,10 @@ type ConfiguracaoViewProps = {
 };
 
 function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeForm, onSave }: ConfiguracaoViewProps) {
-  const [area, setArea] = useState<"EMPRESA" | "UTILIZADORES" | "PARAMETROS" | "TABELAS">("PARAMETROS");
+  const location = useLocation();
+  const [area, setArea] = useState<"EMPRESA" | "UTILIZADORES" | "PARAMETROS" | "TABELAS">(
+    location.pathname.startsWith("/configuracao/tabelas/") ? "TABELAS" : "PARAMETROS"
+  );
 
   function changeField<K extends keyof ParametrosClienteForm>(field: K, value: ParametrosClienteForm[K]) {
     onChangeForm({ ...form, [field]: value });

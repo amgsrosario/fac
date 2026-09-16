@@ -3267,7 +3267,64 @@ button:disabled {
   grid-template-columns: minmax(260px, 480px) 1fr;
   align-items: center;
   gap: 12px;
-  margin: 0 0 18px;
+  margin: 0 0 12px;
+}
+
+.fac-catalog-maintenance-note {
+  margin: -10px 0 26px;
+}
+
+.fac-reference-lookup {
+  position: relative;
+}
+
+.fac-reference-lookup-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fac-reference-lookup-row input {
+  min-width: 0;
+  flex: 1;
+}
+
+.fac-reference-lookup-row a {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 40px;
+  color: var(--tuuli-border-focus);
+  text-decoration: none;
+}
+
+.fac-reference-lookup-results {
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  right: 40px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--fac-border);
+  background: var(--fac-surface);
+}
+
+.fac-reference-lookup-results button {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--fac-text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.fac-reference-lookup-results button:hover,
+.fac-reference-lookup-results button:focus-visible {
+  background: var(--fac-sidebar);
 }
 
 .fac-postal-toolbar input {
