@@ -161,7 +161,7 @@ export default function TabelasView() {
   }
 
   if (specificActive) return <>
-    <TableDirectory activeKey={activeKey} compact onSelect={selectTable} />
+    {!linkedTable && <TableDirectory activeKey={activeKey} compact onSelect={selectTable} />}
     <TabelasEspecificasView key={specificActive} onBack={() => setSpecificActive(null)} startNew={Boolean(linkedTable && new URLSearchParams(location.search).get("mode") === "new")} tableKey={specificActive} />
   </>;
 

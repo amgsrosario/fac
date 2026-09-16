@@ -423,7 +423,7 @@ function ReferenceLookup({ field, value, onChange }: { field: Field; value: stri
     <span>{field.label}</span>
     <div className="fac-reference-lookup-row">
       <input aria-label={field.label} autoComplete="off" onBlur={() => window.setTimeout(() => setOpen(false), 150)} onChange={(event) => { selectedRef.current = ""; setQuery(event.target.value); onChange(""); setOpen(true); }} onFocus={() => setOpen(true)} placeholder={postal ? "Pesquisar código postal ou localidade..." : "Pesquisar código, freguesia ou concelho..."} type="search" value={query} />
-      <a aria-label={postal ? "Gerir códigos postais" : "Gerir freguesias"} href={`/configuracao/tabelas/${target}`} rel="noopener noreferrer" target="_blank" title={postal ? "Gerir códigos postais" : "Gerir freguesias"}><i aria-hidden="true" className="pi pi-external-link" /></a>
+      <a aria-label={postal ? "Criar código postal" : "Criar freguesia"} href={`/configuracao/tabelas/${target}?mode=new`} rel="noopener noreferrer" target="_blank" title={postal ? "Criar código postal" : "Criar freguesia"}><i aria-hidden="true" className="pi pi-external-link" /></a>
     </div>
     {open && results.length > 0 && <div className="fac-reference-lookup-results">{results.map((result) => <button key={result.value} onMouseDown={(event) => event.preventDefault()} onClick={() => { onChange(result.value); setQuery(result.label); setOpen(false); }} type="button">{result.label}</button>)}</div>}
   </div>;

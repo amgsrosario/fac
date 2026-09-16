@@ -20,7 +20,7 @@ const uiMode = import.meta.env.VITE_FAC_UI_MODE === "commercial" ? "commercial" 
 
 function Root() {
   const [session, setSession] = useState<AuthSession | null>(() => getAuthSession());
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => window.location.pathname === "/");
   const logout = () => {
     clearAuthSession();
     setSession(null);
