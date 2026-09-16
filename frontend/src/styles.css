@@ -3327,6 +3327,13 @@ button:disabled {
   background: var(--fac-sidebar);
 }
 
+.fac-reference-lookup-status {
+  display: block;
+  padding: 9px 12px;
+  color: var(--fac-text-muted);
+  font-size: 13px;
+}
+
 .fac-postal-toolbar input {
   width: 100%;
   min-height: 42px;

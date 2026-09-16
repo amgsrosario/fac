@@ -4,6 +4,7 @@ import { Paginator } from "primereact/paginator";
 import { useLocation } from "react-router-dom";
 import { GlobalSearch } from "../../../GlobalSearch";
 import { apiFetch, AuthSession } from "../../../api";
+import PostalCodeLookup from "../../../PostalCodeLookup";
 import {
   DesktopShell,
   FacButton,
@@ -68,7 +69,6 @@ type CatalogoNumero = {
 };
 
 type ClienteCatalogos = {
-  codPostais: CatalogoString[];
   paises: CatalogoString[];
   moedas: CatalogoString[];
   regimesIva: CatalogoString[];
@@ -136,7 +136,6 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
   const { showToast } = useFacToast();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [catalogos, setCatalogos] = useState<ClienteCatalogos>({
-    codPostais: [],
     paises: [],
     moedas: [],
     regimesIva: [],
@@ -189,9 +188,8 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
     setLoading(true);
     setError(null);
     try {
-      const [clientesPage, codPostaisPage, paisesPage, moedasPage, regimesIvaPage, modosPagamentoPage, prazosPagamentoPage, transportesPage] = await Promise.all([
+      const [clientesPage, paisesPage, moedasPage, regimesIvaPage, modosPagamentoPage, prazosPagamentoPage, transportesPage] = await Promise.all([
         fetchPage<Cliente>("/api/clientes?page=0&size=20&sort=nome,asc"),
-        fetchPage<CatalogoString>("/api/codpostal?size=300&sort=id,asc"),
         fetchPage<CatalogoString>("/api/paises?size=300&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
         fetchPage<CatalogoString>("/api/riva?size=100&sort=nome,asc"),
@@ -204,7 +202,6 @@ export default function CustomersView({ currentUser, onLogout }: { currentUser: 
       setPageSize(clientesPage.size);
       setTotalElements(clientesPage.totalElements);
       setCatalogos({
-        codPostais: codPostaisPage.content,
         paises: paisesPage.content,
         moedas: moedasPage.content,
         regimesIva: regimesIvaPage.content,
@@ -706,7 +703,7 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
       <FormSection title="Morada">
         <FacInputText label="Morada" maxLength={60} onChange={(event) => onChangeForm({ ...form, morada: event.target.value })} required value={form.morada} />
         <FacInputText label="Morada complementar" maxLength={60} onChange={(event) => onChangeForm({ ...form, morada1: event.target.value })} value={form.morada1} />
-        <FacSelect label="Código postal" onChange={(value) => onChangeForm({ ...form, codPostalId: value ?? "" })} options={catalogOptions(catalogos.codPostais)} value={form.codPostalId} />
+        <PostalCodeLookup required value={form.codPostalId} onChange={(value) => onChangeForm({ ...form, codPostalId: value })} />
         <FacInputText label="Localidade" maxLength={50} onChange={(event) => onChangeForm({ ...form, localidade: event.target.value })} value={form.localidade} />
         <FacSelect label="País" onChange={(value) => onChangeForm({ ...form, paisId: value ?? "" })} options={catalogOptions(catalogos.paises)} value={form.paisId} />
       </FormSection>

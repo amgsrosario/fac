@@ -15,6 +15,7 @@ import { GlobalSearch } from "./GlobalSearch";
 import { EntityDetailOverlay } from "./EntityContext";
 import { integer as tuuliInteger, money as tuuliMoney } from "./ui/tuuli/format";
 import { apiFetch, AuthSession, responseError } from "./api";
+import PostalCodeLookup from "./PostalCodeLookup";
 
 type Page<T> = {
   content: T[];
@@ -1408,7 +1409,7 @@ function ClientesView({
             <FormSection title="Morada">
               <Field label="Morada"><input maxLength={60} onChange={(event) => changeField("morada", event.target.value)} value={form.morada} /></Field>
               <Field label="Morada complementar"><input maxLength={60} onChange={(event) => changeField("morada1", event.target.value)} value={form.morada1} /></Field>
-              <Field label="Código postal"><input onChange={(event) => changeField("codPostalId", event.target.value)} value={form.codPostalId} /></Field>
+              <PostalCodeLookup required value={form.codPostalId} onChange={(value) => changeField("codPostalId", value)} />
               <Field label="Localidade"><input maxLength={50} onChange={(event) => changeField("localidade", event.target.value)} value={form.localidade} /></Field>
               <Field label="País">
                 <select onChange={(event) => changeField("paisId", event.target.value)} value={form.paisId}>

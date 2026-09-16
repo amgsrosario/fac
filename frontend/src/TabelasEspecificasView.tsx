@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "./api";
+import PostalCodeLookup from "./PostalCodeLookup";
 
 type Page<T> = { content: T[]; number: number; size: number; totalElements: number; totalPages: number };
 type Row = Record<string, unknown>;
@@ -352,7 +353,9 @@ export default function TabelasEspecificasView({ tableKey, onBack, startNew = fa
   return <section className="fac-panel">
     <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabela</p><h2>{config.label}</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={onBack} type="button">Voltar</button><button className="fac-primary-button" onClick={reset} type="button">Novo registo</button></div></div>
     {feedback && <p className={`fac-editor-message fac-editor-message-${feedback.kind}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.text}</p>}
-    <div className="fac-table-editor"><div className="fac-form-grid">{config.fields.map((item) => tableKey === "armazens" && (item.key === "codPostalId" || item.key === "freguesiaId")
+    <div className="fac-table-editor"><div className="fac-form-grid">{config.fields.map((item) => tableKey === "armazens" && item.key === "codPostalId"
+      ? <PostalCodeLookup key={item.key} required={item.required} value={String(values[item.key] ?? "")} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />
+      : tableKey === "armazens" && item.key === "freguesiaId"
       ? <ReferenceLookup field={item} key={item.key} value={String(values[item.key] ?? "")} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />
       : <EditorField field={item} key={item.key} options={options[item.options ?? ""] ?? []} editing={Boolean(editing)} value={values[item.key]} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />)}</div>
       {isRiva && <div className="fac-rate-grid"><p className="fac-muted">Taxas do regime</p>{rateOptions.map((option) => <label className="fac-field" key={option.value}><span>{option.label}</span><input min="0" onChange={(event) => setRates((current) => ({ ...current, [option.value]: event.target.value }))} step="0.01" type="number" value={rates[option.value] ?? ""}/></label>)}</div>}

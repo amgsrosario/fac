@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "./api";
+import PostalCodeLookup from "./PostalCodeLookup";
 
 type Empresa = {
   id?: number;
@@ -144,7 +145,7 @@ export default function EmpresaAdminView() {
         <Field label="Website"><input disabled={loading} value={empresa.web ?? ""} onChange={(e) => change("web", e.target.value)} /></Field>
         <Field label="Morada"><input disabled={loading} value={empresa.morada ?? ""} onChange={(e) => change("morada", e.target.value)} /></Field>
         <Field label="Morada adicional"><input disabled={loading} value={empresa.morada1 ?? ""} onChange={(e) => change("morada1", e.target.value)} /></Field>
-        <Field label="Código postal"><input disabled={loading} value={empresa.codPostalId ?? ""} onChange={(e) => change("codPostalId", e.target.value)} /></Field>
+        <PostalCodeLookup disabled={loading} value={empresa.codPostalId ?? ""} onChange={(value) => change("codPostalId", value)} />
         <Field label="Localidade"><input disabled={loading} value={empresa.localidade ?? ""} onChange={(e) => change("localidade", e.target.value)} /></Field>
         <Field label="País"><input disabled={loading} value={empresa.paisId ?? ""} onChange={(e) => change("paisId", e.target.value)} /></Field>
         <Field label="Freguesia"><input disabled={loading} value={empresa.freguesiaId ?? ""} onChange={(e) => change("freguesiaId", e.target.value)} /></Field>
