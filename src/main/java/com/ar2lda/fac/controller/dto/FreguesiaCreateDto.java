@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 
 public record FreguesiaCreateDto(
         @NotBlank(message = "Código é obrigatório")
-        @Pattern(regexp = "^\\d{6}$", message = "Código deve ter 6 dígitos")
+        @Pattern(regexp = "^[0-9A-Z]{6}$", message = "Código deve ter 6 caracteres alfanuméricos")
         String codigo,
         @NotBlank(message = "Código de distrito é obrigatório")
         @Pattern(regexp = "^\\d{2}$", message = "Código de distrito deve ter 2 dígitos")
@@ -16,7 +16,7 @@ public record FreguesiaCreateDto(
         @Pattern(regexp = "^\\d{2}$", message = "Código de concelho deve ter 2 dígitos")
         String codigoConcelho,
         @NotBlank(message = "Código de freguesia é obrigatório")
-        @Pattern(regexp = "^\\d{2}$", message = "Código de freguesia deve ter 2 dígitos")
+        @Pattern(regexp = "^[0-9A-Z]{2}$", message = "Código de freguesia deve ter 2 caracteres alfanuméricos")
         String codigoFreguesia,
         @NotBlank(message = "Concelho é obrigatório")
         @Size(max = 50, message = "Concelho deve ter no máximo 50 caracteres")

@@ -14,7 +14,7 @@ class FlywaySchemaIntegrationTests {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void esquemaEstaNaVersaoOnzeEContemSnapshotFiscalBlocoTresMD28EMD29EChavesNaturaisETipoArtigo() {
+    void esquemaEstaNaVersaoDozeEContemEstruturasEReferenciaHistoricaCorrigida() {
         Integer versao = jdbcTemplate.queryForObject(
                 "select max(version::integer) from flyway_schema_history where success",
                 Integer.class
@@ -95,7 +95,17 @@ class FlywaySchemaIntegrationTests {
                   and constraint_type = 'CHECK'
                 """, Integer.class);
 
-        assertThat(versao).isEqualTo(11);
+        Integer freguesiasAguedaCorrigidas = jdbcTemplate.queryForObject("""
+                select count(*) from freguesia
+                where (codigo = '010103' and codigo_distrito = '01' and codigo_concelho = '01'
+                       and codigo_freguesia = '03' and concelho = 'AGUEDA'
+                       and nome = 'AGUADA DE CIMA' and not extinta)
+                   or (codigo = '010121' and codigo_distrito = '01' and codigo_concelho = '01'
+                       and codigo_freguesia = '21' and concelho = 'AGUEDA'
+                       and nome = 'AGUEDA E BORRALHA' and not extinta)
+                """, Integer.class);
+
+        assertThat(versao).isEqualTo(12);
         assertThat(colunasSnapshot).isEqualTo(2);
         assertThat(estruturasBlocoTres).isEqualTo(3);
         assertThat(estruturasMd28).isEqualTo(10);
@@ -105,5 +115,6 @@ class FlywaySchemaIntegrationTests {
         assertThat(transporteNatural).isEqualTo(4);
         assertThat(tipoArtigo).isEqualTo(1);
         assertThat(tipoArtigoConstraint).isEqualTo(1);
+        assertThat(freguesiasAguedaCorrigidas).isEqualTo(2);
     }
 }

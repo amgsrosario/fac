@@ -10,8 +10,13 @@ import com.ar2lda.fac.model.Freguesia;
 import com.ar2lda.fac.repository.FreguesiaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.text.Normalizer;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +32,21 @@ public class FreguesiaService {
         return mapper.toDTO(repository.save(mapper.fromCreateDTO(dto)));
     }
 
-    public Page<FreguesiaDto> list(Pageable pageable) {
-        return repository.findAll(pageable).map(mapper::toDTO);
+    public Page<FreguesiaDto> list(String search, Pageable pageable) {
+        Pageable safePageable = withAllowedSort(pageable);
+        String term = normalizeSearch(search);
+        Page<Freguesia> result = term.isEmpty()
+                ? repository.findAll(safePageable)
+                : repository.findAllBySearch(term, safePageable);
+        return result.map(mapper::toDTO);
+    }
+
+    private String normalizeSearch(String search) {
+        if (search == null) {
+            return "";
+        }
+        return Normalizer.normalize(search.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
     }
 
     public FreguesiaDto getByCodigo(String codigo) {
@@ -49,5 +67,16 @@ public class FreguesiaService {
     private Freguesia findEntityByCodigo(String codigo) {
         return repository.findById(codigo)
                 .orElseThrow(() -> new NotFoundException("Freguesia não encontrada: " + codigo));
+    }
+
+    private Pageable withAllowedSort(Pageable pageable) {
+        Sort safeSort = Sort.by(pageable.getSort().stream()
+                .filter(order -> order.getProperty().equals("codigo")
+                        || order.getProperty().equals("concelho")
+                        || order.getProperty().equals("nome")
+                        || order.getProperty().equals("extinta"))
+                .toList());
+        if (safeSort.isUnsorted()) safeSort = Sort.by(Sort.Direction.ASC, "codigo");
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), safeSort);
     }
 }

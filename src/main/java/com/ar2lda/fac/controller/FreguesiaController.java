@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -35,8 +36,9 @@ public class FreguesiaController implements GenericController {
     }
 
     @GetMapping
-    public Page<FreguesiaDto> list(Pageable pageable) {
-        return service.list(pageable);
+    public Page<FreguesiaDto> list(@RequestParam(name = "search", required = false) String search,
+                                   Pageable pageable) {
+        return service.list(search, pageable);
     }
 
     @GetMapping("/{codigo}")

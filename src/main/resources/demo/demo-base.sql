@@ -13,10 +13,6 @@ insert into pais (id, nome)
 values ('PT', 'Portugal')
 on conflict (id) do update set nome = excluded.nome;
 
-insert into codpostal (id, nome)
-values ('3750-001', 'Agueda')
-on conflict (id) do update set nome = excluded.nome;
-
 insert into moeda (id, nome, vcompra, vvenda, simbolo, ndecimais, ciso)
 values ('EUR', 'Euro', 1, 1, 'EUR', 2, '978')
 on conflict (id) do update set
@@ -97,7 +93,7 @@ values (
     '599000007',
     'Avenida das Oliveiras, 14',
     null,
-    '3750-001',
+    '7000-000',
     'Evora Demo',
     'PT',
     null,
@@ -270,7 +266,7 @@ values (
     'Sede',
     'Rua da Empresa, 1',
     null,
-    '3750-001',
+    '3750-099',
     'Agueda',
     'PT',
     null
@@ -314,7 +310,7 @@ values (
     'Rua do Cliente, 10',
     null,
     'Agueda',
-    '3750-001',
+    '3750-099',
     'PT',
     '509999990',
     'EUR',
@@ -355,9 +351,7 @@ on conflict (id) do update set
     inativo = excluded.inativo,
     observacoes = excluded.observacoes;
 
-insert into pais (id, nome) values ('ES', 'Espanha') on conflict (id) do update set nome=excluded.nome;
-insert into codpostal (id, nome) values ('7000-001','Evora Demo'),('28000','Madrid Demo') on conflict (id) do update set nome=excluded.nome;
-update armazem set nome='Armazem Alentejo Sabores', morada='Avenida das Oliveiras, 14', id_codpostal='7000-001', localidade='Evora Demo' where id='001';
+update armazem set nome='Armazem Alentejo Sabores', morada='Avenida das Oliveiras, 14', id_codpostal='7000-000', localidade='Evora Demo' where id='001';
 
 insert into familia (id, descricao) values (1002,'Azeites'),(1003,'Vinhos'),(1004,'Cabazes e servicos') on conflict (id) do update set descricao=excluded.descricao;
 insert into artigo (codigo,abreviatura,codigo_identificacao,descricao,tipo_artigo,unidade,id_familia,peso,id_iva_compra,id_iva_venda,pvp,inativo,retencao,observacoes) values
@@ -372,12 +366,12 @@ insert into artigo (codigo,abreviatura,codigo_identificacao,descricao,tipo_artig
 on conflict (codigo) do update set descricao=excluded.descricao,tipo_artigo=excluded.tipo_artigo,pvp=excluded.pvp,id_iva_venda=excluded.id_iva_venda,inativo=false;
 
 insert into cliente (id,nome,morada,morada1,localidade,id_codpostal,id_pais,nif,id_moeda,tel,tm,email,email1,id_mpagamento,id_ppagamento,id_riva,tspiva,iban,retencao,id_transporte,inativo,observacoes) values
-(1101,'Mercearia Campo Dourado, Lda.','Rua do Mercado Demo, 8',null,'Evora Demo','7000-001','PT','599100011','EUR',null,null,'compras@campo-dourado.demo',null,'TFB','P30','CON',null,null,false,'001',false,'Cliente empresarial nacional ficticio'),
-(1102,'Sabores de Madrid SL','Calle Olivo Demo, 21',null,'Madrid Demo','28000','ES','ESB9900001','EUR',null,null,'compras@sabores-madrid.demo',null,'TFB','P30','CON',null,null,false,'001',false,'Cliente espanhol ficticio; fiscalidade limitada ao modelo atual'),
-(1103,'Consumidor Final Demo','Praca Central Demo, 3',null,'Evora Demo','7000-001','PT','999999990','EUR',null,null,null,null,'TFB','P30','CON',null,null,false,'001',false,'Consumidor final ficticio'),
-(1104,'Casa dos Sabores do Sul, Lda.','Rua das Adegas Demo, 17',null,'Evora Demo','7000-001','PT','599100029','EUR',null,null,'financeiro@casa-sabores.demo',null,'TFB','P30','CON',null,null,false,'001',false,'Cliente com varios movimentos para extrato'),
-(1105,'Cliente Documento Anulado, Lda.','Travessa do Montado Demo, 5',null,'Evora Demo','7000-001','PT','599100037','EUR',null,null,'arquivo@cliente-anulado.demo',null,'TFB','P30','CON',null,null,false,'001',false,'Cliente reservado ao documento anulado')
-on conflict (id) do update set nome=excluded.nome,morada=excluded.morada,id_codpostal=excluded.id_codpostal,id_pais=excluded.id_pais,nif=excluded.nif,email=excluded.email,inativo=false;
+(1101,'Mercearia Campo Dourado, Lda.','Rua do Mercado Demo, 8',null,'Evora Demo','7000-000','PT','599100011','EUR',null,null,'compras@campo-dourado.demo',null,'TFB','P30','CON',null,null,false,'001',false,'Cliente empresarial nacional ficticio'),
+(1102,'Sabores de Evora, Lda.','Rua do Olival Demo, 21',null,'Evora Demo','7000-000','PT','599100045','EUR',null,null,'compras@sabores-evora.demo',null,'TFB','P30','CON',null,null,false,'001',false,'Cliente empresarial nacional ficticio'),
+(1103,'Consumidor Final Demo','Praca Central Demo, 3',null,'Evora Demo','7000-000','PT','999999990','EUR',null,null,null,null,'TFB','P30','CON',null,null,false,'001',false,'Consumidor final ficticio'),
+(1104,'Casa dos Sabores do Sul, Lda.','Rua das Adegas Demo, 17',null,'Evora Demo','7000-000','PT','599100029','EUR',null,null,'financeiro@casa-sabores.demo',null,'TFB','P30','CON',null,null,false,'001',false,'Cliente com varios movimentos para extrato'),
+(1105,'Cliente Documento Anulado, Lda.','Travessa do Montado Demo, 5',null,'Evora Demo','7000-000','PT','599100037','EUR',null,null,'arquivo@cliente-anulado.demo',null,'TFB','P30','CON',null,null,false,'001',false,'Cliente reservado ao documento anulado')
+on conflict (id) do update set nome=excluded.nome,morada=excluded.morada,localidade=excluded.localidade,id_codpostal=excluded.id_codpostal,id_pais=excluded.id_pais,nif=excluded.nif,email=excluded.email,inativo=false,observacoes=excluded.observacoes;
 
 -- O cenário comercial consolidado usa exatamente os cinco clientes e oito artigos acima.
 delete from cliente where id = '001';

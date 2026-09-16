@@ -71,7 +71,7 @@ public class DemoScenarioService {
             pagar(total.id(), total.valorTotal());
             var anulado = emitir(1105L, "VTRES", 6, "Documento destinado a anulacao");
             documentoService.anular(anulado.id(), new AnularDocumentoRequest("Documento emitido por duplicacao operacional"));
-            emitir(1102L, "TRINT", 2, "Documento para cliente espanhol");
+            emitir(1102L, "TRNAC", 2, "Documento para cliente de Evora");
             var multi = criar(1103L, "AZ075", 1, "Documento multipagina para validacao MD 15");
             for (int i = 0; i < 34; i++) linhaService.create(multi.id(), line(i % 2 == 0 ? "VTRES" : "VBREG", BigDecimal.ONE));
             documentoService.emitir(multi.id(), new DocumentoComercialEmitirDto("admin.demo"));
