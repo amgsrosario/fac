@@ -787,7 +787,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   return (
     <ResponsiveSlot
       desktop={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>}
-      mobile={<MobileShell title="FAC Documentos">{content}</MobileShell>}
+      mobile={<MobileShell title="Documentos">{content}</MobileShell>}
       tablet={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>}
     />
   );

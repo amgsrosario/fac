@@ -40,10 +40,10 @@ export function CommercialSidebar({
   return (
     <div className="fac-commercial-nav">
       <div className="fac-commercial-brand">
-        <span>FAC</span>
+        <span>TUULI</span>
         <div>
-          <strong>FAC</strong>
-          <small>Comercial</small>
+          <strong>TUULI</strong>
+          <small>AIR</small>
         </div>
       </div>
       <nav aria-label="Navegação comercial">

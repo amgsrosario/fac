@@ -502,7 +502,7 @@ export default function DocumentsLabView({ currentUser, onLogout }: { currentUse
     </section>
   );
   const focusedDesktop = <main className="fac-ui fac-doclab-focus-shell"><section className="fac-commercial-content"><div className="fac-commercial-content-inner">{content}</div></section></main>;
-  return <ResponsiveSlot desktop={mode === "operator" ? focusedDesktop : <DesktopShell sidebar={sidebar}>{content}</DesktopShell>} mobile={<MobileShell title="FAC Documentos Lab">{content}</MobileShell>} tablet={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>} />;
+  return <ResponsiveSlot desktop={mode === "operator" ? focusedDesktop : <DesktopShell sidebar={sidebar}>{content}</DesktopShell>} mobile={<MobileShell title="Documentos Lab">{content}</MobileShell>} tablet={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>} />;
 }
 
 function LabHeader({ density, document, metrics, mode, notice, onDensity, onGenerate, onMode, step }: { density: Density; document: DocumentLabState; metrics: JSX.Element; mode: LabMode; notice: string; onDensity: (density: Density) => void; onGenerate: (count: number) => void; onMode: (mode: LabMode) => void; step?: WizardStep }) {

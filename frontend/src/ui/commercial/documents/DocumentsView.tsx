@@ -572,7 +572,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   return (
     <ResponsiveSlot
       desktop={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>}
-      mobile={<MobileShell title="FAC Documentos">{content}</MobileShell>}
+      mobile={<MobileShell title="Documentos">{content}</MobileShell>}
       tablet={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>}
     />
   );

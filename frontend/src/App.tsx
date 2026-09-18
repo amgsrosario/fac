@@ -1595,7 +1595,7 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
       <section className="fac-hero">
         <div>
           <p className="fac-eyebrow">Configuração</p>
-          <h2>Base de funcionamento do FAC</h2>
+          <h2>Configuração de base</h2>
           <p>Dados da empresa, valores sugeridos e tabelas de apoio, separados das operações diárias.</p>
         </div>
         <div className="fac-hero-card">

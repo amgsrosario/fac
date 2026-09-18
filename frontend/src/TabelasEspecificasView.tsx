@@ -311,7 +311,7 @@ export default function TabelasEspecificasView({ tableKey, onBack, startNew = fa
   }
 
   async function remove(row: Row) {
-    if (!window.confirm(`Eliminar ${config.label}: ${config.rowId(row)}?\n\nSe estiver em utilização, o FAC recusará a operação.`)) return;
+    if (!window.confirm(`Eliminar ${config.label}: ${config.rowId(row)}?\n\nSe estiver em utilização, a aplicação recusará a operação.`)) return;
     setLoading(true); setFeedback(null);
     try {
       const response = await apiFetch(config.itemUrl(row), { method: "DELETE" });

@@ -10,7 +10,7 @@ export function DesktopShell({
   return (
     <main className="fac-ui fac-commercial-shell">
       <aside className="fac-commercial-sidebar">
-        {sidebar ?? <strong>FAC</strong>}
+        {sidebar ?? <strong>TUULI AIR</strong>}
       </aside>
       <section className="fac-commercial-content">
         <div className="fac-commercial-content-inner">{children}</div>

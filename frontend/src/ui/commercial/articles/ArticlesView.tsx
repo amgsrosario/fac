@@ -310,7 +310,7 @@ export default function ArticlesView({
   return (
     <ResponsiveSlot
       desktop={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>}
-      mobile={<MobileShell title="FAC Artigos">{content}</MobileShell>}
+      mobile={<MobileShell title="Artigos">{content}</MobileShell>}
       tablet={<DesktopShell sidebar={sidebar}>{content}</DesktopShell>}
     />
   );
@@ -800,10 +800,10 @@ function LegacyCommercialSidebar({
   return (
     <div className="fac-commercial-nav">
       <div className="fac-commercial-brand">
-        <span>FAC</span>
+        <span>TUULI</span>
         <div>
-          <strong>FAC</strong>
-          <small>Comercial</small>
+          <strong>TUULI</strong>
+          <small>AIR</small>
         </div>
       </div>
       <nav aria-label="Navegação comercial">

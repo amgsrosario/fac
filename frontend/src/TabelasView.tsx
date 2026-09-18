@@ -182,7 +182,7 @@ export default function TabelasView() {
       <div aria-labelledby="fac-delete-title" aria-modal="true" className="fac-dialog" role="dialog">
         <p className="fac-eyebrow">Confirmar eliminação</p>
         <h3 id="fac-delete-title">{rowReference(active, pendingDelete)}</h3>
-        <p>O FAC vai verificar se este registo ja foi utilizado em clientes, documentos, na empresa ou noutras tabelas relacionadas.</p>
+        <p>A aplicação vai verificar se este registo ja foi utilizado em clientes, documentos, na empresa ou noutras tabelas relacionadas.</p>
         <p><strong>Se estiver em utilização, não será eliminado e permanecerá nesta tabela.</strong></p>
         <div className="fac-dialog-actions">
           <button className="fac-ghost-button" onClick={() => setPendingDelete(null)} type="button">Cancelar</button>

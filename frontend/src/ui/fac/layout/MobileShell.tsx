@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 
 export function MobileShell({
   children,
-  title = "FAC"
+  title = "TUULI AIR"
 }: {
   children: ReactNode;
   title?: string;

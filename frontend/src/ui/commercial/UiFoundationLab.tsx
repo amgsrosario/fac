@@ -33,7 +33,7 @@ export function UiFoundationLabContent() {
     if (demoMode === "dialog") setDialogVisible(true);
     if (demoMode === "confirm") setConfirmVisible(true);
     if (demoMode === "toast") {
-      window.setTimeout(() => showToast({ detail: "Mensagem FAC demonstrativa.", severity: "success", summary: "Sucesso" }), 350);
+      window.setTimeout(() => showToast({ detail: "Mensagem demonstrativa.", severity: "success", summary: "Sucesso" }), 350);
     }
   }, [demoMode, showToast]);
 
@@ -42,10 +42,10 @@ export function UiFoundationLabContent() {
       <header className="fac-lab-hero">
         <div>
           <div className="fac-lab-brand">
-            <span className="fac-lab-brand-mark">FAC</span>
-            <span>FAC Commercial Foundation</span>
+            <span className="fac-lab-brand-mark">TUULI</span>
+            <span>TUULI AIR</span>
           </div>
-          <p className="fac-eyebrow">FAC UI Lab</p>
+          <p className="fac-eyebrow">TUULI UI Lab</p>
           <h1>Fundacao comercial isolada</h1>
           <p className="fac-muted">Modo tecnico sem dados reais, endpoints ou migracao dos ecras existentes.</p>
         </div>
@@ -67,7 +67,7 @@ export function UiFoundationLabContent() {
             <FacButton label="Confirmacao" onClick={() => setConfirmVisible(true)} variant="ghost" />
             <FacButton
               label="Mostrar toast"
-              onClick={() => showToast({ detail: "Mensagem FAC demonstrativa.", severity: "success", summary: "Sucesso" })}
+              onClick={() => showToast({ detail: "Mensagem demonstrativa.", severity: "success", summary: "Sucesso" })}
               variant="primary"
             />
           </div>
@@ -102,7 +102,7 @@ export function UiFoundationLabContent() {
             <FacStatusBadge tone="info">Informativo</FacStatusBadge>
           </div>
           <div className="fac-lab-states">
-            <FacMessage title="Informacao">A fundacao comercial usa tokens FAC e comportamento PrimeReact.</FacMessage>
+            <FacMessage title="Informacao">A fundação comercial usa os tokens da interface e comportamento PrimeReact.</FacMessage>
             <FacMessage title="Sucesso" tone="success">Operacao demonstrativa concluida.</FacMessage>
             <FacMessage title="Aviso" tone="warning">Validacao visual ainda limitada ao laboratorio.</FacMessage>
             <FacMessage title="Erro" tone="error">Exemplo de mensagem de erro sem dados reais.</FacMessage>
@@ -158,11 +158,11 @@ export function UiFoundationLabContent() {
 
       <FacDialog
         footer={<FacButton label="Fechar" onClick={() => setDialogVisible(false)} variant="primary" />}
-        header="Dialogo FAC"
+        header="Diálogo TUULI"
         onHide={() => setDialogVisible(false)}
         visible={dialogVisible}
       >
-        <p>Dialogo PrimeReact encapsulado pela camada visual FAC.</p>
+        <p>Diálogo PrimeReact encapsulado pela camada visual da aplicação.</p>
       </FacDialog>
 
       <FacDialog
@@ -172,7 +172,7 @@ export function UiFoundationLabContent() {
             <FacButton label="Confirmar" onClick={() => setConfirmVisible(false)} variant="primary" />
           </div>
         }
-        header="Confirmacao FAC"
+        header="Confirmação TUULI"
         onHide={() => setConfirmVisible(false)}
         visible={confirmVisible}
       >
@@ -183,9 +183,9 @@ export function UiFoundationLabContent() {
 
   return (
     <ResponsiveSlot
-      desktop={<DesktopShell sidebar={<><strong>FAC</strong><p className="fac-muted">Commercial lab</p></>}>{lab}</DesktopShell>}
-      mobile={<MobileShell title="FAC Lab">{lab}</MobileShell>}
-      tablet={<DesktopShell sidebar={<><strong>FAC</strong><p className="fac-muted">Tablet lab</p></>}>{lab}</DesktopShell>}
+      desktop={<DesktopShell sidebar={<><strong>TUULI AIR</strong><p className="fac-muted">Commercial lab</p></>}>{lab}</DesktopShell>}
+      mobile={<MobileShell title="TUULI AIR Lab">{lab}</MobileShell>}
+      tablet={<DesktopShell sidebar={<><strong>TUULI AIR</strong><p className="fac-muted">Tablet lab</p></>}>{lab}</DesktopShell>}
     />
   );
 }
