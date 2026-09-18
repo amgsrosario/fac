@@ -16,6 +16,7 @@ import { EntityDetailOverlay } from "./EntityContext";
 import { integer as tuuliInteger, money as tuuliMoney } from "./ui/tuuli/format";
 import { apiFetch, AuthSession, responseError } from "./api";
 import PostalCodeLookup from "./PostalCodeLookup";
+import { useFacToast } from "./ui/fac";
 
 type Page<T> = {
   content: T[];
@@ -125,6 +126,7 @@ type ClienteColumn = {
 };
 
 const CLIENT_COLUMNS_STORAGE = "fac.clientes.colunas";
+const recentDeniedLocations = new Set<string>();
 const DEFAULT_CLIENT_COLUMNS: ClienteColumn[] = [
   { key: "id", label: "Código", visible: true },
   { key: "nome", label: "Nome", visible: true },
@@ -298,6 +300,7 @@ type AppProps = {
 function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout }: AppProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useFacToast();
   const adminAccessRef = useRef<HTMLDivElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileDrawerRef = useRef<HTMLElement>(null);
@@ -591,6 +594,18 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 
   const requestedShellView = embeddedContent ? initialView : activeView;
   const shellView = canShowMenuItem({ label: requestedShellView, hint: "" }) ? requestedShellView : "Dashboard";
+  const accessDenied = requestedShellView !== shellView;
+
+  useEffect(() => {
+    if (!accessDenied || location.pathname === "/") return;
+
+    const deniedLocation = `${location.pathname}${location.search}`;
+    if (recentDeniedLocations.has(deniedLocation)) return;
+    recentDeniedLocations.add(deniedLocation);
+    window.setTimeout(() => recentDeniedLocations.delete(deniedLocation), 1000);
+    navigate("/", { replace: true });
+    showToast({ life: 4000, severity: "warn", summary: "Acesso não autorizado." });
+  }, [accessDenied, location.pathname, location.search, navigate, showToast]);
 
   async function refreshActiveView() {
     if (shellView === "Clientes") {
@@ -1583,7 +1598,13 @@ type ConfiguracaoViewProps = {
 function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeForm, onSave }: ConfiguracaoViewProps) {
   const location = useLocation();
   const [area, setArea] = useState<"EMPRESA" | "UTILIZADORES" | "PARAMETROS" | "TABELAS">(
-    location.pathname.startsWith("/configuracao/tabelas/") ? "TABELAS" : "PARAMETROS"
+    location.pathname.startsWith("/configuracao/tabelas/")
+      ? "TABELAS"
+      : location.pathname === "/configuracao/utilizadores"
+        ? "UTILIZADORES"
+        : location.pathname === "/configuracao/empresa"
+          ? "EMPRESA"
+          : "PARAMETROS"
   );
 
   function changeField<K extends keyof ParametrosClienteForm>(field: K, value: ParametrosClienteForm[K]) {
