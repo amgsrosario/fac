@@ -147,7 +147,6 @@ export default function PendentesView() {
   const [selectedFinanceiroId, setSelectedFinanceiroId] = useState<number | null>(null);
   const [selectedFinanceiro, setSelectedFinanceiro] = useState<DocumentoFinanceiro | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [createdReceipt, setCreatedReceipt] = useState<DocumentoFinanceiro | null>(null);
   const pendenteColumns = useConfiguredColumns("fac.pendentes.colunas", PENDENTE_COLUMNS);
   const financeiroColumns = useConfiguredColumns("fac.recebimentos.colunas", FINANCEIRO_COLUMNS);
 
@@ -414,7 +413,18 @@ export default function PendentesView() {
   function handleAllocationInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>, pendente: Pendente) {
     if (event.key !== "Enter") return;
     event.preventDefault();
-    toggleAllocation(pendente);
+    changeAllocation(pendente, event.currentTarget.value);
+    const currentInput = event.currentTarget;
+    requestAnimationFrame(() => {
+      const inputs = receiptEditorRef.current
+        ? Array.from(receiptEditorRef.current.querySelectorAll<HTMLInputElement>(".tuuli-allocation-input:not([disabled])"))
+        : [];
+      const nextInput = inputs[inputs.indexOf(currentInput) + 1];
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
+    });
   }
 
   async function issueReceipt(postAction: ReceiptPostAction = "DETAIL") {
@@ -450,7 +460,6 @@ export default function PendentesView() {
         }))
       });
       closeReceipt();
-      setCreatedReceipt(created);
       setNotice(`${financialReference(created)} emitido por ${formatMoney(created.valorPagamentoLiquido)} ${created.moedaId}. Pendentes atualizados.`);
       await loadTesouraria();
       await openFinancialDetail(created);
@@ -570,7 +579,7 @@ export default function PendentesView() {
   const pendenteById = useMemo(() => new Map(pendentes.map((pendente) => [pendente.id, pendente])), [pendentes]);
 
   return <>
-    {notice && <div className="fac-editor-message"><p>{notice}</p>{createdReceipt && <div className="fac-inline-actions"><button className="fac-gold-button" disabled={loading} onClick={() => openFinancialPdf(createdReceipt)} type="button">Abrir PDF</button><button className="fac-soft-button" disabled={loading} onClick={() => openFinancialDetail(createdReceipt)} type="button">Ver detalhe</button></div>}</div>}
+    {notice && <div className="fac-editor-message" role="status"><p>{notice}</p></div>}
     {message && <p className="fac-message">{message}</p>}
 
     {!receiptOpen && !selectedFinanceiroId && <div className="tuuli-v2-page tuuli-receipts-page">
