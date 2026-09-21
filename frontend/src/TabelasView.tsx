@@ -165,8 +165,8 @@ export default function TabelasView() {
     <TabelasEspecificasView key={specificActive} onBack={() => setSpecificActive(null)} startNew={Boolean(linkedTable && new URLSearchParams(location.search).get("mode") === "new")} tableKey={specificActive} />
   </>;
 
-  if (!active) return <section className="fac-panel">
-    <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabelas</p><h2>Escolha uma área de configuração</h2></div><span className="fac-muted">Catálogos agrupados por função</span></div>
+  if (!active) return <section className="fac-config-directory">
+    <div className="fac-config-directory-header"><p className="fac-eyebrow">Tabelas</p><h2>Catálogos de apoio</h2></div>
     <TableDirectory activeKey={activeKey} onSelect={selectTable} />
   </section>;
 
@@ -196,7 +196,7 @@ export default function TabelasView() {
 
 function TableDirectory({ activeKey, compact = false, onSelect }: { activeKey: string | null; compact?: boolean; onSelect: (item: TableEntry) => void }) {
   return (
-    <div className={compact ? "fac-table-groups fac-table-groups-compact" : "fac-table-groups"}>
+    <div aria-label={compact ? "Mudar tabela" : "Diretório de tabelas"} className={compact ? "fac-table-groups fac-table-groups-compact" : "fac-table-groups"}>
       {tableCategories.map((category) => (
         <article className="fac-table-group" key={category.key}>
           <p className="fac-eyebrow">{category.title}</p>

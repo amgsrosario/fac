@@ -3155,51 +3155,86 @@ button:disabled {
   margin-top: 16px;
 }
 
-.fac-config-nav {
+.fac-config-layout {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 22px;
+}
+
+.fac-config-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+  border-bottom: 1px solid var(--fac-border);
 }
 
 .fac-config-nav button {
-  display: grid;
-  gap: 4px;
-  padding: 16px 18px;
-  border: 1px solid var(--fac-border);
-  border-radius: 16px;
-  color: var(--fac-text);
-  background: var(--fac-surface);
-  text-align: left;
+  position: relative;
+  min-height: 42px;
+  border: 0;
+  padding: 0 0 11px;
+  color: var(--fac-text-muted);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
   cursor: pointer;
 }
 
-.fac-config-nav button span,
 .fac-table-group small {
   color: var(--fac-text-muted);
 }
 
 .fac-config-nav button.active {
-  border-color: #d9cba7;
-  background: var(--fac-document-soft);
+  color: var(--fac-text);
+  font-weight: 500;
+}
+
+.fac-config-nav button.active::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--tuuli-blue);
+  content: "";
+}
+
+.fac-config-directory {
+  display: grid;
+  gap: 16px;
+}
+
+.fac-config-directory-header h2 {
+  margin: 4px 0 0;
+}
+
+.fac-config-layout > .fac-panel {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .fac-table-groups {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 28px;
+  margin: 0;
 }
 
 .fac-table-groups-compact {
-  align-items: start;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: -4px 0 0;
+  padding: 0 0 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--fac-border);
 }
 
 .fac-table-group {
-  padding: 16px;
-  border: 1px solid var(--fac-border);
-  border-radius: 14px;
-  background: var(--fac-sidebar);
+  min-width: 0;
 }
 
 .fac-table-group > small {
@@ -3210,7 +3245,7 @@ button:disabled {
 
 .fac-table-group-links {
   display: grid;
-  gap: 7px;
+  gap: 0;
 }
 
 .fac-table-group > div:not(.fac-table-group-links) {
@@ -3229,11 +3264,13 @@ button:disabled {
   width: 100%;
   display: grid;
   gap: 3px;
-  padding: 10px 11px;
+  padding: 10px 0;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 0;
   color: var(--fac-text);
   background: transparent;
+  font-weight: 400;
+  text-decoration: none;
   text-align: left;
   cursor: pointer;
 }
@@ -3245,9 +3282,41 @@ button:disabled {
 .fac-table-link.active,
 .fac-table-link:hover,
 .fac-table-link:focus-visible {
-  border-color: var(--fac-border);
-  background: var(--fac-surface);
+  border-color: transparent;
+  background: transparent;
   outline: none;
+}
+
+.fac-table-link.active span {
+  color: var(--tuuli-blue);
+  font-weight: 500;
+}
+
+.fac-table-groups-compact .fac-table-group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.fac-table-groups-compact .fac-table-group > .fac-eyebrow {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.fac-table-groups-compact .fac-table-group-links {
+  display: flex;
+  gap: 4px;
+}
+
+.fac-table-groups-compact .fac-table-link {
+  width: auto;
+  padding: 5px 7px;
+  white-space: nowrap;
+}
+
+.fac-table-groups-compact .fac-table-link small {
+  display: none;
 }
 
 .fac-table-link:hover span {
@@ -3478,11 +3547,26 @@ button:disabled {
 }
 
 @media (max-width: 800px) {
-  .fac-config-nav,
   .fac-table-groups,
   .fac-column-list,
   .fac-report-source-grid {
     grid-template-columns: 1fr;
+  }
+
+  .fac-config-layout {
+    gap: 18px;
+  }
+
+  .fac-config-nav {
+    gap: 20px;
+  }
+
+  .fac-config-nav button {
+    flex: 0 0 auto;
+  }
+
+  .fac-table-groups:not(.fac-table-groups-compact) {
+    gap: 20px;
   }
 
   .fac-column-editor-header {
@@ -4250,6 +4334,58 @@ button:disabled {
 .fac-documents-v2 .fac-documents-search > input::placeholder {
   color: var(--tuuli-placeholder);
   opacity: 1;
+}
+
+@media (max-width: 1100px) {
+  .fac-config-layout .fac-panel-header {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .fac-config-layout .fac-inline-actions,
+  .fac-config-layout .fac-form-footer {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .fac-config-layout .fac-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .fac-config-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .fac-config-nav button {
+    width: 100%;
+    font-size: 12px;
+  }
+
+  .fac-config-layout .fac-panel-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .fac-config-layout .fac-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-table-groups:not(.fac-table-groups-compact) .fac-table-group > small,
+  .fac-table-groups:not(.fac-table-groups-compact) .fac-table-link small,
+  .fac-table-groups-compact .fac-table-group > .fac-eyebrow {
+    display: none;
+  }
+
+  .fac-table-groups-compact,
+  .fac-table-groups-compact .fac-table-group {
+    gap: 4px;
+  }
 }
 
 .fac-documents-v2 .fac-documents-search > input:focus {

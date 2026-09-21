@@ -1612,25 +1612,12 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
   }
 
   return (
-    <>
-      <section className="fac-hero">
-        <div>
-          <p className="fac-eyebrow">Configuração</p>
-          <h2>Configuração de base</h2>
-          <p>Dados da empresa, valores sugeridos e tabelas de apoio, separados das operações diárias.</p>
-        </div>
-        <div className="fac-hero-card">
-          <span>Area atual</span>
-          <strong>{area === "EMPRESA" ? "Empresa" : area === "UTILIZADORES" ? "Utilizadores" : area === "PARAMETROS" ? "Parâmetros" : "Tabelas"}</strong>
-          <small>Configuração simples, explícita e centralizada</small>
-        </div>
-      </section>
-
+    <div className="fac-config-layout">
       <nav aria-label="Áreas de configuração" className="fac-config-nav">
-        <button className={area === "EMPRESA" ? "active" : ""} onClick={() => setArea("EMPRESA")} type="button"><strong>Empresa</strong><span>Identificação e dados fiscais</span></button>
-        <button className={area === "UTILIZADORES" ? "active" : ""} onClick={() => setArea("UTILIZADORES")} type="button"><strong>Utilizadores</strong><span>Perfis, estado e palavra-passe</span></button>
-        <button className={area === "PARAMETROS" ? "active" : ""} onClick={() => setArea("PARAMETROS")} type="button"><strong>Parâmetros</strong><span>Valores sugeridos da aplicação</span></button>
-        <button className={area === "TABELAS" ? "active" : ""} onClick={() => setArea("TABELAS")} type="button"><strong>Tabelas</strong><span>Catálogos de apoio</span></button>
+        <button aria-current={area === "EMPRESA" ? "page" : undefined} className={area === "EMPRESA" ? "active" : ""} onClick={() => setArea("EMPRESA")} type="button">Empresa</button>
+        <button aria-current={area === "UTILIZADORES" ? "page" : undefined} className={area === "UTILIZADORES" ? "active" : ""} onClick={() => setArea("UTILIZADORES")} type="button">Utilizadores</button>
+        <button aria-current={area === "PARAMETROS" ? "page" : undefined} className={area === "PARAMETROS" ? "active" : ""} onClick={() => setArea("PARAMETROS")} type="button">Parâmetros</button>
+        <button aria-current={area === "TABELAS" ? "page" : undefined} className={area === "TABELAS" ? "active" : ""} onClick={() => setArea("TABELAS")} type="button">Tabelas</button>
       </nav>
 
       {area === "EMPRESA" && <EmpresaAdminView />}
@@ -1707,7 +1694,7 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
       </>}
 
       {area === "TABELAS" && <TabelasView />}
-    </>
+    </div>
   );
 }
 
@@ -1815,7 +1802,7 @@ function viewTitle(view: ViewKey) {
   if (view === "Listagens") return "Listagens e análise";
   if (view === "ImportExport") return "Importação e exportação de dados mestres";
   if (view === "Auditoria") return "Auditoria fiscal";
-  if (view === "Configuracao") return "Configuração simples e explícita";
+  if (view === "Configuracao") return "Configuração";
   return "Visão geral";
 }
 
