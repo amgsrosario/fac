@@ -1578,13 +1578,12 @@ button:disabled {
 .fac-table {
   width: 100%;
   border-collapse: collapse;
-  overflow: hidden;
 }
 
 .fac-table th,
 .fac-table td {
   border-bottom: 1px solid var(--fac-border);
-  padding: 13px 10px;
+  padding: 9px 10px;
   text-align: left;
 }
 
@@ -2317,6 +2316,8 @@ button:disabled {
 
 .fac-table-scroll {
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
 }
 
 .fac-table-scroll .fac-table {
@@ -2326,8 +2327,41 @@ button:disabled {
 .fac-table th {
   color: var(--fac-text-muted);
   font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: var(--tuuli-tracking-technical);
+}
+
+.fac-table-wrapper {
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+}
+
+.fac-admin-users-table {
+  min-width: 720px;
+}
+
+.fac-audit-table {
+  min-width: 920px;
+}
+
+.fac-config-table {
+  min-width: 560px;
+}
+
+.fac-admin-users-table .fac-actions,
+.fac-config-table .fac-inline-actions {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.fac-admin-users-table th:last-child,
+.fac-admin-users-table td:last-child,
+.fac-config-table th:last-child,
+.fac-config-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
 }
 
 .fac-status {
@@ -3533,16 +3567,26 @@ button:disabled {
   }
 
   .fac-postal-pagination {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr auto;
     gap: 8px;
   }
 
   .fac-postal-page-controls {
+    grid-column: 1 / -1;
+    grid-row: 1;
     justify-content: space-between;
   }
 
   .fac-postal-pagination > label {
-    justify-self: start;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .fac-postal-pagination > span {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
   }
 }
 

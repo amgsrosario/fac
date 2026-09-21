@@ -77,6 +77,8 @@ export function FacDataTable<T extends object>({
 }: FacDataTableProps<T>) {
   const baseFilters = useMemo(() => createFilters(columns, globalFilterFields), [columns, globalFilterFields]);
   const [filters, setFilters] = useState<DataTableFilterMeta>(baseFilters);
+  const recordCount = totalRecords ?? value.length;
+  const showPaginator = paginator && recordCount > rows;
 
   useEffect(() => {
     setFilters((current) => ({
@@ -106,7 +108,7 @@ export function FacDataTable<T extends object>({
       }}
       onSelectionChange={(event: DataTableSelectionSingleChangeEvent<T[]>) => onSelectionChange?.((event.value as T | null) ?? null)}
       onSort={onLazySort}
-      paginator={paginator}
+      paginator={showPaginator}
       paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
       currentPageReportTemplate="{first}-{last} de {totalRecords}"
       removableSort
@@ -122,7 +124,7 @@ export function FacDataTable<T extends object>({
       {columns.map((column) => (
         <Column
           body={column.body}
-          className={column.className}
+          className={[column.className, column.dataType === "numeric" ? "fac-data-table-numeric" : ""].filter(Boolean).join(" ")}
           dataType={column.dataType}
           field={column.field}
           filter={column.filter}

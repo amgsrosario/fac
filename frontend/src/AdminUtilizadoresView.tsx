@@ -158,7 +158,7 @@ export default function AdminUtilizadoresView() {
 
       <div className="fac-grid-two">
         <div className="fac-table-wrapper">
-          <table className="fac-table">
+          <table className="fac-table fac-admin-users-table">
             <thead>
               <tr><th>Código</th><th>Nome</th><th>Perfil</th><th>Estado</th><th>Ações</th></tr>
             </thead>

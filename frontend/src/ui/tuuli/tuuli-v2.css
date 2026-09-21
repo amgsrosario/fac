@@ -276,6 +276,8 @@
 
 .tuuli-table-surface {
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
   border: 0;
   border-top: 1px solid var(--tuuli-screen-line);
   border-radius: 0;
@@ -1665,6 +1667,7 @@
   padding: 12px 0 0;
   color: var(--tuuli-text-muted);
   font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .tuuli-pagination [data-pc-name="paginator"] {
@@ -2128,8 +2131,22 @@
   }
 
   .tuuli-pagination {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: stretch;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 1fr;
+  }
+
+  .tuuli-pagination [data-pc-name="paginator"] {
+    justify-content: flex-start;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .tuuli-pagination [data-pc-name="paginator"] .p-paginator-first,
+  .tuuli-pagination [data-pc-name="paginator"] .p-paginator-last {
+    display: none;
   }
 
   .tuuli-entity-metrics {
@@ -2146,6 +2163,11 @@
   .tuuli-grammar-entity-list .tuuli-toolbar > .fac-inline-actions > button {
     width: auto;
   }
+}
+
+.fac-scroll-hint-more {
+  box-shadow: inset -14px 0 12px -12px color-mix(in srgb, var(--tuuli-text-primary) 22%, transparent);
+  transition: box-shadow 140ms ease;
 }
 
 /* Listagens: selector plus operational listing. */

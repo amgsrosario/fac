@@ -46,10 +46,10 @@ export default function AuditoriaView() {
       </div>
       <div className="fac-form-footer"><span className="fac-muted">{eventos.length} de eventos encontrados</span><button className="fac-primary-button" disabled={loading} onClick={carregar}>{loading ? "A consultar..." : "Aplicar filtros"}</button></div>
       {erro && <p className="fac-message">{erro}</p>}
-      <table className="fac-table"><thead><tr><th>Data</th><th>Evento</th><th>Referência</th><th>Utilizador</th><th>Resultado</th><th>Descrição</th></tr></thead><tbody>
+      <div className="fac-table-wrapper"><table className="fac-table fac-audit-table"><thead><tr><th>Data</th><th>Evento</th><th>Referência</th><th>Utilizador</th><th>Resultado</th><th>Descrição</th></tr></thead><tbody>
         {eventos.map(e => <tr key={e.id}><td>{new Date(e.dataHora).toLocaleString("pt-PT")}</td><td>{e.tipoEvento}</td><td>{e.referencia ?? `${e.entidadeTipo} ${e.entidadeId}`}</td><td>{e.utilizadorNome ?? "SISTEMA"}<br/><small>{e.utilizadorPerfil ?? "-"}</small></td><td><span className={`fac-status ${e.resultado === "FALHA" ? "danger" : ""}`}>{e.resultado}</span></td><td>{e.descricao}</td></tr>)}
         {!loading && eventos.length === 0 && <tr><td colSpan={6}>Sem eventos para os filtros selecionados.</td></tr>}
-      </tbody></table>
+      </tbody></table></div>
     </section>
   </>;
 }

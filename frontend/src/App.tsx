@@ -297,6 +297,67 @@ type AppProps = {
   onLogout: () => void;
 };
 
+const HORIZONTAL_SCROLL_SELECTOR = [
+  ".p-datatable-wrapper",
+  ".fac-table-wrapper",
+  ".fac-table-scroll",
+  ".tuuli-table-surface"
+].join(",");
+
+function HorizontalScrollHints({ routeKey }: { routeKey: string }) {
+  useEffect(() => {
+    const cleanups = new Map<HTMLElement, () => void>();
+
+    const bind = () => {
+      cleanups.forEach((cleanup, element) => {
+        if (element.isConnected) return;
+        cleanup();
+        cleanups.delete(element);
+      });
+
+      document.querySelectorAll<HTMLElement>(HORIZONTAL_SCROLL_SELECTOR).forEach((element) => {
+        if (cleanups.has(element)) return;
+
+        const update = () => {
+          const maxScroll = element.scrollWidth - element.clientWidth;
+          const hasMore = maxScroll > 2 && element.scrollLeft < maxScroll - 16;
+          element.classList.toggle("fac-scroll-hint-more", hasMore);
+        };
+        const resizeObserver = new ResizeObserver(update);
+        const contentObserver = new MutationObserver(update);
+        resizeObserver.observe(element);
+        if (element.firstElementChild instanceof HTMLElement) resizeObserver.observe(element.firstElementChild);
+        contentObserver.observe(element, { childList: true, characterData: true, subtree: true });
+        element.addEventListener("scroll", update, { passive: true });
+        update();
+
+        cleanups.set(element, () => {
+          resizeObserver.disconnect();
+          contentObserver.disconnect();
+          element.removeEventListener("scroll", update);
+          element.classList.remove("fac-scroll-hint-more");
+        });
+      });
+    };
+
+    const frame = window.requestAnimationFrame(bind);
+    const timers = [100, 500, 1000].map((delay) => window.setTimeout(bind, delay));
+    const mutationObserver = new MutationObserver(bind);
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("resize", bind);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      timers.forEach(window.clearTimeout);
+      mutationObserver.disconnect();
+      window.removeEventListener("resize", bind);
+      cleanups.forEach((cleanup) => cleanup());
+    };
+  }, [routeKey]);
+
+  return null;
+}
+
 function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout }: AppProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -809,6 +870,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 
   return (
     <main className={`fac-shell${shellView === "Documentos" ? " fac-shell-documents-v2" : ""}${shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" || shellView === "Listagens" ? " fac-shell-tuuli-v2" : ""}`}>
+      <HorizontalScrollHints routeKey={`${location.pathname}:${shellView}`} />
       <header className="fac-mobile-topbar">
         <button
           aria-controls="fac-mobile-drawer"
