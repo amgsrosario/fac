@@ -1,7 +1,6 @@
 import { KeyboardEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { InputNumber, InputNumberValueChangeEvent } from "primereact/inputnumber";
 import { useNavigate, useParams } from "react-router-dom";
-import { GlobalSearch } from "../../../GlobalSearch";
 import { apiFetch, AuthSession } from "../../../api";
 import { DesktopShell, EntityLookupColumn, EntityLookupDialog, EntityLookupField, EntityLookupSearchField, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useFacToast } from "../../fac";
 import { CommercialSidebar } from "../shared";
@@ -709,20 +708,28 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     <section className="fac-draft-editor" onKeyDown={handleKeyDown}>
       <header className="fac-draft-appbar">
         <div className="fac-draft-title">
-          <strong>Documentos</strong>
-          <span>{documento ? documentRef(documento) : "Novo rascunho"}</span>
-          {documento && <span className={`fac-draft-status ${documento.estado.toLowerCase()}`}>{estadoLabel(documento.estado)}</span>}
+          <span className="fac-draft-eyebrow">Documentos comerciais</span>
+          <div className="fac-draft-heading">
+            <h1>{documento ? documentRef(documento) : "Novo documento"}</h1>
+            {documento && <span className={`fac-draft-status ${documento.estado.toLowerCase()}`}>{estadoLabel(documento.estado)}</span>}
+          </div>
+          <div className="fac-draft-context">
+            {header.clienteId && <span>{catalogos.clientes.find((cliente) => String(cliente.id) === header.clienteId)?.nome ?? "Cliente selecionado"}</span>}
+            {dirty && <span className="fac-draft-dirty">Alterações por guardar</span>}
+          </div>
         </div>
         <div className="fac-draft-actions">
-          <GlobalSearch className="fac-commercial-global-search" />
-          {dirty && <span className="fac-draft-dirty">Alteracoes por guardar</span>}
-          <FacButton icon="pi pi-arrow-left" label="Voltar à listagem" onClick={goBack} variant="ghost" />
-          {documento && canCreate && <FacButton disabled={saving || loading} icon="pi pi-plus" label="Novo documento" onClick={newDocument} variant="secondary" />}
-          {documento && documento.estado === "RASCUNHO" && canDeleteDraft && <FacButton disabled={saving || loading} icon="pi pi-trash" label="Eliminar rascunho" onClick={() => setDeleteOpen(true)} variant="destructive" />}
-          {canOpenPdfCurrent && <FacButton disabled={saving} icon="pi pi-file-pdf" label="PDF" onClick={openPdf} variant="secondary" />}
-          {canVoidCurrent && <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={() => setAnularOpen(true)} variant="destructive" />}
-          {showSaveDraftAction && <FacButton disabled={saving || loading || !canEditCurrent} icon="pi pi-save" label={saveDraftLabel} onClick={() => void saveDraft()} variant="secondary" />}
-          {showEmitAction && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label="Emitir documento" onClick={emitDocument} variant="primary" />}
+          <div className="fac-draft-navigation">
+            <FacButton icon="pi pi-arrow-left" label="Voltar à listagem" onClick={goBack} variant="ghost" />
+          </div>
+          <div className="fac-draft-document-actions">
+            {documento && canCreate && <FacButton disabled={saving || loading} icon="pi pi-plus" label="Novo documento" onClick={newDocument} variant="secondary" />}
+            {documento && documento.estado === "RASCUNHO" && canDeleteDraft && <FacButton disabled={saving || loading} icon="pi pi-trash" label="Eliminar rascunho" onClick={() => setDeleteOpen(true)} variant="destructive" />}
+            {canOpenPdfCurrent && <FacButton disabled={saving} icon="pi pi-file-pdf" label="PDF" onClick={openPdf} variant="secondary" />}
+            {canVoidCurrent && <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={() => setAnularOpen(true)} variant="destructive" />}
+            {showSaveDraftAction && <FacButton disabled={saving || loading || !canEditCurrent} icon="pi pi-save" label={saveDraftLabel} onClick={() => void saveDraft()} variant="secondary" />}
+            {showEmitAction && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label="Emitir documento" onClick={emitDocument} variant="primary" />}
+          </div>
         </div>
       </header>
       {error && <FacMessage tone="error" title="Erro">{error}</FacMessage>}
@@ -813,34 +820,38 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
   return (
     <section className="fac-draft-header-phase">
       <div className="fac-draft-form-grid">
-        <FacSelect disabled={readOnly} label="Tipo" onChange={(value) => onUpdate({ tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={header.tipoDocumentoId} />
-        <FacSelect disabled={readOnly} label="Série" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
-        <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
-        <EntityLookupField<Cliente>
-          clearable={false}
-          columns={clienteLookupColumns}
-          dataKey="id"
-          disabled={readOnly}
-          emptyMessage="Sem clientes para selecionar."
-          label="Cliente"
-          loading={catalogos.clientes.length === 0}
-          optionLabel={clienteLookupLabel}
-          optionMeta={(cliente) => [cliente.nif && `NIF ${cliente.nif}`, cliente.localidade].filter(Boolean).join(" · ")}
-          onSelect={(cliente) => onChooseClient(String(cliente.id))}
-          placeholder="Selecionar cliente"
-          preferenceKey="fac.lookup.draft.clientes"
-          searchFields={clienteSearchFields}
-          selection={selectedCliente}
-          title="Selecionar cliente"
-          value={catalogos.clientes.filter((cliente) => !cliente.inativo)}
-          valueLabel={selectedCliente ? clienteLookupLabel(selectedCliente) : undefined}
-        />
-        <FacSelect disabled={readOnly} label="Armazém de carga" onChange={(value) => onUpdate({ armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={header.armazemCargaId} />
-        <FacSelect disabled={readOnly} label="Moeda" onChange={(value) => onUpdate({ moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={header.moedaId} />
-        <FacSelect disabled={readOnly} label="Regime IVA" onChange={(value) => onUpdate({ rivaId: value ?? "" })} options={catalogos.regimesIva.map((regime) => ({ label: regime.nome, value: regime.id }))} value={header.rivaId} />
-        <FacSelect disabled={readOnly} label="Modo de pagamento" onChange={(value) => onUpdate({ mPagamentoId: value ?? "" })} options={catalogos.modosPagamento.map((modo) => ({ label: modo.nome, value: String(modo.id) }))} value={header.mPagamentoId} />
-        <FacSelect disabled={readOnly} label="Prazo" onChange={(value) => onUpdate({ pPagamentoId: value ?? "" })} options={catalogos.prazosPagamento.map((prazo) => ({ label: prazo.nome, value: prazo.id }))} value={header.pPagamentoId} />
-        <FacSelect disabled={readOnly} label="Transporte" onChange={(value) => onUpdate({ transporteId: value ?? "" })} options={catalogos.transportes.map((transporte) => ({ label: transporte.nome, value: String(transporte.id) }))} value={header.transporteId} />
+        <div className="fac-draft-form-primary">
+          <FacSelect disabled={readOnly} label="Tipo" onChange={(value) => onUpdate({ tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={header.tipoDocumentoId} />
+          <FacSelect disabled={readOnly} label="Série" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
+          <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
+          <EntityLookupField<Cliente>
+            clearable={false}
+            columns={clienteLookupColumns}
+            dataKey="id"
+            disabled={readOnly}
+            emptyMessage="Sem clientes para selecionar."
+            label="Cliente"
+            loading={catalogos.clientes.length === 0}
+            optionLabel={clienteLookupLabel}
+            optionMeta={(cliente) => [cliente.nif && `NIF ${cliente.nif}`, cliente.localidade].filter(Boolean).join(" · ")}
+            onSelect={(cliente) => onChooseClient(String(cliente.id))}
+            placeholder="Selecionar cliente"
+            preferenceKey="fac.lookup.draft.clientes"
+            searchFields={clienteSearchFields}
+            selection={selectedCliente}
+            title="Selecionar cliente"
+            value={catalogos.clientes.filter((cliente) => !cliente.inativo)}
+            valueLabel={selectedCliente ? clienteLookupLabel(selectedCliente) : undefined}
+          />
+        </div>
+        <div className="fac-draft-form-conditions">
+          <FacSelect disabled={readOnly} label="Armazém de carga" onChange={(value) => onUpdate({ armazemCargaId: value ?? "" })} options={catalogos.armazens.map((armazem) => ({ label: `${armazem.id} - ${armazem.nome}`, value: armazem.id }))} value={header.armazemCargaId} />
+          <FacSelect disabled={readOnly} label="Moeda" onChange={(value) => onUpdate({ moedaId: value ?? "" })} options={catalogos.moedas.map((moeda) => ({ label: moeda.nome, value: moeda.id }))} value={header.moedaId} />
+          <FacSelect disabled={readOnly} label="Regime IVA" onChange={(value) => onUpdate({ rivaId: value ?? "" })} options={catalogos.regimesIva.map((regime) => ({ label: regime.nome, value: regime.id }))} value={header.rivaId} />
+          <FacSelect disabled={readOnly} label="Modo de pagamento" onChange={(value) => onUpdate({ mPagamentoId: value ?? "" })} options={catalogos.modosPagamento.map((modo) => ({ label: modo.nome, value: String(modo.id) }))} value={header.mPagamentoId} />
+          <FacSelect disabled={readOnly} label="Prazo" onChange={(value) => onUpdate({ pPagamentoId: value ?? "" })} options={catalogos.prazosPagamento.map((prazo) => ({ label: prazo.nome, value: prazo.id }))} value={header.pPagamentoId} />
+          <FacSelect disabled={readOnly} label="Transporte" onChange={(value) => onUpdate({ transporteId: value ?? "" })} options={catalogos.transportes.map((transporte) => ({ label: transporte.nome, value: String(transporte.id) }))} value={header.transporteId} />
+        </div>
         <label className="fac-draft-textarea"><span>Observações</span><textarea disabled={readOnly} maxLength={250} onChange={(event) => onUpdate({ observacoes: event.target.value })} value={header.observacoes} /></label>
       </div>
       <div className="fac-draft-phase-actions">
@@ -976,6 +987,7 @@ function DraftLines(props: {
   return (
     <section className="fac-draft-lines-phase">
       <div className="fac-draft-lines-toolbar">
+        <div><strong>Linhas do documento</strong><span>{props.lines.length === 1 ? "1 linha" : `${props.lines.length} linhas`}</span></div>
         <FacButton disabled={props.readOnly} icon="pi pi-plus" label="Adicionar linha" onClick={() => props.onAddBlankLine("TEXTO", props.selectedLineUid ?? undefined)} variant="secondary" />
       </div>
       <div className="fac-draft-lines-wrap" onKeyDownCapture={handleGridKeyDown} ref={gridRef}>
@@ -1030,7 +1042,7 @@ function DraftLines(props: {
         <div><span>Subtotal</span><strong>{money(props.totals.subtotal)}</strong></div>
         <div><span>Descontos</span><strong>{money(props.totals.discount)}</strong></div>
         <div><span>IVA</span><strong>{money(props.totals.vat)}</strong></div>
-        <div className="fac-draft-total-final"><span>Total provisorio</span><strong>{money(props.totals.total)}</strong></div>
+        <div className="fac-draft-total-final"><span>Total</span><strong>{money(props.totals.total)}</strong></div>
       </aside>
     </section>
   );
@@ -1089,7 +1101,7 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
   const inactiveCell = <span className="fac-draft-empty-cell" aria-hidden="true"></span>;
   return (
     <tr className={`${selected ? "selected" : ""} ${isTextLine ? "text-line" : ""} ${isTextLine && !line.descricao.trim() ? "text-line-empty" : ""} ${active ? "active-line" : ""}`} onFocus={() => !active && props.onSelectLine(line.uid)} onMouseDown={() => !active && props.onSelectLine(line.uid)}>
-      <td className="fac-draft-line-number">{active ? "+" : index + 1}</td>
+      <td className="fac-draft-line-number">{active ? <span className="fac-draft-new-line-marker">Nova</span> : index + 1}</td>
       <td className={`fac-draft-article-cell ${isTextLine ? "fac-draft-article-empty" : ""}`} {...cellProps(0, hasArticle || active)}>
         {isTextLine ? (
           <span className="fac-draft-text-separator-mark" title={line.descricao.trim() ? "Linha de texto" : "Linha de texto vazia"}></span>
