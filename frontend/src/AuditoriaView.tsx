@@ -34,22 +34,42 @@ export default function AuditoriaView() {
 
   useEffect(() => { carregar(); }, []);
 
-  return <>
-    <section className="fac-hero"><div><p className="fac-eyebrow">Auditoria fiscal</p><h2>Operações críticas e tentativas negadas</h2><p>Eventos persistentes, apenas para consulta administrativa.</p></div></section>
-    <section className="fac-panel fac-section-panel">
-      <div className="fac-form-grid">
-        <label className="fac-field"><span>Evento</span><select value={tipo} onChange={e => setTipo(e.target.value)}><option value="">Todos</option><option>DOCUMENTO_EMITIDO</option><option>DOCUMENTO_ANULADO</option><option>TENTATIVA_ANULACAO_NEGADA</option><option>LOGIN_SUCESSO</option><option>LOGIN_FALHADO</option></select></label>
-        <label className="fac-field"><span>Referência</span><input value={referencia} onChange={e => setReferencia(e.target.value)} /></label>
-        <label className="fac-field"><span>Utilizador</span><input value={utilizador} onChange={e => setUtilizador(e.target.value)} /></label>
-        <label className="fac-field"><span>Desde</span><input type="date" value={desde} onChange={e => setDesde(e.target.value)} /></label>
-        <label className="fac-field"><span>Até</span><input type="date" value={ate} onChange={e => setAte(e.target.value)} /></label>
+  return <section className="fac-audit-v2">
+    <header className="fac-audit-header">
+      <p className="fac-eyebrow">Auditoria fiscal</p>
+      <h2>Operações críticas e tentativas negadas</h2>
+      <p>Eventos persistentes, apenas para consulta administrativa.</p>
+    </header>
+
+    <div className="fac-audit-filters">
+      <label className="fac-field fac-audit-event-filter"><span>Evento</span><select value={tipo} onChange={e => setTipo(e.target.value)}><option value="">Todos</option><option>DOCUMENTO_EMITIDO</option><option>DOCUMENTO_ANULADO</option><option>TENTATIVA_ANULACAO_NEGADA</option><option>LOGIN_SUCESSO</option><option>LOGIN_FALHADO</option></select></label>
+      <label className="fac-field"><span>Referência</span><input value={referencia} onChange={e => setReferencia(e.target.value)} /></label>
+      <label className="fac-field"><span>Utilizador</span><input value={utilizador} onChange={e => setUtilizador(e.target.value)} /></label>
+      <label className="fac-field"><span>Desde</span><input type="date" value={desde} onChange={e => setDesde(e.target.value)} /></label>
+      <label className="fac-field"><span>Até</span><input type="date" value={ate} onChange={e => setAte(e.target.value)} /></label>
+      <button className="fac-primary-button fac-audit-apply" disabled={loading} onClick={carregar}>{loading ? "A consultar..." : "Aplicar filtros"}</button>
+    </div>
+
+    {erro && <p className="fac-message">{erro}</p>}
+
+    <div className="fac-audit-results">
+      <p aria-live="polite" className="fac-audit-count">{eventos.length} de eventos encontrados</p>
+      <div className="fac-table-wrapper">
+        <table className="fac-table fac-audit-table">
+          <thead><tr><th>Data</th><th>Evento</th><th>Referência</th><th>Utilizador</th><th>Resultado</th><th>Descrição</th></tr></thead>
+          <tbody>
+            {eventos.map(e => <tr key={e.id}>
+              <td className="fac-audit-date">{new Date(e.dataHora).toLocaleString("pt-PT")}</td>
+              <td><span className="fac-audit-event">{e.tipoEvento}</span></td>
+              <td><span className="fac-audit-reference">{e.referencia ?? `${e.entidadeTipo} ${e.entidadeId}`}</span></td>
+              <td><span className="fac-audit-user">{e.utilizadorNome ?? "SISTEMA"}</span><small>{e.utilizadorPerfil ?? "-"}</small></td>
+              <td><span className={`fac-status fac-audit-result${e.resultado === "FALHA" ? " danger" : ""}`}>{e.resultado}</span></td>
+              <td className="fac-audit-description">{e.descricao}</td>
+            </tr>)}
+            {!loading && eventos.length === 0 && <tr><td colSpan={6}>Sem eventos para os filtros selecionados.</td></tr>}
+          </tbody>
+        </table>
       </div>
-      <div className="fac-form-footer"><span className="fac-muted">{eventos.length} de eventos encontrados</span><button className="fac-primary-button" disabled={loading} onClick={carregar}>{loading ? "A consultar..." : "Aplicar filtros"}</button></div>
-      {erro && <p className="fac-message">{erro}</p>}
-      <div className="fac-table-wrapper"><table className="fac-table fac-audit-table"><thead><tr><th>Data</th><th>Evento</th><th>Referência</th><th>Utilizador</th><th>Resultado</th><th>Descrição</th></tr></thead><tbody>
-        {eventos.map(e => <tr key={e.id}><td>{new Date(e.dataHora).toLocaleString("pt-PT")}</td><td>{e.tipoEvento}</td><td>{e.referencia ?? `${e.entidadeTipo} ${e.entidadeId}`}</td><td>{e.utilizadorNome ?? "SISTEMA"}<br/><small>{e.utilizadorPerfil ?? "-"}</small></td><td><span className={`fac-status ${e.resultado === "FALHA" ? "danger" : ""}`}>{e.resultado}</span></td><td>{e.descricao}</td></tr>)}
-        {!loading && eventos.length === 0 && <tr><td colSpan={6}>Sem eventos para os filtros selecionados.</td></tr>}
-      </tbody></table></div>
-    </section>
-  </>;
+    </div>
+  </section>;
 }

@@ -2646,6 +2646,220 @@ button:disabled {
   min-width: 920px;
 }
 
+.fac-audit-v2 {
+  min-width: 0;
+}
+
+.fac-audit-header {
+  margin-bottom: 24px;
+}
+
+.fac-audit-header h2 {
+  margin: 0;
+  color: var(--fac-petrol);
+  font-size: clamp(1.55rem, 2.2vw, 2rem);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.fac-audit-header > p:last-child {
+  max-width: 720px;
+  margin: 8px 0 0;
+  color: var(--fac-text-muted);
+  line-height: 1.55;
+}
+
+.fac-audit-filters {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.25fr) minmax(145px, 1fr) minmax(145px, 1fr) minmax(132px, .75fr) minmax(132px, .75fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--fac-border);
+}
+
+.fac-audit-filters .fac-field {
+  min-width: 0;
+}
+
+.fac-audit-filters .fac-field > span {
+  color: var(--fac-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.fac-audit-filters input,
+.fac-audit-filters select {
+  min-height: 42px;
+}
+
+.fac-audit-apply {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.fac-audit-results {
+  min-width: 0;
+}
+
+.fac-audit-count {
+  margin: 0 0 8px;
+  color: var(--fac-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fac-audit-v2 .fac-table-wrapper {
+  scrollbar-color: color-mix(in srgb, var(--tuuli-text-secondary) 32%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+.fac-audit-v2 .fac-table-wrapper::-webkit-scrollbar {
+  height: 7px;
+}
+
+.fac-audit-v2 .fac-table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fac-audit-v2 .fac-table-wrapper::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tuuli-text-secondary) 32%, transparent);
+  background-clip: padding-box;
+}
+
+.fac-audit-table th,
+.fac-audit-table td {
+  vertical-align: top;
+}
+
+.fac-audit-table th:first-child,
+.fac-audit-table td:first-child {
+  width: 150px;
+  min-width: 150px;
+}
+
+.fac-audit-table th:nth-child(2),
+.fac-audit-table td:nth-child(2) {
+  width: 205px;
+  min-width: 205px;
+}
+
+.fac-audit-table th:nth-child(3),
+.fac-audit-table td:nth-child(3) {
+  width: 150px;
+  min-width: 150px;
+}
+
+.fac-audit-table th:nth-child(4),
+.fac-audit-table td:nth-child(4) {
+  width: 145px;
+  min-width: 145px;
+}
+
+.fac-audit-table th:nth-child(5),
+.fac-audit-table td:nth-child(5) {
+  width: 90px;
+  min-width: 90px;
+}
+
+.fac-audit-table small {
+  display: block;
+  margin-top: 3px;
+  color: var(--fac-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.fac-audit-date {
+  color: var(--tuuli-text-secondary);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fac-audit-event,
+.fac-audit-user {
+  color: var(--fac-text);
+  font-weight: 500;
+}
+
+.fac-audit-event {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.fac-audit-reference,
+.fac-audit-description {
+  color: var(--tuuli-text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.fac-audit-result.fac-status {
+  padding: 4px 8px;
+  font-weight: 500;
+}
+
+@media (max-width: 1180px) {
+  .fac-audit-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fac-audit-apply {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 700px) {
+  .fac-audit-header {
+    margin-bottom: 20px;
+  }
+
+  .fac-audit-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-bottom: 18px;
+  }
+
+  .fac-audit-event-filter,
+  .fac-audit-apply {
+    grid-column: 1 / -1;
+  }
+
+  .fac-audit-apply {
+    width: 100%;
+  }
+
+  .fac-audit-table {
+    min-width: 820px;
+  }
+
+  .fac-audit-table th:first-child,
+  .fac-audit-table td:first-child {
+    width: 138px;
+    min-width: 138px;
+  }
+
+  .fac-audit-table th:nth-child(2),
+  .fac-audit-table td:nth-child(2) {
+    width: 180px;
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fac-audit-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-audit-event-filter,
+  .fac-audit-apply {
+    grid-column: auto;
+  }
+}
+
 .fac-config-table {
   min-width: 560px;
 }
