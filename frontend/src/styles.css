@@ -143,6 +143,11 @@ textarea {
   min-width: 0;
 }
 
+.fac-topbar > div:first-child {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
 .fac-mobile-topbar,
 .fac-mobile-drawer,
 .fac-mobile-drawer-overlay {
@@ -250,11 +255,18 @@ textarea {
 
 .fac-topbar-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: 1 1 620px;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: 9px;
   min-width: 0;
+}
+
+.fac-topbar-actions .fac-global-search {
+  flex: 1 1 320px;
+  min-width: 200px;
+  max-width: 420px;
 }
 
 .fac-topbar-actions > input {
@@ -505,6 +517,11 @@ button:disabled {
   max-width: 240px;
   padding: 0 4px 0 0;
   text-align: right;
+}
+
+.fac-topbar-actions > .fac-current-user {
+  flex: 0 1 190px;
+  min-width: 0;
 }
 
 .fac-current-user span,
@@ -4281,10 +4298,15 @@ button:disabled {
     border-top: 1px solid var(--fac-border);
   }
 
-  .fac-topbar,
   .fac-panel-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .fac-topbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
   }
 
   .fac-topbar-actions,
@@ -4401,8 +4423,10 @@ button:disabled {
 
   .fac-topbar-actions {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    width: 100%;
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
   }
 
   .fac-topbar-actions > input {
@@ -4410,10 +4434,16 @@ button:disabled {
   }
 
   .fac-topbar-actions .fac-global-search {
-    flex: 1 0 100%;
+    flex: 1 1 260px;
+    min-width: 140px;
     max-width: none;
-    order: 10;
-    width: 100%;
+    order: 0;
+    width: auto;
+  }
+
+  .fac-topbar-actions > .fac-current-user {
+    flex-basis: 150px;
+    max-width: 150px;
   }
 }
 
