@@ -2339,7 +2339,307 @@ button:disabled {
 }
 
 .fac-admin-users-table {
-  min-width: 720px;
+  min-width: 680px;
+}
+
+.fac-users-v2 {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.fac-users-v2 .fac-table-wrapper {
+  scrollbar-color: color-mix(in srgb, var(--tuuli-text-secondary) 32%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+.fac-users-v2 .fac-table-wrapper::-webkit-scrollbar {
+  height: 7px;
+}
+
+.fac-users-v2 .fac-table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fac-users-v2 .fac-table-wrapper::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tuuli-text-secondary) 32%, transparent);
+  background-clip: padding-box;
+}
+
+.fac-users-v2 .fac-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--tuuli-text-secondary) 48%, transparent);
+}
+
+.fac-users-header {
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.fac-users-header h2 {
+  font-size: clamp(1.55rem, 2.2vw, 2rem);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.fac-users-count {
+  color: var(--fac-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fac-users-filters {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(150px, 190px) minmax(150px, 190px);
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 22px;
+}
+
+.fac-users-filter {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fac-users-filter > span {
+  color: var(--fac-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.fac-users-filter input,
+.fac-users-filter select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid var(--fac-border);
+  border-radius: var(--tuuli-radius-md);
+  padding: 9px 12px;
+  color: var(--fac-text);
+  background-color: var(--fac-surface);
+  font: inherit;
+  outline: none;
+}
+
+.fac-users-filter select {
+  appearance: none;
+  padding-right: 34px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--fac-text-muted) 50%),
+    linear-gradient(135deg, var(--fac-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% - 2px),
+    calc(100% - 11px) calc(50% - 2px);
+  background-repeat: no-repeat;
+  background-size: 5px 5px, 5px 5px;
+}
+
+.fac-users-filter input:focus,
+.fac-users-filter select:focus {
+  border-color: var(--tuuli-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tuuli-blue) 10%, transparent);
+}
+
+.fac-users-workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
+  gap: 30px;
+  align-items: start;
+}
+
+.fac-admin-users-table th,
+.fac-admin-users-table td {
+  vertical-align: middle;
+}
+
+.fac-admin-users-table th:first-child,
+.fac-admin-users-table td:first-child {
+  min-width: 180px;
+}
+
+.fac-admin-users-table th:nth-child(2),
+.fac-admin-users-table td:nth-child(2) {
+  min-width: 185px;
+}
+
+.fac-admin-users-table small {
+  display: block;
+  margin-top: 3px;
+  color: var(--fac-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.fac-users-identity,
+.fac-users-name {
+  color: var(--fac-text);
+  font-weight: 500;
+}
+
+.fac-users-role {
+  color: var(--tuuli-text-secondary);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.fac-admin-users-table .fac-status {
+  padding: 4px 8px;
+  font-weight: 500;
+}
+
+.fac-admin-users-table th:last-child,
+.fac-admin-users-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--fac-surface);
+}
+
+.fac-admin-users-table tbody tr:hover td:last-child {
+  background: var(--fac-client-soft);
+}
+
+.fac-users-actions {
+  display: table-cell;
+  white-space: nowrap;
+}
+
+.fac-users-actions .fac-users-action + .fac-users-action {
+  margin-left: 4px;
+}
+
+.fac-users-action {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--tuuli-radius-sm);
+  padding: 0;
+  color: var(--tuuli-text-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.fac-users-action:hover,
+.fac-users-action:focus-visible {
+  border-color: var(--fac-border);
+  color: var(--tuuli-blue-hover);
+  background: var(--tuuli-surface-hover);
+  outline: none;
+}
+
+.fac-editor-card.fac-users-editor {
+  border: 0;
+  border-left: 1px solid var(--fac-border);
+  border-radius: 0;
+  padding: 0 0 0 24px;
+  background: transparent;
+}
+
+.fac-users-editor .fac-panel-header {
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.fac-users-editor .fac-field + .fac-field {
+  margin-top: 12px;
+}
+
+.fac-users-editor .fac-field > span,
+.fac-users-password .fac-field > span {
+  font-weight: 500;
+}
+
+.fac-panel.fac-users-password {
+  margin-top: 26px;
+  border-width: 1px 0 0;
+  border-radius: 0;
+  padding: 22px 0 0;
+  background: transparent;
+}
+
+@media (max-width: 800px) {
+  .fac-users-workspace {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+
+  .fac-editor-card.fac-users-editor {
+    border-top: 1px solid var(--fac-border);
+    border-left: 0;
+    padding: 22px 0 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .fac-users-header {
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .fac-users-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fac-users-filter-search {
+    grid-column: 1 / -1;
+  }
+
+  .fac-admin-users-table {
+    min-width: 600px;
+  }
+
+  .fac-admin-users-table th:first-child,
+  .fac-admin-users-table td:first-child {
+    width: 150px;
+    min-width: 150px;
+  }
+
+  .fac-admin-users-table th:nth-child(2),
+  .fac-admin-users-table td:nth-child(2) {
+    width: 150px;
+    min-width: 150px;
+  }
+
+  .fac-admin-users-table th:nth-child(3),
+  .fac-admin-users-table td:nth-child(3) {
+    width: 88px;
+    min-width: 88px;
+  }
+
+  .fac-admin-users-table th:nth-child(4),
+  .fac-admin-users-table td:nth-child(4) {
+    width: 72px;
+    min-width: 72px;
+  }
+
+  .fac-users-v2 .fac-admin-users-table td.fac-users-actions,
+  .fac-users-v2 .fac-admin-users-table th.fac-users-actions {
+    width: 108px;
+    min-width: 108px;
+    padding-right: 4px;
+    padding-left: 4px;
+  }
+
+  .fac-users-actions .fac-users-action + .fac-users-action {
+    margin-left: 2px;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .fac-users-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .fac-users-filter-search {
+    grid-column: auto;
+  }
 }
 
 .fac-audit-table {
@@ -2362,6 +2662,13 @@ button:disabled {
 .fac-config-table td:last-child {
   width: 1%;
   white-space: nowrap;
+}
+
+.fac-admin-users-table th.fac-users-actions,
+.fac-admin-users-table td.fac-users-actions {
+  display: table-cell;
+  width: 116px;
+  min-width: 116px;
 }
 
 .fac-status {

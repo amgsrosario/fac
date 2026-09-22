@@ -130,33 +130,42 @@ export default function AdminUtilizadoresView() {
   }
 
   return (
-    <section className="fac-panel">
-      <div className="fac-panel-header">
+    <section className="fac-panel fac-users-v2">
+      <div className="fac-panel-header fac-users-header">
         <div>
           <p className="fac-eyebrow">Administração</p>
           <h2>Utilizadores e perfis funcionais</h2>
         </div>
-        <span className="fac-muted">{loading ? "A carregar..." : `${total} utilizador(es)`}</span>
+        <span className="fac-users-count">{loading ? "A carregar..." : `${total} ${total === 1 ? "utilizador" : "utilizadores"}`}</span>
       </div>
 
       {message && <p className="fac-editor-message">{message}</p>}
 
-      <div className="fac-toolbar">
-        <input placeholder="Pesquisar por codigo, nome ou email" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <select value={papel} onChange={(e) => setPapel(e.target.value as "" | Papel)}>
-          <option value="">Todos os perfis</option>
-          <option value="ADMINISTRADOR">Administrador</option>
-          <option value="OPERADOR">Operador</option>
-          <option value="CONSULTA">Consulta</option>
-        </select>
-        <select value={ativo} onChange={(e) => setAtivo(e.target.value as "" | "true" | "false")}>
-          <option value="">Todos os estados</option>
-          <option value="true">Ativos</option>
-          <option value="false">Inativos</option>
-        </select>
+      <div className="fac-toolbar fac-users-filters">
+        <label className="fac-users-filter fac-users-filter-search">
+          <span>Pesquisar</span>
+          <input placeholder="Código, nome ou email" type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
+        <label className="fac-users-filter">
+          <span>Perfil</span>
+          <select value={papel} onChange={(e) => setPapel(e.target.value as "" | Papel)}>
+            <option value="">Todos os perfis</option>
+            <option value="ADMINISTRADOR">Administrador</option>
+            <option value="OPERADOR">Operador</option>
+            <option value="CONSULTA">Consulta</option>
+          </select>
+        </label>
+        <label className="fac-users-filter">
+          <span>Estado</span>
+          <select value={ativo} onChange={(e) => setAtivo(e.target.value as "" | "true" | "false")}>
+            <option value="">Todos os estados</option>
+            <option value="true">Ativos</option>
+            <option value="false">Inativos</option>
+          </select>
+        </label>
       </div>
 
-      <div className="fac-grid-two">
+      <div className="fac-grid-two fac-users-workspace">
         <div className="fac-table-wrapper">
           <table className="fac-table fac-admin-users-table">
             <thead>
@@ -165,14 +174,14 @@ export default function AdminUtilizadoresView() {
             <tbody>
               {users.map((user) => (
                 <tr key={user.codigo}>
-                  <td>{user.codigo}<br /><small>{user.email}</small></td>
-                  <td>{user.nome}<br /><small>{user.ultimoLoginEm ? `Ultimo login ${formatDate(user.ultimoLoginEm)}` : "Sem login registado"}</small></td>
-                  <td>{labelPapel(user.papel)}</td>
-                  <td><span className="fac-status">{user.ativo ? "Ativo" : "Inativo"}</span></td>
-                  <td className="fac-actions">
-                    <button onClick={() => select(user)} type="button">Editar</button>
-                    <button onClick={() => toggle(user)} type="button">{user.ativo ? "Desativar" : "Ativar"}</button>
-                    <button onClick={() => { setResetTarget(user); setNewPassword(""); }} type="button">Password</button>
+                  <td><strong className="fac-users-identity">{user.codigo}</strong><small>{user.email}</small></td>
+                  <td><span className="fac-users-name">{user.nome}</span><small>{user.ultimoLoginEm ? `Último login ${formatDate(user.ultimoLoginEm)}` : "Sem login registado"}</small></td>
+                  <td><span className="fac-users-role">{labelPapel(user.papel)}</span></td>
+                  <td><span className={`fac-status${user.ativo ? "" : " danger"}`}>{user.ativo ? "Ativo" : "Inativo"}</span></td>
+                  <td className="fac-actions fac-users-actions">
+                    <button aria-label={`Editar ${user.codigo}`} className="fac-users-action" onClick={() => select(user)} title="Editar utilizador" type="button"><i aria-hidden="true" className="pi pi-pencil" /></button>
+                    <button aria-label={`${user.ativo ? "Desativar" : "Ativar"} ${user.codigo}`} className="fac-users-action" onClick={() => toggle(user)} title={user.ativo ? "Desativar utilizador" : "Ativar utilizador"} type="button"><i aria-hidden="true" className={`pi ${user.ativo ? "pi-ban" : "pi-check"}`} /></button>
+                    <button aria-label={`Redefinir password de ${user.codigo}`} className="fac-users-action" onClick={() => { setResetTarget(user); setNewPassword(""); }} title="Redefinir password" type="button"><i aria-hidden="true" className="pi pi-key" /></button>
                   </td>
                 </tr>
               ))}
@@ -181,19 +190,19 @@ export default function AdminUtilizadoresView() {
           </table>
         </div>
 
-        <div className="fac-editor-card">
+        <div className="fac-editor-card fac-users-editor">
           <div className="fac-panel-header">
             <div><p className="fac-eyebrow">{editing ? "Editar" : "Novo"}</p><h3>{editing ? editing.codigo : "Utilizador"}</h3></div>
-            {editing && <button onClick={clear} type="button">Novo</button>}
+            {editing && <button className="fac-ghost-button" onClick={clear} type="button">Novo</button>}
           </div>
           <Field label="Código">
-            <input disabled={Boolean(editing)} value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value })} />
+            <input autoComplete="off" disabled={Boolean(editing)} value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value })} />
           </Field>
           <Field label="Nome">
-            <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
+            <input autoComplete="off" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
           </Field>
           <Field label="Email">
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <input autoComplete="off" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           </Field>
           <Field label="Perfil">
             <select value={form.papel} onChange={(e) => setForm({ ...form, papel: e.target.value as Papel })}>
@@ -203,7 +212,7 @@ export default function AdminUtilizadoresView() {
             </select>
           </Field>
           {!editing && <Field label="Password inicial">
-            <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            <input autoComplete="new-password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
           </Field>}
           {!editing && <small className="fac-muted">8 a 72 caracteres, com maiúscula, minúscula, número e símbolo. Não pode conter o código do utilizador.</small>}
           <div className="fac-form-footer">
@@ -213,14 +222,14 @@ export default function AdminUtilizadoresView() {
         </div>
       </div>
 
-      {resetTarget && <div className="fac-panel fac-compact-panel">
+      {resetTarget && <div className="fac-panel fac-compact-panel fac-users-password">
         <div className="fac-panel-header">
           <div><p className="fac-eyebrow">Reset de password</p><h3>{resetTarget.codigo}</h3></div>
-          <button onClick={() => setResetTarget(null)} type="button">Fechar</button>
+          <button className="fac-ghost-button" onClick={() => setResetTarget(null)} type="button">Fechar</button>
         </div>
         <div className="fac-form-grid">
           <Field label="Nova password">
-            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            <input autoComplete="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
           </Field>
         </div>
         <div className="fac-form-footer">
