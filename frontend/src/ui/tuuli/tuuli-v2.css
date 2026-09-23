@@ -1970,6 +1970,214 @@
   font-weight: var(--tuuli-weight-normal);
 }
 
+.fac-client-editor-v2 {
+  max-width: 1120px;
+  margin: 0 auto;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.fac-client-editor-header {
+  align-items: flex-end;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--tuuli-screen-line);
+  padding-bottom: 18px;
+}
+
+.fac-client-editor-header h2 {
+  margin: 3px 0 0;
+  font-size: 24px;
+  font-weight: var(--tuuli-weight-title);
+}
+
+.fac-client-editor-reference {
+  display: block;
+  margin-top: 5px;
+  color: var(--tuuli-text-secondary);
+  font-size: 13px;
+}
+
+.fac-client-editor-v2 .fac-client-form-sections {
+  gap: 30px;
+}
+
+.fac-client-editor-v2 .fac-client-form-section,
+.fac-client-editor-v2 .fac-more-options {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--tuuli-screen-line);
+  border-radius: 0;
+  padding: 18px 0 0;
+  background: transparent;
+}
+
+.fac-client-editor-v2 .fac-client-form-section:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.fac-client-editor-v2 .fac-client-form-section legend {
+  margin-bottom: 16px;
+  padding: 0;
+  color: var(--tuuli-text-primary);
+  font-size: 15px;
+  font-weight: var(--tuuli-weight-anchor);
+}
+
+.fac-client-editor-v2 .fac-form-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px 14px;
+}
+
+.fac-client-editor-v2 .fac-field {
+  grid-column: span 4;
+  gap: 6px;
+}
+
+.fac-client-editor-v2 .fac-field > span,
+.fac-client-editor-v2 .fac-check-field span {
+  color: var(--tuuli-text-secondary);
+  font-size: 12px;
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.fac-client-editor-v2 .fac-field input,
+.fac-client-editor-v2 .fac-field select,
+.fac-client-editor-v2 .fac-field textarea {
+  min-height: 40px;
+  border-color: var(--tuuli-screen-line);
+  border-radius: 4px;
+  padding: 8px 10px;
+  background: var(--fac-surface);
+  font-weight: var(--tuuli-weight-normal);
+}
+
+.fac-client-editor-v2 .fac-field input:disabled {
+  background: color-mix(in srgb, var(--fac-bg) 72%, var(--fac-surface));
+}
+
+.fac-client-editor-v2 .fac-client-field-code,
+.fac-client-editor-v2 .fac-client-field-nif,
+.fac-client-editor-v2 .fac-client-field-phone,
+.fac-client-editor-v2 .fac-client-field-country {
+  grid-column: span 3;
+}
+
+.fac-client-editor-v2 .fac-client-field-name {
+  grid-column: span 6;
+}
+
+.fac-client-editor-v2 .fac-client-field-email,
+.fac-client-editor-v2 .fac-client-field-address {
+  grid-column: span 6;
+}
+
+.fac-client-editor-v2 .fac-client-field-postal {
+  grid-column: span 4;
+  min-width: 0;
+}
+
+.fac-client-editor-v2 .fac-client-field-locality {
+  grid-column: span 5;
+}
+
+.fac-client-editor-v2 .fac-client-form-commercial .fac-field:nth-child(5) {
+  grid-column: span 8;
+}
+
+.fac-client-editor-v2 .fac-check-field {
+  grid-column: span 4;
+  min-height: 40px;
+  padding-top: 19px;
+}
+
+.fac-client-editor-v2 .fac-more-options-trigger {
+  color: var(--tuuli-text-primary);
+  font-size: 14px;
+  font-weight: var(--tuuli-weight-anchor);
+}
+
+.fac-client-editor-v2 .fac-more-options .fac-form-grid {
+  margin-top: 16px;
+}
+
+.fac-client-editor-v2 .fac-more-options .fac-field:nth-child(2) {
+  grid-column: span 8;
+}
+
+.fac-client-editor-v2 .fac-client-editor-footer {
+  margin-top: 30px;
+  padding-bottom: 12px;
+}
+
+.fac-client-editor-v2 .fac-client-editor-footer .fac-primary-button {
+  min-width: 150px;
+}
+
+.tuuli-grammar-entity-list .fac-client-detail-v2 {
+  display: grid;
+  gap: 28px;
+}
+
+.tuuli-grammar-entity-list .fac-client-detail-header {
+  padding-right: 40px;
+}
+
+.tuuli-grammar-entity-list .fac-client-detail-header h2 {
+  margin-bottom: 8px;
+}
+
+.fac-client-detail-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+  color: var(--tuuli-text-secondary);
+  font-size: 13px;
+}
+
+.fac-client-detail-section {
+  display: grid;
+  gap: 8px;
+}
+
+.fac-client-detail-section h3 {
+  margin: 0;
+  color: var(--tuuli-text-primary);
+  font-size: 13px;
+  font-weight: var(--tuuli-weight-anchor);
+}
+
+.fac-client-detail-section .fac-entity-detail-rows div {
+  grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1.2fr);
+  border-bottom-color: var(--tuuli-screen-line);
+  padding: 9px 0;
+}
+
+.fac-client-detail-section .fac-entity-detail-rows dd {
+  color: var(--tuuli-text-primary);
+}
+
+.fac-client-current-account {
+  margin-top: 38px;
+  overflow: visible;
+  border: 0;
+  border-top: 1px solid var(--tuuli-screen-line);
+  border-radius: 0;
+  padding: 26px 0 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.fac-client-current-account .tuuli-section-header {
+  margin-bottom: 12px;
+}
+
 @media (max-width: 1100px) {
   .fac-workspace-tuuli-v2 > .fac-topbar {
     margin-bottom: 32px;
@@ -2012,6 +2220,33 @@
 
   .tuuli-grammar-entity-list .tuuli-toolbar > .fac-inline-actions > button {
     width: auto;
+  }
+
+  .fac-client-editor-v2 .fac-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fac-client-editor-v2 .fac-field,
+  .fac-client-editor-v2 .fac-client-field-code,
+  .fac-client-editor-v2 .fac-client-field-name,
+  .fac-client-editor-v2 .fac-client-field-nif,
+  .fac-client-editor-v2 .fac-client-field-email,
+  .fac-client-editor-v2 .fac-client-field-phone,
+  .fac-client-editor-v2 .fac-client-field-address,
+  .fac-client-editor-v2 .fac-client-field-postal,
+  .fac-client-editor-v2 .fac-client-field-locality,
+  .fac-client-editor-v2 .fac-client-field-country,
+  .fac-client-editor-v2 .fac-client-form-commercial .fac-field:nth-child(5),
+  .fac-client-editor-v2 .fac-more-options .fac-field:nth-child(2),
+  .fac-client-editor-v2 .fac-check-field {
+    grid-column: auto;
+  }
+
+  .fac-client-editor-v2 .fac-client-field-name,
+  .fac-client-editor-v2 .fac-client-field-email,
+  .fac-client-editor-v2 .fac-client-field-address,
+  .fac-client-editor-v2 .fac-more-options .fac-field:nth-child(2) {
+    grid-column: 1 / -1;
   }
 }
 
@@ -2103,6 +2338,50 @@
   .tuuli-grammar-entity-list .fac-entity-detail {
     border-radius: 5px 5px 0 0;
     padding: 24px 20px;
+  }
+
+  .fac-client-editor-header {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .fac-client-editor-header .fac-inline-actions {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .fac-client-editor-v2 .fac-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fac-client-editor-v2 .fac-field,
+  .fac-client-editor-v2 .fac-client-field-name,
+  .fac-client-editor-v2 .fac-client-field-email,
+  .fac-client-editor-v2 .fac-client-field-address,
+  .fac-client-editor-v2 .fac-more-options .fac-field:nth-child(2) {
+    grid-column: 1;
+  }
+
+  .fac-client-editor-v2 .fac-check-field {
+    padding-top: 4px;
+  }
+
+  .fac-client-editor-v2 .fac-client-editor-footer {
+    align-items: stretch;
+  }
+
+  .fac-client-editor-v2 .fac-client-editor-footer .fac-primary-button {
+    width: 100%;
+  }
+
+  .fac-client-detail-section .fac-entity-detail-rows div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  .fac-client-detail-section .fac-entity-detail-rows dd {
+    text-align: left;
   }
 }
 

@@ -561,11 +561,11 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         transporteId: matriz.transporteId != null ? String(matriz.transporteId) : current.transporteId,
         retencao: matriz.retencao ?? current.retencao
       }));
-      setEditorMessage("Matriz 0 aplicada aos campos configurados.");
+      setEditorMessage("Predefinições aplicadas aos campos configurados.");
     } catch (err) {
       setEditorMessage(err instanceof Error && err.message.includes("404")
-        ? "A Matriz 0 ainda não foi configurada."
-        : "Não foi possível aplicar a Matriz 0.");
+        ? "As predefinições ainda não foram configuradas."
+        : "Não foi possível aplicar as predefinições.");
     } finally {
       setClientesLoading(false);
     }
@@ -628,7 +628,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       setParametrosClienteExists(parametros != null);
       setParametrosClienteForm(parametros ? parametrosToForm(parametros) : emptyParametrosClienteForm);
     } catch (err) {
-      setConfigMessage(err instanceof Error ? err.message : "Não foi possível carregar a Matriz 0.");
+      setConfigMessage(err instanceof Error ? err.message : "Não foi possível carregar as predefinições.");
     } finally {
       setConfigLoading(false);
     }
@@ -645,9 +645,9 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         await sendJson<ParametrosCliente>("/api/parametros-cliente", payload);
         setParametrosClienteExists(true);
       }
-      setConfigMessage("Matriz 0 guardada. Será aplicada apenas quando pedida no novo cliente.");
+      setConfigMessage("Predefinições guardadas. Serão aplicadas apenas quando pedidas no novo cliente.");
     } catch (err) {
-      setConfigMessage(err instanceof Error ? err.message : "Não foi possível guardar a Matriz 0.");
+      setConfigMessage(err instanceof Error ? err.message : "Não foi possível guardar as predefinições.");
     } finally {
       setConfigLoading(false);
     }
@@ -1431,37 +1431,57 @@ function ClientesView({
       </section>
 
       <EntityDetailOverlay labelledBy="fac-client-detail-title" onClose={() => setDetailOpen(false)} open={detailOpen && Boolean(selectedCliente)} returnFocusRef={detailTriggerRef}>
-        {selectedCliente && <div id="fac-client-detail">
-          <p className="fac-eyebrow">Cliente</p>
-          <h2 id="fac-client-detail-title">{selectedCliente.nome}</h2>
-          <dl className="fac-entity-detail-rows">
-            <div><dt>Código</dt><dd>{selectedCliente.id}</dd></div>
-            <div><dt>NIF</dt><dd>{selectedCliente.nif}</dd></div>
+        {selectedCliente && <div className="fac-client-detail-v2" id="fac-client-detail">
+          <header className="fac-client-detail-header">
+            <p className="fac-eyebrow">Cliente</p>
+            <h2 id="fac-client-detail-title">{selectedCliente.nome}</h2>
+            <div className="fac-client-detail-identity">
+              <span>Código {selectedCliente.id}</span>
+              <span>NIF {selectedCliente.nif}</span>
+              <span className={`fac-status ${selectedCliente.inativo ? "inativo" : ""}`}>{selectedCliente.inativo ? "Inativo" : "Ativo"}</span>
+            </div>
+          </header>
+
+          <ClientDetailSection title="Contactos">
+            <div><dt>Email</dt><dd>{selectedCliente.email ?? "-"}</dd></div>
+            <div><dt>Email alternativo</dt><dd>{selectedCliente.email1 ?? "-"}</dd></div>
+            <div><dt>Telefone</dt><dd>{selectedCliente.tel ?? "-"}</dd></div>
+            <div><dt>Telemóvel</dt><dd>{selectedCliente.tm ?? "-"}</dd></div>
+          </ClientDetailSection>
+
+          <ClientDetailSection title="Morada">
             <div><dt>Morada</dt><dd>{selectedCliente.morada ?? "-"}</dd></div>
-            <div><dt>Morada adicional</dt><dd>{selectedCliente.morada1 ?? "-"}</dd></div>
+            <div><dt>Complemento</dt><dd>{selectedCliente.morada1 ?? "-"}</dd></div>
             <div><dt>Código postal</dt><dd>{selectedCliente.codPostalId ?? "-"}</dd></div>
             <div><dt>Localidade</dt><dd>{selectedCliente.localidade ?? "-"}</dd></div>
             <div><dt>País</dt><dd>{selectedCliente.paisId ?? "-"}</dd></div>
+          </ClientDetailSection>
+
+          <ClientDetailSection title="Condições comerciais">
             <div><dt>Moeda</dt><dd>{selectedCliente.moedaId ?? "-"}</dd></div>
+            <div><dt>Modo de pagamento</dt><dd>{selectedCliente.mPagamentoId ?? "-"}</dd></div>
+            <div><dt>Prazo de pagamento</dt><dd>{selectedCliente.pPagamentoId ?? "-"}</dd></div>
             <div><dt>Regime IVA</dt><dd>{selectedCliente.rivaId ?? "-"}</dd></div>
-            <div><dt>Email</dt><dd>{selectedCliente.email ?? "-"}</dd></div>
-            <div><dt>Telefone</dt><dd>{selectedCliente.tel ?? selectedCliente.tm ?? "-"}</dd></div>
-            <div><dt>Estado</dt><dd>{selectedCliente.inativo ? "Inativo" : "Ativo"}</dd></div>
-          </dl>
+            <div><dt>Transporte</dt><dd>{selectedCliente.transporteId ?? "-"}</dd></div>
+            <div><dt>Retenção</dt><dd>{selectedCliente.retencao ? "Sim" : "Não"}</dd></div>
+            <div><dt>IBAN</dt><dd>{selectedCliente.iban ?? "-"}</dd></div>
+            <div><dt>Observações</dt><dd>{selectedCliente.observacoes ?? "-"}</dd></div>
+          </ClientDetailSection>
         </div>}
       </EntityDetailOverlay>
 
       {editorOpen && (
-        <section className="fac-panel fac-section-panel">
-          <div className="fac-panel-header">
+        <section className="fac-panel fac-section-panel fac-client-editor-v2">
+          <div className="fac-panel-header fac-client-editor-header">
             <div>
-              <p className="fac-eyebrow">Editor</p>
-              <h2>{editingClienteId ? `Editar cliente ${editingClienteId}` : "Novo cliente"}</h2>
+              <p className="fac-eyebrow">{editingClienteId ? "Editar cliente" : "Novo cliente"}</p>
+              <h2>{editingClienteId ? form.nome || `Cliente ${editingClienteId}` : "Criar cliente"}</h2>
+              {editingClienteId && <span className="fac-client-editor-reference">Código {editingClienteId} · NIF {form.nif || "por definir"}</span>}
             </div>
             <div className="fac-inline-actions">
               {!editingClienteId && (
                 <button className="fac-soft-button" disabled={loading} onClick={onApplyMatrizZero} type="button">
-                  Aplicar Matriz 0
+                  Aplicar predefinições
                 </button>
               )}
               <button className="fac-ghost-button" onClick={onCloseEditor} type="button">Voltar a lista</button>
@@ -1471,24 +1491,25 @@ function ClientesView({
           {editorMessage && <p className="fac-editor-message">{editorMessage}</p>}
 
           <div className="fac-client-form-sections">
-            <FormSection title="Identificação">
-              <Field label="Código"><input disabled value={editingClienteId ? String(editingClienteId) : "Automático"} /></Field>
-              <Field label="Nome"><input maxLength={80} onChange={(event) => changeField("nome", event.target.value)} value={form.nome} /></Field>
-              <Field label="NIF"><input maxLength={9} onChange={(event) => changeField("nif", event.target.value)} value={form.nif} /></Field>
+            <FormSection className="fac-client-form-identification" title="Identificação">
+              <Field className="fac-client-field-code" label="Código"><input disabled value={editingClienteId ? String(editingClienteId) : "Automático"} /></Field>
+              <Field className="fac-client-field-name" label="Nome"><input autoFocus={!editingClienteId} maxLength={80} onChange={(event) => changeField("nome", event.target.value)} value={form.nome} /></Field>
+              <Field className="fac-client-field-nif" label="NIF"><input maxLength={9} onChange={(event) => changeField("nif", event.target.value)} value={form.nif} /></Field>
             </FormSection>
 
-            <FormSection title="Contactos">
-              <Field label="Email"><input maxLength={120} onChange={(event) => changeField("email", event.target.value)} type="email" value={form.email} /></Field>
-              <Field label="Telefone"><input maxLength={20} onChange={(event) => changeField("tel", event.target.value)} value={form.tel} /></Field>
-              <Field label="Telemóvel"><input maxLength={20} onChange={(event) => changeField("tm", event.target.value)} value={form.tm} /></Field>
+            <FormSection className="fac-client-form-contacts" title="Contactos">
+              <Field className="fac-client-field-email" label="Email"><input maxLength={120} onChange={(event) => changeField("email", event.target.value)} type="email" value={form.email} /></Field>
+              <Field className="fac-client-field-phone" label="Telefone"><input maxLength={20} onChange={(event) => changeField("tel", event.target.value)} value={form.tel} /></Field>
+              <Field className="fac-client-field-phone" label="Telemóvel"><input maxLength={20} onChange={(event) => changeField("tm", event.target.value)} value={form.tm} /></Field>
+              <Field className="fac-client-field-email" label="Email alternativo"><input maxLength={120} onChange={(event) => changeField("email1", event.target.value)} type="email" value={form.email1} /></Field>
             </FormSection>
 
-            <FormSection title="Morada">
-              <Field label="Morada"><input maxLength={60} onChange={(event) => changeField("morada", event.target.value)} value={form.morada} /></Field>
-              <Field label="Morada complementar"><input maxLength={60} onChange={(event) => changeField("morada1", event.target.value)} value={form.morada1} /></Field>
-              <PostalCodeLookup required value={form.codPostalId} onChange={(value) => changeField("codPostalId", value)} />
-              <Field label="Localidade"><input maxLength={50} onChange={(event) => changeField("localidade", event.target.value)} value={form.localidade} /></Field>
-              <Field label="País">
+            <FormSection className="fac-client-form-address" title="Morada">
+              <Field className="fac-client-field-address" label="Morada"><input maxLength={60} onChange={(event) => changeField("morada", event.target.value)} value={form.morada} /></Field>
+              <Field className="fac-client-field-address" label="Morada complementar"><input maxLength={60} onChange={(event) => changeField("morada1", event.target.value)} value={form.morada1} /></Field>
+              <div className="fac-client-field-postal"><PostalCodeLookup required value={form.codPostalId} onChange={(value) => changeField("codPostalId", value)} /></div>
+              <Field className="fac-client-field-locality" label="Localidade"><input maxLength={50} onChange={(event) => changeField("localidade", event.target.value)} value={form.localidade} /></Field>
+              <Field className="fac-client-field-country" label="País">
                 <select onChange={(event) => changeField("paisId", event.target.value)} value={form.paisId}>
                   <option value="">Sem valor</option>
                   {catalogos?.paises.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
@@ -1496,7 +1517,7 @@ function ClientesView({
               </Field>
             </FormSection>
 
-            <FormSection title="Condições comerciais e financeiras">
+            <FormSection className="fac-client-form-commercial" title="Condições comerciais e financeiras">
               <Field label="Moeda">
                 <select onChange={(event) => changeField("moedaId", event.target.value)} value={form.moedaId}>
                   <option value="">Sem valor</option>
@@ -1555,9 +1576,9 @@ function ClientesView({
             </section>
           </div>
 
-          <div className="fac-form-footer">
+          <div className="fac-form-footer fac-client-editor-footer">
             <span className="fac-muted">
-              {editingClienteId ? "As alteracoes substituem os dados atuais do cliente." : "A Matriz 0 preenche apenas os valores configurados."}
+              {editingClienteId ? "As alteracoes substituem os dados atuais do cliente." : "Preenche apenas os valores configurados por defeito."}
             </span>
             <button className="fac-primary-button" disabled={loading} onClick={onSaveCliente} type="button">
               {loading ? "A gravar..." : editingClienteId ? "Guardar alteracoes" : "Gravar cliente"}
@@ -1566,7 +1587,7 @@ function ClientesView({
         </section>
       )}
 
-      <section className={`fac-panel fac-section-panel tuuli-section ${editorOpen ? "fac-hidden" : ""}`}>
+      <section className={`fac-panel fac-section-panel fac-client-current-account tuuli-section ${editorOpen ? "fac-hidden" : ""}`}>
         <div className="fac-panel-header tuuli-section-header">
           <div>
             <p className="fac-eyebrow tuuli-section-kicker">Conta corrente</p>
@@ -1745,9 +1766,9 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
         </div>
 
         <div className="fac-form-footer">
-          <span className="fac-muted">A Matriz 0 aplica estes valores base apenas quando solicitada no novo cliente.</span>
+          <span className="fac-muted">Estas predefinições aplicam os valores base apenas quando solicitadas no novo cliente.</span>
           <button className="fac-primary-button" disabled={loading} onClick={onSave} type="button">
-            {loading ? "A guardar..." : "Guardar Matriz 0"}
+            {loading ? "A guardar..." : "Guardar predefinições"}
           </button>
         </div>
       </section>
@@ -1760,18 +1781,27 @@ function ConfiguracaoView({ catalogos, exists, form, loading, message, onChangeF
   );
 }
 
-function Field({ children, label }: { children: React.ReactNode; label: string }) {
+function ClientDetailSection({ children, title }: { children: React.ReactNode; title: string }) {
   return (
-    <label className="fac-field">
+    <section className="fac-client-detail-section">
+      <h3>{title}</h3>
+      <dl className="fac-entity-detail-rows">{children}</dl>
+    </section>
+  );
+}
+
+function Field({ children, className = "", label }: { children: React.ReactNode; className?: string; label: string }) {
+  return (
+    <label className={`fac-field ${className}`.trim()}>
       <span>{label}</span>
       {children}
     </label>
   );
 }
 
-function FormSection({ children, title }: { children: React.ReactNode; title: string }) {
+function FormSection({ children, className = "", title }: { children: React.ReactNode; className?: string; title: string }) {
   return (
-    <fieldset className="fac-client-form-section">
+    <fieldset className={`fac-client-form-section ${className}`.trim()}>
       <legend>{title}</legend>
       <div className="fac-form-grid">{children}</div>
     </fieldset>
