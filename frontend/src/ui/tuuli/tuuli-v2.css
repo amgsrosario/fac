@@ -2015,6 +2015,22 @@
   }
 }
 
+@media (max-width: 900px) {
+  .tuuli-grammar-document-collection .tuuli-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-toolbar > .fac-inline-actions {
+    justify-content: space-between;
+  }
+
+  .tuuli-grammar-document-collection .tuuli-toolbar > .fac-inline-actions > .fac-inline-actions {
+    margin-left: auto;
+  }
+}
+
 @media (max-width: 767px) {
   .tuuli-grammar-document-collection .tuuli-metric-group {
     grid-template-columns: repeat(3, minmax(0, 1fr));
