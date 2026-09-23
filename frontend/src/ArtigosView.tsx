@@ -253,11 +253,12 @@ export default function ArtigosView() {
 
   if (editorOpen) {
     return (
-      <section className="fac-panel">
-        <div className="fac-panel-header">
+      <section className="fac-panel fac-article-editor-v2">
+        <div className="fac-panel-header fac-article-editor-header">
           <div>
-            <p className="fac-eyebrow">Editor de artigo</p>
-            <h2>{editingCodigo ? `Editar ${editingCodigo}` : "Novo artigo"}</h2>
+            <p className="fac-eyebrow">{editingCodigo ? "Editar artigo" : "Novo artigo"}</p>
+            <h2>{editingCodigo ? form.descricao || editingCodigo : "Criar artigo ou serviço"}</h2>
+            {editingCodigo && <span className="fac-article-editor-reference">Código {editingCodigo}</span>}
           </div>
           <button className="fac-ghost-button" onClick={() => setEditorOpen(false)} type="button">Voltar a lista</button>
         </div>
@@ -265,23 +266,23 @@ export default function ArtigosView() {
         {message && <p className="fac-message">{message}</p>}
 
         <div className="fac-article-form-sections">
-          <FormSection title="Identificação">
-            <Field label="Código">
-              <input disabled={editingCodigo != null} maxLength={50} onChange={(event) => change("codigo", normalizeCode(event.target.value))} value={form.codigo} />
+          <FormSection className="fac-article-form-identification" title="Identificação">
+            <Field className="fac-article-field-code" label="Código">
+              <input autoFocus={editingCodigo == null} disabled={editingCodigo != null} maxLength={50} onChange={(event) => change("codigo", normalizeCode(event.target.value))} value={form.codigo} />
             </Field>
-            <Field label="Descrição"><input maxLength={80} onChange={(event) => change("descricao", event.target.value)} value={form.descricao} /></Field>
-            <Field label="Tipo Artigo/Serviço">
+            <Field className="fac-article-field-description" label="Designação"><input maxLength={80} onChange={(event) => change("descricao", event.target.value)} value={form.descricao} /></Field>
+            <Field className="fac-article-field-type" label="Tipo">
               <select onChange={(event) => change("tipoArtigo", event.target.value as TipoArtigo)} value={form.tipoArtigo}>
                 <option value="SERVICO">Serviço</option>
                 <option value="ARTIGO">Artigo</option>
               </select>
             </Field>
-            <Field label="Unidade"><input maxLength={3} onChange={(event) => change("unidade", event.target.value.toUpperCase())} value={form.unidade} /></Field>
+            <Field className="fac-article-field-unit" label="Unidade"><input maxLength={3} onChange={(event) => change("unidade", event.target.value.toUpperCase())} value={form.unidade} /></Field>
           </FormSection>
 
-          <FormSection title="Preço e fiscalidade">
-            <Field label="Preço de venda"><input min="0" onChange={(event) => change("pvp", event.target.value)} step="0.000001" type="number" value={form.pvp} /></Field>
-            <Field label="IVA de venda">
+          <FormSection className="fac-article-form-commercial" title="Comercial e fiscal">
+            <Field className="fac-article-field-price" label="Preço de venda"><input className="fac-article-price-input" min="0" onChange={(event) => change("pvp", event.target.value)} step="0.000001" type="number" value={form.pvp} /></Field>
+            <Field className="fac-article-field-vat" label="IVA de venda">
               <select onChange={(event) => change("ivaVendaId", event.target.value)} value={form.ivaVendaId}>
                 <option value="">Selecionar</option>
                 {tiposIva.map((tipo) => <option disabled={tipo.inativo && tipo.id !== form.ivaVendaId} key={tipo.id} value={tipo.id}>{tipo.descricao}{tipo.inativo ? " (inativo)" : ""}</option>)}
@@ -301,20 +302,20 @@ export default function ArtigosView() {
               {(form.familiaId || form.observacoes.trim() || form.retencao || form.inativo) && <small>Com valores</small>}
             </button>
             <div className="fac-form-grid" hidden={!moreOptionsOpen} id="fac-article-more-options">
-              <Field label="Família">
+              <Field className="fac-article-field-family" label="Família">
                 <select onChange={(event) => change("familiaId", event.target.value)} value={form.familiaId}>
                   <option value="">Selecionar</option>
                   {familias.map((familia) => <option key={familia.id} value={familia.id}>{familia.descricao}</option>)}
                 </select>
               </Field>
-              <Field label="Observações"><textarea maxLength={250} onChange={(event) => change("observacoes", event.target.value)} value={form.observacoes} /></Field>
+              <Field className="fac-article-field-notes" label="Observações"><textarea maxLength={250} onChange={(event) => change("observacoes", event.target.value)} value={form.observacoes} /></Field>
               <label className="fac-check-field"><input checked={form.retencao} onChange={(event) => change("retencao", event.target.checked)} type="checkbox" /><span>Sujeito a retenção</span></label>
               <label className="fac-check-field"><input checked={form.inativo} onChange={(event) => change("inativo", event.target.checked)} type="checkbox" /><span>Artigo inativo</span></label>
             </div>
           </section>
         </div>
 
-        <div className="fac-form-footer">
+        <div className="fac-form-footer fac-article-editor-footer">
           <span className="fac-muted">O código é definitivo depois de criar o artigo.</span>
           <button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar artigo"}</button>
         </div>
@@ -387,20 +388,29 @@ export default function ArtigosView() {
       </section>
 
       <EntityDetailOverlay labelledBy="fac-article-detail-title" onClose={() => setDetailOpen(false)} open={detailOpen && Boolean(selected)} returnFocusRef={detailTriggerRef}>
-        {selected && <div id="fac-article-detail">
-          <p className="fac-eyebrow">Artigo</p>
-          <h2 id="fac-article-detail-title">{selected.descricao}</h2>
-          <dl className="fac-entity-detail-rows">
-            <div><dt>Código</dt><dd>{selected.codigo}</dd></div>
-            <div><dt>Tipo</dt><dd>{tipoArtigoLabel(selected.tipoArtigo)}</dd></div>
+        {selected && <div className="fac-article-detail-v2" id="fac-article-detail">
+          <header className="fac-article-detail-header">
+            <p className="fac-eyebrow">Artigo</p>
+            <h2 id="fac-article-detail-title">{selected.descricao}</h2>
+            <div className="fac-article-detail-identity">
+              <span>Código {selected.codigo}</span>
+              <span>{tipoArtigoLabel(selected.tipoArtigo)}</span>
+              <span>{selected.unidade}</span>
+              <span className={`fac-status tuuli-status tuuli-status-${selected.inativo ? "inativo" : "ativo"}`}>{selected.inativo ? "Inativo" : "Ativo"}</span>
+            </div>
+          </header>
+          <ArticleDetailSection title="Classificação">
             <div><dt>Família</dt><dd>{familiaNome}</dd></div>
             <div><dt>Unidade</dt><dd>{selected.unidade}</dd></div>
+          </ArticleDetailSection>
+          <ArticleDetailSection title="Comercial e fiscal">
             <div><dt>IVA venda</dt><dd>{selected.ivaVendaId}</dd></div>
             <div><dt>PVP</dt><dd className="tuuli-cell-numeric">{money(selected.pvp)} EUR</dd></div>
             <div><dt>Retenção</dt><dd>{selected.retencao ? "Sim" : "Não"}</dd></div>
-            <div><dt>Estado</dt><dd>{selected.inativo ? "Inativo" : "Ativo"}</dd></div>
-            {selected.observacoes && <div><dt>Observações</dt><dd>{selected.observacoes}</dd></div>}
-          </dl>
+          </ArticleDetailSection>
+          {selected.observacoes && <ArticleDetailSection title="Observações">
+            <div><dt>Nota</dt><dd>{selected.observacoes}</dd></div>
+          </ArticleDetailSection>}
         </div>}
       </EntityDetailOverlay>
     </div>
@@ -431,13 +441,22 @@ function artigoColumnClass(key: string) {
   return "tuuli-cell-secondary";
 }
 
-function Field({ children, label }: { children: React.ReactNode; label: string }) {
-  return <label className="fac-field"><span>{label}</span>{children}</label>;
+function ArticleDetailSection({ children, title }: { children: React.ReactNode; title: string }) {
+  return (
+    <section className="fac-article-detail-section">
+      <h3>{title}</h3>
+      <dl className="fac-entity-detail-rows">{children}</dl>
+    </section>
+  );
 }
 
-function FormSection({ children, title }: { children: React.ReactNode; title: string }) {
+function Field({ children, className = "", label }: { children: React.ReactNode; className?: string; label: string }) {
+  return <label className={`fac-field ${className}`.trim()}><span>{label}</span>{children}</label>;
+}
+
+function FormSection({ children, className = "", title }: { children: React.ReactNode; className?: string; title: string }) {
   return (
-    <fieldset className="fac-article-form-section">
+    <fieldset className={`fac-article-form-section ${className}`.trim()}>
       <legend>{title}</legend>
       <div className="fac-form-grid">{children}</div>
     </fieldset>
