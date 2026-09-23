@@ -65,6 +65,7 @@ export default function EmpresaAdminView() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [logoVersion, setLogoVersion] = useState(0);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -75,6 +76,36 @@ export default function EmpresaAdminView() {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!empresa.temLogotipo) {
+      setLogoUrl(null);
+      return;
+    }
+
+    let active = true;
+    let objectUrl: string | null = null;
+    setLogoUrl(null);
+    apiFetch(`/api/empresa/logotipo?v=${logoVersion}`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error(await responseError(response));
+        objectUrl = URL.createObjectURL(await response.blob());
+        if (active) {
+          setLogoUrl(objectUrl);
+        } else {
+          URL.revokeObjectURL(objectUrl);
+          objectUrl = null;
+        }
+      })
+      .catch(() => {
+        if (active) setLogoUrl(null);
+      });
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [empresa.temLogotipo, logoVersion]);
 
   function change<K extends keyof Empresa>(field: K, value: Empresa[K]) {
     setEmpresa((current) => ({ ...current, [field]: value }));
@@ -168,7 +199,7 @@ export default function EmpresaAdminView() {
           <div><p className="fac-eyebrow">Logotipo</p><h3>PDFs e documentos comerciais</h3></div>
           <span className="fac-muted">PNG/JPEG ate 1 MiB</span>
         </div>
-        {empresa.temLogotipo && <img alt="Logotipo da empresa" className="fac-logo-preview" src={`/api/empresa/logotipo?v=${logoVersion}`} />}
+        {logoUrl && <img alt="Logotipo da empresa" className="fac-logo-preview" src={logoUrl} />}
         <div className="fac-actions">
           <input accept="image/png,image/jpeg" disabled={loading} onChange={(e) => uploadLogo(e.target.files?.[0] ?? null)} type="file" />
           <button disabled={!empresa.temLogotipo} onClick={removeLogo} type="button">Remover logotipo</button>
