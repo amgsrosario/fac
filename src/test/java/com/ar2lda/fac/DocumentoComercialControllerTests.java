@@ -2250,6 +2250,79 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.message").value("Data de emissao nao pode ser anterior ao ultimo documento financeiro emitido da serie"));
     }
 
+    @Test
+    void listaDocumentosFinanceirosComPaginacaoFiltrosESortSeguro() throws Exception {
+        var primeiro = criarDocumentoFinanceiroParaListagem(1, LocalDate.of(2026, 1, 10), false);
+        var segundo = criarDocumentoFinanceiroParaListagem(2, LocalDate.of(2026, 1, 20), false);
+        var anulado = criarDocumentoFinanceiroParaListagem(3, LocalDate.of(2026, 1, 30), true);
+        var ultimo = criarDocumentoFinanceiroParaListagem(4, LocalDate.of(2026, 2, 10), false);
+
+        mockMvc.perform(get("/documentos-financeiros/resumos").param("page", "0").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(ultimo.getId()))
+                .andExpect(jsonPath("$.content[1].id").value(segundo.getId()))
+                .andExpect(jsonPath("$.content[0].linhas").doesNotExist());
+
+        mockMvc.perform(get("/documentos-financeiros/resumos").param("page", "1").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(primeiro.getId()));
+
+        mockMvc.perform(get("/documentos-financeiros/resumos")
+                        .param("dataInicial", "2026-01-20")
+                        .param("dataFinal", "2026-01-30")
+                        .param("mostrarAnulados", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(anulado.getId()))
+                .andExpect(jsonPath("$.content[1].id").value(segundo.getId()));
+
+        mockMvc.perform(get("/documentos-financeiros/resumos").param("dataFinal", "2026-01-10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(primeiro.getId()));
+
+        mockMvc.perform(get("/documentos-financeiros/resumos").param("dataInicial", "2027-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0));
+
+        mockMvc.perform(get("/documentos-financeiros/resumos")
+                        .param("mostrarAnulados", "true")
+                        .param("sort", "id,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(4))
+                .andExpect(jsonPath("$.content[0].id").value(primeiro.getId()));
+
+        mockMvc.perform(get("/documentos-financeiros/resumos").param("sort", "cliente.nome,asc"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/documentos-financeiros/" + primeiro.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas").isArray());
+    }
+
+    private com.ar2lda.fac.model.DocumentoFinanceiro criarDocumentoFinanceiroParaListagem(
+            long numero, LocalDate dataEmissao, boolean anulado) {
+        var documento = new com.ar2lda.fac.model.DocumentoFinanceiro();
+        documento.setCliente(cliente);
+        documento.setTipoDocumento(tipoDocumentoRepository.findById("RCB").orElseThrow());
+        documento.setSerie("A");
+        documento.setNumeroDocumento(numero);
+        documento.setDataEmissao(dataEmissao);
+        documento.setMoeda(moedaRepository.findById("EUR").orElseThrow());
+        documento.setValorPagamentoBruto(BigDecimal.valueOf(numero));
+        documento.setValorDescontoFinanceiro(BigDecimal.ZERO);
+        documento.setValorPagamentoLiquido(BigDecimal.valueOf(numero));
+        documento.setMPagamento(mPagamento);
+        documento.setDataHoraOperacao(dataEmissao.atStartOfDay().atOffset(ZoneOffset.UTC));
+        documento.setEmissor(utilizadorRepository.findById("EMISSOR").orElseThrow());
+        documento.setMomentoEmissao(dataEmissao.atStartOfDay().atOffset(ZoneOffset.UTC));
+        documento.setAnulado(anulado);
+        return documentoFinanceiroRepository.saveAndFlush(documento);
+    }
+
     private Long emitirDocumentoComercialComLinhas(int... quantidades) throws Exception {
         String location = mockMvc.perform(post("/documentos-comerciais")
                         .contentType(MediaType.APPLICATION_JSON)

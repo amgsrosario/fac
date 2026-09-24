@@ -5,6 +5,7 @@ import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDiagnosticoDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDiagnosticoTotaisDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroImpressaoDto;
+import com.ar2lda.fac.controller.dto.DocumentoFinanceiroResumoDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoFinanceiroCreateDto;
 import com.ar2lda.fac.controller.dto.LinhaDocumentoFinanceiroDto;
 import com.ar2lda.fac.exception.BadRequestException;
@@ -36,10 +37,16 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.server.ResponseStatusException;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -125,6 +132,30 @@ public class DocumentoFinanceiroService {
 
     public Page<DocumentoFinanceiroDto> list(Pageable pageable) {
         return documentoRepository.findAll(pageable).map(this::toDTO);
+    }
+
+    public Page<DocumentoFinanceiroResumoDto> listResumos(LocalDate dataInicial, LocalDate dataFinal,
+                                                          boolean mostrarAnulados, Pageable pageable) {
+        if (dataInicial != null && dataFinal != null && dataInicial.isAfter(dataFinal)) {
+            throw new ResponseStatusException(BAD_REQUEST, "Data inicial não pode ser posterior à data final");
+        }
+        Sort sort = pageable.getSort().isSorted()
+                ? validatedSort(pageable.getSort())
+                : Sort.by(Sort.Order.desc("dataEmissao"), Sort.Order.desc("id"));
+        if (sort.getOrderFor("id") == null) {
+            sort = sort.and(Sort.by(Sort.Order.desc("id")));
+        }
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        return documentoRepository.findResumos(dataInicial, dataFinal, mostrarAnulados, safePageable);
+    }
+
+    private Sort validatedSort(Sort sort) {
+        for (Sort.Order order : sort) {
+            if (!java.util.Set.of("id", "dataEmissao").contains(order.getProperty())) {
+                throw new ResponseStatusException(BAD_REQUEST, "Ordenação não suportada: " + order.getProperty());
+            }
+        }
+        return sort;
     }
 
     public DocumentoFinanceiroDto getById(Long id) {

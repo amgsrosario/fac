@@ -126,6 +126,10 @@ class SecurityIntegrationTests {
         String token = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
                 .readTree(response).get("token").asText();
 
+        mockMvc.perform(get("/documentos-financeiros/resumos")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
         mockMvc.perform(post("/series").header("Authorization", "Bearer " + token)
                         .contentType("application/json").content("""
                                 {"tipoDocumentoId":"FT1","serie":"2026","nome":"Serie 2026"}

@@ -1,6 +1,7 @@
 package com.ar2lda.fac.repository;
 
 import com.ar2lda.fac.model.DocumentoFinanceiro;
+import com.ar2lda.fac.controller.dto.DocumentoFinanceiroResumoDto;
 import com.ar2lda.fac.repository.projection.ExtratoAnteriorProjection;
 import com.ar2lda.fac.repository.projection.ExtratoMovimentoProjection;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,30 @@ import java.util.List;
 public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFinanceiro, Long> {
 
     boolean existsByTipoDocumentoIdAndSerie(String tipoDocumentoId, String serie);
+
+    @Query(value = """
+            select new com.ar2lda.fac.controller.dto.DocumentoFinanceiroResumoDto(
+                d.id, d.cliente.id, d.tipoDocumento.id, d.serie, d.numeroDocumento,
+                d.dataEmissao, d.moeda.id, d.valorPagamentoLiquido,
+                d.mPagamento.id, d.emissor.codigo, d.anulado
+            )
+            from DocumentoFinanceiro d
+            where d.dataEmissao >= coalesce(:dataInicial, d.dataEmissao)
+              and d.dataEmissao <= coalesce(:dataFinal, d.dataEmissao)
+              and (:mostrarAnulados = true or d.anulado = false)
+            """, countQuery = """
+            select count(d)
+            from DocumentoFinanceiro d
+            where d.dataEmissao >= coalesce(:dataInicial, d.dataEmissao)
+              and d.dataEmissao <= coalesce(:dataFinal, d.dataEmissao)
+              and (:mostrarAnulados = true or d.anulado = false)
+            """)
+    Page<DocumentoFinanceiroResumoDto> findResumos(
+            @Param("dataInicial") LocalDate dataInicial,
+            @Param("dataFinal") LocalDate dataFinal,
+            @Param("mostrarAnulados") boolean mostrarAnulados,
+            Pageable pageable
+    );
 
     @Query("""
             select d

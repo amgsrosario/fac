@@ -6,7 +6,7 @@ import { ColumnSelector, ConfigurableColumn, useConfiguredColumns } from "./Colu
 import { EntityLookupField, type EntityLookupColumn, type EntityLookupSearchField } from "./ui/fac/components/EntityLookup";
 import { money as formatMoney } from "./ui/tuuli/format";
 
-type Page<T> = { content: T[]; totalElements: number };
+type Page<T> = { content: T[]; totalElements: number; totalPages: number };
 type Pendente = {
   id: number;
   documentoComercialId: number;
@@ -48,6 +48,10 @@ type DocumentoFinanceiro = {
   impresso?: boolean;
   linhas?: LinhaFinanceira[];
 };
+type DocumentoFinanceiroResumo = Pick<DocumentoFinanceiro,
+  "id" | "clienteId" | "tipoDocumentoId" | "serie" | "numeroDocumento" | "dataEmissao"
+  | "moedaId" | "valorPagamentoLiquido" | "mPagamentoId" | "emissorId" | "anulado"
+>;
 type LinhaFinanceira = {
   id: number;
   numeroLinha: number;
@@ -117,7 +121,9 @@ export default function PendentesView() {
   const receiptSubmittingRef = useRef(false);
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [financeiros, setFinanceiros] = useState<DocumentoFinanceiro[]>([]);
+  const [financeiros, setFinanceiros] = useState<DocumentoFinanceiroResumo[]>([]);
+  const [financeirosTotalElements, setFinanceirosTotalElements] = useState(0);
+  const [financeirosTotalPages, setFinanceirosTotalPages] = useState(0);
   const [tipos, setTipos] = useState<TipoDocumento[]>([]);
   const [series, setSeries] = useState<Serie[]>([]);
   const [modos, setModos] = useState<MPagamento[]>([]);
@@ -126,7 +132,7 @@ export default function PendentesView() {
   const [financeiroDateTo, setFinanceiroDateTo] = useState(todayIso);
   const [showAnnulledFinanceiros, setShowAnnulledFinanceiros] = useState(false);
   const [financeirosPage, setFinanceirosPage] = useState(0);
-  const [financeirosPageSize, setFinanceirosPageSize] = useState(10);
+  const [financeirosPageSize, setFinanceirosPageSize] = useState(20);
   const [dueFilter, setDueFilter] = useState<"all" | "overdue" | "not-overdue">("all");
   const [excludeSettled, setExcludeSettled] = useState(false);
   const [pendentesPage, setPendentesPage] = useState(0);
@@ -147,10 +153,16 @@ export default function PendentesView() {
   const [selectedFinanceiroId, setSelectedFinanceiroId] = useState<number | null>(null);
   const [selectedFinanceiro, setSelectedFinanceiro] = useState<DocumentoFinanceiro | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [financeirosLoading, setFinanceirosLoading] = useState(false);
+  const financeirosRequestRef = useRef(0);
   const pendenteColumns = useConfiguredColumns("fac.pendentes.colunas", PENDENTE_COLUMNS);
   const financeiroColumns = useConfiguredColumns("fac.recebimentos.colunas", FINANCEIRO_COLUMNS);
 
   useEffect(() => { loadTesouraria(); }, []);
+
+  useEffect(() => {
+    void loadFinanceiros();
+  }, [financeirosPage, financeirosPageSize, financeiroDateFrom, financeiroDateTo, showAnnulledFinanceiros]);
 
   useEffect(() => {
     if (!receiptOpen) return;
@@ -161,21 +173,51 @@ export default function PendentesView() {
     setLoading(true);
     setMessage(null);
     try {
-      const [pendentesPage, clientesPage, financeirosPage, modosPage] = await Promise.all([
+      const [pendentesPage, clientesPage, modosPage] = await Promise.all([
         fetchJson<Page<Pendente>>("/api/pendentes?size=500&sort=id,desc"),
         fetchJson<Page<Cliente>>("/api/clientes?size=500&sort=nome,asc"),
-        fetchJson<Page<DocumentoFinanceiro>>("/api/documentos-financeiros?size=300&sort=id,desc"),
         fetchJson<Page<MPagamento>>("/api/mpagamentos?size=100&sort=nome,asc")
       ]);
       setPendentes(pendentesPage.content);
       setClientes(clientesPage.content);
-      setFinanceiros(financeirosPage.content);
       setModos(modosPage.content);
-      setSelectedFinanceiro((current) => current ? financeirosPage.content.find((item) => item.id === current.id) ?? current : current);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível carregar a tesouraria.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadFinanceiros() {
+    const requestId = ++financeirosRequestRef.current;
+    setFinanceirosLoading(true);
+    setMessage(null);
+    try {
+      const params = new URLSearchParams({
+        page: String(financeirosPage),
+        size: String(financeirosPageSize),
+        sort: "dataEmissao,desc",
+        mostrarAnulados: String(showAnnulledFinanceiros)
+      });
+      if (financeiroDateFrom) params.set("dataInicial", financeiroDateFrom);
+      if (financeiroDateTo) params.set("dataFinal", financeiroDateTo);
+      const result = await fetchJson<Page<DocumentoFinanceiroResumo>>(`/api/documentos-financeiros/resumos?${params}`);
+      if (requestId !== financeirosRequestRef.current) return;
+      if (result.content.length === 0 && result.totalElements > 0 && financeirosPage > 0) {
+        setFinanceirosPage(Math.max(0, result.totalPages - 1));
+        return;
+      }
+      setFinanceiros(result.content);
+      setFinanceirosTotalElements(result.totalElements);
+      setFinanceirosTotalPages(result.totalPages);
+    } catch (error) {
+      if (requestId !== financeirosRequestRef.current) return;
+      setFinanceiros([]);
+      setFinanceirosTotalElements(0);
+      setFinanceirosTotalPages(0);
+      setMessage(error instanceof Error ? error.message : "Não foi possível carregar os recebimentos emitidos.");
+    } finally {
+      if (requestId === financeirosRequestRef.current) setFinanceirosLoading(false);
     }
   }
 
@@ -256,7 +298,7 @@ export default function PendentesView() {
     closeReceipt();
   }
 
-  async function openFinancialDetail(documento: DocumentoFinanceiro) {
+  async function openFinancialDetail(documento: Pick<DocumentoFinanceiro, "id">) {
     setSelectedFinanceiroId(documento.id);
     setDetailLoading(true);
     setMessage(null);
@@ -462,6 +504,7 @@ export default function PendentesView() {
       closeReceipt();
       setNotice(`${financialReference(created)} emitido por ${formatMoney(created.valorPagamentoLiquido)} ${created.moedaId}. Pendentes atualizados.`);
       await loadTesouraria();
+      await loadFinanceiros();
       await openFinancialDetail(created);
       if (postAction === "PDF") {
         await openFinancialPdf(created);
@@ -488,6 +531,7 @@ export default function PendentesView() {
       if (!window.confirm(`Anular este recibo? Os valores liquidados em ${diagnostico.referencia} voltarão a ficar pendentes nos documentos respetivos.`)) return;
       await sendJson<DocumentoFinanceiro>(`/api/documentos-financeiros/${documento.id}/anular`, null);
       await loadTesouraria();
+      await loadFinanceiros();
       const updated = await fetchJson<DocumentoFinanceiro>(`/api/documentos-financeiros/${documento.id}`);
       setSelectedFinanceiro(updated);
       setNotice(`${diagnostico.referencia} anulado. Os pendentes foram repostos.`);
@@ -507,7 +551,6 @@ export default function PendentesView() {
       const url = URL.createObjectURL(await response.blob());
       window.open(url, "_blank", "noopener,noreferrer");
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      setFinanceiros((current) => current.map((item) => item.id === documento.id ? { ...item, impresso: true } : item));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível gerar o PDF do recibo.");
     } finally {
@@ -546,13 +589,6 @@ export default function PendentesView() {
   const pagedPendentes = filteredPendentes.slice(pendentesPage * pendentesPageSize, (pendentesPage + 1) * pendentesPageSize);
   const subtotalPendentes = summarizePendentes(pagedPendentes);
   const totalFilteredPendentes = summarizePendentes(filteredPendentes);
-  const filteredFinanceiros = useMemo(() => financeiros.filter((documento) => {
-    if (!showAnnulledFinanceiros && documento.anulado) return false;
-    if (financeiroDateFrom && documento.dataEmissao < financeiroDateFrom) return false;
-    if (financeiroDateTo && documento.dataEmissao > financeiroDateTo) return false;
-    return true;
-  }), [financeiroDateFrom, financeiroDateTo, financeiros, showAnnulledFinanceiros]);
-  const pagedFinanceiros = filteredFinanceiros.slice(financeirosPage * financeirosPageSize, (financeirosPage + 1) * financeirosPageSize);
 
   useEffect(() => {
     setPendentesPage(0);
@@ -563,14 +599,6 @@ export default function PendentesView() {
     if (pendentesPage > lastPage) setPendentesPage(lastPage);
   }, [filteredPendentes.length, pendentesPage, pendentesPageSize]);
 
-  useEffect(() => {
-    setFinanceirosPage(0);
-  }, [financeiroDateFrom, financeiroDateTo, showAnnulledFinanceiros]);
-
-  useEffect(() => {
-    const lastPage = Math.max(0, Math.ceil(filteredFinanceiros.length / financeirosPageSize) - 1);
-    if (financeirosPage > lastPage) setFinanceirosPage(lastPage);
-  }, [filteredFinanceiros.length, financeirosPage, financeirosPageSize]);
   const selectedCliente = selectedFinanceiro ? clientes.find((cliente) => cliente.id === selectedFinanceiro.clienteId) ?? null : null;
   const selectedModo = selectedFinanceiro ? modos.find((modo) => modo.id === selectedFinanceiro.mPagamentoId) ?? null : null;
   const selectedAppliedTotal = selectedFinanceiro ? round6(sum((selectedFinanceiro.linhas ?? []).map((linha) => linha.valorALiquidar))) : 0;
@@ -599,15 +627,15 @@ export default function PendentesView() {
         <h2>Recebimentos emitidos</h2>
         <div className="tuuli-toolbar tuuli-receipts-toolbar tuuli-receipts-issued-toolbar">
           <div className="tuuli-receipts-date-filters">
-            <label><span>Data inicial</span><input max={financeiroDateTo || undefined} onChange={(event) => setFinanceiroDateFrom(event.target.value)} type="date" value={financeiroDateFrom}/></label>
-            <label><span>Data final</span><input min={financeiroDateFrom || undefined} onChange={(event) => setFinanceiroDateTo(event.target.value)} type="date" value={financeiroDateTo}/></label>
-            <label className="tuuli-inline-control"><input checked={showAnnulledFinanceiros} onChange={(event) => setShowAnnulledFinanceiros(event.target.checked)} type="checkbox"/><span>Mostrar anulados</span></label>
+            <label><span>Data inicial</span><input max={financeiroDateTo || undefined} onChange={(event) => { setFinanceirosPage(0); setFinanceiroDateFrom(event.target.value); }} type="date" value={financeiroDateFrom}/></label>
+            <label><span>Data final</span><input min={financeiroDateFrom || undefined} onChange={(event) => { setFinanceirosPage(0); setFinanceiroDateTo(event.target.value); }} type="date" value={financeiroDateTo}/></label>
+            <label className="tuuli-inline-control"><input checked={showAnnulledFinanceiros} onChange={(event) => { setFinanceirosPage(0); setShowAnnulledFinanceiros(event.target.checked); }} type="checkbox"/><span>Mostrar anulados</span></label>
           </div>
-          <div className="tuuli-receipts-toolbar-actions"><span className="tuuli-meta">{filteredFinanceiros.length} documentos</span><button className="fac-ghost-button tuuli-tool-action" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div>
+          <div className="tuuli-receipts-toolbar-actions"><span className="tuuli-meta">{financeirosTotalElements} {financeirosTotalElements === 1 ? "documento" : "documentos"}</span><button className="fac-ghost-button tuuli-tool-action" onClick={() => setFinanceiroColumnsOpen((current) => !current)} type="button">Colunas ({financeiroColumns.visibleColumns.length})</button></div>
         </div>
         <ColumnSelector columns={financeiroColumns.columns} open={financeiroColumnsOpen} onMove={financeiroColumns.moveColumn} onReset={financeiroColumns.resetColumns} onToggle={financeiroColumns.toggleColumn}/>
-        <div className="tuuli-table-surface tuuli-receipts-table-surface"><table className="tuuli-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th className={receiptColumnClass(column.key)} key={column.key}>{column.label}</th>)}</tr></thead><tbody>{pagedFinanceiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td className={receiptColumnClass(column.key)} key={column.key}>{financeiroColumnValue(documento, column.key, openFinancialDetail)}</td>)}</tr>)}{!loading && filteredFinanceiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length}>Sem documentos financeiros para mostrar neste período.</td></tr>}</tbody></table></div>
-        {filteredFinanceiros.length > 0 && <div className="tuuli-pagination"><span>{filteredFinanceiros.length} {filteredFinanceiros.length === 1 ? "documento" : "documentos"}</span><Paginator first={financeirosPage * financeirosPageSize} onPageChange={(event) => { setFinanceirosPage(event.page); setFinanceirosPageSize(event.rows); }} rows={financeirosPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filteredFinanceiros.length}/></div>}
+        <div aria-busy={financeirosLoading} className="tuuli-table-surface tuuli-receipts-table-surface"><table className="tuuli-table"><thead><tr>{financeiroColumns.visibleColumns.map((column) => <th className={receiptColumnClass(column.key)} key={column.key}>{column.label}</th>)}</tr></thead><tbody>{financeiros.map((documento) => <tr key={documento.id}>{financeiroColumns.visibleColumns.map((column) => <td className={receiptColumnClass(column.key)} key={column.key}>{financeiroColumnValue(documento, column.key, openFinancialDetail)}</td>)}</tr>)}{!financeirosLoading && financeiros.length === 0 && <tr><td colSpan={financeiroColumns.visibleColumns.length}>Sem documentos financeiros para mostrar neste período.</td></tr>}</tbody></table></div>
+        {financeirosTotalPages > 1 && <div className="tuuli-pagination"><span>{financeirosTotalElements} {financeirosTotalElements === 1 ? "documento" : "documentos"}</span><Paginator first={financeirosPage * financeirosPageSize} onPageChange={(event) => { setFinanceirosPage(event.rows === financeirosPageSize ? event.page : 0); setFinanceirosPageSize(event.rows); }} rows={financeirosPageSize} rowsPerPageOptions={[20, 50]} totalRecords={financeirosTotalElements}/></div>}
       </section>
 
       <section className="tuuli-receipts-section tuuli-receipts-current-account">
@@ -738,10 +766,10 @@ function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: 
 function estado(item: Pendente) { if (Number(item.valorPendente) <= 0) return "LIQUIDADO"; if (item.dataVencimento < todayIso()) return "VENCIDO"; if (Number(item.valorPendente) < Number(item.valorDocumento)) return "PARCIAL"; return "ABERTO"; }
 function referencia(item: Pendente) { return `${item.tipoDocumentoId} ${item.serieDocumento}/${item.numeroDocumento}`; }
 function pendenteColumnValue(item: Pendente, key: string) { switch (key) { case "documento": return referencia(item); case "cliente": return item.clienteId; case "emissao": return datePt(item.dataDocumento); case "vencimento": return datePt(item.dataVencimento); case "moeda": return item.moedaId; case "original": return `${formatMoney(item.valorDocumento)} ${item.moedaId}`; case "pendente": return `${formatMoney(item.valorPendente)} ${item.moedaId}`; case "estado": return <span className={`fac-status tuuli-status-${estado(item).toLowerCase()}`}>{estado(item)}</span>; default: return "-"; } }
-function financeiroColumnValue(documento: DocumentoFinanceiro, key: string, onOpen: (documento: DocumentoFinanceiro) => void) { switch (key) { case "documento": return <button className="fac-table-link tuuli-receipt-link" onClick={() => onOpen(documento)} type="button">{financialReference(documento)}</button>; case "cliente": return documento.clienteId; case "data": return datePt(documento.dataEmissao); case "modo": return documento.mPagamentoId; case "moeda": return documento.moedaId; case "liquido": return `${formatMoney(documento.valorPagamentoLiquido)} ${documento.moedaId}`; case "emissor": return documento.emissorId; case "estado": return <span className={`fac-status ${documento.anulado ? "tuuli-status-anulado" : "tuuli-status-ativo"}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span>; default: return "-"; } }
+function financeiroColumnValue(documento: DocumentoFinanceiroResumo, key: string, onOpen: (documento: Pick<DocumentoFinanceiro, "id">) => void) { switch (key) { case "documento": return <button className="fac-table-link tuuli-receipt-link" onClick={() => onOpen(documento)} type="button">{financialReference(documento)}</button>; case "cliente": return documento.clienteId; case "data": return datePt(documento.dataEmissao); case "modo": return documento.mPagamentoId; case "moeda": return documento.moedaId; case "liquido": return `${formatMoney(documento.valorPagamentoLiquido)} ${documento.moedaId}`; case "emissor": return documento.emissorId; case "estado": return <span className={`fac-status ${documento.anulado ? "tuuli-status-anulado" : "tuuli-status-ativo"}`}>{documento.anulado ? "ANULADO" : "EMITIDO"}</span>; default: return "-"; } }
 function receiptColumnClass(key: string) { return [key === "documento" || key === "liquido" ? "tuuli-cell-primary" : "tuuli-cell-secondary", key === "liquido" ? "tuuli-cell-numeric" : ""].filter(Boolean).join(" "); }
 function pendingColumnClass(key: string) { return [key === "documento" || key === "original" || key === "pendente" ? "tuuli-cell-primary" : "tuuli-cell-secondary", key === "original" || key === "pendente" ? "tuuli-cell-numeric" : ""].filter(Boolean).join(" "); }
-function financialReference(documento: DocumentoFinanceiro) { return `${documento.tipoDocumentoId} ${documento.serie}/${documento.numeroDocumento}`; }
+function financialReference(documento: Pick<DocumentoFinanceiro, "tipoDocumentoId" | "serie" | "numeroDocumento">) { return `${documento.tipoDocumentoId} ${documento.serie}/${documento.numeroDocumento}`; }
 function receiptStatusLabel(documento: DocumentoFinanceiro) { return documento.anulado ? "Anulado" : "Emitido"; }
 function lineReference(linha: LinhaFinanceira) { return `${linha.tipoDocumentoId} ${linha.serieDocumento}/${linha.numeroDocumento}`; }
 function datePt(value: string) { return value ? value.split("-").reverse().join("/") : "-"; }

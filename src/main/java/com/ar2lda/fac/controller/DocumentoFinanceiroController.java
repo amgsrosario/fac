@@ -4,6 +4,7 @@ import com.ar2lda.fac.controller.dto.DocumentoFinanceiroCreateDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDiagnosticoDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDto;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroImpressaoDto;
+import com.ar2lda.fac.controller.dto.DocumentoFinanceiroResumoDto;
 import com.ar2lda.fac.service.DocumentoFinanceiroService;
 import com.ar2lda.fac.service.DocumentoFinanceiroPdfService;
 import jakarta.validation.Valid;
@@ -19,8 +20,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.net.URI;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/documentos-financeiros")
@@ -40,6 +44,16 @@ public class DocumentoFinanceiroController implements GenericController {
     @GetMapping
     public Page<DocumentoFinanceiroDto> list(Pageable pageable) {
         return service.list(pageable);
+    }
+
+    @GetMapping("/resumos")
+    public Page<DocumentoFinanceiroResumoDto> listResumos(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
+            @RequestParam(defaultValue = "false") boolean mostrarAnulados,
+            Pageable pageable
+    ) {
+        return service.listResumos(dataInicial, dataFinal, mostrarAnulados, pageable);
     }
 
     @GetMapping("/{id}")
