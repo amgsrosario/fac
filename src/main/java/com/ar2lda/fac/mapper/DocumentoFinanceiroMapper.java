@@ -49,6 +49,9 @@ public interface DocumentoFinanceiroMapper {
                 linha.getId(),
                 linha.getNumeroLinha(),
                 linha.getPendente() != null ? linha.getPendente().getId() : null,
+                linha.getPendente() != null && linha.getPendente().getDocumentoComercial() != null
+                        ? linha.getPendente().getDocumentoComercial().getId()
+                        : null,
                 linha.getDataDocumento(),
                 linha.getDataVencimento(),
                 linha.getTipoDocumento() != null ? linha.getTipoDocumento().getId() : null,

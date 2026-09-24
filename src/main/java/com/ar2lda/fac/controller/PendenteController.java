@@ -1,11 +1,13 @@
 package com.ar2lda.fac.controller;
 
 import com.ar2lda.fac.controller.dto.ContaCorrenteClienteDiagnosticoDto;
+import com.ar2lda.fac.controller.dto.ContaCorrentePendentePageDto;
 import com.ar2lda.fac.controller.dto.PendenteDto;
 import com.ar2lda.fac.service.PendenteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +31,16 @@ public class PendenteController {
     @GetMapping("/{id}")
     public PendenteDto getById(@PathVariable Long id) {
         return service.getById(id);
+    }
+
+    @GetMapping("/conta-corrente")
+    public ContaCorrentePendentePageDto contaCorrente(
+            @RequestParam(name = "clienteId", required = false) Long clienteId,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "vencimento", defaultValue = "all") String vencimento,
+            @RequestParam(name = "excluirLiquidados", defaultValue = "false") boolean excluirLiquidados,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return service.contaCorrente(clienteId, search, vencimento, excluirLiquidados, pageable);
     }
 
     @GetMapping("/clientes/{clienteId}/abertos")

@@ -7,6 +7,7 @@ public record LinhaDocumentoFinanceiroDto(
         Long id,
         Integer numeroLinha,
         Long pendenteId,
+        Long documentoComercialId,
         LocalDate dataDocumento,
         LocalDate dataVencimento,
         String tipoDocumentoId,

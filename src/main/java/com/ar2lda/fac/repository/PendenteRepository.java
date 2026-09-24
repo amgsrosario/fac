@@ -1,6 +1,10 @@
 package com.ar2lda.fac.repository;
 
 import com.ar2lda.fac.model.Pendente;
+import com.ar2lda.fac.controller.dto.ContaCorrentePendenteResumoMoedaDto;
+import com.ar2lda.fac.controller.dto.PendenteDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -23,6 +27,98 @@ public interface PendenteRepository extends JpaRepository<Pendente, Long> {
     Optional<Pendente> findByDocumentoComercialId(Long documentoComercialId);
 
     List<Pendente> findByClienteIdOrderByDataDocumentoAscNumeroDocumentoAsc(Long clienteId);
+
+    @Query(value = """
+            select new com.ar2lda.fac.controller.dto.PendenteDto(
+                p.id, d.id, c.id, t.id, p.numeroDocumento, p.serieDocumento,
+                p.valorDocumento, p.valorPendente, p.dataDocumento, p.dataVencimento, m.id)
+            from Pendente p
+            join p.documentoComercial d
+            join p.cliente c
+            join p.tipoDocumento t
+            join p.moeda m
+            where (:clienteId is null or c.id = :clienteId)
+              and (:excluirLiquidados = false or p.valorPendente > 0)
+              and (:vencimento = 'all'
+                or (:vencimento = 'overdue' and p.valorPendente > 0 and p.dataVencimento < :hoje)
+                or (:vencimento = 'not-overdue' and not (p.valorPendente > 0 and p.dataVencimento < :hoje)))
+              and (:searchEmpty = true
+                or lower(concat(t.id, concat(' ', concat(p.serieDocumento, concat('/', str(p.numeroDocumento)))))) like concat('%', :search, '%')
+                or str(c.id) like concat('%', :search, '%')
+                or str(p.id) like concat('%', :search, '%')
+                or (:searchLiquidado = true and p.valorPendente <= 0)
+                or (:searchVencido = true and p.valorPendente > 0 and p.dataVencimento < :hoje)
+                or (:searchParcial = true and p.valorPendente > 0 and p.valorPendente < p.valorDocumento and p.dataVencimento >= :hoje)
+                or (:searchAberto = true and p.valorPendente = p.valorDocumento and p.dataVencimento >= :hoje))
+            """, countQuery = """
+            select count(p.id)
+            from Pendente p
+            join p.cliente c
+            join p.tipoDocumento t
+            where (:clienteId is null or c.id = :clienteId)
+              and (:excluirLiquidados = false or p.valorPendente > 0)
+              and (:vencimento = 'all'
+                or (:vencimento = 'overdue' and p.valorPendente > 0 and p.dataVencimento < :hoje)
+                or (:vencimento = 'not-overdue' and not (p.valorPendente > 0 and p.dataVencimento < :hoje)))
+              and (:searchEmpty = true
+                or lower(concat(t.id, concat(' ', concat(p.serieDocumento, concat('/', str(p.numeroDocumento)))))) like concat('%', :search, '%')
+                or str(c.id) like concat('%', :search, '%')
+                or str(p.id) like concat('%', :search, '%')
+                or (:searchLiquidado = true and p.valorPendente <= 0)
+                or (:searchVencido = true and p.valorPendente > 0 and p.dataVencimento < :hoje)
+                or (:searchParcial = true and p.valorPendente > 0 and p.valorPendente < p.valorDocumento and p.dataVencimento >= :hoje)
+                or (:searchAberto = true and p.valorPendente = p.valorDocumento and p.dataVencimento >= :hoje))
+            """)
+    Page<PendenteDto> findContaCorrente(
+            @Param("clienteId") Long clienteId,
+            @Param("search") String search,
+            @Param("searchEmpty") boolean searchEmpty,
+            @Param("searchLiquidado") boolean searchLiquidado,
+            @Param("searchVencido") boolean searchVencido,
+            @Param("searchParcial") boolean searchParcial,
+            @Param("searchAberto") boolean searchAberto,
+            @Param("vencimento") String vencimento,
+            @Param("excluirLiquidados") boolean excluirLiquidados,
+            @Param("hoje") LocalDate hoje,
+            Pageable pageable
+    );
+
+    @Query("""
+            select new com.ar2lda.fac.controller.dto.ContaCorrentePendenteResumoMoedaDto(
+                m.id, count(p.id), sum(case when p.valorPendente > 0 then 1 else 0 end),
+                sum(p.valorDocumento), sum(p.valorPendente))
+            from Pendente p
+            join p.cliente c
+            join p.tipoDocumento t
+            join p.moeda m
+            where (:clienteId is null or c.id = :clienteId)
+              and (:excluirLiquidados = false or p.valorPendente > 0)
+              and (:vencimento = 'all'
+                or (:vencimento = 'overdue' and p.valorPendente > 0 and p.dataVencimento < :hoje)
+                or (:vencimento = 'not-overdue' and not (p.valorPendente > 0 and p.dataVencimento < :hoje)))
+              and (:searchEmpty = true
+                or lower(concat(t.id, concat(' ', concat(p.serieDocumento, concat('/', str(p.numeroDocumento)))))) like concat('%', :search, '%')
+                or str(c.id) like concat('%', :search, '%')
+                or str(p.id) like concat('%', :search, '%')
+                or (:searchLiquidado = true and p.valorPendente <= 0)
+                or (:searchVencido = true and p.valorPendente > 0 and p.dataVencimento < :hoje)
+                or (:searchParcial = true and p.valorPendente > 0 and p.valorPendente < p.valorDocumento and p.dataVencimento >= :hoje)
+                or (:searchAberto = true and p.valorPendente = p.valorDocumento and p.dataVencimento >= :hoje))
+            group by m.id
+            order by m.id
+            """)
+    List<ContaCorrentePendenteResumoMoedaDto> summarizeContaCorrente(
+            @Param("clienteId") Long clienteId,
+            @Param("search") String search,
+            @Param("searchEmpty") boolean searchEmpty,
+            @Param("searchLiquidado") boolean searchLiquidado,
+            @Param("searchVencido") boolean searchVencido,
+            @Param("searchParcial") boolean searchParcial,
+            @Param("searchAberto") boolean searchAberto,
+            @Param("vencimento") String vencimento,
+            @Param("excluirLiquidados") boolean excluirLiquidados,
+            @Param("hoje") LocalDate hoje
+    );
 
     @Query("""
             select p

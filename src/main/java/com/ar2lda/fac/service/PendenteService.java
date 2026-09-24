@@ -1,6 +1,8 @@
 package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.ContaCorrenteClienteDiagnosticoDto;
+import com.ar2lda.fac.controller.dto.ContaCorrentePendentePageDto;
+import com.ar2lda.fac.controller.dto.ContaCorrentePendenteResumoMoedaDto;
 import com.ar2lda.fac.controller.dto.ContaCorrenteDocumentoDto;
 import com.ar2lda.fac.controller.dto.ContaCorrenteMoedaResumoDto;
 import com.ar2lda.fac.controller.dto.ContaCorrenteMovimentoDto;
@@ -18,11 +20,14 @@ import com.ar2lda.fac.repository.LinhaDocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.PendenteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -37,6 +42,7 @@ public class PendenteService {
     private final PendenteRepository repository;
     private final LinhaDocumentoFinanceiroRepository linhaDocumentoFinanceiroRepository;
     private final ClienteRepository clienteRepository;
+    private final Clock clock;
     private final PendenteMapper mapper;
 
     public Page<PendenteDto> list(Pageable pageable) {
@@ -46,6 +52,40 @@ public class PendenteService {
     public PendenteDto getById(Long id) {
         return mapper.toDTO(repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Pendente nao encontrado: " + id)));
+    }
+
+    @Transactional(readOnly = true)
+    public ContaCorrentePendentePageDto contaCorrente(Long clienteId, String search, String vencimento,
+                                                      boolean excluirLiquidados, Pageable pageable) {
+        String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
+        String normalizedVencimento = switch (vencimento == null ? "all" : vencimento) {
+            case "overdue", "not-overdue" -> vencimento;
+            default -> "all";
+        };
+        LocalDate hoje = LocalDate.now(clock);
+        int size = pageable.getPageSize() == 50 ? 50 : 20;
+        Pageable normalizedPageable = PageRequest.of(
+                Math.max(0, pageable.getPageNumber()),
+                size,
+                Sort.by(Sort.Order.desc("dataDocumento"), Sort.Order.desc("id"))
+        );
+        boolean searchEmpty = normalizedSearch.isEmpty();
+        boolean searchLiquidado = !searchEmpty && "liquidado".contains(normalizedSearch);
+        boolean searchVencido = !searchEmpty && "vencido".contains(normalizedSearch);
+        boolean searchParcial = !searchEmpty && "parcial".contains(normalizedSearch);
+        boolean searchAberto = !searchEmpty && "aberto".contains(normalizedSearch);
+        Page<PendenteDto> page = repository.findContaCorrente(
+                clienteId, normalizedSearch, searchEmpty, searchLiquidado, searchVencido,
+                searchParcial, searchAberto, normalizedVencimento, excluirLiquidados, hoje, normalizedPageable
+        );
+        List<ContaCorrentePendenteResumoMoedaDto> totais = repository.summarizeContaCorrente(
+                clienteId, normalizedSearch, searchEmpty, searchLiquidado, searchVencido,
+                searchParcial, searchAberto, normalizedVencimento, excluirLiquidados, hoje
+        );
+        return new ContaCorrentePendentePageDto(
+                page.getContent(), page.getTotalElements(), page.getTotalPages(),
+                page.getNumber(), page.getSize(), totais
+        );
     }
 
     @Transactional(readOnly = true)

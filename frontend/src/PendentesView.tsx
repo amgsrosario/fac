@@ -7,6 +7,8 @@ import { EntityLookupField, type EntityLookupColumn, type EntityLookupSearchFiel
 import { money as formatMoney } from "./ui/tuuli/format";
 
 type Page<T> = { content: T[]; totalElements: number; totalPages: number };
+type PendingSummaryValue = { moedaId: string; quantidade: number; quantidadeAbertos: number; valorDocumento: number; valorPendente: number };
+type CurrentAccountPage = Page<Pendente> & { number: number; size: number; totais: PendingSummaryValue[] };
 type Pendente = {
   id: number;
   documentoComercialId: number;
@@ -56,6 +58,7 @@ type LinhaFinanceira = {
   id: number;
   numeroLinha: number;
   pendenteId: number;
+  documentoComercialId?: number | null;
   dataDocumento: string;
   dataVencimento: string;
   tipoDocumentoId: string;
@@ -117,6 +120,13 @@ export default function PendentesView() {
   const newReceiptButtonRef = useRef<HTMLButtonElement | null>(null);
   const receiptSubmittingRef = useRef(false);
   const receiptPendentesRequestRef = useRef(0);
+  const [listPendentes, setListPendentes] = useState<Pendente[]>([]);
+  const [listPendentesTotalElements, setListPendentesTotalElements] = useState(0);
+  const [listPendentesTotalPages, setListPendentesTotalPages] = useState(0);
+  const [listPendentesTotals, setListPendentesTotals] = useState<PendingSummaryValue[]>([]);
+  const [listPendentesLoading, setListPendentesLoading] = useState(false);
+  const [listPendentesError, setListPendentesError] = useState<string | null>(null);
+  const listPendentesRequestRef = useRef(0);
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
   const [receiptPendentesLoading, setReceiptPendentesLoading] = useState(false);
   const [receiptPendentesError, setReceiptPendentesError] = useState<string | null>(null);
@@ -142,7 +152,7 @@ export default function PendentesView() {
   const [dueFilter, setDueFilter] = useState<"all" | "overdue" | "not-overdue">("all");
   const [excludeSettled, setExcludeSettled] = useState(false);
   const [pendentesPage, setPendentesPage] = useState(0);
-  const [pendentesPageSize, setPendentesPageSize] = useState(10);
+  const [pendentesPageSize, setPendentesPageSize] = useState(20);
   const [exportingPendentes, setExportingPendentes] = useState<"pdf" | "xlsx" | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -171,6 +181,11 @@ export default function PendentesView() {
   }, [financeirosPage, financeirosPageSize, financeiroDateFrom, financeiroDateTo, showAnnulledFinanceiros]);
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => { void loadContaCorrente(); }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [pendentesPage, pendentesPageSize, dueFilter, excludeSettled, search]);
+
+  useEffect(() => {
     if (!receiptOpen) return;
     setClientFocusRequest((current) => current + 1);
   }, [receiptOpen]);
@@ -193,6 +208,40 @@ export default function PendentesView() {
       setMessage(error instanceof Error ? error.message : "Não foi possível carregar a tesouraria.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadContaCorrente() {
+    const requestId = ++listPendentesRequestRef.current;
+    setListPendentesLoading(true);
+    setListPendentesError(null);
+    try {
+      const params = new URLSearchParams({
+        page: String(pendentesPage),
+        size: String(pendentesPageSize),
+        vencimento: dueFilter,
+        excluirLiquidados: String(excludeSettled)
+      });
+      if (search.trim()) params.set("search", search.trim());
+      const result = await fetchJson<CurrentAccountPage>(`/api/pendentes/conta-corrente?${params}`);
+      if (requestId !== listPendentesRequestRef.current) return;
+      if (result.content.length === 0 && result.totalElements > 0 && pendentesPage > 0) {
+        setPendentesPage(Math.max(0, result.totalPages - 1));
+        return;
+      }
+      setListPendentes(result.content);
+      setListPendentesTotalElements(result.totalElements);
+      setListPendentesTotalPages(result.totalPages);
+      setListPendentesTotals(result.totais);
+    } catch (error) {
+      if (requestId !== listPendentesRequestRef.current) return;
+      setListPendentes([]);
+      setListPendentesTotalElements(0);
+      setListPendentesTotalPages(0);
+      setListPendentesTotals([]);
+      setListPendentesError(error instanceof Error ? error.message : "Não foi possível carregar a conta corrente.");
+    } finally {
+      if (requestId === listPendentesRequestRef.current) setListPendentesLoading(false);
     }
   }
 
@@ -601,6 +650,7 @@ export default function PendentesView() {
       closeReceipt();
       setNotice(`${financialReference(created)} emitido por ${formatMoney(created.valorPagamentoLiquido)} ${created.moedaId}. Pendentes atualizados.`);
       await loadTesouraria();
+      await loadContaCorrente();
       await loadFinanceiros();
       await openFinancialDetail(created);
       if (postAction === "PDF") {
@@ -628,6 +678,7 @@ export default function PendentesView() {
       if (!window.confirm(`Anular este recibo? Os valores liquidados em ${diagnostico.referencia} voltarão a ficar pendentes nos documentos respetivos.`)) return;
       await sendJson<DocumentoFinanceiro>(`/api/documentos-financeiros/${documento.id}/anular`, null);
       await loadTesouraria();
+      await loadContaCorrente();
       await loadFinanceiros();
       const updated = await fetchJson<DocumentoFinanceiro>(`/api/documentos-financeiros/${documento.id}`);
       setSelectedFinanceiro(updated);
@@ -655,7 +706,8 @@ export default function PendentesView() {
     }
   }
 
-  const abertas = pendentes.filter((item) => Number(item.valorPendente) > 0);
+  const totalPendenteConta = round6(sum(listPendentesTotals.map((item) => Number(item.valorPendente) || 0)));
+  const totalAbertosConta = listPendentesTotals.reduce((total, item) => total + item.quantidadeAbertos, 0);
   const receiptCliente = selectedReceiptClient;
   const receiptPendentes = pendentes
     .filter((item) => !form.moedaId || item.moedaId === form.moedaId)
@@ -672,35 +724,23 @@ export default function PendentesView() {
   const canIssueReceipt = !loading && !receiptSubmitting && !validateReceipt(form, receiptPendentes, allocations);
   const issueButtonLabel = receiptSubmitting ? "A emitir..." : "Emitir recebimento";
   const issuePdfButtonLabel = receiptSubmitting ? "A emitir..." : "Emitir e abrir PDF";
-  const filteredPendentes = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return pendentes.filter((item) => {
-      const itemEstado = estado(item);
-      if (excludeSettled && itemEstado === "LIQUIDADO") return false;
-      if (dueFilter === "overdue" && itemEstado !== "VENCIDO") return false;
-      if (dueFilter === "not-overdue" && itemEstado === "VENCIDO") return false;
-      return !term || [referencia(item), String(item.clienteId), String(item.id), itemEstado].some((value) => value.toLowerCase().includes(term));
-    });
-  }, [dueFilter, excludeSettled, pendentes, search]);
-  const pagedPendentes = filteredPendentes.slice(pendentesPage * pendentesPageSize, (pendentesPage + 1) * pendentesPageSize);
-  const subtotalPendentes = summarizePendentes(pagedPendentes);
-  const totalFilteredPendentes = summarizePendentes(filteredPendentes);
+  const subtotalPendentes = summarizePendentes(listPendentes);
 
   useEffect(() => {
     setPendentesPage(0);
   }, [dueFilter, excludeSettled, search]);
-
-  useEffect(() => {
-    const lastPage = Math.max(0, Math.ceil(filteredPendentes.length / pendentesPageSize) - 1);
-    if (pendentesPage > lastPage) setPendentesPage(lastPage);
-  }, [filteredPendentes.length, pendentesPage, pendentesPageSize]);
 
   const selectedCliente = selectedFinanceiro ? clientes.find((cliente) => cliente.id === selectedFinanceiro.clienteId) ?? null : null;
   const selectedModo = selectedFinanceiro ? modos.find((modo) => modo.id === selectedFinanceiro.mPagamentoId) ?? null : null;
   const selectedAppliedTotal = selectedFinanceiro ? round6(sum((selectedFinanceiro.linhas ?? []).map((linha) => linha.valorALiquidar))) : 0;
   const selectedReceiptDifference = selectedFinanceiro ? round6(Number(selectedFinanceiro.valorPagamentoLiquido || 0) - selectedAppliedTotal) : 0;
   const selectedReceiptStatus = selectedFinanceiro ? receiptStatusLabel(selectedFinanceiro) : "";
-  const pendenteById = useMemo(() => new Map(pendentes.map((pendente) => [pendente.id, pendente])), [pendentes]);
+  const pendenteById = useMemo(() => new Map<number, { documentoComercialId: number }>([
+    ...listPendentes.map((pendente) => [pendente.id, { documentoComercialId: pendente.documentoComercialId }] as const),
+    ...(selectedFinanceiro?.linhas ?? [])
+      .filter((linha) => linha.documentoComercialId != null)
+      .map((linha) => [linha.pendenteId, { documentoComercialId: linha.documentoComercialId as number }] as const),
+  ]), [listPendentes, selectedFinanceiro]);
 
   return <>
     {notice && <div className="fac-editor-message" role="status"><p>{notice}</p></div>}
@@ -710,8 +750,8 @@ export default function PendentesView() {
       <section className="tuuli-receipts-context" aria-label="Contexto de recebimentos">
         <div className="tuuli-metric">
           <span>Saldo em aberto</span>
-          <strong>{formatMoney(sum(abertas.map((item) => item.valorPendente)))} EUR</strong>
-          <small>{abertas.length} pendentes ativos</small>
+          <strong>{formatMoney(totalPendenteConta)} EUR</strong>
+          <small>{totalAbertosConta} pendentes no filtro atual</small>
         </div>
         <div className="tuuli-receipts-page-actions">
           <button className="fac-ghost-button tuuli-tool-action" disabled={loading} onClick={loadTesouraria} type="button">Atualizar</button>
@@ -744,13 +784,14 @@ export default function PendentesView() {
           </div>
           <div className="tuuli-receipts-toolbar-actions">
             <div className="tuuli-receipts-export-actions"><button className="fac-ghost-button tuuli-tool-action" disabled={exportingPendentes !== null} onClick={() => exportPendentes("pdf")} type="button">{exportingPendentes === "pdf" ? "A gerar PDF..." : "Exportar PDF"}</button><button className="fac-ghost-button tuuli-tool-action" disabled={exportingPendentes !== null} onClick={() => exportPendentes("xlsx")} type="button">{exportingPendentes === "xlsx" ? "A gerar Excel..." : "Exportar Excel"}</button></div>
-            <div className="tuuli-receipts-meta-actions"><span className="tuuli-meta">{filteredPendentes.length} registos</span><button className="fac-ghost-button tuuli-tool-action" onClick={() => setPendenteColumnsOpen((current) => !current)} type="button">Colunas ({pendenteColumns.visibleColumns.length})</button></div>
+            <div className="tuuli-receipts-meta-actions"><span className="tuuli-meta">{listPendentesTotalElements} {listPendentesTotalElements === 1 ? "registo" : "registos"}</span><button className="fac-ghost-button tuuli-tool-action" onClick={() => setPendenteColumnsOpen((current) => !current)} type="button">Colunas ({pendenteColumns.visibleColumns.length})</button></div>
           </div>
         </div>
+        {listPendentesError && <p className="fac-message" role="alert">{listPendentesError} <button className="fac-table-link" onClick={() => void loadContaCorrente()} type="button">Tentar novamente</button></p>}
         <ColumnSelector columns={pendenteColumns.columns} open={pendenteColumnsOpen} onMove={pendenteColumns.moveColumn} onReset={pendenteColumns.resetColumns} onToggle={pendenteColumns.toggleColumn}/>
-        <div className="tuuli-table-surface tuuli-receipts-table-surface"><table className="tuuli-table"><thead><tr>{pendenteColumns.visibleColumns.map((column) => <th className={pendingColumnClass(column.key)} key={column.key}>{column.label}</th>)}</tr></thead><tbody>{pagedPendentes.map((item) => <tr key={item.id}>{pendenteColumns.visibleColumns.map((column) => <td className={pendingColumnClass(column.key)} key={column.key}>{pendenteColumnValue(item, column.key)}</td>)}</tr>)}{!loading && filteredPendentes.length === 0 && <tr><td colSpan={pendenteColumns.visibleColumns.length}>Sem pendentes para mostrar.</td></tr>}</tbody></table></div>
-        {filteredPendentes.length > 0 && <div className="tuuli-receipts-summary"><PendingSummary label="Subtotal da página" values={subtotalPendentes}/><PendingSummary label="Total filtrado" values={totalFilteredPendentes}/></div>}
-        {filteredPendentes.length > 0 && <div className="tuuli-pagination"><span>{filteredPendentes.length} {filteredPendentes.length === 1 ? "registo" : "registos"}</span><Paginator first={pendentesPage * pendentesPageSize} onPageChange={(event) => { setPendentesPage(event.page); setPendentesPageSize(event.rows); }} rows={pendentesPageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={filteredPendentes.length}/></div>}
+        <div aria-busy={listPendentesLoading} className="tuuli-table-surface tuuli-receipts-table-surface"><table className="tuuli-table"><thead><tr>{pendenteColumns.visibleColumns.map((column) => <th className={pendingColumnClass(column.key)} key={column.key}>{column.label}</th>)}</tr></thead><tbody>{listPendentes.map((item) => <tr key={item.id}>{pendenteColumns.visibleColumns.map((column) => <td className={pendingColumnClass(column.key)} key={column.key}>{pendenteColumnValue(item, column.key)}</td>)}</tr>)}{!listPendentesLoading && listPendentes.length === 0 && <tr><td colSpan={pendenteColumns.visibleColumns.length}>Sem pendentes para mostrar.</td></tr>}</tbody></table></div>
+        {listPendentesTotalElements > 0 && <div className="tuuli-receipts-summary"><PendingSummary label="Subtotal da página" values={subtotalPendentes}/><PendingSummary label="Total filtrado" values={listPendentesTotals.map((item) => [item.moedaId, { count: item.quantidade, original: item.valorDocumento, pending: item.valorPendente }] as [string, { count: number; original: number; pending: number }])}/></div>}
+        {listPendentesTotalPages > 1 && <div className="tuuli-pagination"><span>{listPendentesTotalElements} {listPendentesTotalElements === 1 ? "registo" : "registos"}</span><Paginator first={pendentesPage * pendentesPageSize} onPageChange={(event) => { setPendentesPage(event.rows === pendentesPageSize ? event.page : 0); setPendentesPageSize(event.rows); }} rows={pendentesPageSize} rowsPerPageOptions={[20, 50]} totalRecords={listPendentesTotalElements}/></div>}
       </section>
     </div>}
 

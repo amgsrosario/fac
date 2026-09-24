@@ -1799,6 +1799,84 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void suportaVolumeNoLookupECarregamentoCompletoDePendentes() throws Exception {
+        Cliente clienteVolume = null;
+        for (int index = 1; index <= 25; index++) {
+            Cliente candidato = criarClienteTeste(
+                    "Volume Lookup " + String.format("%02d", index),
+                    String.format("58%07d", index)
+            );
+            emitir(criarDocumentoComPrimeiraLinha(candidato, "2026-04-01"));
+            if (index == 1) {
+                clienteVolume = candidato;
+            }
+        }
+        for (int index = 2; index <= 100; index++) {
+            emitir(criarDocumentoComPrimeiraLinha(clienteVolume, "2026-04-01"));
+        }
+
+        mockMvc.perform(get("/clientes/com-pendentes")
+                        .param("search", "volume lookup")
+                        .param("page", "0")
+                        .param("size", "20")
+                        .param("sort", "nome,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(20)))
+                .andExpect(jsonPath("$.totalElements").value(25))
+                .andExpect(jsonPath("$.totalPages").value(2));
+
+        mockMvc.perform(get("/clientes/com-pendentes")
+                        .param("search", "volume lookup")
+                        .param("page", "1")
+                        .param("size", "20")
+                        .param("sort", "nome,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(5)));
+
+        mockMvc.perform(get("/pendentes/clientes/" + clienteVolume.getId() + "/abertos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(100)));
+
+        mockMvc.perform(get("/pendentes/conta-corrente")
+                        .param("clienteId", clienteVolume.getId().toString())
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(20)))
+                .andExpect(jsonPath("$.totalElements").value(100))
+                .andExpect(jsonPath("$.totalPages").value(5))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totais[0].moedaId").value("EUR"))
+                .andExpect(jsonPath("$.totais[0].quantidade").value(100))
+                .andExpect(jsonPath("$.totais[0].quantidadeAbertos").value(100));
+
+        mockMvc.perform(get("/pendentes/conta-corrente")
+                        .param("clienteId", clienteVolume.getId().toString())
+                        .param("page", "1")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(20)))
+                .andExpect(jsonPath("$.totalElements").value(100));
+
+        mockMvc.perform(get("/pendentes/conta-corrente")
+                        .param("clienteId", clienteVolume.getId().toString())
+                        .param("page", "1")
+                        .param("size", "50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(50)))
+                .andExpect(jsonPath("$.totalPages").value(2));
+
+        mockMvc.perform(get("/pendentes/conta-corrente")
+                        .param("clienteId", clienteVolume.getId().toString())
+                        .param("search", "sem-correspondencia"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(0)))
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totais", hasSize(0)));
+    }
+
+    @Test
     void rejeitaEmissaoSemCodigoAtSemConsumirNumeracao() throws Exception {
         TipoDocumento tipoDocumento = tipoDocumentoRepository.findById("DCT").orElseThrow();
         serieRepository.save(new Serie(tipoDocumento, "SEMAT", "Série sem código AT", null, null));
