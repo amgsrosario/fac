@@ -1,6 +1,7 @@
 package com.ar2lda.fac.controller;
 
 import com.ar2lda.fac.controller.dto.ClienteCreateDto;
+import com.ar2lda.fac.controller.dto.ClienteComPendentesResumoDto;
 import com.ar2lda.fac.controller.dto.ClienteDto;
 import com.ar2lda.fac.controller.dto.ClienteUpdateDto;
 import com.ar2lda.fac.service.ClienteService;
@@ -8,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +34,13 @@ public class ClienteController implements GenericController {
                                  @RequestParam(name = "inativo", required = false) Boolean inativo,
                                  Pageable pageable) {
         return service.list(search, inativo, pageable);
+    }
+
+    @GetMapping("/com-pendentes")
+    public Page<ClienteComPendentesResumoDto> listComPendentes(
+            @RequestParam(name = "search", required = false) String search,
+            @PageableDefault(size = 20, sort = "nome") Pageable pageable) {
+        return service.listComPendentes(search, pageable);
     }
 
     @GetMapping("/{id}")

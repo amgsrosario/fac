@@ -36,8 +36,10 @@ type EntityLookupDialogProps<T extends object> = {
   initialQuery?: string;
   loading?: boolean;
   onHide: () => void;
+  onQueryChange?: (query: string) => void;
   onSelect: (row: T) => void;
   preferenceKey?: string;
+  remoteSearch?: boolean;
   searchFields?: EntityLookupSearchField<T>[];
   selection?: T | null;
   selectionLabel?: (row: T) => ReactNode;
@@ -118,8 +120,9 @@ export function EntityLookupField<T extends object>({
   const suggestions = useMemo(() => {
     const trimmed = query.trim();
     if (!trimmed) return showAllSuggestionsOnEmptyQuery ? dialogProps.value.slice(0, suggestionLimit) : [];
+    if (dialogProps.remoteSearch) return dialogProps.value.slice(0, suggestionLimit);
     return dialogProps.value.filter((row) => matchEntityQuery(row, trimmed, searchFields)).slice(0, suggestionLimit);
-  }, [dialogProps.value, query, searchFields, showAllSuggestionsOnEmptyQuery, suggestionLimit]);
+  }, [dialogProps.remoteSearch, dialogProps.value, query, searchFields, showAllSuggestionsOnEmptyQuery, suggestionLimit]);
 
   useEffect(() => {
     if (selection) {
@@ -347,6 +350,7 @@ export function EntityLookupField<T extends object>({
         {...dialogProps}
         onHide={() => hide()}
         initialQuery={query}
+        onQueryChange={onQueryChange}
         onSelect={(row) => {
           selectRow(row);
           hide(false);
@@ -367,8 +371,10 @@ export function EntityLookupDialog<T extends object>({
   globalFilterFields,
   loading = false,
   onHide,
+  onQueryChange,
   onSelect,
   preferenceKey,
+  remoteSearch = false,
   searchFields: providedSearchFields,
   selection = null,
   selectionLabel,
@@ -394,8 +400,8 @@ export function EntityLookupDialog<T extends object>({
   const visibleColumns = columns.filter((column) => visibleFields.includes(column.field));
   const activeFilterCount = Object.values(columnFilters).filter((value) => value.trim()).length;
   const filteredValue = useMemo(
-    () => value.filter((row) => matchEntityQuery(row, globalFilter, searchFields) && visibleColumns.every((column) => matchColumnFilter(row, column, columnFilters[column.field]))),
-    [columnFilters, globalFilter, searchFields, value, visibleColumns]
+    () => value.filter((row) => (remoteSearch || matchEntityQuery(row, globalFilter, searchFields)) && visibleColumns.every((column) => matchColumnFilter(row, column, columnFilters[column.field]))),
+    [columnFilters, globalFilter, remoteSearch, searchFields, value, visibleColumns]
   );
   const searchRef = useRef<HTMLInputElement>(null);
   const helpPanelRef = useRef<OverlayPanel>(null);
@@ -488,9 +494,9 @@ export function EntityLookupDialog<T extends object>({
       <div className="fac-entity-lookup-toolbar">
         <span className="p-input-icon-left fac-entity-lookup-search">
           <i className="pi pi-search" aria-hidden="true" />
-          <InputText onChange={(event) => setGlobalFilter(event.target.value)} placeholder={searchPlaceholder} ref={searchRef} title={SEARCH_HELP} value={globalFilter} />
+          <InputText onChange={(event) => { setGlobalFilter(event.target.value); onQueryChange?.(event.target.value); }} placeholder={searchPlaceholder} ref={searchRef} title={SEARCH_HELP} value={globalFilter} />
           {globalFilter && (
-            <button aria-label="Limpar pesquisa" className="fac-entity-lookup-clear" onClick={() => setGlobalFilter("")} type="button">
+            <button aria-label="Limpar pesquisa" className="fac-entity-lookup-clear" onClick={() => { setGlobalFilter(""); onQueryChange?.(""); }} type="button">
               <i className="pi pi-times" aria-hidden="true" />
             </button>
           )}

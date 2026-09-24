@@ -65,6 +65,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -1685,6 +1686,116 @@ class DocumentoComercialControllerTests {
                 .andExpect(jsonPath("$.dataDocumento").value("2026-06-06"))
                 .andExpect(jsonPath("$.dataVencimento").value("2026-07-06"))
                 .andExpect(jsonPath("$.moedaId").value("EUR"));
+    }
+
+    @Test
+    void listaClientesComPendentesAbertosComPesquisaPaginacaoEContagem() throws Exception {
+        Cliente segundo = criarClienteTeste("Cliente Alfa Lookup", "509654322");
+        segundo.setEmail("lookup.cliente@fac.test");
+        segundo.setLocalidade("Lisboa Lookup");
+        segundo = clienteRepository.save(segundo);
+        Cliente semPendentes = criarClienteTeste("Cliente Sem Saldo", "509654323");
+        Cliente inativo = criarClienteTeste("Cliente Inativo Lookup", "509654324");
+        inativo.setInativo(true);
+        clienteRepository.save(inativo);
+
+        emitir(criarDocumentoComPrimeiraLinha(segundo, "2026-04-01"));
+        emitir(criarDocumentoComPrimeiraLinha(segundo, "2026-04-02"));
+        emitir(criarDocumentoComPrimeiraLinha(cliente, "2026-04-03"));
+        emitir(criarDocumentoComPrimeiraLinha(inativo, "2026-04-04"));
+
+        for (String search : List.of(
+                segundo.getId().toString(),
+                "alfa lookup",
+                segundo.getNif(),
+                "lookup.cliente@fac.test",
+                "lisboa lookup")) {
+            mockMvc.perform(get("/clientes/com-pendentes")
+                            .param("search", search)
+                            .param("page", "0")
+                            .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content", hasSize(1)))
+                    .andExpect(jsonPath("$.content[0].id").value(segundo.getId()))
+                    .andExpect(jsonPath("$.content[0].codigo").value(segundo.getId()))
+                    .andExpect(jsonPath("$.content[0].nome").value("Cliente Alfa Lookup"))
+                    .andExpect(jsonPath("$.content[0].nif").value("509654322"))
+                    .andExpect(jsonPath("$.content[0].moedaId").value("EUR"))
+                    .andExpect(jsonPath("$.content[0].mPagamentoId").value(mPagamento.getId()))
+                    .andExpect(jsonPath("$.content[0].quantidadePendentes").value(2));
+        }
+
+        mockMvc.perform(get("/clientes/com-pendentes")
+                        .param("page", "0")
+                        .param("size", "1")
+                        .param("sort", "nome,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(2));
+
+        mockMvc.perform(get("/clientes/com-pendentes")
+                        .param("page", "1")
+                        .param("size", "1")
+                        .param("sort", "nome,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.number").value(1));
+
+        mockMvc.perform(get("/clientes/com-pendentes").param("search", semPendentes.getNif()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(0)))
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        mockMvc.perform(get("/clientes/com-pendentes").param("search", inativo.getNif()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(0)));
+    }
+
+    @Test
+    void listaTodosOsPendentesAbertosDoClienteComFiltroEOrdemDeterministica() throws Exception {
+        Cliente outroCliente = criarClienteTeste("Outro Cliente Lookup", "509654325");
+        String maisRecente = criarDocumentoComPrimeiraLinha(cliente, "2026-04-03");
+        String maisAntigo = criarDocumentoComPrimeiraLinha(cliente, "2026-04-01");
+        String parcial = criarDocumentoComPrimeiraLinha(cliente, "2026-04-02");
+        String liquidado = criarDocumentoComPrimeiraLinha(cliente, "2026-04-04");
+        String outro = criarDocumentoComPrimeiraLinha(outroCliente, "2026-04-05");
+        for (String location : List.of(maisAntigo, parcial, maisRecente, liquidado, outro)) {
+            emitir(location);
+        }
+
+        Pendente pendenteParcial = pendenteRepository.findByDocumentoComercialId(documentoId(parcial)).orElseThrow();
+        liquidar(pendenteParcial, cliente, new BigDecimal("5.000000"));
+        Pendente pendenteLiquidado = pendenteRepository.findByDocumentoComercialId(documentoId(liquidado)).orElseThrow();
+        liquidar(pendenteLiquidado, cliente, pendenteLiquidado.getValorPendente());
+
+        mockMvc.perform(get("/pendentes/clientes/" + cliente.getId() + "/abertos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[0].documentoComercialId").value(documentoId(maisAntigo)))
+                .andExpect(jsonPath("$[1].documentoComercialId").value(documentoId(parcial)))
+                .andExpect(jsonPath("$[1].valorPendente").value(7.300000))
+                .andExpect(jsonPath("$[2].documentoComercialId").value(documentoId(maisRecente)));
+
+        mockMvc.perform(get("/pendentes/clientes/" + cliente.getId() + "/abertos")
+                        .param("moedaId", " eur "))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)));
+
+        mockMvc.perform(get("/pendentes/clientes/" + cliente.getId() + "/abertos")
+                        .param("moedaId", "USD"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(get("/pendentes/clientes/" + outroCliente.getId() + "/abertos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].clienteId").value(outroCliente.getId()));
+
+        Cliente semPendentes = criarClienteTeste("Sem Pendentes Lookup", "509654326");
+        mockMvc.perform(get("/pendentes/clientes/" + semPendentes.getId() + "/abertos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test

@@ -49,6 +49,14 @@ public class PendenteService {
     }
 
     @Transactional(readOnly = true)
+    public List<PendenteDto> listAbertosPorCliente(Long clienteId, String moedaId) {
+        String normalizedMoedaId = moedaId == null || moedaId.isBlank() ? null : moedaId.trim().toUpperCase();
+        return repository.findAbertosPorCliente(clienteId, normalizedMoedaId).stream()
+                .map(mapper::toDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ContaCorrenteClienteDiagnosticoDto diagnosticoContaCorrenteCliente(Long clienteId) {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new NotFoundException("Cliente nao encontrado: " + clienteId));

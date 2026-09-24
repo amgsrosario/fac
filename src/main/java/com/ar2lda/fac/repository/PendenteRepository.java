@@ -31,6 +31,26 @@ public interface PendenteRepository extends JpaRepository<Pendente, Long> {
             join fetch p.cliente c
             join fetch p.tipoDocumento t
             join fetch p.moeda m
+            where c.id = :clienteId
+              and p.valorPendente > 0
+              and (:moedaId is null or m.id = :moedaId)
+            order by p.dataVencimento asc nulls last,
+                     p.dataDocumento asc nulls last,
+                     p.numeroDocumento asc,
+                     p.id asc
+            """)
+    List<Pendente> findAbertosPorCliente(
+            @Param("clienteId") Long clienteId,
+            @Param("moedaId") String moedaId
+    );
+
+    @Query("""
+            select p
+            from Pendente p
+            join fetch p.documentoComercial d
+            join fetch p.cliente c
+            join fetch p.tipoDocumento t
+            join fetch p.moeda m
             where d.estado = com.ar2lda.fac.model.EstadoDocumentoComercial.EMITIDO
               and d.anulado = false
               and d.numeroDocumento is not null

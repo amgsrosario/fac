@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/pendentes")
@@ -26,6 +29,13 @@ public class PendenteController {
     @GetMapping("/{id}")
     public PendenteDto getById(@PathVariable Long id) {
         return service.getById(id);
+    }
+
+    @GetMapping("/clientes/{clienteId}/abertos")
+    public List<PendenteDto> listAbertosPorCliente(
+            @PathVariable Long clienteId,
+            @RequestParam(name = "moedaId", required = false) String moedaId) {
+        return service.listAbertosPorCliente(clienteId, moedaId);
     }
 
     @GetMapping("/conta-corrente/clientes/{clienteId}/diagnostico")

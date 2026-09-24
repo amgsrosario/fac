@@ -1,6 +1,7 @@
 package com.ar2lda.fac.service;
 
 import com.ar2lda.fac.controller.dto.ClienteCreateDto;
+import com.ar2lda.fac.controller.dto.ClienteComPendentesResumoDto;
 import com.ar2lda.fac.controller.dto.ClienteDto;
 import com.ar2lda.fac.controller.dto.ClienteUpdateDto;
 import com.ar2lda.fac.exception.ConflictException;
@@ -26,6 +27,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,6 +36,9 @@ import org.springframework.stereotype.Service;
 public class ClienteService {
 
     private static final String RIVA_DEFAULT_ID = "CON";
+    private static final java.util.Set<String> CLIENTES_COM_PENDENTES_SORTS = java.util.Set.of(
+            "id", "nome", "nif", "email", "localidade"
+    );
 
     private final ClienteRepository clienteRepository;
     private final CodPostalRepository codPostalRepository;
@@ -59,6 +65,30 @@ public class ClienteService {
         String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
         return clienteRepository.findAllBySearch(normalizedSearch, normalizedSearch.isEmpty(), inativo, pageable)
                 .map(mapper::toDTO);
+    }
+
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public Page<ClienteComPendentesResumoDto> listComPendentes(String search, Pageable pageable) {
+        String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
+        return clienteRepository.findComPendentesAbertos(
+                normalizedSearch,
+                normalizedSearch.isEmpty(),
+                clientesComPendentesPageable(pageable)
+        );
+    }
+
+    private Pageable clientesComPendentesPageable(Pageable pageable) {
+        java.util.List<Sort.Order> orders = pageable.getSort().stream()
+                .filter(order -> CLIENTES_COM_PENDENTES_SORTS.contains(order.getProperty()))
+                .toList();
+        if (orders.isEmpty()) {
+            orders = java.util.List.of(Sort.Order.asc("nome"));
+        }
+        if (orders.stream().noneMatch(order -> "id".equals(order.getProperty()))) {
+            orders = new java.util.ArrayList<>(orders);
+            orders.add(Sort.Order.asc("id"));
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(orders));
     }
 
     public ClienteDto getById(Long id) {

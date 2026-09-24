@@ -20,7 +20,7 @@ type Pendente = {
   dataVencimento: string;
   moedaId: string;
 };
-type Cliente = { id: number; nome: string; nif: string; email?: string | null; localidade?: string | null; inativo: boolean; moedaId?: string | null; mPagamentoId?: string | null; pPagamentoId?: string | null };
+type Cliente = { id: number; codigo: number; nome: string; nif: string; moedaId?: string | null; mPagamentoId?: string | null; quantidadePendentes: number };
 type TipoDocumento = { id: string; descricao: string; areaGestao: number };
 type Serie = { serie: string; tipoDocumentoId: string; nome: string };
 type MPagamento = { id: string; nome: string };
@@ -98,18 +98,15 @@ const FINANCEIRO_COLUMNS: ConfigurableColumn[] = [
   { key: "emissor", label: "Emissor", visible: false }, { key: "estado", label: "Estado", visible: true }
 ];
 const CLIENT_LOOKUP_COLUMNS: EntityLookupColumn<Cliente>[] = [
-  { defaultVisible: true, field: "id", filterable: true, globalSearch: true, header: "Código", required: true, sortable: true, width: "7rem" },
+  { defaultVisible: true, field: "codigo", filterable: true, globalSearch: true, header: "Código", required: true, sortable: true, width: "7rem" },
   { defaultVisible: true, field: "nome", filterable: true, globalSearch: true, header: "Nome", required: true, sortable: true },
   { defaultVisible: true, field: "nif", filterable: true, globalSearch: true, header: "NIF", sortable: true, width: "9rem" },
-  { defaultVisible: true, field: "email", filterable: true, globalSearch: true, header: "Email", sortable: true },
-  { body: (cliente) => cliente.inativo ? "Sim" : "Não", field: "inativo", header: "Inativo", sortable: true, width: "7rem" }
+  { defaultVisible: true, field: "quantidadePendentes", header: "Pendentes", sortable: true, width: "8rem" }
 ];
 const CLIENT_SEARCH_FIELDS: EntityLookupSearchField<Cliente>[] = [
-  { aliases: ["codigo", "código"], fields: ["id"], key: "id" },
+  { aliases: ["codigo", "código"], fields: ["codigo"], key: "codigo" },
   { fields: ["nome"], key: "nome" },
-  { fields: ["nif"], key: "nif" },
-  { fields: ["email"], key: "email" },
-  { fields: ["localidade"], key: "localidade" }
+  { fields: ["nif"], key: "nif" }
 ];
 
 export default function PendentesView() {
@@ -119,8 +116,17 @@ export default function PendentesView() {
   const receiptEditorRef = useRef<HTMLElement | null>(null);
   const newReceiptButtonRef = useRef<HTMLButtonElement | null>(null);
   const receiptSubmittingRef = useRef(false);
+  const receiptPendentesRequestRef = useRef(0);
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
+  const [receiptPendentesLoading, setReceiptPendentesLoading] = useState(false);
+  const [receiptPendentesError, setReceiptPendentesError] = useState<string | null>(null);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [selectedReceiptClient, setSelectedReceiptClient] = useState<Cliente | null>(null);
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientLookupLoading, setClientLookupLoading] = useState(false);
+  const [clientLookupError, setClientLookupError] = useState<string | null>(null);
+  const [clientLookupTotal, setClientLookupTotal] = useState(0);
+  const clientLookupRequestRef = useRef(0);
   const [financeiros, setFinanceiros] = useState<DocumentoFinanceiroResumo[]>([]);
   const [financeirosTotalElements, setFinanceirosTotalElements] = useState(0);
   const [financeirosTotalPages, setFinanceirosTotalPages] = useState(0);
@@ -169,22 +175,102 @@ export default function PendentesView() {
     setClientFocusRequest((current) => current + 1);
   }, [receiptOpen]);
 
+  useEffect(() => {
+    if (!receiptOpen) return;
+    const timeout = window.setTimeout(() => { void loadReceiptClients(clientSearch); }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [clientSearch, receiptOpen]);
+
   async function loadTesouraria() {
     setLoading(true);
     setMessage(null);
     try {
-      const [pendentesPage, clientesPage, modosPage] = await Promise.all([
-        fetchJson<Page<Pendente>>("/api/pendentes?size=500&sort=id,desc"),
-        fetchJson<Page<Cliente>>("/api/clientes?size=500&sort=nome,asc"),
+      const [modosPage] = await Promise.all([
         fetchJson<Page<MPagamento>>("/api/mpagamentos?size=100&sort=nome,asc")
       ]);
-      setPendentes(pendentesPage.content);
-      setClientes(clientesPage.content);
       setModos(modosPage.content);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível carregar a tesouraria.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadClientPendentes(cliente: Cliente, reconcile = false) {
+    const requestId = ++receiptPendentesRequestRef.current;
+    setReceiptPendentesLoading(true);
+    setReceiptPendentesError(null);
+    try {
+      const result = await fetchJson<Pendente[]>(`/api/pendentes/clientes/${cliente.id}/abertos`);
+      if (requestId !== receiptPendentesRequestRef.current) return;
+      const nextIds = new Set(result.map((item) => item.id));
+      let allocationsChanged = false;
+      let balanceChanged = false;
+      const nextAllocations: Allocations = {};
+      if (reconcile) {
+        Object.entries(allocations).forEach(([id, value]) => {
+          const pending = result.find((item) => item.id === Number(id));
+          if (!nextIds.has(Number(id)) || !pending) {
+            allocationsChanged = true;
+            return;
+          }
+          if (Number(value || 0) > Number(pending.valorPendente)) {
+            allocationsChanged = true;
+            balanceChanged = true;
+            return;
+          }
+          nextAllocations[Number(id)] = value;
+        });
+      }
+      setAllocations(nextAllocations);
+      setPendentes(result);
+      const moedas = [...new Set(result.map((item) => item.moedaId))];
+      const moedaDefault = cliente.moedaId ?? "";
+      const moedaId = moedaDefault && moedas.includes(moedaDefault)
+        ? moedaDefault
+        : moedas.length === 1 ? moedas[0] : "";
+      setForm((current) => current.clienteId === String(cliente.id) ? {
+        ...current,
+        moedaId,
+        valorRecebido: allocationsChanged ? "" : current.valorRecebido
+      } : current);
+      if (allocationsChanged) {
+        setManualReceiptValue(false);
+        setNotice(balanceChanged
+          ? "Os pendentes foram atualizados. Uma distribuição superior ao saldo atual foi removida."
+          : "Os pendentes foram atualizados. Uma distribuição associada a um pendente indisponível foi removida.");
+      }
+      requestAnimationFrame(() => {
+        const selector = moedas.length === 1 ? "[data-receipt-value]" : "[data-receipt-currency]";
+        receiptEditorRef.current?.querySelector<HTMLElement>(selector)?.focus();
+      });
+    } catch (error) {
+      if (requestId !== receiptPendentesRequestRef.current) return;
+      setPendentes([]);
+      setReceiptPendentesError(error instanceof Error ? error.message : "Não foi possível carregar os pendentes do cliente.");
+    } finally {
+      if (requestId === receiptPendentesRequestRef.current) setReceiptPendentesLoading(false);
+    }
+  }
+
+  async function loadReceiptClients(query: string) {
+    const requestId = ++clientLookupRequestRef.current;
+    setClientLookupLoading(true);
+    setClientLookupError(null);
+    try {
+      const params = new URLSearchParams({ page: "0", size: "20", sort: "nome,asc" });
+      if (query.trim()) params.set("search", query.trim());
+      const result = await fetchJson<Page<Cliente>>(`/api/clientes/com-pendentes?${params}`);
+      if (requestId !== clientLookupRequestRef.current) return;
+      setClientes(result.content);
+      setClientLookupTotal(result.totalElements);
+    } catch (error) {
+      if (requestId !== clientLookupRequestRef.current) return;
+      setClientes([]);
+      setClientLookupTotal(0);
+      setClientLookupError(error instanceof Error ? error.message : "Não foi possível pesquisar clientes.");
+    } finally {
+      if (requestId === clientLookupRequestRef.current) setClientLookupLoading(false);
     }
   }
 
@@ -246,7 +332,11 @@ export default function PendentesView() {
       setForm(nextForm);
       setInitialReceiptFormKey(receiptFormKey(nextForm));
       setAllocations({});
+      setPendentes([]);
+      setReceiptPendentesError(null);
       setManualReceiptValue(false);
+      setSelectedReceiptClient(null);
+      setClientSearch("");
       setReceiptOpen(true);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível preparar o recebimento.");
@@ -256,8 +346,14 @@ export default function PendentesView() {
   }
 
   function closeReceipt() {
+    receiptPendentesRequestRef.current += 1;
     setReceiptOpen(false);
     setInitialReceiptFormKey("");
+    setSelectedReceiptClient(null);
+    setPendentes([]);
+    setReceiptPendentesLoading(false);
+    setReceiptPendentesError(null);
+    setAllocations({});
     requestAnimationFrame(() => newReceiptButtonRef.current?.focus());
   }
 
@@ -321,6 +417,11 @@ export default function PendentesView() {
 
   function selectClient(clienteId: string) {
     if (!clienteId) {
+      receiptPendentesRequestRef.current += 1;
+      setSelectedReceiptClient(null);
+      setPendentes([]);
+      setReceiptPendentesLoading(false);
+      setReceiptPendentesError(null);
       setForm((current) => ({
         ...current,
         clienteId: "",
@@ -333,25 +434,21 @@ export default function PendentesView() {
       return;
     }
     const cliente = clientes.find((item) => item.id === Number(clienteId));
-    const moedas = openPendentesForClient(pendentes, Number(clienteId)).map((item) => item.moedaId);
-    const moedasUnicas = [...new Set(moedas)];
-    const moedaCliente = cliente?.moedaId ?? "";
-    const moedaId = moedaCliente && moedasUnicas.includes(moedaCliente)
-      ? moedaCliente
-      : moedasUnicas.length === 1 ? moedasUnicas[0] : "";
+    if (!cliente) return;
+    receiptPendentesRequestRef.current += 1;
+    setSelectedReceiptClient(cliente ?? null);
+    setPendentes([]);
+    setReceiptPendentesError(null);
     setForm((current) => ({
       ...current,
       clienteId,
-      moedaId,
-      mPagamentoId: validPaymentMode(modos, cliente?.mPagamentoId),
+      moedaId: "",
+      mPagamentoId: validPaymentMode(modos, cliente.mPagamentoId),
       valorRecebido: ""
     }));
     setAllocations({});
     setManualReceiptValue(false);
-    requestAnimationFrame(() => {
-      const selector = moedasUnicas.length === 1 ? "[data-receipt-value]" : "[data-receipt-currency]";
-      receiptEditorRef.current?.querySelector<HTMLElement>(selector)?.focus();
-    });
+    void loadClientPendentes(cliente);
   }
 
   function distributeReceipt() {
@@ -476,7 +573,7 @@ export default function PendentesView() {
       setMessage(validation);
       return;
     }
-    const cliente = clientes.find((item) => item.id === Number(form.clienteId));
+    const cliente = receiptCliente;
     const pdfMessage = postAction === "PDF" ? " O PDF será aberto após a emissão." : "";
     if (!window.confirm(`Confirmar a emissão deste recibo de ${formatMoney(receiptTarget)} ${form.moedaId} para ${cliente?.nome ?? form.clienteId}? Após a emissão, o documento deixa de poder ser editado.${pdfMessage}`)) return;
     receiptSubmittingRef.current = true;
@@ -559,12 +656,11 @@ export default function PendentesView() {
   }
 
   const abertas = pendentes.filter((item) => Number(item.valorPendente) > 0);
-  const clientesComPendentes = clientes.filter((cliente) => !cliente.inativo && abertas.some((item) => item.clienteId === cliente.id));
-  const receiptCliente = clientesComPendentes.find((cliente) => cliente.id === Number(form.clienteId)) ?? null;
-  const receiptPendentes = openPendentesForClient(pendentes, Number(form.clienteId))
+  const receiptCliente = selectedReceiptClient;
+  const receiptPendentes = pendentes
     .filter((item) => !form.moedaId || item.moedaId === form.moedaId)
-    .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento) || a.numeroDocumento - b.numeroDocumento);
-  const clientCurrencies = [...new Set(openPendentesForClient(pendentes, Number(form.clienteId)).map((item) => item.moedaId))];
+    .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento) || a.dataDocumento.localeCompare(b.dataDocumento) || a.numeroDocumento - b.numeroDocumento || a.id - b.id);
+  const clientCurrencies = [...new Set(pendentes.map((item) => item.moedaId))];
   const receiptTarget = round6(Number(form.valorRecebido || 0));
   const allocatedLines = receiptPendentes
     .map((pendente) => ({ pendente, amount: round6(Number(allocations[pendente.id] || 0)) }))
@@ -619,7 +715,7 @@ export default function PendentesView() {
         </div>
         <div className="tuuli-receipts-page-actions">
           <button className="fac-ghost-button tuuli-tool-action" disabled={loading} onClick={loadTesouraria} type="button">Atualizar</button>
-          {canManageTreasury && <button className="fac-primary-button tuuli-primary-action" disabled={loading || clientesComPendentes.length === 0} onClick={openReceipt} ref={newReceiptButtonRef} type="button">Novo recebimento</button>}
+          {canManageTreasury && <button className="fac-primary-button tuuli-primary-action" disabled={loading} onClick={openReceipt} ref={newReceiptButtonRef} type="button">Novo recebimento</button>}
         </div>
       </section>
 
@@ -716,22 +812,26 @@ export default function PendentesView() {
           autoFocusRequest={clientFocusRequest}
           columns={CLIENT_LOOKUP_COLUMNS}
           dataKey="id"
-          emptyMessage="Sem clientes com documentos pendentes para selecionar."
+          emptyMessage={clientLookupTotal === 0 ? "Sem clientes com documentos pendentes para selecionar." : "Sem clientes correspondentes nesta página."}
           label="Cliente"
-          loading={loading}
+          loading={clientLookupLoading}
           onClear={() => selectClient("")}
+          onQueryChange={setClientSearch}
           onSelect={(cliente) => selectClient(String(cliente.id))}
           openDialogOnF2
           optionLabel={(cliente) => `${cliente.id} · ${cliente.nome}`}
-          optionMeta={(cliente) => [cliente.nif && `NIF ${cliente.nif}`, cliente.email, cliente.inativo ? "Inativo" : null].filter(Boolean).join(" · ")}
+          optionMeta={(cliente) => [cliente.nif && `NIF ${cliente.nif}`, `${cliente.quantidadePendentes} ${cliente.quantidadePendentes === 1 ? "pendente" : "pendentes"}`].filter(Boolean).join(" · ")}
           placeholder="Pesquisar cliente"
           preferenceKey="fac.lookup.recebimentos.clientes"
+          remoteSearch
           searchFields={CLIENT_SEARCH_FIELDS}
           selection={receiptCliente}
+          showAllSuggestionsOnEmptyQuery
           title="Selecionar cliente"
-          value={clientesComPendentes}
+          value={clientes}
           valueLabel={receiptCliente ? `${receiptCliente.id} · ${receiptCliente.nome}` : undefined}
         />
+        {clientLookupError && <div className="fac-field-error" role="alert">{clientLookupError} <button className="fac-table-link" onClick={() => void loadReceiptClients(clientSearch)} type="button">Tentar novamente</button></div>}
         <Field label="Moeda"><select data-receipt-currency disabled={!form.clienteId || clientCurrencies.length <= 1} onChange={(event) => { setForm((current) => ({ ...current, moedaId: event.target.value, valorRecebido: "" })); setAllocations({}); setManualReceiptValue(false); requestAnimationFrame(() => receiptEditorRef.current?.querySelector<HTMLElement>("[data-receipt-value]")?.focus()); }} value={form.moedaId}><option value="">Selecionar moeda</option>{clientCurrencies.map((moeda) => <option key={moeda} value={moeda}>{moeda}</option>)}</select></Field>
         <Field label="Valor recebido"><input data-receipt-value disabled={!form.moedaId} min="0.000001" onChange={(event) => { const value = event.target.value; setForm((current) => ({ ...current, valorRecebido: value })); setAllocations({}); setManualReceiptValue(value !== ""); }} step="0.000001" type="number" value={form.valorRecebido}/></Field>
         <Field label="Modo de pagamento"><select onChange={(event) => setForm((current) => ({ ...current, mPagamentoId: event.target.value }))} value={form.mPagamentoId}><option value="">Confirmar modo</option>{modos.map((modo) => <option key={modo.id} value={modo.id}>{modo.nome}</option>)}</select></Field>
@@ -744,9 +844,13 @@ export default function PendentesView() {
       <div className="tuuli-receipt-workspace-summary"><div><span>Total pendente do cliente</span><strong>{formatMoney(totalPendenteCliente)} {form.moedaId || "EUR"}</strong></div><div><span>Valor recebido</span><strong>{formatMoney(receiptTarget)} {form.moedaId}</strong></div><div><span>Distribuído</span><strong>{formatMoney(allocatedTotal)} {form.moedaId}</strong></div><div className={difference === 0 ? "balanced" : "unbalanced"}><span>Diferença</span><strong>{formatMoney(difference)} {form.moedaId}</strong></div></div>
       <div className="tuuli-receipt-distribution-heading"><div><p>Documentos pendentes</p><h3>Distribuição do recebimento</h3></div><div className="tuuli-receipt-distribution-tools"><button className="fac-ghost-button tuuli-tool-action" disabled={!form.valorRecebido || !form.moedaId} onClick={distributeReceipt} type="button">Distribuir por antiguidade</button><button className="fac-ghost-button tuuli-tool-action" disabled={allocatedTotal === 0} onClick={clearAllocations} type="button">Limpar distribuição</button></div></div>
 
+      {!form.clienteId && <p className="fac-muted">Seleciona um cliente para carregar os documentos pendentes.</p>}
+      {form.clienteId && receiptPendentesLoading && <p className="fac-muted" role="status">A carregar documentos pendentes...</p>}
+      {form.clienteId && receiptPendentesError && <p className="fac-message" role="alert">{receiptPendentesError} <button className="fac-table-link" onClick={() => receiptCliente && void loadClientPendentes(receiptCliente, true)} type="button">Tentar novamente</button></p>}
+
       <div className="tuuli-table-surface tuuli-receipt-allocation-surface"><table className="tuuli-table fac-allocation-table"><thead><tr><th>Documento</th><th>Emissão</th><th>Vencimento</th><th>Valor original</th><th>Pendente antes</th><th>Valor a liquidar</th><th>Novo pendente</th></tr></thead><tbody>
         {receiptPendentes.map((pendente) => { const amount = round6(Number(allocations[pendente.id] || 0)); return <tr aria-label={`${referencia(pendente)}: clicar para atribuir ou limpar o valor a liquidar`} className={`fac-allocation-row ${amount > 0 ? "allocated" : ""}`} key={pendente.id} onClick={(event) => { if (!(event.target as HTMLElement).closest("input, button, select, textarea")) toggleAllocation(pendente); }}><td className="tuuli-cell-primary">{referencia(pendente)}</td><td className="tuuli-cell-secondary">{datePt(pendente.dataDocumento)}</td><td className="tuuli-cell-secondary">{datePt(pendente.dataVencimento)}</td><td className="tuuli-cell-numeric tuuli-cell-secondary">{formatMoney(pendente.valorDocumento)} {pendente.moedaId}</td><td className="tuuli-cell-numeric tuuli-cell-secondary">{formatMoney(pendente.valorPendente)} {pendente.moedaId}</td><td className="tuuli-cell-numeric tuuli-cell-primary"><input aria-label={`Valor a liquidar de ${referencia(pendente)}`} className="tuuli-allocation-input" max={pendente.valorPendente} min="0" onChange={(event) => changeAllocation(pendente, event.target.value)} onKeyDown={(event) => handleAllocationInputKeyDown(event, pendente)} step="0.000001" type="number" value={allocations[pendente.id] ?? ""}/></td><td className="tuuli-cell-numeric tuuli-cell-primary">{formatMoney(round6(pendente.valorPendente - amount))} {pendente.moedaId}</td></tr>; })}
-        {form.clienteId && form.moedaId && receiptPendentes.length === 0 && <tr><td colSpan={7}>Este cliente não tem pendentes em aberto nesta moeda.</td></tr>}
+        {form.clienteId && !receiptPendentesLoading && !receiptPendentesError && receiptPendentes.length === 0 && <tr><td colSpan={7}>{form.moedaId ? "Este cliente não tem pendentes em aberto nesta moeda." : "Este cliente já não tem pendentes em aberto."}</td></tr>}
       </tbody></table></div>
 
       <div className="tuuli-receipt-workspace-notes"><Field label="Observações"><textarea maxLength={250} onChange={(event) => setForm((current) => ({ ...current, observacoes: event.target.value }))} value={form.observacoes}/></Field></div>
