@@ -7,8 +7,10 @@ import com.ar2lda.fac.model.CodPostal;
 import com.ar2lda.fac.model.Familia;
 import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.model.DocumentoComercial;
+import com.ar2lda.fac.model.DocumentoFinanceiro;
 import com.ar2lda.fac.model.Empresa;
 import com.ar2lda.fac.model.MPagamento;
+import com.ar2lda.fac.model.LinhaDocumentoFinanceiro;
 import com.ar2lda.fac.model.Pendente;
 import com.ar2lda.fac.model.Pais;
 import com.ar2lda.fac.model.PPagamento;
@@ -2511,6 +2513,122 @@ class DocumentoComercialControllerTests {
         documento.setMomentoEmissao(dataEmissao.atStartOfDay().atOffset(ZoneOffset.UTC));
         documento.setAnulado(anulado);
         return documentoFinanceiroRepository.saveAndFlush(documento);
+    }
+
+    @Test
+    void listagensFinanceirasPaginamFiltramEOrdenamMaisDeQuinhentosRegistos() throws Exception {
+        Long documentoComercialId = emitirDocumentoComercialComLinhas(1);
+        Pendente pendente = pendenteRepository.findByDocumentoComercialId(documentoComercialId).orElseThrow();
+        TipoDocumento tipoFinanceiro = tipoDocumentoRepository.findById("RCB").orElseThrow();
+        Utilizador emissor = utilizadorRepository.findById("EMISSOR").orElseThrow();
+        Moeda moeda = moedaRepository.findById("EUR").orElseThrow();
+        LocalDate data = LocalDate.of(2026, 7, 1);
+
+        List<DocumentoFinanceiro> documentos = new ArrayList<>(501);
+        for (int index = 1; index <= 501; index++) {
+            DocumentoFinanceiro documento = new DocumentoFinanceiro();
+            documento.setCliente(cliente);
+            documento.setTipoDocumento(tipoFinanceiro);
+            documento.setSerie("A");
+            documento.setNumeroDocumento(10_000L + index);
+            documento.setDataEmissao(data);
+            documento.setMoeda(moeda);
+            documento.setValorPagamentoBruto(BigDecimal.valueOf(index));
+            documento.setValorDescontoFinanceiro(BigDecimal.ZERO);
+            documento.setValorPagamentoLiquido(BigDecimal.valueOf(index));
+            documento.setMPagamento(mPagamento);
+            documento.setDataHoraOperacao(data.atStartOfDay().atOffset(ZoneOffset.UTC));
+            documento.setEmissor(emissor);
+            documento.setMomentoEmissao(data.atStartOfDay().atOffset(ZoneOffset.UTC));
+            documentos.add(documento);
+        }
+        documentos = documentoFinanceiroRepository.saveAllAndFlush(documentos);
+
+        List<LinhaDocumentoFinanceiro> linhas = new ArrayList<>(501);
+        for (int index = 0; index < documentos.size(); index++) {
+            BigDecimal valor = BigDecimal.valueOf(index + 1L);
+            LinhaDocumentoFinanceiro linha = new LinhaDocumentoFinanceiro();
+            linha.setDocumentoFinanceiro(documentos.get(index));
+            linha.setNumeroLinha(1);
+            linha.setPendente(pendente);
+            linha.setDataDocumento(pendente.getDataDocumento());
+            linha.setDataVencimento(pendente.getDataVencimento());
+            linha.setTipoDocumento(pendente.getTipoDocumento());
+            linha.setNumeroDocumento(pendente.getNumeroDocumento());
+            linha.setSerieDocumento(pendente.getSerieDocumento());
+            linha.setValorDocumento(valor);
+            linha.setValorPendenteAntes(valor);
+            linha.setValorALiquidar(valor);
+            linha.setDescontoPercentual(BigDecimal.ZERO);
+            linha.setDescontoValor(BigDecimal.ZERO);
+            linha.setValorPagamentoLiquido(valor);
+            linha.setNovoValorPendente(BigDecimal.ZERO);
+            linha.setMoeda(moeda);
+            linhas.add(linha);
+        }
+        linhaDocumentoFinanceiroRepository.saveAllAndFlush(linhas);
+
+        mockMvc.perform(get("/listagens/documentos-financeiros")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("page", "0").param("size", "20")
+                        .param("sort", "numeroDocumento,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(501))
+                .andExpect(jsonPath("$.totalPages").value(26))
+                .andExpect(jsonPath("$.content", hasSize(20)))
+                .andExpect(jsonPath("$.content[0].numeroDocumento").value(10001));
+
+        mockMvc.perform(get("/listagens/documentos-financeiros")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("page", "12").param("size", "20")
+                        .param("sort", "numeroDocumento,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(20)))
+                .andExpect(jsonPath("$.content[0].numeroDocumento").value(10241));
+
+        mockMvc.perform(get("/listagens/documentos-financeiros")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("page", "25").param("size", "20")
+                        .param("sort", "numeroDocumento,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].numeroDocumento").value(10501));
+
+        mockMvc.perform(get("/listagens/documentos-financeiros")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("q", "10501").param("page", "0").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].numeroDocumento").value(10501));
+
+        mockMvc.perform(get("/listagens/documentos-financeiros")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("page", "10").param("size", "50")
+                        .param("sort", "numeroDocumento,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(501))
+                .andExpect(jsonPath("$.totalPages").value(11))
+                .andExpect(jsonPath("$.content", hasSize(1)));
+
+        mockMvc.perform(get("/listagens/linhas-financeiras")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("q", "10501").param("page", "0").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].documento.numeroDocumento").value(10501));
+
+        mockMvc.perform(get("/listagens/linhas-financeiras")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("page", "10").param("size", "50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(501))
+                .andExpect(jsonPath("$.totalPages").value(11))
+                .andExpect(jsonPath("$.content", hasSize(1)));
+
+        mockMvc.perform(get("/listagens/documentos-financeiros")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("sort", "campoInexistente,asc"))
+                .andExpect(status().isBadRequest());
     }
 
     private Long emitirDocumentoComercialComLinhas(int... quantidades) throws Exception {

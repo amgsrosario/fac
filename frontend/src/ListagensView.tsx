@@ -7,7 +7,7 @@ import { currentYearDateRange } from "./dateFilters";
 import { MultiSelectFilter, MultiSelectOption } from "./MultiSelectFilter";
 import { decimal as tuuliDecimal, money as tuuliMoney } from "./ui/tuuli/format";
 
-type Page<T> = { content: T[]; totalElements: number; totalPages?: number };
+type Page<T> = { content: T[]; totalElements: number; totalPages: number };
 type SortDirection = "asc" | "desc";
 type SourceKey = "pendentesAData" | "pendentes" | "comerciais" | "linhasComerciais" | "financeiros" | "linhasFinanceiras" | "relacaoComercial" | "relacaoFinanceira" | "extratoCliente";
 
@@ -147,6 +147,7 @@ export default function ListagensView() {
   const [linhasComerciais, setLinhasComerciais] = useState<LinhaComercialListagem[]>([]);
   const [linhasFinanceiras, setLinhasFinanceiras] = useState<LinhaFinanceiraListagem[]>([]);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [columnsOpen, setColumnsOpen] = useState(false);
@@ -171,6 +172,7 @@ export default function ListagensView() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
   const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [sortKey, setSortKey] = useState("emissao");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const loadRequestRef = useRef(0);
@@ -178,10 +180,17 @@ export default function ListagensView() {
 
   useEffect(() => { loadFilterOptions(); }, []);
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPage(0);
+      setDebouncedSearch(search.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+  useEffect(() => {
     if (source !== "extratoCliente") {
       loadSource(source);
     }
-  }, [source, dataInicial, dataFinal, clienteIds, artigoIds, mostrarAnuladosComerciais, mostrarAnuladosFinanceiros, mostrarTextoComercial, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos, page, pageSize, sortKey, sortDirection]);
+  }, [source, dataInicial, dataFinal, clienteIds, artigoIds, mostrarAnuladosComerciais, mostrarAnuladosFinanceiros, mostrarTextoComercial, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos, debouncedSearch, page, pageSize, sortKey, sortDirection]);
 
   async function loadFilterOptions() {
     try {
@@ -234,19 +243,32 @@ export default function ListagensView() {
         if (requestId !== loadRequestRef.current) return;
         setComerciais(response.content.map((item) => ({ ...item.documento, valorLiquido: item.valorLiquido })));
         setTotalElements(response.totalElements);
+        setTotalPages(response.totalPages);
       }
       if (target === "linhasComerciais" || target === "relacaoComercial") {
         const response = await fetchPage<LinhaComercialResponse>(listagemUrl("/api/listagens/linhas-comerciais", target === "linhasComerciais", target));
         if (requestId !== loadRequestRef.current) return;
         setLinhasComerciais(response.content.map((item) => ({ ...item.linha, documento: item.documento })));
-        if (target === "linhasComerciais") setTotalElements(response.totalElements);
+        if (target === "linhasComerciais") {
+          setTotalElements(response.totalElements);
+          setTotalPages(response.totalPages);
+        }
       }
       if (target === "financeiros") {
-        setFinanceiros((await fetchPage<DocumentoFinanceiro>(listagemUrl("/api/listagens/documentos-financeiros", false, target))).content);
+        const response = await fetchPage<DocumentoFinanceiro>(listagemUrl("/api/listagens/documentos-financeiros", false, target));
+        if (requestId !== loadRequestRef.current) return;
+        setFinanceiros(response.content);
+        setTotalElements(response.totalElements);
+        setTotalPages(response.totalPages);
       }
       if (target === "linhasFinanceiras" || target === "relacaoFinanceira") {
-        const page = await fetchPage<LinhaFinanceiraResponse>(listagemUrl("/api/listagens/linhas-financeiras", false, target));
-        setLinhasFinanceiras(page.content.map((item) => ({ ...item.linha, documento: item.documento })));
+        const response = await fetchPage<LinhaFinanceiraResponse>(listagemUrl("/api/listagens/linhas-financeiras", false, target));
+        if (requestId !== loadRequestRef.current) return;
+        setLinhasFinanceiras(response.content.map((item) => ({ ...item.linha, documento: item.documento })));
+        if (target === "linhasFinanceiras") {
+          setTotalElements(response.totalElements);
+          setTotalPages(response.totalPages);
+        }
       }
     } catch (error) {
       if (requestId !== loadRequestRef.current) return;
@@ -389,7 +411,7 @@ export default function ListagensView() {
   }
 
   function listagemUrl(path: string, includeArtigos = false, target = source) {
-    const remote = isRemoteCommercialSource(target);
+    const remote = isRemotePagedSource(target);
     const params = new URLSearchParams({
       dataInicial,
       dataFinal,
@@ -401,6 +423,7 @@ export default function ListagensView() {
     if (target === "financeiros") params.set("mostrarAnulados", String(mostrarAnuladosFinanceiros));
     if (target === "linhasComerciais") params.set("mostrarTexto", String(mostrarTextoComercial));
     if (includeArtigos) artigoIds.forEach((id) => params.append("artigoIds", id));
+    if (remote && debouncedSearch) params.set("q", debouncedSearch);
     const sort = remoteSort(target, sortKey, sortDirection);
     sort.forEach((value) => params.append("sort", value));
     return `${path}?${params}`;
@@ -409,6 +432,7 @@ export default function ListagensView() {
   function changeSource(next: SourceKey) {
     setSource(next);
     setSearch("");
+    setDebouncedSearch("");
     setPage(0);
     setSortKey(defaultSortKey(next));
     setSortDirection("desc");
@@ -435,6 +459,7 @@ export default function ListagensView() {
       : source === "linhasComerciais" || source === "relacaoComercial" ? linhasComerciais
       : source === "financeiros" ? financeiros
       : linhasFinanceiras;
+    if (isRemotePagedSource(source)) return base;
     const term = search.trim().toLowerCase();
     if (!term) return base;
     return base.filter((row) => searchText(source, row).includes(term));
@@ -443,7 +468,7 @@ export default function ListagensView() {
   const currentSource = SOURCES.find((item) => item.key === source);
   const resultCount = loading ? "A carregar..." : source === "extratoCliente"
     ? extratos ? `${extratos.reduce((total, extrato) => total + extrato.moedas.reduce((subtotal, moeda) => subtotal + moeda.movimentos.length, 0), 0)} movimentos` : "A aguardar consulta"
-    : `${isRemoteCommercialSource(source) ? totalElements : rows.length} registos`;
+    : `${isRemotePagedSource(source) ? totalElements : rows.length} registos`;
   const listingExport = source === "comerciais" || source === "linhasComerciais" || source === "financeiros" || source === "linhasFinanceiras";
   const exportingFormat = isPendentesSource(source) ? exportingPendentesFormat : exportingListingFormat;
   const exportCurrent = isPendentesSource(source) ? exportarPendentes : listingExport ? exportarListagem : null;
@@ -486,11 +511,11 @@ export default function ListagensView() {
       <ColumnSelector columns={configured.columns} open={columnsOpen} onMove={configured.moveColumn} onReset={configured.resetColumns} onToggle={configured.toggleColumn}/>
       {source === "extratoCliente" && <ExtratoTable extratos={extratos} loading={loading} columns={configured.visibleColumns}/>}
       {source !== "extratoCliente" &&
-      <div className="fac-table-scroll"><table className="fac-table tuuli-table tuuli-listings-table"><thead><tr>{configured.visibleColumns.map((column) => <th aria-sort={sortKey === column.key && isRemoteCommercialSource(source) ? (sortDirection === "asc" ? "ascending" : "descending") : undefined} className={numericColumn(column.key) ? "tuuli-numeric" : undefined} key={column.key}>{remoteSortField(source, column.key) ? <button className="fac-table-sort" onClick={() => changeSort(column.key)} type="button">{column.label}<span aria-hidden="true">{sortKey === column.key ? (sortDirection === "asc" ? " ↑" : " ↓") : ""}</span></button> : column.label}</th>)}</tr></thead><tbody>
+      <div className="fac-table-scroll"><table className="fac-table tuuli-table tuuli-listings-table"><thead><tr>{configured.visibleColumns.map((column) => <th aria-sort={sortKey === column.key && isRemotePagedSource(source) ? (sortDirection === "asc" ? "ascending" : "descending") : undefined} className={numericColumn(column.key) ? "tuuli-numeric" : undefined} key={column.key}>{remoteSortField(source, column.key) ? <button className="fac-table-sort" onClick={() => changeSort(column.key)} type="button">{column.label}<span aria-hidden="true">{sortKey === column.key ? (sortDirection === "asc" ? " ↑" : " ↓") : ""}</span></button> : column.label}</th>)}</tr></thead><tbody>
         {rows.map((row, index) => <tr key={rowKey(source, row, index)}>{configured.visibleColumns.map((column) => <td className={numericColumn(column.key) ? "tuuli-numeric" : undefined} key={column.key}>{cellValue(source, row, column.key, navigate)}</td>)}</tr>)}
         {!loading && rows.length === 0 && <tr><td colSpan={configured.visibleColumns.length}>{emptyMessage(source, pendentesClienteIds.length > 0)}</td></tr>}
       </tbody></table></div>}
-      {isRemoteCommercialSource(source) && <div className="tuuli-pagination"><span>{totalElements} registos</span><Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[10, 20, 50]} totalRecords={totalElements}/></div>}
+      {isRemotePagedSource(source) && totalPages > 1 && <div className="tuuli-pagination"><span>{totalElements} registos</span><Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.rows === pageSize ? event.page : 0); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[20, 50]} totalRecords={totalElements}/></div>}
       </section>
     </section>
   </div>;
@@ -658,8 +683,8 @@ function isPendentesSource(source: SourceKey) {
   return source === "pendentes" || source === "pendentesAData";
 }
 
-function isRemoteCommercialSource(source: SourceKey) {
-  return source === "comerciais" || source === "linhasComerciais";
+function isRemotePagedSource(source: SourceKey) {
+  return source === "comerciais" || source === "linhasComerciais" || source === "financeiros" || source === "linhasFinanceiras";
 }
 
 const COMMERCIAL_SORT_FIELDS: Partial<Record<SourceKey, Record<string, string>>> = {
@@ -681,6 +706,25 @@ const COMMERCIAL_SORT_FIELDS: Partial<Record<SourceKey, Record<string, string>>>
     descricao: "descricao",
     quantidade: "quantidade",
     liquido: "valorLinha"
+  },
+  financeiros: {
+    documento: "numeroDocumento",
+    cliente: "cliente.id",
+    data: "dataEmissao",
+    bruto: "valorPagamentoBruto",
+    desconto: "valorDescontoFinanceiro",
+    liquido: "valorPagamentoLiquido",
+    estado: "anulado"
+  },
+  linhasFinanceiras: {
+    recibo: "documentoFinanceiro.numeroDocumento",
+    cliente: "documentoFinanceiro.cliente.id",
+    dataRecibo: "documentoFinanceiro.dataEmissao",
+    documento: "numeroDocumento",
+    emissao: "dataDocumento",
+    vencimento: "dataVencimento",
+    liquidado: "valorALiquidar",
+    recebido: "valorPagamentoLiquido"
   }
 };
 

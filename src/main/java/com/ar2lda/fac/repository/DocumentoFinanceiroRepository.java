@@ -7,6 +7,7 @@ import com.ar2lda.fac.repository.projection.ExtratoMovimentoProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -42,6 +43,7 @@ public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFi
             Pageable pageable
     );
 
+    @EntityGraph(attributePaths = {"cliente", "tipoDocumento", "moeda", "mPagamento", "emissor"})
     @Query("""
             select d
             from DocumentoFinanceiro d
@@ -49,6 +51,12 @@ public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFi
               and d.dataEmissao <= :dataFinal
               and (:mostrarAnulados = true or d.anulado = false)
               and (:filtrarClientes = false or d.cliente.id in :clienteIds)
+              and (:searchEmpty = true
+                or lower(d.tipoDocumento.id) like :search
+                or lower(d.serie) like :search
+                or str(d.numeroDocumento) like :search
+                or str(d.cliente.id) like :search
+                or lower(d.emissor.codigo) like :search)
             """)
     Page<DocumentoFinanceiro> findAnaliticos(
             @Param("dataInicial") LocalDate dataInicial,
@@ -56,6 +64,8 @@ public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFi
             @Param("mostrarAnulados") boolean mostrarAnulados,
             @Param("filtrarClientes") boolean filtrarClientes,
             @Param("clienteIds") Collection<Long> clienteIds,
+            @Param("search") String search,
+            @Param("searchEmpty") boolean searchEmpty,
             Pageable pageable
     );
 

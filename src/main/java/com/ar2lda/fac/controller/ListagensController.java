@@ -46,6 +46,15 @@ public class ListagensController {
             "documentoComercial.numeroDocumento", "documentoComercial.cliente.nome",
             "artigoCodigo", "descricao", "quantidade", "valorLinha"
     );
+    private static final Set<String> DOCUMENTO_FINANCEIRO_SORTS = Set.of(
+            "id", "dataEmissao", "numeroDocumento", "cliente.id", "valorPagamentoBruto",
+            "valorDescontoFinanceiro", "valorPagamentoLiquido", "anulado"
+    );
+    private static final Set<String> LINHA_FINANCEIRA_SORTS = Set.of(
+            "id", "numeroLinha", "documentoFinanceiro.id", "documentoFinanceiro.dataEmissao",
+            "documentoFinanceiro.numeroDocumento", "documentoFinanceiro.cliente.id", "numeroDocumento",
+            "dataDocumento", "dataVencimento", "valorALiquidar", "valorPagamentoLiquido"
+    );
 
     private final ListagensService service;
     private final PendentesPdfExporter pendentesPdfExporter;
@@ -87,9 +96,13 @@ public class ListagensController {
             @RequestParam(required = false) Long clienteId,
             @RequestParam(required = false) List<Long> clienteIds,
             @RequestParam(defaultValue = "false") boolean mostrarAnulados,
+            @RequestParam(required = false) String q,
             Pageable pageable
     ) {
-        return service.documentosFinanceiros(dataInicial, dataFinal, clienteId, clienteIds, mostrarAnulados, pageable);
+        return service.documentosFinanceiros(dataInicial, dataFinal, clienteId, clienteIds, mostrarAnulados, q,
+                validatedStablePageable(pageable, DOCUMENTO_FINANCEIRO_SORTS,
+                        List.of(Sort.Order.desc("dataEmissao"), Sort.Order.desc("id")),
+                        List.of(Sort.Order.desc("id"))));
     }
 
     @GetMapping("/linhas-financeiras")
@@ -98,9 +111,14 @@ public class ListagensController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
             @RequestParam(required = false) Long clienteId,
             @RequestParam(required = false) List<Long> clienteIds,
+            @RequestParam(required = false) String q,
             Pageable pageable
     ) {
-        return service.linhasFinanceiras(dataInicial, dataFinal, clienteId, clienteIds, pageable);
+        return service.linhasFinanceiras(dataInicial, dataFinal, clienteId, clienteIds, q,
+                validatedStablePageable(pageable, LINHA_FINANCEIRA_SORTS,
+                        List.of(Sort.Order.desc("documentoFinanceiro.dataEmissao"),
+                                Sort.Order.desc("documentoFinanceiro.id"), Sort.Order.asc("numeroLinha")),
+                        List.of(Sort.Order.desc("documentoFinanceiro.id"), Sort.Order.asc("numeroLinha"))));
     }
 
     @GetMapping("/pendentes")
@@ -195,5 +213,21 @@ public class ListagensController {
             }
         }
         return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
+    }
+
+    private Pageable validatedStablePageable(Pageable pageable, Set<String> allowedSorts,
+                                              List<Sort.Order> defaultOrders, List<Sort.Order> tieBreakers) {
+        for (Sort.Order order : pageable.getSort()) {
+            if (!allowedSorts.contains(order.getProperty())) {
+                throw new ResponseStatusException(BAD_REQUEST, "Ordenacao nao suportada: " + order.getProperty());
+            }
+        }
+        Sort sort = pageable.getSort().isSorted() ? pageable.getSort() : Sort.by(defaultOrders);
+        for (Sort.Order tieBreaker : tieBreakers) {
+            if (sort.getOrderFor(tieBreaker.getProperty()) == null) {
+                sort = sort.and(Sort.by(tieBreaker));
+            }
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
     }
 }

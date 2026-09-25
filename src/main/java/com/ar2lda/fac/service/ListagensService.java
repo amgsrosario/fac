@@ -99,9 +99,19 @@ public class ListagensService {
 
     @Transactional(readOnly = true)
     public Page<DocumentoFinanceiroDto> documentosFinanceiros(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, boolean mostrarAnulados, Pageable pageable) {
+        return documentosFinanceiros(dataInicial, dataFinal, clienteId, clienteIds, mostrarAnulados, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DocumentoFinanceiroDto> documentosFinanceiros(LocalDate dataInicial, LocalDate dataFinal, Long clienteId,
+                                                               List<Long> clienteIds, boolean mostrarAnulados,
+                                                               String pesquisa, Pageable pageable) {
         List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
         boolean filtrarClientes = !filtroClientes.isEmpty();
-        return documentoFinanceiroRepository.findAnaliticos(dataInicial, dataFinal, mostrarAnulados, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), pageable)
+        String search = blankToNull(pesquisa);
+        return documentoFinanceiroRepository.findAnaliticos(dataInicial, dataFinal, mostrarAnulados,
+                        filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L),
+                        search == null ? "" : "%" + search.toLowerCase() + "%", search == null, pageable)
                 .map(this::toDocumentoFinanceiroDto);
     }
 
@@ -112,9 +122,18 @@ public class ListagensService {
 
     @Transactional(readOnly = true)
     public Page<ListagemLinhaFinanceiraDto> linhasFinanceiras(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, Pageable pageable) {
+        return linhasFinanceiras(dataInicial, dataFinal, clienteId, clienteIds, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ListagemLinhaFinanceiraDto> linhasFinanceiras(LocalDate dataInicial, LocalDate dataFinal, Long clienteId,
+                                                               List<Long> clienteIds, String pesquisa, Pageable pageable) {
         List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
         boolean filtrarClientes = !filtroClientes.isEmpty();
-        return linhaDocumentoFinanceiroRepository.findAnaliticas(dataInicial, dataFinal, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), pageable)
+        String search = blankToNull(pesquisa);
+        return linhaDocumentoFinanceiroRepository.findAnaliticas(dataInicial, dataFinal, filtrarClientes,
+                        filtrarClientes ? filtroClientes : List.of(-1L),
+                        search == null ? "" : "%" + search.toLowerCase() + "%", search == null, pageable)
                 .map(this::toLinhaFinanceiraDto);
     }
 

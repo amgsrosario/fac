@@ -4,6 +4,7 @@ import com.ar2lda.fac.model.LinhaDocumentoFinanceiro;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,6 +16,11 @@ public interface LinhaDocumentoFinanceiroRepository extends JpaRepository<LinhaD
 
     List<LinhaDocumentoFinanceiro> findByDocumentoFinanceiroIdOrderByNumeroLinha(Long documentoFinanceiroId);
 
+    @EntityGraph(attributePaths = {
+            "documentoFinanceiro", "documentoFinanceiro.cliente", "documentoFinanceiro.tipoDocumento",
+            "documentoFinanceiro.moeda", "documentoFinanceiro.mPagamento", "documentoFinanceiro.emissor",
+            "pendente", "pendente.documentoComercial", "tipoDocumento", "moeda"
+    })
     @Query("""
             select l
             from LinhaDocumentoFinanceiro l
@@ -22,6 +28,14 @@ public interface LinhaDocumentoFinanceiroRepository extends JpaRepository<LinhaD
               and l.documentoFinanceiro.dataEmissao <= :dataFinal
               and l.documentoFinanceiro.anulado = false
               and (:filtrarClientes = false or l.documentoFinanceiro.cliente.id in :clienteIds)
+              and (:searchEmpty = true
+                or lower(l.documentoFinanceiro.tipoDocumento.id) like :search
+                or lower(l.documentoFinanceiro.serie) like :search
+                or str(l.documentoFinanceiro.numeroDocumento) like :search
+                or str(l.documentoFinanceiro.cliente.id) like :search
+                or lower(l.tipoDocumento.id) like :search
+                or lower(l.serieDocumento) like :search
+                or str(l.numeroDocumento) like :search)
               and (
                 l.pendente is null
                 or l.pendente.documentoComercial is null
@@ -33,6 +47,8 @@ public interface LinhaDocumentoFinanceiroRepository extends JpaRepository<LinhaD
             @Param("dataFinal") LocalDate dataFinal,
             @Param("filtrarClientes") boolean filtrarClientes,
             @Param("clienteIds") Collection<Long> clienteIds,
+            @Param("search") String search,
+            @Param("searchEmpty") boolean searchEmpty,
             Pageable pageable
     );
 
