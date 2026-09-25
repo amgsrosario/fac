@@ -1,12 +1,13 @@
 package com.ar2lda.fac.service;
 
-import com.ar2lda.fac.controller.dto.AuditoriaEventoDto;
+import com.ar2lda.fac.controller.dto.AuditoriaEventoResumoDto;
 import com.ar2lda.fac.model.*;
 import com.ar2lda.fac.repository.AuditoriaEventoRepository;
 import com.ar2lda.fac.repository.UtilizadorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,9 +44,13 @@ public class AuditoriaService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AuditoriaEventoDto> consultar(OffsetDateTime desde, OffsetDateTime ate, TipoAuditoriaEvento tipo,
+    public Page<AuditoriaEventoResumoDto> consultar(OffsetDateTime desde, OffsetDateTime ate, TipoAuditoriaEvento tipo,
             String entidadeTipo, String entidadeId, String utilizadorId, ResultadoAuditoria resultado,
-            String referencia, Pageable pageable) {
+            String referencia, int page, int size) {
+        int normalizedPage = Math.max(page, 0);
+        int normalizedSize = size == 50 ? 50 : 20;
+        PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize,
+                Sort.by(Sort.Order.desc("dataHora"), Sort.Order.desc("id")));
         Specification<AuditoriaEvento> spec = Specification.where(null);
         if (desde != null) spec = spec.and((r, q, cb) -> cb.greaterThanOrEqualTo(r.get("dataHora"), desde));
         if (ate != null) spec = spec.and((r, q, cb) -> cb.lessThanOrEqualTo(r.get("dataHora"), ate));
@@ -63,9 +68,9 @@ public class AuditoriaService {
         return auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName()) ? auth.getName() : null;
     }
 
-    private AuditoriaEventoDto toDto(AuditoriaEvento e) {
-        return new AuditoriaEventoDto(e.getId(), e.getDataHora(), e.getTipoEvento(), e.getEntidadeTipo(), e.getEntidadeId(),
+    private AuditoriaEventoResumoDto toDto(AuditoriaEvento e) {
+        return new AuditoriaEventoResumoDto(e.getId(), e.getDataHora(), e.getTipoEvento(), e.getEntidadeTipo(), e.getEntidadeId(),
                 e.getUtilizadorId(), e.getUtilizadorNome(), e.getUtilizadorPerfil(), e.getResultado(), e.getReferencia(),
-                e.getDescricao(), e.getDadosEssenciais());
+                e.getDescricao());
     }
 }

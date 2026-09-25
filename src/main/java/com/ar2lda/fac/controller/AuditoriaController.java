@@ -1,12 +1,11 @@
 package com.ar2lda.fac.controller;
 
-import com.ar2lda.fac.controller.dto.AuditoriaEventoDto;
+import com.ar2lda.fac.controller.dto.AuditoriaEventoResumoDto;
 import com.ar2lda.fac.model.ResultadoAuditoria;
 import com.ar2lda.fac.model.TipoAuditoriaEvento;
 import com.ar2lda.fac.service.AuditoriaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +19,7 @@ public class AuditoriaController {
 
     @GetMapping
     @PreAuthorize("@functionalAuthorization.has('AUDITORIA_CONSULTAR')")
-    public Page<AuditoriaEventoDto> consultar(
+    public Page<AuditoriaEventoResumoDto> consultar(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime ate,
             @RequestParam(required = false) TipoAuditoriaEvento tipoEvento,
@@ -29,7 +28,9 @@ public class AuditoriaController {
             @RequestParam(required = false) String utilizadorId,
             @RequestParam(required = false) ResultadoAuditoria resultado,
             @RequestParam(required = false) String referencia,
-            Pageable pageable) {
-        return service.consultar(desde, ate, tipoEvento, entidadeTipo, entidadeId, utilizadorId, resultado, referencia, pageable);
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return service.consultar(desde, ate, tipoEvento, entidadeTipo, entidadeId, utilizadorId, resultado, referencia,
+                page, size);
     }
 }
