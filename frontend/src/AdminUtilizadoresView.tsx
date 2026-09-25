@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Paginator } from "primereact/paginator";
 import { apiFetch } from "./api";
 
 type Papel = "ADMINISTRADOR" | "OPERADOR" | "CONSULTA";
@@ -17,7 +18,7 @@ type Utilizador = {
   atualizadoPor?: string;
 };
 
-type Page<T> = { content: T[]; totalElements: number };
+type Page<T> = { content: T[]; totalElements: number; totalPages: number };
 
 type FormState = {
   codigo: string;
@@ -32,7 +33,11 @@ const emptyForm: FormState = { codigo: "", nome: "", email: "", papel: "OPERADOR
 export default function AdminUtilizadoresView() {
   const [users, setUsers] = useState<Utilizador[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [papel, setPapel] = useState<"" | Papel>("");
   const [ativo, setAtivo] = useState<"" | "true" | "false">("");
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -41,28 +46,48 @@ export default function AdminUtilizadoresView() {
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const requestRef = useRef(0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPage(0);
+      setDebouncedQuery(query.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   const params = useMemo(() => {
-    const p = new URLSearchParams({ size: "50", sort: "codigo,asc" });
-    if (query.trim()) p.set("q", query.trim());
+    const p = new URLSearchParams({ page: String(page), size: String(pageSize), sort: "codigo,asc" });
+    if (debouncedQuery) p.set("q", debouncedQuery);
     if (papel) p.set("papel", papel);
     if (ativo) p.set("ativo", ativo);
     return p.toString();
-  }, [query, papel, ativo]);
+  }, [page, pageSize, debouncedQuery, papel, ativo]);
+
+  const loadUsers = useCallback(async () => {
+    const requestId = ++requestRef.current;
+    setLoading(true);
+    try {
+      const result = await apiGet<Page<Utilizador>>(`/api/utilizadores?${params}`);
+      if (requestId !== requestRef.current) return;
+      const lastPage = Math.max(0, result.totalPages - 1);
+      if (page > lastPage) {
+        setPage(lastPage);
+        return;
+      }
+      setUsers(result.content);
+      setTotal(result.totalElements);
+      setTotalPages(result.totalPages);
+    } catch (error) {
+      if (requestId === requestRef.current) setMessage(error instanceof Error ? error.message : "Não foi possível carregar os utilizadores.");
+    } finally {
+      if (requestId === requestRef.current) setLoading(false);
+    }
+  }, [page, params]);
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    apiGet<Page<Utilizador>>(`/api/utilizadores?${params}`)
-      .then((page) => {
-        if (!active) return;
-        setUsers(page.content);
-        setTotal(page.totalElements);
-      })
-      .catch((error) => { if (active) setMessage(error.message); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [params]);
+    void loadUsers();
+  }, [loadUsers]);
 
   function select(user: Utilizador) {
     setEditing(user);
@@ -94,7 +119,7 @@ export default function AdminUtilizadoresView() {
         setMessage("Utilizador criado.");
       }
       clear();
-      await reload(params, setUsers, setTotal);
+      await loadUsers();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível guardar o utilizador.");
     }
@@ -104,7 +129,7 @@ export default function AdminUtilizadoresView() {
     setMessage(null);
     try {
       await apiSend<Utilizador>(`/api/utilizadores/${encodeURIComponent(user.codigo)}/estado`, "PATCH", { ativo: !user.ativo });
-      await reload(params, setUsers, setTotal);
+      await loadUsers();
       setMessage(user.ativo ? "Utilizador desativado." : "Utilizador reativado.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível alterar o estado.");
@@ -148,7 +173,7 @@ export default function AdminUtilizadoresView() {
         </label>
         <label className="fac-users-filter">
           <span>Perfil</span>
-          <select value={papel} onChange={(e) => setPapel(e.target.value as "" | Papel)}>
+          <select value={papel} onChange={(e) => { setPage(0); setPapel(e.target.value as "" | Papel); }}>
             <option value="">Todos os perfis</option>
             <option value="ADMINISTRADOR">Administrador</option>
             <option value="OPERADOR">Operador</option>
@@ -157,7 +182,7 @@ export default function AdminUtilizadoresView() {
         </label>
         <label className="fac-users-filter">
           <span>Estado</span>
-          <select value={ativo} onChange={(e) => setAtivo(e.target.value as "" | "true" | "false")}>
+          <select value={ativo} onChange={(e) => { setPage(0); setAtivo(e.target.value as "" | "true" | "false"); }}>
             <option value="">Todos os estados</option>
             <option value="true">Ativos</option>
             <option value="false">Inativos</option>
@@ -166,8 +191,9 @@ export default function AdminUtilizadoresView() {
       </div>
 
       <div className="fac-grid-two fac-users-workspace">
-        <div className="fac-table-wrapper">
-          <table className="fac-table fac-admin-users-table">
+        <div className="fac-users-list">
+          <div className="fac-table-wrapper">
+            <table className="fac-table fac-admin-users-table">
             <thead>
               <tr><th>Código</th><th>Nome</th><th>Perfil</th><th>Estado</th><th>Ações</th></tr>
             </thead>
@@ -187,7 +213,21 @@ export default function AdminUtilizadoresView() {
               ))}
               {!users.length && <tr><td colSpan={5}>Sem utilizadores para os filtros atuais.</td></tr>}
             </tbody>
-          </table>
+            </table>
+          </div>
+          {totalPages > 1 && <div className="tuuli-pagination">
+            <span>{total} {total === 1 ? "utilizador" : "utilizadores"}</span>
+            <Paginator
+              first={page * pageSize}
+              onPageChange={(event) => {
+                setPage(event.rows === pageSize ? event.page : 0);
+                setPageSize(event.rows);
+              }}
+              rows={pageSize}
+              rowsPerPageOptions={[20, 50]}
+              totalRecords={total}
+            />
+          </div>}
         </div>
 
         <div className="fac-editor-card fac-users-editor">
@@ -253,12 +293,6 @@ function labelPapel(papel: Papel) {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString("pt-PT");
-}
-
-async function reload(params: string, setUsers: (users: Utilizador[]) => void, setTotal: (total: number) => void) {
-  const page = await apiGet<Page<Utilizador>>(`/api/utilizadores?${params}`);
-  setUsers(page.content);
-  setTotal(page.totalElements);
 }
 
 async function apiGet<T>(url: string): Promise<T> {

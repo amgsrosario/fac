@@ -10,6 +10,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -169,6 +172,61 @@ class UtilizadorControllerTests {
                 .andExpect(jsonPath("$.content[0].codigo").value("CONSULTALIST"))
                 .andExpect(jsonPath("$.content[0].papel").value("CONSULTA"))
                 .andExpect(jsonPath("$.content[0].ativo").value(true));
+    }
+
+    @Test
+    void listaComPaginacaoVinteECinquentaAcimaDoLimiteAnterior() throws Exception {
+        List<Utilizador> utilizadores = new ArrayList<>();
+        for (int index = 1; index <= 51; index++) {
+            String codigo = "PAGE%03d".formatted(index);
+            utilizadores.add(new Utilizador(
+                    codigo,
+                    "Paginação volume %03d".formatted(index),
+                    "pagination-volume-%03d@example.com".formatted(index),
+                    "$2a$10$abcdefghijklmnopqrstuuuuuuuuuuuuuuuuuuuuuuuuuuuuu",
+                    false));
+        }
+        repository.saveAllAndFlush(utilizadores);
+
+        mockMvc.perform(get("/utilizadores")
+                        .param("q", "Paginação volume")
+                        .param("page", "0")
+                        .param("size", "20")
+                        .param("sort", "codigo,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(51))
+                .andExpect(jsonPath("$.totalPages").value(3))
+                .andExpect(jsonPath("$.content.length()").value(20))
+                .andExpect(jsonPath("$.content[0].codigo").value("PAGE001"));
+
+        mockMvc.perform(get("/utilizadores")
+                        .param("q", "Paginação volume")
+                        .param("page", "1")
+                        .param("size", "20")
+                        .param("sort", "codigo,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(20))
+                .andExpect(jsonPath("$.content[0].codigo").value("PAGE021"));
+
+        mockMvc.perform(get("/utilizadores")
+                        .param("q", "Paginação volume")
+                        .param("page", "2")
+                        .param("size", "20")
+                        .param("sort", "codigo,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(11))
+                .andExpect(jsonPath("$.content[10].codigo").value("PAGE051"));
+
+        mockMvc.perform(get("/utilizadores")
+                        .param("q", "Paginação volume")
+                        .param("page", "1")
+                        .param("size", "50")
+                        .param("sort", "codigo,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(51))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].codigo").value("PAGE051"));
     }
 
     private void createUtilizador(String codigo, String email) throws Exception {
