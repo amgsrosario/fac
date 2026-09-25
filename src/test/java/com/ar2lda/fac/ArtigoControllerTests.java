@@ -1,7 +1,12 @@
 package com.ar2lda.fac;
 
 import com.ar2lda.fac.model.Familia;
+import com.ar2lda.fac.model.Artigo;
+import com.ar2lda.fac.model.TipoArtigo;
+import com.ar2lda.fac.model.TipoTaxaIva;
+import com.ar2lda.fac.repository.ArtigoRepository;
 import com.ar2lda.fac.repository.FamiliaRepository;
+import com.ar2lda.fac.repository.TipoTaxaIvaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +15,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,11 +38,21 @@ class ArtigoControllerTests {
     @Autowired
     private FamiliaRepository familiaRepository;
 
+    @Autowired
+    private ArtigoRepository artigoRepository;
+
+    @Autowired
+    private TipoTaxaIvaRepository tipoTaxaIvaRepository;
+
     private Long familiaId;
+    private Familia familia;
+    private TipoTaxaIva ivaNormal;
 
     @BeforeEach
     void createFamilia() {
-        familiaId = familiaRepository.save(new Familia("Família de teste")).getId();
+        familia = familiaRepository.save(new Familia("Família de teste"));
+        familiaId = familia.getId();
+        ivaNormal = tipoTaxaIvaRepository.findById("NORMAL").orElseThrow();
     }
 
     @Test
@@ -146,6 +165,75 @@ class ArtigoControllerTests {
         mockMvc.perform(post("/artigos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createJson("ART006", "5601234567896").replace("\"SERVICO\"", "\"PRODUTO\"")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listaArtigosComPaginacaoPesquisaEstadoEVolumeAcimaDoLimiteAntigo() throws Exception {
+        List<Artigo> artigos = new ArrayList<>();
+        for (int i = 1; i <= 201; i++) {
+            Artigo artigo = new Artigo("VOL%04d".formatted(i));
+            artigo.setDescricao("Artigo escalabilidade");
+            artigo.setAbreviatura("Escala");
+            artigo.setTipoArtigo(TipoArtigo.SERVICO);
+            artigo.setUnidade("UN");
+            artigo.setFamilia(familia);
+            artigo.setPeso(BigDecimal.ONE);
+            artigo.setIvaCompra(ivaNormal);
+            artigo.setIvaVenda(ivaNormal);
+            artigo.setPvp(BigDecimal.valueOf(i));
+            artigo.setInativo(i % 2 == 0);
+            artigo.setRetencao(false);
+            artigos.add(artigo);
+        }
+        artigoRepository.saveAllAndFlush(artigos);
+
+        mockMvc.perform(get("/artigos")
+                        .param("search", "Artigo escalabilidade")
+                        .param("page", "0")
+                        .param("size", "20")
+                        .param("sort", "descricao,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(201))
+                .andExpect(jsonPath("$.totalPages").value(11))
+                .andExpect(jsonPath("$.content.length()").value(20))
+                .andExpect(jsonPath("$.content[0].codigo").value("VOL0001"));
+
+        mockMvc.perform(get("/artigos")
+                        .param("search", "Artigo escalabilidade")
+                        .param("page", "10")
+                        .param("size", "20")
+                        .param("sort", "codigo,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].codigo").value("VOL0201"));
+
+        mockMvc.perform(get("/artigos")
+                        .param("search", "Artigo escalabilidade")
+                        .param("page", "4")
+                        .param("size", "50")
+                        .param("sort", "codigo,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalPages").value(5))
+                .andExpect(jsonPath("$.content.length()").value(1));
+
+        mockMvc.perform(get("/artigos")
+                        .param("search", "VOL0201")
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].codigo").value("VOL0201"));
+
+        mockMvc.perform(get("/artigos")
+                        .param("search", "Artigo escalabilidade")
+                        .param("inativo", "true")
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(100));
+
+        mockMvc.perform(get("/artigos").param("sort", "campoInexistente,asc"))
                 .andExpect(status().isBadRequest());
     }
 

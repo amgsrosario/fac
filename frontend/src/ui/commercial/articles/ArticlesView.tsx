@@ -1,5 +1,6 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { FilterMatchMode } from "primereact/api";
+import { Paginator } from "primereact/paginator";
 import { useLocation } from "react-router-dom";
 import { GlobalSearch } from "../../../GlobalSearch";
 import { apiFetch, AuthSession } from "../../../api";
@@ -29,6 +30,7 @@ import "./articles.css";
 type Page<T> = {
   content: T[];
   totalElements: number;
+  totalPages: number;
 };
 
 type Artigo = {
@@ -125,8 +127,18 @@ export default function ArticlesView({
   const [familias, setFamilias] = useState<Familia[]>([]);
   const [tiposIva, setTiposIva] = useState<TipoTaxaIva[]>([]);
   const [selectedCodigo, setSelectedCodigo] = useState<string | null>(null);
+  const [selectedOverride, setSelectedOverride] = useState<Artigo | null>(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [stateFilter, setStateFilter] = useState<"all" | "active" | "inactive">("all");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortField, setSortField] = useState("codigo");
+  const [sortOrder, setSortOrder] = useState<1 | -1>(1);
+  const [columnFilters, setColumnFilters] = useState({ codigo: "", descricao: "", unidade: "", ivaVendaId: "", inativo: "" });
+  const requestRef = useRef(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,58 +150,90 @@ export default function ArticlesView({
   const [mobileScreen, setMobileScreen] = useState<MobileScreen>("list");
 
   useEffect(() => {
-    loadData();
+    loadCatalogs();
   }, []);
 
   useEffect(() => {
-    if (services.length === 0) return;
+    const timeout = window.setTimeout(() => { setPage(0); setDebouncedSearch(search.trim()); }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  useEffect(() => {
+    void loadServices();
+  }, [page, pageSize, debouncedSearch, stateFilter, sortField, sortOrder, columnFilters]);
+
+  useEffect(() => {
     const artigoId = new URLSearchParams(location.search).get("artigo");
     if (!artigoId) return;
     const decoded = decodeURIComponent(artigoId);
-    if (services.some((service) => service.codigo === decoded)) {
+    const current = services.find((service) => service.codigo === decoded);
+    if (current) {
       setSelectedCodigo(decoded);
+      setSelectedOverride(null);
       setMobileScreen("detail");
+      return;
     }
+    requestJson<Artigo>(`/api/artigos/${encodeURIComponent(decoded)}`)
+      .then((service) => { setSelectedOverride(service); setSelectedCodigo(decoded); setMobileScreen("detail"); })
+      .catch(() => undefined);
   }, [location.search, services]);
 
-  async function loadData() {
-    setLoading(true);
+  async function loadCatalogs() {
     setError(null);
     try {
-      const [artigosPage, familiasPage, tiposIvaPage] = await Promise.all([
-        fetchPage<Artigo>("/api/artigos?size=200&sort=codigo,asc"),
+      const [familiasPage, tiposIvaPage] = await Promise.all([
         fetchPage<Familia>("/api/familias?size=200&sort=descricao,asc"),
         fetchPage<TipoTaxaIva>("/api/tipos-taxa-iva?size=100&sort=descricao,asc")
       ]);
-      setServices(artigosPage.content);
       setFamilias(familiasPage.content);
       setTiposIva(tiposIvaPage.content);
-      setSelectedCodigo((current) => current ?? artigosPage.content[0]?.codigo ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível carregar os artigos.");
-    } finally {
-      setLoading(false);
     }
   }
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return services.filter((service) => {
-      const matchesSearch = !term || [service.codigo, service.descricao, service.abreviatura, service.codigoIdentificacao]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term));
-      const matchesState = stateFilter === "all"
-        || (stateFilter === "active" && !service.inativo)
-        || (stateFilter === "inactive" && service.inativo);
-      return matchesSearch && matchesState;
-    });
-  }, [search, services, stateFilter]);
+  async function loadServices(preferredCodigo?: string): Promise<boolean> {
+    const requestId = ++requestRef.current;
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams({ page: String(page), size: String(pageSize) });
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    const effectiveInactive = columnFilters.inativo || (stateFilter === "active" ? "false" : stateFilter === "inactive" ? "true" : "");
+    if (effectiveInactive) params.set("inativo", effectiveInactive);
+    if (columnFilters.codigo) params.set("codigo", columnFilters.codigo);
+    if (columnFilters.descricao) params.set("descricao", columnFilters.descricao);
+    if (columnFilters.unidade) params.set("unidade", columnFilters.unidade);
+    if (columnFilters.ivaVendaId) params.set("ivaVendaId", columnFilters.ivaVendaId);
+    params.append("sort", `${sortField},${sortOrder === 1 ? "asc" : "desc"}`);
+    if (sortField !== "codigo") params.append("sort", "codigo,asc");
+    try {
+      const result = await fetchPage<Artigo>(`/api/artigos?${params}`);
+      if (requestId !== requestRef.current) return false;
+      setServices(result.content);
+      setTotalElements(result.totalElements);
+      setTotalPages(result.totalPages ?? 0);
+      const preferredVisible = preferredCodigo != null && result.content.some((service) => service.codigo === preferredCodigo);
+      setSelectedCodigo((current) => {
+        const wanted = preferredCodigo ?? current;
+        return wanted && result.content.some((service) => service.codigo === wanted) ? wanted : result.content[0]?.codigo ?? null;
+      });
+      if (preferredVisible || !preferredCodigo) setSelectedOverride(null);
+      return preferredVisible;
+    } catch (err) {
+      if (requestId === requestRef.current) setError(err instanceof Error ? err.message : "Não foi possível carregar os artigos.");
+      return false;
+    } finally {
+      if (requestId === requestRef.current) setLoading(false);
+    }
+  }
 
-  const selected = services.find((service) => service.codigo === selectedCodigo) ?? null;
+  const filtered = services;
+  const selected = services.find((service) => service.codigo === selectedCodigo)
+    ?? (selectedOverride?.codigo === selectedCodigo ? selectedOverride : null);
   const selectedIva = tiposIva.find((tipo) => tipo.id === selected?.ivaVendaId)?.descricao ?? selected?.ivaVendaId ?? "-";
   const hiddenDefaultSource = editorOpen && editorMode === "edit" ? selected : null;
   const defaults = useMemo(() => resolveHiddenDefaults(tiposIva, hiddenDefaultSource), [hiddenDefaultSource, tiposIva]);
-  const activeCount = services.filter((service) => !service.inativo).length;
+  const activeCount = stateFilter === "active" ? totalElements : services.filter((service) => !service.inativo).length;
 
   function openNew() {
     if (!canManage) return;
@@ -245,9 +289,12 @@ export default function ArticlesView({
       } else {
         await request("/api/artigos", "POST", payload);
       }
-      const page = await fetchPage<Artigo>("/api/artigos?size=200&sort=codigo,asc");
-      setServices(page.content);
-      setSelectedCodigo(form.codigo);
+      const visible = await loadServices(form.codigo);
+      if (!visible) {
+        const saved = await requestJson<Artigo>(`/api/artigos/${encodeURIComponent(form.codigo)}`);
+        setSelectedOverride(saved);
+        setSelectedCodigo(saved.codigo);
+      }
       setEditorOpen(false);
       setNotice(`Artigo ${form.codigo} ${editorMode === "edit" ? "atualizado" : "criado"}.`);
       showToast({ detail: `Artigo ${form.codigo} guardado.`, severity: "success", summary: "Guardado" });
@@ -260,6 +307,7 @@ export default function ArticlesView({
   }
 
   function selectService(codigo: string) {
+    setSelectedOverride(null);
     setSelectedCodigo(codigo);
     if (isMobile) setMobileScreen("detail");
   }
@@ -295,14 +343,23 @@ export default function ArticlesView({
       onNew={openNew}
       onSave={save}
       onSearch={setSearch}
+      onColumnFilters={(filters) => { setPage(0); setColumnFilters(filters); }}
+      onPageChange={(nextPage, nextSize) => { setPage(nextSize === pageSize ? nextPage : 0); setPageSize(nextSize); }}
+      onSortChange={(field, order) => { setPage(0); setSortField(field); setSortOrder(order); }}
       onSelect={selectService}
-      onStateFilter={setStateFilter}
+      onStateFilter={(value) => { setPage(0); setStateFilter(value); }}
+      page={page}
+      pageSize={pageSize}
       saving={saving}
       search={search}
       selected={selected}
       selectedIva={selectedIva}
       services={services}
       stateFilter={stateFilter}
+      sortField={sortField}
+      sortOrder={sortOrder}
+      totalElements={totalElements}
+      totalPages={totalPages}
       tiposIva={tiposIva}
     />
   );
@@ -338,14 +395,23 @@ function ServicesContent(props: {
   onNew: () => void;
   onSave: (event?: FormEvent) => void;
   onSearch: (value: string) => void;
+  onColumnFilters: (filters: { codigo: string; descricao: string; unidade: string; ivaVendaId: string; inativo: string }) => void;
+  onPageChange: (page: number, size: number) => void;
+  onSortChange: (field: string, order: 1 | -1) => void;
   onSelect: (codigo: string) => void;
   onStateFilter: (value: "all" | "active" | "inactive") => void;
   saving: boolean;
   search: string;
+  page: number;
+  pageSize: number;
   selected: Artigo | null;
   selectedIva: string;
   services: Artigo[];
   stateFilter: "all" | "active" | "inactive";
+  sortField: string;
+  sortOrder: 1 | -1;
+  totalElements: number;
+  totalPages: number;
   tiposIva: TipoTaxaIva[];
 }) {
   const isMobile = props.deviceClass === "mobile";
@@ -429,7 +495,8 @@ function ServicesHeader({
   compact = false,
   loading,
   onNew,
-  services
+  stateFilter,
+  totalElements
 }: Parameters<typeof ServicesContent>[0] & { compact?: boolean }) {
   return (
     <ModuleHeader
@@ -444,8 +511,8 @@ function ServicesHeader({
       subtitle="Gerir produtos e serviços utilizados nos documentos."
       summary={
         <div className="fac-module-summary" aria-label="Resumo de artigos">
-          <span>{loading ? "A carregar" : `${services.length} artigos`}</span>
-          <strong>{activeCount} ativos</strong>
+          <span>{loading ? "A carregar" : `${totalElements} artigos`}</span>
+          <strong>{activeCount} {stateFilter === "active" ? "ativos" : "ativos nesta página"}</strong>
         </div>
       }
       title="Artigos"
@@ -491,18 +558,27 @@ function ServicesList({
   deviceClass,
   filtered,
   loading,
+  onColumnFilters,
+  onPageChange,
   onSelect,
+  onSortChange,
+  page,
+  pageSize,
   search,
   selected,
   services,
-  stateFilter
+  sortField,
+  sortOrder,
+  stateFilter,
+  tiposIva,
+  totalElements,
+  totalPages
 }: Parameters<typeof ServicesContent>[0]) {
   if (loading) return <FacLoadingState description="A carregar artigos." />;
   if (services.length === 0) return <FacEmptyState description="Ainda não existem artigos no catálogo." />;
   if (filtered.length === 0) return <FacEmptyState description="Sem resultados para a pesquisa e filtros atuais." />;
 
   if (deviceClass !== "mobile") {
-    const tableValue = services.filter((service) => stateFilter === "all" || (stateFilter === "active" && !service.inativo) || (stateFilter === "inactive" && service.inativo));
     const columns: FacDataTableColumn<Artigo>[] = [
       { field: "codigo", filter: true, filterPlaceholder: "Código", header: "Código", sortable: true, style: { width: "8rem" } },
       { field: "descricao", filter: true, filterPlaceholder: "Descrição", header: "Descrição", sortable: true },
@@ -519,7 +595,7 @@ function ServicesList({
       {
         field: "ivaVendaId",
         filter: true,
-        filterElement: (options) => <ColumnSelectFilter onChange={options.filterApplyCallback} options={Array.from(new Set(services.map((service) => service.ivaVendaId))).sort()} value={options.value} />,
+        filterElement: (options) => <ColumnSelectFilter onChange={options.filterApplyCallback} options={tiposIva.map((tipo) => tipo.id).sort()} value={options.value} />,
         filterMatchMode: FilterMatchMode.EQUALS,
         header: "IVA",
         sortable: true,
@@ -546,10 +622,27 @@ function ServicesList({
         emptyMessage="Sem resultados para a pesquisa e filtros atuais."
         globalFilter={search}
         globalFilterFields={["codigo", "descricao", "abreviatura", "codigoIdentificacao"]}
+        first={page * pageSize}
+        lazy
         loading={loading}
+        onLazyFilter={(event) => onColumnFilters({
+          codigo: filterValue(event.filters, "codigo"),
+          descricao: filterValue(event.filters, "descricao"),
+          unidade: filterValue(event.filters, "unidade"),
+          ivaVendaId: filterValue(event.filters, "ivaVendaId"),
+          inativo: filterValue(event.filters, "inativo")
+        })}
+        onLazyPage={(event) => onPageChange(event.page ?? 0, event.rows)}
+        onLazySort={(event) => onSortChange(String(event.sortField ?? "codigo"), event.sortOrder === 1 ? 1 : -1)}
         onSelectionChange={(service) => service && onSelect(service.codigo)}
+        paginator={totalPages > 1}
+        rows={pageSize}
+        rowsPerPageOptions={[20, 50]}
         selection={selected}
-        value={tableValue}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        totalRecords={totalElements}
+        value={services}
       />
     );
   }
@@ -557,7 +650,7 @@ function ServicesList({
   return (
     <>
       <div className="fac-services-list-meta">
-        <span>{filtered.length} resultados</span>
+        <span>{totalElements} resultados</span>
       </div>
       <div className="fac-services-table-wrap" data-filter={stateFilter} data-search={search ? "active" : "empty"}>
         <table className="fac-services-table">
@@ -604,8 +697,15 @@ function ServicesList({
           ))}
         </div>
       </div>
+      {totalPages > 1 && <Paginator first={page * pageSize} onPageChange={(event) => onPageChange(event.page, event.rows)} rows={pageSize} rowsPerPageOptions={[20, 50]} totalRecords={totalElements} />}
     </>
   );
+}
+
+function filterValue(filters: Record<string, unknown>, field: string) {
+  const filter = filters[field] as { value?: unknown } | undefined;
+  if (typeof filter?.value === "boolean") return String(filter.value);
+  return typeof filter?.value === "string" ? filter.value.trim() : "";
 }
 
 function ServiceDetail({
@@ -874,6 +974,12 @@ function StateColumnFilter({ onChange, value }: { onChange: (value: unknown) => 
 }
 
 async function fetchPage<T>(url: string): Promise<Page<T>> {
+  const response = await apiFetch(url);
+  if (!response.ok) throw new Error(await responseError(response));
+  return response.json();
+}
+
+async function requestJson<T>(url: string): Promise<T> {
   const response = await apiFetch(url);
   if (!response.ok) throw new Error(await responseError(response));
   return response.json();

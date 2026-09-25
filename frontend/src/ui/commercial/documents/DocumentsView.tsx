@@ -1,6 +1,7 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FilterMatchMode } from "primereact/api";
+import { Paginator } from "primereact/paginator";
 import { GlobalSearch } from "../../../GlobalSearch";
 import { apiFetch, AuthSession } from "../../../api";
 import {
@@ -270,7 +271,16 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   });
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [stateFilter, setStateFilter] = useState<StateFilter>("all");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortField, setSortField] = useState("dataEmissao");
+  const [sortOrder, setSortOrder] = useState<1 | -1>(-1);
+  const [columnFilters, setColumnFilters] = useState({ dataEmissao: "", documento: "", cliente: "", estado: "" });
+  const listRequestRef = useRef(0);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -296,15 +306,22 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   }, []);
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => { setPage(0); setDebouncedSearch(search.trim()); }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  useEffect(() => {
+    void loadDocuments();
+  }, [page, pageSize, debouncedSearch, stateFilter, sortField, sortOrder, columnFilters]);
+
+  useEffect(() => {
     if (selectedId) loadDetail(selectedId);
   }, [selectedId]);
 
   async function loadData() {
-    setLoading(true);
     setError(null);
     try {
-      const [docsPage, tiposPage, seriesPage, clientes, artigos, armazensPage, moedasPage, regimesPage, modosPage, prazosPage, transportesPage, tiposIvaPage] = await Promise.all([
-        fetchPage<DocumentoComercial>("/api/documentos-comerciais?size=300&sort=dataEmissao,desc&sort=id,desc"),
+      const [tiposPage, seriesPage, clientes, artigos, armazensPage, moedasPage, regimesPage, modosPage, prazosPage, transportesPage, tiposIvaPage] = await Promise.all([
         fetchPage<TipoDocumento>("/api/tipos-documento?size=100&sort=id,asc"),
         fetchPage<Serie>("/api/series?size=100&sort=tipoDocumento.id,asc&sort=serie,asc"),
         fetchAllPages<Cliente>("/api/clientes", "nome,asc"),
@@ -318,7 +335,6 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
         fetchPage<TipoTaxaIva>("/api/tipos-taxa-iva?size=100&sort=descricao,asc")
       ]);
       const commercialTypes = tiposPage.content.filter((tipo) => tipo.areaGestao === 2);
-      setDocumentos(docsPage.content);
       setCatalogos({
         artigos: artigos.filter((artigo) => !artigo.inativo),
         armazens: armazensPage.content,
@@ -332,11 +348,41 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
         modosPagamento: modosPage.content,
         prazosPagamento: prazosPage.content
       });
-      setSelectedId((current) => current ?? docsPage.content[0]?.id ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível carregar documentos.");
+    }
+  }
+
+  async function loadDocuments(preferredId?: number): Promise<boolean> {
+    const requestId = ++listRequestRef.current;
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams({ page: String(page), size: String(pageSize) });
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    const effectiveState = columnFilters.estado || (stateFilter === "all" ? "" : stateFilter);
+    if (effectiveState) params.set("estado", effectiveState);
+    if (columnFilters.dataEmissao) params.set("dataEmissao", columnFilters.dataEmissao);
+    if (columnFilters.documento) params.set("documento", columnFilters.documento);
+    if (columnFilters.cliente) params.set("cliente", columnFilters.cliente);
+    params.append("sort", `${sortField},${sortOrder === 1 ? "asc" : "desc"}`);
+    if (sortField !== "id") params.append("sort", `id,${sortOrder === 1 ? "asc" : "desc"}`);
+    try {
+      const result = await fetchPage<DocumentoComercial>(`/api/documentos-comerciais?${params}`);
+      if (requestId !== listRequestRef.current) return false;
+      setDocumentos(result.content);
+      setTotalElements(result.totalElements);
+      setTotalPages(result.totalPages ?? 0);
+      const preferredDocumentVisible = preferredId != null && result.content.some((doc) => doc.id === preferredId);
+      setSelectedId((current) => {
+        const wanted = preferredId ?? current;
+        return wanted && result.content.some((doc) => doc.id === wanted) ? wanted : result.content[0]?.id ?? null;
+      });
+      return preferredDocumentVisible;
+    } catch (err) {
+      if (requestId === listRequestRef.current) setError(err instanceof Error ? err.message : "Não foi possível carregar documentos.");
+      return false;
     } finally {
-      setLoading(false);
+      if (requestId === listRequestRef.current) setLoading(false);
     }
   }
 
@@ -355,28 +401,8 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
     }
   }
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return documentos.filter((doc) => {
-      const matchesSearch = !term || [
-        doc.id,
-        doc.tipoDocumentoId,
-        doc.tipoDocumentoDescricao,
-        doc.serie,
-        doc.numeroDocumento,
-        doc.numeroDocumentoCompleto,
-        doc.clienteNome,
-        doc.clienteNif,
-        doc.estado,
-        doc.moedaCodigo ?? doc.moedaId
-      ].filter(Boolean).some((value) => String(value).toLowerCase().includes(term));
-      const matchesState = stateFilter === "all" || doc.estado === stateFilter;
-      return matchesSearch && matchesState;
-    });
-  }, [documentos, search, stateFilter]);
-
   const selected = documentos.find((doc) => doc.id === selectedId) ?? null;
-  const activeCount = documentos.filter((doc) => doc.estado === "RASCUNHO").length;
+  const activeCount = stateFilter === "RASCUNHO" ? totalElements : documentos.filter((doc) => doc.estado === "RASCUNHO").length;
 
   function openNew() {
     if (!canCreate) return;
@@ -425,8 +451,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
           tipoTaxaIvaId: nullable(form.tipoTaxaIvaId)
         }
       }, "POST");
-      await loadData();
-      setSelectedId(created.id);
+      await loadDocuments(created.id);
       setEditorOpen(false);
       setNotice(`Documento ${documentRef(created)} criado como rascunho.`);
       showToast({ detail: "Documento guardado como rascunho.", severity: "success", summary: "Documento" });
@@ -477,9 +502,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
     try {
       await requestNoContent(`/api/documentos-comerciais/${selected.id}`, "DELETE");
       setDeleteOpen(false);
-      const page = await fetchPage<DocumentoComercial>("/api/documentos-comerciais?size=300&sort=dataEmissao,desc&sort=id,desc");
-      setDocumentos(page.content);
-      setSelectedId(page.content[0]?.id ?? null);
+      await loadDocuments();
       setLinhas([]);
       setDiagnostico(null);
       setNotice("Rascunho eliminado com sucesso.");
@@ -505,10 +528,8 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   }
 
   async function refreshAfterAction(id: number, message: string) {
-    const page = await fetchPage<DocumentoComercial>("/api/documentos-comerciais?size=300&sort=dataEmissao,desc&sort=id,desc");
-    setDocumentos(page.content);
-    setSelectedId(id);
-    await loadDetail(id);
+    const documentVisible = await loadDocuments(id);
+    if (documentVisible) await loadDetail(id);
     setNotice(message);
     showToast({ detail: message, severity: "success", summary: "Documento" });
   }
@@ -535,7 +556,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       editorMessage={editorMessage}
       editorOpen={editorOpen}
       error={error}
-      filtered={filtered}
+      filtered={documentos}
       form={form}
       linhas={linhas}
       loading={loading}
@@ -558,10 +579,19 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
       onOpenPdf={openPdf}
       onSave={save}
       onSearch={setSearch}
+      onColumnFilters={(filters) => { setPage(0); setColumnFilters(filters); }}
+      onPageChange={(nextPage, nextSize) => { setPage(nextSize === pageSize ? nextPage : 0); setPageSize(nextSize); }}
+      onSortChange={(field, order) => { setPage(0); setSortField(field); setSortOrder(order); }}
       onSelect={selectDocument}
-      onStateFilter={setStateFilter}
+      onStateFilter={(value) => { setPage(0); setStateFilter(value); }}
       saving={saving}
       search={search}
+      page={page}
+      pageSize={pageSize}
+      totalElements={totalElements}
+      totalPages={totalPages}
+      sortField={sortField}
+      sortOrder={sortOrder}
       selected={selected}
       stateFilter={stateFilter}
       voidOpen={anularOpen}
@@ -617,10 +647,19 @@ function DocumentsContent(props: {
   onOpenPdf: () => void;
   onSave: (event?: FormEvent) => void;
   onSearch: (value: string) => void;
+  onColumnFilters: (filters: { dataEmissao: string; documento: string; cliente: string; estado: string }) => void;
+  onPageChange: (page: number, size: number) => void;
+  onSortChange: (field: string, order: 1 | -1) => void;
   onSelect: (id: number) => void;
   onStateFilter: (value: StateFilter) => void;
   saving: boolean;
   search: string;
+  page: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  sortField: string;
+  sortOrder: 1 | -1;
   selected: DocumentoComercial | null;
   stateFilter: StateFilter;
   voidOpen: boolean;
@@ -685,7 +724,7 @@ function MobileDocumentsContent(props: Parameters<typeof DocumentsContent>[0]) {
   );
 }
 
-function DocumentsHeader({ activeCount, compact = false, documentos, loading }: Parameters<typeof DocumentsContent>[0] & { compact?: boolean }) {
+function DocumentsHeader({ activeCount, compact = false, totalElements, loading }: Parameters<typeof DocumentsContent>[0] & { compact?: boolean }) {
   return (
     <ModuleHeader
       action={
@@ -696,7 +735,7 @@ function DocumentsHeader({ activeCount, compact = false, documentos, loading }: 
       compact={compact}
       eyebrow="Documentos"
       subtitle="Consultar e preparar documentos comerciais."
-      summary={<div className="fac-module-summary" aria-label="Resumo de documentos"><span>{loading ? "A carregar" : `${documentos.length} documentos`}</span><strong>{activeCount} rascunhos</strong></div>}
+      summary={<div className="fac-module-summary" aria-label="Resumo de documentos"><span>{loading ? "A carregar" : `${totalElements} documentos`}</span><strong>{activeCount} rascunhos nesta página</strong></div>}
       title="Documentos"
     />
   );
@@ -721,13 +760,12 @@ function DocumentsToolbar({ canCreate, deviceClass, onNew, onSearch, onStateFilt
   );
 }
 
-function DocumentsList({ deviceClass, documentos, filtered, loading, onSelect, search, selected, stateFilter }: Parameters<typeof DocumentsContent>[0]) {
+function DocumentsList({ deviceClass, documentos, filtered, loading, onColumnFilters, onPageChange, onSelect, onSortChange, page, pageSize, search, selected, sortField, sortOrder, totalElements, totalPages }: Parameters<typeof DocumentsContent>[0]) {
   if (loading) return <FacLoadingState description="A carregar documentos." />;
   if (documentos.length === 0) return <FacEmptyState description="Ainda não existem documentos comerciais." />;
   if (filtered.length === 0) return <FacEmptyState description="Sem resultados para a pesquisa e filtros atuais." />;
 
   if (deviceClass !== "mobile") {
-    const tableValue = documentos.filter((doc) => stateFilter === "all" || doc.estado === stateFilter);
     const columns: FacDataTableColumn<DocumentoComercial>[] = [
       { body: (doc) => date(doc.dataEmissao), dataType: "date", field: "dataEmissao", filter: true, filterPlaceholder: "Data", header: "Data", sortable: true, style: { width: "7rem" } },
       { body: (doc) => documentRef(doc), field: "numeroDocumentoCompleto", filter: true, filterPlaceholder: "Documento", header: "Documento", sortable: true, style: { width: "10rem" } },
@@ -754,9 +792,25 @@ function DocumentsList({ deviceClass, documentos, filtered, loading, onSelect, s
         globalFilter={search}
         globalFilterFields={["id", "tipoDocumentoId", "serie", "numeroDocumentoCompleto", "clienteNome", "clienteNif", "estado", "moedaCodigo"]}
         loading={loading}
+        first={page * pageSize}
+        lazy
+        onLazyFilter={(event) => onColumnFilters({
+          dataEmissao: filterValue(event.filters, "dataEmissao"),
+          documento: filterValue(event.filters, "numeroDocumentoCompleto"),
+          cliente: filterValue(event.filters, "clienteNome"),
+          estado: filterValue(event.filters, "estado")
+        })}
+        onLazyPage={(event) => onPageChange(event.page ?? 0, event.rows)}
+        onLazySort={(event) => onSortChange(String(event.sortField ?? "dataEmissao"), event.sortOrder === 1 ? 1 : -1)}
         onSelectionChange={(doc) => doc && onSelect(doc.id)}
+        paginator={totalPages > 1}
+        rows={pageSize}
+        rowsPerPageOptions={[20, 50]}
         selection={selected}
-        value={tableValue}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        totalRecords={totalElements}
+        value={documentos}
       />
     );
   }
@@ -771,8 +825,14 @@ function DocumentsList({ deviceClass, documentos, filtered, loading, onSelect, s
           <DocumentStatusBadge estado={doc.estado} />
         </button>
       ))}
+      {totalPages > 1 && <Paginator first={page * pageSize} onPageChange={(event) => onPageChange(event.page, event.rows)} rows={pageSize} rowsPerPageOptions={[20, 50]} totalRecords={totalElements} />}
     </div>
   );
+}
+
+function filterValue(filters: Record<string, unknown>, field: string) {
+  const filter = filters[field] as { value?: unknown } | undefined;
+  return typeof filter?.value === "string" ? filter.value.trim() : "";
 }
 
 function DocumentDetail(props: Parameters<typeof DocumentsContent>[0]) {

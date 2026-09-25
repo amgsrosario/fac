@@ -63,6 +63,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.hasSize;
@@ -2560,5 +2561,72 @@ class DocumentoComercialControllerTests {
                 .andExpect(status().isOk());
 
         return Long.valueOf(location.substring(location.lastIndexOf('/') + 1));
+    }
+    @Test
+    void listaDocumentosComPaginacaoFiltrosPesquisaEVolumeAcimaDoLimiteAntigo() throws Exception {
+        int previous = 0;
+        for (int total : new int[]{0, 1, 20, 21, 50, 51, 100, 300, 301, 500}) {
+            criarDocumentosParaListagem(previous + 1, total);
+            mockMvc.perform(get("/documentos-comerciais").param("size", "50"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(total));
+            previous = total;
+        }
+
+        mockMvc.perform(get("/documentos-comerciais").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(500))
+                .andExpect(jsonPath("$.totalPages").value(25))
+                .andExpect(jsonPath("$.content", hasSize(20)));
+        mockMvc.perform(get("/documentos-comerciais").param("page", "15").param("size", "20"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(20)));
+        mockMvc.perform(get("/documentos-comerciais").param("page", "9").param("size", "50"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(50)));
+        mockMvc.perform(get("/documentos-comerciais").param("search", "Cliente Documento 301"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+        mockMvc.perform(get("/documentos-comerciais").param("estado", "EMITIDO"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(250));
+        mockMvc.perform(get("/documentos-comerciais").param("dataEmissao", "2026-01-21"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(17));
+        mockMvc.perform(get("/documentos-comerciais").param("sort", "campoInexistente,asc"))
+                .andExpect(status().isBadRequest());
+    }
+
+    private void criarDocumentosParaListagem(int inicio, int total) {
+        TipoDocumento tipo = tipoDocumentoRepository.findById("DCT").orElseThrow();
+        Moeda moeda = moedaRepository.findById("EUR").orElseThrow();
+        RIva riva = rIvaRepository.findById("CON").orElseThrow();
+        Transporte transporte = transporteRepository.findById("DCT").orElseThrow();
+        ArrayList<DocumentoComercial> documentos = new ArrayList<>(Math.max(0, total - inicio + 1));
+        for (int index = inicio; index <= total; index++) {
+            DocumentoComercial documento = new DocumentoComercial();
+            documento.setTipoDocumento(tipo);
+            documento.setSerie("A");
+            documento.setDataEmissao(LocalDate.of(2026, 1, 1).plusDays(index % 30));
+            documento.setDataVencimento(LocalDate.of(2026, 2, 1).plusDays(index % 30));
+            documento.setCliente(cliente);
+            documento.setClienteNome("Cliente Documento " + index);
+            documento.setClienteNif("500" + String.format("%06d", index));
+            documento.setClienteMorada("Rua " + index);
+            documento.setClienteCodPostal("3750-004");
+            documento.setClienteLocalidade("Agueda");
+            documento.setClientePais("PT");
+            documento.setDataCarga(documento.getDataEmissao());
+            documento.setArmazemCarga(armazem);
+            documento.setCargaNome(armazem.getNome());
+            documento.setCargaMorada(armazem.getMorada());
+            documento.setCargaCodPostal("3750-004");
+            documento.setCargaLocalidade(armazem.getLocalidade());
+            documento.setCargaPais("PT");
+            documento.setMoeda(moeda);
+            documento.setRiva(riva);
+            documento.setPPagamento(pPagamento);
+            documento.setMPagamento(mPagamento);
+            documento.setTransporte(transporte);
+            documento.setEstado(index % 2 == 0 ? com.ar2lda.fac.model.EstadoDocumentoComercial.EMITIDO : com.ar2lda.fac.model.EstadoDocumentoComercial.RASCUNHO);
+            documento.setValorTotal(BigDecimal.valueOf(index));
+            documentos.add(documento);
+        }
+        if (!documentos.isEmpty()) documentoRepository.saveAllAndFlush(documentos);
     }
 }

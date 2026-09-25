@@ -14,6 +14,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.format.annotation.DateTimeFormat;
+import com.ar2lda.fac.model.EstadoDocumentoComercial;
+import com.ar2lda.fac.controller.dto.DocumentoComercialResumoDto;
+import java.time.LocalDate;
+import java.util.Set;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -49,8 +59,27 @@ public class DocumentoComercialController implements GenericController {
 
     @GetMapping
     @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
-    public Page<DocumentoComercialDto> list(Pageable pageable) {
-        return service.list(pageable);
+    public Page<DocumentoComercialResumoDto> list(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) EstadoDocumentoComercial estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataEmissao,
+            @RequestParam(required = false) String documento,
+            @RequestParam(required = false) String cliente,
+            Pageable pageable) {
+        return service.list(search, estado, dataEmissao, documento, cliente, validatedPageable(pageable));
+    }
+
+    private Pageable validatedPageable(Pageable pageable) {
+        Set<String> allowed = Set.of("id", "dataEmissao", "numeroDocumentoCompleto", "clienteNome", "valorTotal", "estado");
+        for (Sort.Order order : pageable.getSort()) {
+            if (!allowed.contains(order.getProperty())) {
+                throw new ResponseStatusException(BAD_REQUEST, "Ordenacao nao suportada: " + order.getProperty());
+            }
+        }
+        Sort sort = pageable.getSort().isSorted() ? pageable.getSort() : Sort.by(Sort.Order.desc("dataEmissao"), Sort.Order.desc("id"));
+        if (sort.getOrderFor("id") == null) sort = sort.and(Sort.by(Sort.Order.desc("id")));
+        int size = pageable.getPageSize() == 50 ? 50 : 20;
+        return PageRequest.of(pageable.getPageNumber(), size, sort);
     }
 
     @GetMapping("/{id}")

@@ -42,8 +42,15 @@ public class ArtigoService {
         return mapper.toDTO(artigoRepository.save(artigo));
     }
 
-    public Page<ArtigoDto> list(Pageable pageable) {
-        return artigoRepository.findAll(pageable).map(mapper::toDTO);
+    public Page<ArtigoDto> list(String search, Boolean inativo, String codigo, String descricao,
+                                String unidade, String ivaVendaId, Pageable pageable) {
+        String searchTerm = like(search);
+        String codigoTerm = like(codigo);
+        String descricaoTerm = like(descricao);
+        return artigoRepository.findResumos(
+                searchTerm, searchTerm.isEmpty(), inativo,
+                codigoTerm, codigoTerm.isEmpty(), descricaoTerm, descricaoTerm.isEmpty(),
+                blankToNull(unidade), blankToNull(ivaVendaId), pageable);
     }
 
     public ArtigoDto getByCodigo(String codigo) {
@@ -112,5 +119,13 @@ public class ArtigoService {
             return null;
         }
         return codigoIdentificacao.trim();
+    }
+
+    private String like(String value) {
+        return value == null || value.isBlank() ? "" : "%" + value.trim().toLowerCase() + "%";
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

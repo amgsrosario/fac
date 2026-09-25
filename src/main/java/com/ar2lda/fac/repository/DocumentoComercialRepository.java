@@ -1,6 +1,8 @@
 package com.ar2lda.fac.repository;
 
 import com.ar2lda.fac.model.DocumentoComercial;
+import com.ar2lda.fac.model.EstadoDocumentoComercial;
+import com.ar2lda.fac.controller.dto.DocumentoComercialResumoDto;
 import com.ar2lda.fac.repository.projection.ExtratoAnteriorProjection;
 import com.ar2lda.fac.repository.projection.ExtratoMovimentoProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +19,42 @@ import java.util.Collection;
 import java.util.List;
 
 public interface DocumentoComercialRepository extends JpaRepository<DocumentoComercial, Long> {
+
+    @Query("""
+            select new com.ar2lda.fac.controller.dto.DocumentoComercialResumoDto(
+                d.id, coalesce(d.tipoDocumentoCodigo, td.id), coalesce(d.tipoDocumentoDescricao, td.descricao),
+                d.serie, d.serieDescricao, d.numeroDocumento, d.numeroDocumentoCompleto, d.atcud,
+                d.estado, d.dataEmissao, d.dataVencimento, c.id, d.clienteNome, d.clienteNif,
+                coalesce(d.moedaCodigo, m.id), d.moedaCodigo, d.moedaSimbolo, d.moedaCasasDecimais,
+                d.valorBruto, d.valorDesconto, d.valorIvaTotal, d.valorRetencao, d.valorTotal,
+                d.anulado, d.motivoAnulacao, d.impresso, d.liquidado)
+            from DocumentoComercial d
+            join d.tipoDocumento td
+            join d.cliente c
+            left join d.moeda m
+            where (:searchEmpty = true or
+                   lower(coalesce(d.numeroDocumentoCompleto, '')) like :search or
+                   lower(coalesce(d.serie, '')) like :search or
+                   lower(coalesce(d.clienteNome, '')) like :search or
+                   lower(coalesce(d.clienteNif, '')) like :search or
+                   lower(coalesce(d.tipoDocumentoDescricao, td.descricao, '')) like :search or
+                   lower(cast(d.estado as string)) like :search)
+              and (:estado is null or d.estado = :estado)
+              and (:dataEmissaoEmpty = true or d.dataEmissao = :dataEmissao)
+              and (:documentoEmpty = true or lower(coalesce(d.numeroDocumentoCompleto, '')) like :documento)
+              and (:clienteEmpty = true or lower(coalesce(d.clienteNome, '')) like :cliente)
+            """)
+    Page<DocumentoComercialResumoDto> findResumos(
+            @Param("search") String search,
+            @Param("searchEmpty") boolean searchEmpty,
+            @Param("estado") EstadoDocumentoComercial estado,
+            @Param("dataEmissao") LocalDate dataEmissao,
+            @Param("dataEmissaoEmpty") boolean dataEmissaoEmpty,
+            @Param("documento") String documento,
+            @Param("documentoEmpty") boolean documentoEmpty,
+            @Param("cliente") String cliente,
+            @Param("clienteEmpty") boolean clienteEmpty,
+            Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select d from DocumentoComercial d where d.id = :id")

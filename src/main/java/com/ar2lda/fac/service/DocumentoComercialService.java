@@ -129,8 +129,19 @@ public class DocumentoComercialService {
         return mapper.toDTO(saved);
     }
 
-    public Page<DocumentoComercialDto> list(Pageable pageable) {
-        return documentoRepository.findAll(pageable).map(mapper::toDTO);
+    public Page<com.ar2lda.fac.controller.dto.DocumentoComercialResumoDto> list(
+            String search, EstadoDocumentoComercial estado, LocalDate dataEmissao,
+            String documento, String cliente, Pageable pageable) {
+        String searchTerm = like(search);
+        String documentoTerm = like(documento);
+        String clienteTerm = like(cliente);
+        return documentoRepository.findResumos(searchTerm, searchTerm.isEmpty(), estado,
+                dataEmissao == null ? LocalDate.of(1900, 1, 1) : dataEmissao, dataEmissao == null,
+                documentoTerm, documentoTerm.isEmpty(), clienteTerm, clienteTerm.isEmpty(), pageable);
+    }
+
+    private String like(String value) {
+        return value == null || value.isBlank() ? "" : "%" + value.trim().toLowerCase() + "%";
     }
 
     public DocumentoComercialDto getById(Long id) {
