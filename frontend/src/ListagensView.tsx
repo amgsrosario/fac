@@ -249,7 +249,7 @@ export default function ListagensView() {
         const response = await fetchPage<LinhaComercialResponse>(listagemUrl("/api/listagens/linhas-comerciais", target === "linhasComerciais", target));
         if (requestId !== loadRequestRef.current) return;
         setLinhasComerciais(response.content.map((item) => ({ ...item.linha, documento: item.documento })));
-        if (target === "linhasComerciais") {
+        if (target === "linhasComerciais" || target === "relacaoComercial") {
           setTotalElements(response.totalElements);
           setTotalPages(response.totalPages);
         }
@@ -265,7 +265,7 @@ export default function ListagensView() {
         const response = await fetchPage<LinhaFinanceiraResponse>(listagemUrl("/api/listagens/linhas-financeiras", false, target));
         if (requestId !== loadRequestRef.current) return;
         setLinhasFinanceiras(response.content.map((item) => ({ ...item.linha, documento: item.documento })));
-        if (target === "linhasFinanceiras") {
+        if (target === "linhasFinanceiras" || target === "relacaoFinanceira") {
           setTotalElements(response.totalElements);
           setTotalPages(response.totalPages);
         }
@@ -684,7 +684,8 @@ function isPendentesSource(source: SourceKey) {
 }
 
 function isRemotePagedSource(source: SourceKey) {
-  return source === "comerciais" || source === "linhasComerciais" || source === "financeiros" || source === "linhasFinanceiras";
+  return source === "comerciais" || source === "linhasComerciais" || source === "financeiros" || source === "linhasFinanceiras"
+    || source === "relacaoComercial" || source === "relacaoFinanceira";
 }
 
 const COMMERCIAL_SORT_FIELDS: Partial<Record<SourceKey, Record<string, string>>> = {

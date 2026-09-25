@@ -83,9 +83,10 @@ public class ListagensController {
             @RequestParam(required = false) List<Long> clienteIds,
             @RequestParam(required = false) List<String> artigoIds,
             @RequestParam(defaultValue = "false") boolean mostrarTexto,
+            @RequestParam(required = false) String q,
             Pageable pageable
     ) {
-        return service.linhasComerciais(dataInicial, dataFinal, clienteId, clienteIds, artigoId, artigoIds, mostrarTexto,
+        return service.linhasComerciais(dataInicial, dataFinal, clienteId, clienteIds, artigoId, artigoIds, mostrarTexto, q,
                 validatedPageable(pageable, LINHA_COMERCIAL_SORTS));
     }
 

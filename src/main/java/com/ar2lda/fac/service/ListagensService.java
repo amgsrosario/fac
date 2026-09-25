@@ -79,11 +79,23 @@ public class ListagensService {
 
     @Transactional(readOnly = true)
     public Page<ListagemLinhaComercialDto> linhasComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, List<Long> clienteIds, String artigoId, List<String> artigoIds, boolean mostrarTexto, Pageable pageable) {
+        return linhasComerciais(dataInicial, dataFinal, clienteId, clienteIds, artigoId, artigoIds, mostrarTexto, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ListagemLinhaComercialDto> linhasComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId,
+                                                             List<Long> clienteIds, String artigoId,
+                                                             List<String> artigoIds, boolean mostrarTexto,
+                                                             String pesquisa, Pageable pageable) {
         List<Long> filtroClientes = filtroClientes(clienteId, clienteIds);
         boolean filtrarClientes = !filtroClientes.isEmpty();
         List<String> filtroArtigos = filtroStrings(artigoId, artigoIds);
         boolean filtrarArtigos = !filtroArtigos.isEmpty();
-        return linhaDocumentoComercialRepository.findAnaliticas(dataInicial, dataFinal, mostrarTexto, filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L), filtrarArtigos, filtrarArtigos ? filtroArtigos : List.of("__NO_ARTIGO__"), pageable)
+        String search = blankToNull(pesquisa);
+        return linhaDocumentoComercialRepository.findAnaliticas(dataInicial, dataFinal, mostrarTexto,
+                        filtrarClientes, filtrarClientes ? filtroClientes : List.of(-1L),
+                        filtrarArtigos, filtrarArtigos ? filtroArtigos : List.of("__NO_ARTIGO__"),
+                        search == null ? "" : "%" + search.toLowerCase() + "%", search == null, pageable)
                 .map(this::toLinhaComercialDto);
     }
 

@@ -2516,6 +2516,71 @@ class DocumentoComercialControllerTests {
     }
 
     @Test
+    void relacaoComercialPaginaEPesquisaQuinhentasEUmaLinhasSemPerderDocumento() throws Exception {
+        Long documentoId = emitirDocumentoComercialComLinhas(1);
+        DocumentoComercial documento = documentoRepository.findById(documentoId).orElseThrow();
+        List<com.ar2lda.fac.model.LinhaDocumentoComercial> linhas = new ArrayList<>(500);
+        for (int numeroLinha = 2; numeroLinha <= 501; numeroLinha++) {
+            var linha = new com.ar2lda.fac.model.LinhaDocumentoComercial();
+            linha.setDocumentoComercial(documento);
+            linha.setNumeroLinha(numeroLinha);
+            linha.setTipoLinha(com.ar2lda.fac.model.TipoLinhaDocumento.COMERCIAL);
+            linha.setArtigo(artigo);
+            linha.setDescricao("Relação comercial %03d".formatted(numeroLinha));
+            linha.setQuantidade(BigDecimal.ONE);
+            linha.setPrecoUnitario(BigDecimal.TEN);
+            linha.setValorBruto(BigDecimal.TEN);
+            linha.setTipoDesconto(com.ar2lda.fac.model.TipoDescontoLinha.VALOR);
+            linha.setDesconto(BigDecimal.ZERO);
+            linha.setValorDesconto(BigDecimal.ZERO);
+            linha.setValorLinha(BigDecimal.TEN);
+            linha.setTipoTaxaIva(artigo.getIvaVenda());
+            linha.setPercentagemIva(BigDecimal.valueOf(23));
+            linha.setPeso(BigDecimal.ONE);
+            linhas.add(linha);
+        }
+        linhaDocumentoComercialRepository.saveAllAndFlush(linhas);
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("page", "0").param("size", "20")
+                        .param("sort", "numeroLinha,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(501))
+                .andExpect(jsonPath("$.totalPages").value(26))
+                .andExpect(jsonPath("$.content", hasSize(20)))
+                .andExpect(jsonPath("$.content[0].documento.id").value(documentoId));
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("page", "25").param("size", "20")
+                        .param("sort", "numeroLinha,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].documento.id").value(documentoId))
+                .andExpect(jsonPath("$.content[0].linha.numeroLinha").value(501));
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("q", "Relação comercial 501")
+                        .param("page", "0").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].documento.id").value(documentoId))
+                .andExpect(jsonPath("$.content[0].linha.numeroLinha").value(501));
+
+        mockMvc.perform(get("/listagens/linhas-comerciais")
+                        .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
+                        .param("clienteIds", cliente.getId().toString())
+                        .param("page", "10").param("size", "50")
+                        .param("sort", "numeroLinha,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(501))
+                .andExpect(jsonPath("$.totalPages").value(11))
+                .andExpect(jsonPath("$.content", hasSize(1)));
+    }
+
+    @Test
     void listagensFinanceirasPaginamFiltramEOrdenamMaisDeQuinhentosRegistos() throws Exception {
         Long documentoComercialId = emitirDocumentoComercialComLinhas(1);
         Pendente pendente = pendenteRepository.findByDocumentoComercialId(documentoComercialId).orElseThrow();
@@ -2615,7 +2680,9 @@ class DocumentoComercialControllerTests {
                         .param("q", "10501").param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].documento.numeroDocumento").value(10501));
+                .andExpect(jsonPath("$.content[0].documento.numeroDocumento").value(10501))
+                .andExpect(jsonPath("$.content[0].linha.documentoComercialId").value(documentoComercialId))
+                .andExpect(jsonPath("$.content[0].linha.pendenteId").value(pendente.getId()));
 
         mockMvc.perform(get("/listagens/linhas-financeiras")
                         .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
