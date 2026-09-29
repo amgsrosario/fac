@@ -1,0 +1,25 @@
+name: Piloto TUULI - segurança dos testes
+
+on:
+  pull_request:
+    branches:
+      - main
+      - feature/visual-redesign
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Testes unitários de proteção da base
+        run: mvn -B -Dtest=TestDatabaseSafetyValidatorTests test
+      - name: Build sem executar testes
+        run: mvn -B -DskipTests package
