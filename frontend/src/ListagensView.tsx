@@ -61,6 +61,8 @@ type PendenteListagem = {
   clienteCodigo: string; clienteNome: string; moedaId: string; total: number; recebido: number; pendente: number;
 };
 type PendentesResponse = {
+  totalElements: number;
+  totalPages: number;
   linhas: PendenteListagem[];
   totais: { total: number; recebido: number; pendente: number };
 };
@@ -173,6 +175,7 @@ export default function ListagensView() {
   const [pageSize, setPageSize] = useState(20);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [pendentesTotalPages, setPendentesTotalPages] = useState(0);
   const [sortKey, setSortKey] = useState("emissao");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const loadRequestRef = useRef(0);
@@ -180,17 +183,19 @@ export default function ListagensView() {
 
   useEffect(() => { loadFilterOptions(); }, []);
   useEffect(() => {
+    if (isPendentesSource(source)) return;
     const timer = window.setTimeout(() => {
       setPage(0);
       setDebouncedSearch(search.trim());
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [search]);
+  }, [search, source]);
   useEffect(() => {
     if (source !== "extratoCliente") {
       loadSource(source);
     }
-  }, [source, dataInicial, dataFinal, clienteIds, artigoIds, mostrarAnuladosComerciais, mostrarAnuladosFinanceiros, mostrarTextoComercial, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos, debouncedSearch, page, pageSize, sortKey, sortDirection]);
+    return () => { loadRequestRef.current += 1; };
+  }, [source, dataInicial, dataFinal, clienteIds, artigoIds, mostrarAnuladosComerciais, mostrarAnuladosFinanceiros, mostrarTextoComercial, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos, debouncedSearch, page, pageSize, sortKey, sortDirection, isPendentesSource(source) ? search : ""]);
 
   async function loadFilterOptions() {
     try {
@@ -207,20 +212,24 @@ export default function ListagensView() {
   }
 
   async function loadSource(target: SourceKey) {
+    const requestId = ++loadRequestRef.current;
     if (target !== "pendentes" && target !== "pendentesAData" && (!dataInicial || !dataFinal)) {
+      setLoading(false);
       setMessage("Indica a data inicial e a data final.");
       return;
     }
     if (target === "pendentesAData" && !pendentesDataReferencia) {
+      clearSourceRows(target);
+      setLoading(false);
       setMessage("Indica a data de referencia.");
       return;
     }
     if (target !== "pendentes" && target !== "pendentesAData" && dataInicial > dataFinal) {
+      setLoading(false);
       setMessage("A data inicial não pode ser posterior à data final.");
       clearSourceRows(target);
       return;
     }
-    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setMessage(null);
     clearSourceRows(target);
@@ -229,12 +238,15 @@ export default function ListagensView() {
         setClientesExtrato((await fetchPage<ClienteOption>("/api/clientes?size=500&sort=nome,asc")).content);
       }
       if (target === "pendentes" || target === "pendentesAData") {
-        const params = new URLSearchParams();
+        const params = new URLSearchParams({ page: String(page), size: String(pageSize), pesquisa: search.trim() });
         if (target === "pendentesAData") params.set("dataReferencia", pendentesDataReferencia);
         params.set("apenasVencidos", String(pendentesApenasVencidos));
         pendentesClienteIds.forEach((id) => params.append("clienteIds", String(id)));
         const endpoint = target === "pendentesAData" ? "/api/listagens/pendentes-a-data" : "/api/listagens/pendentes";
         const response = await fetchJson<PendentesResponse>(`${endpoint}${params.toString() ? `?${params}` : ""}`);
+        if (requestId !== loadRequestRef.current) return;
+        setTotalElements(response.totalElements);
+        setPendentesTotalPages(response.totalPages);
         setPendentes(response.linhas);
         setPendentesTotais(response.totais);
       }
@@ -402,6 +414,8 @@ export default function ListagensView() {
   function clearSourceRows(target: SourceKey) {
     if (isPendentesSource(target)) {
       setPendentes([]);
+      setTotalElements(0);
+      setPendentesTotalPages(0);
       setPendentesTotais({ total: 0, recebido: 0, pendente: 0 });
     }
     if (target === "comerciais") setComerciais([]);
@@ -430,6 +444,9 @@ export default function ListagensView() {
   }
 
   function changeSource(next: SourceKey) {
+    if (next !== source) loadRequestRef.current += 1;
+    if (next === "extratoCliente") setLoading(false);
+    if (isPendentesSource(next) && pageSize !== 20 && pageSize !== 50) setPageSize(20);
     setSource(next);
     setSearch("");
     setDebouncedSearch("");
@@ -461,14 +478,14 @@ export default function ListagensView() {
       : linhasFinanceiras;
     if (isRemotePagedSource(source)) return base;
     const term = search.trim().toLowerCase();
-    if (!term) return base;
+    if (!term || isPendentesSource(source)) return base;
     return base.filter((row) => searchText(source, row).includes(term));
   }, [source, pendentes, comerciais, linhasComerciais, financeiros, linhasFinanceiras, search]);
 
   const currentSource = SOURCES.find((item) => item.key === source);
   const resultCount = loading ? "A carregar..." : source === "extratoCliente"
     ? extratos ? `${extratos.reduce((total, extrato) => total + extrato.moedas.reduce((subtotal, moeda) => subtotal + moeda.movimentos.length, 0), 0)} movimentos` : "A aguardar consulta"
-    : `${isRemotePagedSource(source) ? totalElements : rows.length} registos`;
+    : `${isRemotePagedSource(source) || isPendentesSource(source) ? totalElements : rows.length} registos`;
   const listingExport = source === "comerciais" || source === "linhasComerciais" || source === "financeiros" || source === "linhasFinanceiras";
   const exportingFormat = isPendentesSource(source) ? exportingPendentesFormat : exportingListingFormat;
   const exportCurrent = isPendentesSource(source) ? exportarPendentes : listingExport ? exportarListagem : null;
@@ -487,14 +504,14 @@ export default function ListagensView() {
       <header className="tuuli-listings-results-header">
         <div><p className="fac-eyebrow">{currentSource?.label}</p><div className="tuuli-listings-title-row"><h2>{source === "pendentesAData" ? "Situação dos valores por receber" : "Dados disponíveis"}</h2><span>{resultCount}</span></div>{source === "pendentesAData" && <p className="fac-muted">Valores pendentes na data selecionada, vencidos e não vencidos.</p>}</div>
         <div className="tuuli-listings-tools">
-          {source !== "extratoCliente" && <label className="tuuli-search"><i aria-hidden="true" className="pi pi-search"/><input onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar nesta listagem" type="search" value={search}/></label>}
+          {source !== "extratoCliente" && <label className="tuuli-search"><i aria-hidden="true" className="pi pi-search"/><input onChange={(event) => { if (isPendentesSource(source)) { loadRequestRef.current += 1; setPage(0); } setSearch(event.target.value); }} placeholder="Pesquisar nesta listagem" type="search" value={search}/></label>}
           <button className="tuuli-tool-action" disabled={loading} onClick={() => source === "extratoCliente" ? consultarExtrato() : loadSource(source)} type="button">Atualizar</button>
           {exportCurrent && <><button className="tuuli-tool-action" disabled={exportingFormat !== null} onClick={() => exportCurrent("pdf")} type="button">{exportingFormat === "pdf" ? "A gerar..." : "Exportar PDF"}</button><button className="tuuli-tool-action" disabled={exportingFormat !== null} onClick={() => exportCurrent("xlsx")} type="button">{exportingFormat === "xlsx" ? "A gerar..." : "Exportar Excel"}</button></>}
           <button className="tuuli-tool-action" onClick={() => setColumnsOpen((current) => !current)} type="button">Colunas ({configured.visibleColumns.length})</button>
         </div>
       </header>
       {message && <p className="fac-message">{message}</p>}
-      {isPendentesSource(source) && <div className="fac-pendentes-controls"><PendentesFilters apenasVencidos={pendentesApenasVencidos} clientes={clientes} dataReferencia={source === "pendentesAData" ? pendentesDataReferencia : undefined} onApenasVencidos={setPendentesApenasVencidos} onChange={setPendentesClienteIds} onDataReferencia={setPendentesDataReferencia} selectedValues={pendentesClienteIds}/></div>}
+      {isPendentesSource(source) && <div className="fac-pendentes-controls"><PendentesFilters apenasVencidos={pendentesApenasVencidos} clientes={clientes} dataReferencia={source === "pendentesAData" ? pendentesDataReferencia : undefined} onApenasVencidos={(value) => { loadRequestRef.current += 1; setPage(0); setPendentesApenasVencidos(value); }} onChange={(values) => { loadRequestRef.current += 1; setPage(0); setPendentesClienteIds(values); }} onDataReferencia={(value) => { loadRequestRef.current += 1; setPage(0); setPendentesDataReferencia(value); }} selectedValues={pendentesClienteIds}/></div>}
       {isPendentesSource(source) && <PendentesTotals totais={pendentesTotais}/>}
       {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters artigos={artigos} clientes={clientes} dataFinal={dataFinal} dataInicial={dataInicial} mostrarAnulados={source === "comerciais" ? mostrarAnuladosComerciais : source === "financeiros" ? mostrarAnuladosFinanceiros : undefined} mostrarTexto={source === "linhasComerciais" ? mostrarTextoComercial : undefined} onArtigos={(values) => { setPage(0); setArtigoIds(values); }} onClientes={(values) => { setPage(0); setClienteIds(values); }} onDataFinal={(value) => { setPage(0); setDataFinal(value); }} onDataInicial={(value) => { setPage(0); setDataInicial(value); }} onMostrarAnulados={(value) => { setPage(0); if (source === "financeiros") setMostrarAnuladosFinanceiros(value); else setMostrarAnuladosComerciais(value); }} onMostrarTexto={(value) => { setPage(0); setMostrarTextoComercial(value); }} selectedArtigoIds={artigoIds} selectedClienteIds={clienteIds} showArtigo={source === "linhasComerciais"} />}
       {source === "extratoCliente" && <p className="fac-muted">Extrato calculado a partir dos documentos emitidos. Os documentos anulados não integram os movimentos contabilísticos e cada moeda é apresentada separadamente.</p>}
@@ -515,6 +532,7 @@ export default function ListagensView() {
         {rows.map((row, index) => <tr key={rowKey(source, row, index)}>{configured.visibleColumns.map((column) => <td className={numericColumn(column.key) ? "tuuli-numeric" : undefined} key={column.key}>{cellValue(source, row, column.key, navigate)}</td>)}</tr>)}
         {!loading && rows.length === 0 && <tr><td colSpan={configured.visibleColumns.length}>{emptyMessage(source, pendentesClienteIds.length > 0)}</td></tr>}
       </tbody></table></div>}
+      {isPendentesSource(source) && <div className="tuuli-pagination"><span>{totalElements} registos · {pendentesTotalPages} páginas</span><Paginator first={page * pageSize} onPageChange={(event) => { loadRequestRef.current += 1; setPage(event.rows !== pageSize ? 0 : event.page); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[20, 50]} totalRecords={totalElements}/></div>}
       {isRemotePagedSource(source) && totalPages > 1 && <div className="tuuli-pagination"><span>{totalElements} registos</span><Paginator first={page * pageSize} onPageChange={(event) => { setPage(event.rows === pageSize ? event.page : 0); setPageSize(event.rows); }} rows={pageSize} rowsPerPageOptions={[20, 50]} totalRecords={totalElements}/></div>}
       </section>
     </section>
