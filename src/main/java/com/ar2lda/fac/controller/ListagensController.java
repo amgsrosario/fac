@@ -4,7 +4,7 @@ import com.ar2lda.fac.controller.dto.DocumentoFinanceiroDto;
 import com.ar2lda.fac.controller.dto.ListagemDocumentoComercialDto;
 import com.ar2lda.fac.controller.dto.ListagemLinhaComercialDto;
 import com.ar2lda.fac.controller.dto.ListagemLinhaFinanceiraDto;
-import com.ar2lda.fac.controller.dto.PendentesListagemDto;
+import com.ar2lda.fac.controller.dto.PendentesPaginaDto;
 import com.ar2lda.fac.reporting.pendentes.PendentesExcelExporter;
 import com.ar2lda.fac.reporting.pendentes.PendentesPdfExporter;
 import com.ar2lda.fac.reporting.listagens.ListagemTabularExporter;
@@ -123,11 +123,17 @@ public class ListagensController {
     }
 
     @GetMapping("/pendentes")
-    public PendentesListagemDto pendentes(
+    public PendentesPaginaDto pendentes(
             @RequestParam(required = false) List<Long> clienteIds,
-            @RequestParam(defaultValue = "false") boolean apenasVencidos
+            @RequestParam(defaultValue = "false") boolean apenasVencidos,
+            @RequestParam(defaultValue = "") String pesquisa,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        return service.pendentes(clienteIds, apenasVencidos);
+        if (page < 0 || (size != 20 && size != 50)) {
+            throw new ResponseStatusException(BAD_REQUEST, "Pagina deve ser positiva ou zero e tamanho deve ser 20 ou 50");
+        }
+        return service.pendentesPagina(null, clienteIds, apenasVencidos, pesquisa, page, size);
     }
 
     @GetMapping("/{source}/exportar/{format}")
@@ -150,12 +156,18 @@ public class ListagensController {
     }
 
     @GetMapping("/pendentes-a-data")
-    public PendentesListagemDto pendentesAData(
+    public PendentesPaginaDto pendentesAData(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataReferencia,
             @RequestParam(required = false) List<Long> clienteIds,
-            @RequestParam(defaultValue = "false") boolean apenasVencidos
+            @RequestParam(defaultValue = "false") boolean apenasVencidos,
+            @RequestParam(defaultValue = "") String pesquisa,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        return service.pendentesAData(dataReferencia, clienteIds, apenasVencidos);
+        if (page < 0 || (size != 20 && size != 50)) {
+            throw new ResponseStatusException(BAD_REQUEST, "Pagina deve ser positiva ou zero e tamanho deve ser 20 ou 50");
+        }
+        return service.pendentesPagina(dataReferencia, clienteIds, apenasVencidos, pesquisa, page, size);
     }
 
     @GetMapping("/pendentes/exportar/pdf")

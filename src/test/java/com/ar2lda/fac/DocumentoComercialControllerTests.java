@@ -573,6 +573,129 @@ class DocumentoComercialControllerTests {
                         org.hamcrest.Matchers.hasItem(documentoId(rascunhoLocation).intValue())));
     }
 
+    @Autowired
+    private com.ar2lda.fac.service.ListagensService listagensService;
+
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
+
+    @Test
+    void listagemPendentesPaginaVolumeComTotaisGlobaisEPesquisaLiteral() throws Exception {
+        Cliente volume = criarClienteTeste("Volume %_ Alpha", "509000081");
+        Cliente outro = criarClienteTeste("Volume Beta", "509000082");
+        var ids = new java.util.ArrayList<Long>();
+        for (int i = 0; i < 65; i++) {
+            String location = criarDocumentoComPrimeiraLinha(i < 60 ? volume : outro, "2026-06-01");
+            emitir(location);
+            ids.add(documentoId(location));
+        }
+        Pendente pagoAntes = pendenteRepository.findByDocumentoComercialId(ids.get(0)).orElseThrow();
+        Pendente parcial = pendenteRepository.findByDocumentoComercialId(ids.get(1)).orElseThrow();
+        Pendente pagoDepois = pendenteRepository.findByDocumentoComercialId(ids.get(2)).orElseThrow();
+        liquidar(pagoAntes, volume, pagoAntes.getValorPendente(), "2026-07-01");
+        liquidar(parcial, volume, new BigDecimal("5"), "2026-07-10");
+        liquidar(pagoDepois, volume, pagoDepois.getValorPendente(), "2026-07-25");
+
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+        for (boolean historico : List.of(false, true)) {
+            String endpoint = historico ? "/listagens/pendentes-a-data" : "/listagens/pendentes";
+            var legado = historico
+                    ? listagensService.pendentesAData(LocalDate.of(2026, 7, 20), List.of(), false)
+                    : listagensService.pendentes(List.of(), false);
+            var statistics = entityManager.getEntityManagerFactory()
+                    .unwrap(org.hibernate.SessionFactory.class).getStatistics();
+            boolean statisticsEnabled = statistics.isStatisticsEnabled();
+            statistics.setStatisticsEnabled(true);
+            statistics.clear();
+            try {
+                listagensService.pendentesPagina(historico ? LocalDate.of(2026, 7, 20) : null,
+                        List.of(), false, "", 0, 50);
+                org.assertj.core.api.Assertions.assertThat(statistics.getPrepareStatementCount()).isEqualTo(1);
+                org.assertj.core.api.Assertions.assertThat(statistics.getEntityLoadCount()).isZero();
+            } finally {
+                statistics.setStatisticsEnabled(statisticsEnabled);
+            }
+            int count = historico ? 64 : 63;
+            var encontrados = new java.util.ArrayList<Long>();
+            for (int page = 0; page < 4; page++) {
+                var request = get(endpoint).param("dataReferencia", "2026-07-20").param("page", String.valueOf(page));
+                var response = mockMvc.perform(request)
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.linhas.length()").value(Math.min(20, count - page * 20)))
+                        .andExpect(jsonPath("$.totalElements").value(count))
+                        .andExpect(jsonPath("$.totalPages").value(4))
+                        .andExpect(jsonPath("$.totais.total").value(historico ? 787.2 : 774.9))
+                        .andExpect(jsonPath("$.totais.recebido").value(5))
+                        .andExpect(jsonPath("$.totais.pendente").value(historico ? 782.2 : 769.9))
+                        .andReturn();
+                var json = mapper.readTree(response.getResponse().getContentAsString());
+                for (var linha : json.get("linhas")) encontrados.add(linha.get("documentoId").asLong());
+                org.assertj.core.api.Assertions.assertThat(json.get("totais"))
+                        .isEqualTo(mapper.readTree(mapper.writeValueAsString(legado.totais())));
+            }
+            org.assertj.core.api.Assertions.assertThat(encontrados)
+                    .containsExactlyElementsOf(legado.linhas().stream().map(l -> l.documentoId()).toList())
+                    .doesNotHaveDuplicates();
+            mockMvc.perform(get(endpoint).param("dataReferencia", "2026-07-20").param("size", "50"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.linhas.length()").value(50))
+                    .andExpect(jsonPath("$.totalPages").value(2));
+            mockMvc.perform(get(endpoint).param("dataReferencia", "2026-07-20").param("page", "99"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.linhas.length()").value(0))
+                    .andExpect(jsonPath("$.totalElements").value(count))
+                    .andExpect(jsonPath("$.totais.total").value(historico ? 787.2 : 774.9));
+            mockMvc.perform(get(endpoint).param("dataReferencia", "2026-07-20").param("pesquisa", "  %_ ALPHA  ")
+                            .param("apenasVencidos", "true").param("clienteIds", volume.getId().toString()))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(count - 5))
+                    .andExpect(jsonPath("$.totais.total").value(historico ? 725.7 : 713.4))
+                    .andExpect(jsonPath("$.totais.recebido").value(5));
+            mockMvc.perform(get(endpoint).param("dataReferencia", "2026-07-20").param("pesquisa", "inexistente"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.linhas.length()").value(0))
+                    .andExpect(jsonPath("$.totalElements").value(0)).andExpect(jsonPath("$.totalPages").value(0))
+                    .andExpect(jsonPath("$.totais.pendente").value(0));
+            mockMvc.perform(get(endpoint).param("dataReferencia", "2026-07-20").param("page", "-1"))
+                    .andExpect(status().isBadRequest());
+            mockMvc.perform(get(endpoint).param("dataReferencia", "2026-07-20").param("size", "500"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    void listagemPendentesADataPreservaLimiteAnulacaoERecibosAnulados() throws Exception {
+        LocalDate referencia = LocalDate.of(2026, 7, 20);
+        var limite = referencia.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toOffsetDateTime();
+        var momentos = java.util.Arrays.asList(limite.minusSeconds(1), limite, limite.plusSeconds(1), null);
+        var esperados = new java.util.ArrayList<Long>();
+        for (int i = 0; i < momentos.size(); i++) {
+            String location = criarDocumentoComPrimeiraLinha(cliente, "2026-06-01");
+            emitir(location);
+            Long id = documentoId(location);
+            entityManager.flush();
+            String auditoria = momentos.get(i) == null ? "" :
+                    "motivo_anulacao = 'Teste anulacao', anulado_por_utilizador_id = 'EMISSOR', anulado_por_nome = 'Emissor', ";
+            entityManager.createNativeQuery("update documento_comercial set " + auditoria
+                            + "estado = 'ANULADO', anulado = true, data_hora_anulacao = :momento where id = :id")
+                    .setParameter("momento", momentos.get(i)).setParameter("id", id).executeUpdate();
+            if (i >= 2) esperados.add(id);
+        }
+        String pagoLocation = criarDocumentoComPrimeiraLinha(cliente, "2026-06-01");
+        emitir(pagoLocation);
+        Pendente pago = pendenteRepository.findByDocumentoComercialId(documentoId(pagoLocation)).orElseThrow();
+        liquidar(pago, cliente, pago.getValorPendente(), "2026-07-10");
+        entityManager.flush();
+        entityManager.createNativeQuery("update documento_financeiro set anulado = true").executeUpdate();
+        entityManager.clear();
+        esperados.add(documentoId(pagoLocation));
+
+        var legado = listagensService.pendentesAData(referencia, List.of(), false);
+        var pagina = listagensService.pendentesPagina(referencia, List.of(), false, "", 0, 20);
+        org.assertj.core.api.Assertions.assertThat(pagina.linhas()).isEqualTo(legado.linhas());
+        org.assertj.core.api.Assertions.assertThat(pagina.totais()).isEqualTo(legado.totais());
+        org.assertj.core.api.Assertions.assertThat(pagina.linhas().stream().map(l -> l.documentoId()))
+                .containsExactlyInAnyOrderElementsOf(esperados);
+        org.assertj.core.api.Assertions.assertThat(pagina.totalElements()).isEqualTo(3);
+        org.assertj.core.api.Assertions.assertThat(pagina.totais().pendente()).isEqualByComparingTo("36.9");
+    }
+
     @Test
     void listagemPendentesIncluiApenasDocumentosPorReceberComFiltroMultiCliente() throws Exception {
         Cliente segundoCliente = criarClienteTeste("Cliente Pendentes Dois", "509000002");

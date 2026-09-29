@@ -8,6 +8,8 @@ import com.ar2lda.fac.controller.dto.ListagemLinhaFinanceiraDto;
 import com.ar2lda.fac.controller.dto.PendenteListagemDto;
 import com.ar2lda.fac.controller.dto.PendenteListagemTotaisDto;
 import com.ar2lda.fac.controller.dto.PendentesListagemDto;
+import com.ar2lda.fac.controller.dto.PendentesPaginaDto;
+import com.ar2lda.fac.repository.PendentesListagemRepository;
 import com.ar2lda.fac.mapper.DocumentoComercialMapper;
 import com.ar2lda.fac.mapper.DocumentoFinanceiroMapper;
 import com.ar2lda.fac.mapper.LinhaDocumentoComercialMapper;
@@ -48,6 +50,7 @@ public class ListagensService {
     private final LinhaDocumentoComercialMapper linhaDocumentoComercialMapper;
     private final DocumentoFinanceiroMapper documentoFinanceiroMapper;
     private final Clock clock;
+    private final PendentesListagemRepository pendentesListagemRepository;
 
     @Transactional(readOnly = true)
     public Page<ListagemDocumentoComercialDto> documentosComerciais(LocalDate dataInicial, LocalDate dataFinal, Long clienteId, Pageable pageable) {
@@ -147,6 +150,15 @@ public class ListagensService {
                         filtrarClientes ? filtroClientes : List.of(-1L),
                         search == null ? "" : "%" + search.toLowerCase() + "%", search == null, pageable)
                 .map(this::toLinhaFinanceiraDto);
+    }
+
+    @Transactional(readOnly = true)
+    public PendentesPaginaDto pendentesPagina(LocalDate dataReferencia, List<Long> clienteIds,
+                                              boolean apenasVencidos, String pesquisa, int page, int size) {
+        return pendentesListagemRepository.consultar(
+                dataReferencia == null ? LocalDate.now(clock) : dataReferencia,
+                dataReferencia == null ? null : dataReferencia.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+                filtroClientes(clienteIds), apenasVencidos, pesquisa, page, size);
     }
 
     @Transactional(readOnly = true)
