@@ -9,6 +9,8 @@ import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.DocumentoComercialRepository;
 import com.ar2lda.fac.repository.DocumentoFinanceiroRepository;
 import com.ar2lda.fac.repository.projection.ExtratoAnteriorProjection;
+import com.ar2lda.fac.repository.projection.ExtratoClienteProjection;
+import org.springframework.data.domain.PageRequest;
 import com.ar2lda.fac.repository.projection.ExtratoMovimentoProjection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -159,17 +164,44 @@ class ExtratoClienteServiceTests {
 
     @Test
     void semSelecaoDeClientesConsideraTodosOrdenadosPorNome() {
-        Cliente zulu = cliente(2002L, "Zulu");
-        Cliente alfa = cliente(2001L, "Alfa");
-        when(clienteRepository.findAll()).thenReturn(List.of(zulu, alfa));
-        when(clienteRepository.findById(2001L)).thenReturn(Optional.of(alfa));
-        when(clienteRepository.findById(2002L)).thenReturn(Optional.of(zulu));
-        stubExtratoVazio(2001L);
-        stubExtratoVazio(2002L);
+        var zulu = clienteProjection(2002L, "Zulu");
+        var alfa = clienteProjection(2001L, "Alfa");
+        when(clienteRepository.findClientesExtratoApos(null, PageRequest.of(0, ExtratoClienteService.CLIENTES_POR_BLOCO)))
+                .thenReturn(List.of(alfa, zulu));
 
         List<ExtratoClienteDto> extratos = service.getExtratos(List.of(), INICIAL, FINAL);
 
         assertThat(extratos).extracting(ExtratoClienteDto::clienteId).containsExactly(2001L, 2002L);
+        verify(clienteRepository, never()).findAll();
+        verify(clienteRepository, never()).findById(any());
+    }
+
+    @Test
+    void selecaoMantemOrdemERemoveDuplicados() {
+        var primeiro = clienteProjection(2001L, "Zulu");
+        var segundo = clienteProjection(2002L, "Alfa");
+        when(clienteRepository.findClientesExtratoPorIds(List.of(2002L, 2001L)))
+                .thenReturn(List.of(primeiro, segundo));
+        assertThat(service.getExtratos(List.of(2002L, 2001L, 2002L), INICIAL, FINAL))
+                .extracting(ExtratoClienteDto::clienteId).containsExactly(2002L, 2001L);
+        verify(clienteRepository, never()).findAll();
+        verify(clienteRepository, never()).findById(any());
+    }
+
+    @Test
+    void selecaoInexistenteMantemErroAnterior() {
+        assertThatThrownBy(() -> service.getExtratos(List.of(999L), INICIAL, FINAL))
+                .isInstanceOf(com.ar2lda.fac.exception.NotFoundException.class)
+                .hasMessage("Cliente nao encontrado: 999");
+    }
+
+    private ExtratoClienteProjection clienteProjection(Long id, String nome) {
+        var cliente = mock(ExtratoClienteProjection.class);
+        when(cliente.getId()).thenReturn(id);
+        when(cliente.getNome()).thenReturn(nome);
+        when(cliente.getNif()).thenReturn("500000001");
+        when(cliente.getMoedaId()).thenReturn("EUR");
+        return cliente;
     }
 
     @Test

@@ -1,6 +1,9 @@
 package com.ar2lda.fac.repository;
 
 import com.ar2lda.fac.model.Cliente;
+import com.ar2lda.fac.repository.projection.ExtratoClienteProjection;
+import java.util.Collection;
+import java.util.List;
 import com.ar2lda.fac.controller.dto.ClienteComPendentesResumoDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -58,6 +61,21 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
             @Param("searchEmpty") boolean searchEmpty,
             Pageable pageable
     );
+
+    @Query("""
+            select c.id as id, c.nome as nome, c.nif as nif, c.moeda.id as moedaId
+            from Cliente c
+            where (:aposId is null or c.id > :aposId)
+            order by c.id
+            """)
+    List<ExtratoClienteProjection> findClientesExtratoApos(@Param("aposId") Long aposId, Pageable pageable);
+
+    @Query("""
+            select c.id as id, c.nome as nome, c.nif as nif, c.moeda.id as moedaId
+            from Cliente c
+            where c.id in :ids
+            """)
+    List<ExtratoClienteProjection> findClientesExtratoPorIds(@Param("ids") Collection<Long> ids);
 
     boolean existsByNif(String nif);
     boolean existsByNifAndIdNot(String nif, Long id);
