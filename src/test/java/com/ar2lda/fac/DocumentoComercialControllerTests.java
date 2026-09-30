@@ -579,6 +579,79 @@ class DocumentoComercialControllerTests {
     @Autowired
     private jakarta.persistence.EntityManager entityManager;
 
+    @Autowired
+    private com.ar2lda.fac.service.ExtratoClienteService extratoClienteService;
+
+    @Test
+    void extratosClientesProcessamBlocosSemEntidadesEComSemanticaEquivalente() throws Exception {
+        var clientesVolume = new java.util.ArrayList<Cliente>();
+        for (int i = 0; i < 105; i++) {
+            String nome = List.of("Zulu", "alfa", "ALFA", "Águeda", "ábaco", "İris").get(i % 6);
+            Cliente novo = criarClienteTeste(nome, String.valueOf(509100000 + i));
+            novo.setInativo(i > 0 && i < 104 && i % 2 == 0);
+            clientesVolume.add(novo);
+        }
+        Cliente primeiro = clientesVolume.getFirst();
+        Cliente ultimo = clientesVolume.getLast();
+        String anterior = criarDocumentoComPrimeiraLinha(primeiro, "2026-05-31");
+        emitir(anterior);
+        String inicial = criarDocumentoComPrimeiraLinha(primeiro, "2026-06-01");
+        emitir(inicial);
+        String anulado = criarDocumentoComPrimeiraLinha(ultimo, "2026-06-15");
+        emitir(anulado);
+        mockMvc.perform(post(anulado + "/anular").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Teste de extratos\"}"))
+                .andExpect(status().isOk());
+        String fim = criarDocumentoComPrimeiraLinha(ultimo, "2026-06-30");
+        emitir(fim);
+        String futuro = criarDocumentoComPrimeiraLinha(ultimo, "2026-07-01");
+        emitir(futuro);
+        liquidar(pendenteRepository.findByDocumentoComercialId(documentoId(anterior)).orElseThrow(),
+                primeiro, new BigDecimal("2.3"), "2026-05-31");
+        liquidar(pendenteRepository.findByDocumentoComercialId(documentoId(inicial)).orElseThrow(),
+                primeiro, new BigDecimal("2.3"), "2026-06-30");
+        LocalDate inicio = LocalDate.of(2026, 6, 1);
+        LocalDate finalPeriodo = LocalDate.of(2026, 6, 30);
+        entityManager.flush();
+        var esperados = clienteRepository.findAll().stream()
+                .sorted(java.util.Comparator.comparing(Cliente::getNome, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(Cliente::getId))
+                .map(Cliente::getId).toList();
+        entityManager.clear();
+        var stats = entityManager.getEntityManagerFactory().unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        boolean enabled = stats.isStatisticsEnabled();
+        stats.setStatisticsEnabled(true);
+        stats.clear();
+        java.util.List<com.ar2lda.fac.controller.dto.ExtratoClienteDto> todos;
+        try {
+            todos = extratoClienteService.getExtratos(null, inicio, finalPeriodo);
+            org.assertj.core.api.Assertions.assertThat(stats.getPrepareStatementCount()).isEqualTo(10);
+            org.assertj.core.api.Assertions.assertThat(stats.getEntityLoadCount()).isZero();
+        } finally {
+            stats.setStatisticsEnabled(enabled);
+        }
+        org.assertj.core.api.Assertions.assertThat(todos).extracting(e -> e.clienteId())
+                .containsExactlyElementsOf(esperados);
+        for (Long id : List.of(primeiro.getId(), ultimo.getId(), clientesVolume.get(50).getId())) {
+            var legado = extratoClienteService.getExtrato(id, inicio, finalPeriodo);
+            var emBloco = todos.stream().filter(e -> e.clienteId().equals(id)).findFirst().orElseThrow();
+            org.assertj.core.api.Assertions.assertThat(emBloco).usingRecursiveComparison()
+                    .ignoringFields("geradoEm").isEqualTo(legado);
+        }
+        var ids = clientesVolume.reversed().stream().map(Cliente::getId).toList();
+        var selecionados = extratoClienteService.getExtratos(ids, inicio, finalPeriodo);
+        org.assertj.core.api.Assertions.assertThat(selecionados).extracting(e -> e.clienteId()).containsExactlyElementsOf(ids);
+        org.assertj.core.api.Assertions.assertThat(extratoClienteService.getExtratos(List.of(primeiro.getId()), inicio, finalPeriodo))
+                .hasSize(1);
+        var saldoPrimeiro = todos.stream().filter(e -> e.clienteId().equals(primeiro.getId())).findFirst().orElseThrow()
+                .moedas().getFirst();
+        org.assertj.core.api.Assertions.assertThat(saldoPrimeiro.anterior().saldo()).isEqualByComparingTo("10");
+        org.assertj.core.api.Assertions.assertThat(saldoPrimeiro.totalFinal().saldo()).isEqualByComparingTo("20");
+        mockMvc.perform(get("/extratos/clientes").param("dataInicial", inicio.toString())
+                        .param("dataFinal", finalPeriodo.toString()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(esperados.size()));
+    }
+
     @Test
     void listagemPendentesPaginaVolumeComTotaisGlobaisEPesquisaLiteral() throws Exception {
         Cliente volume = criarClienteTeste("Volume %_ Alpha", "509000081");

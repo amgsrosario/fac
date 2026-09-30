@@ -3,6 +3,8 @@ package com.ar2lda.fac.repository;
 import com.ar2lda.fac.model.DocumentoFinanceiro;
 import com.ar2lda.fac.controller.dto.DocumentoFinanceiroResumoDto;
 import com.ar2lda.fac.repository.projection.ExtratoAnteriorProjection;
+import com.ar2lda.fac.repository.projection.ExtratosAnteriorProjection;
+import com.ar2lda.fac.repository.projection.ExtratosMovimentoProjection;
 import com.ar2lda.fac.repository.projection.ExtratoMovimentoProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -112,6 +114,41 @@ public interface DocumentoFinanceiroRepository extends JpaRepository<DocumentoFi
             """)
     List<ExtratoMovimentoProjection> findExtratoMovimentos(
             @Param("clienteId") Long clienteId,
+            @Param("dataInicial") LocalDate dataInicial,
+            @Param("dataFinal") LocalDate dataFinal
+    );
+    @Query("""
+            select d.cliente.id as clienteId, d.moeda.id as moedaId,
+                   sum(case when d.tipoDocumento.sinalContabilistico = 1 then d.valorPagamentoBruto else 0 end) as debito,
+                   sum(case when d.tipoDocumento.sinalContabilistico = 2 then d.valorPagamentoBruto else 0 end) as credito
+            from DocumentoFinanceiro d
+            where d.cliente.id in :clienteIds
+              and d.anulado = false
+              and d.dataEmissao < :dataInicial
+            group by d.cliente.id, d.moeda.id
+            """)
+    List<ExtratosAnteriorProjection> findExtratosAnterior(
+            @Param("clienteIds") Collection<Long> clienteIds,
+            @Param("dataInicial") LocalDate dataInicial
+    );
+
+    @Query("""
+            select d.cliente.id as clienteId, d.id as id, d.dataEmissao as data, d.momentoEmissao as momento,
+                   d.tipoDocumento.id as tipoDocumentoId, d.serie as serie,
+                   d.numeroDocumento as numeroDocumento, d.tipoDocumento.descricao as descricao,
+                   null as dataVencimento, d.moeda.id as moedaId,
+                   d.tipoDocumento.sinalContabilistico as sinalContabilistico,
+                   false as liquidacaoImediata,
+                   d.valorPagamentoBruto as valor
+            from DocumentoFinanceiro d
+            where d.cliente.id in :clienteIds
+              and d.anulado = false
+              and d.dataEmissao >= :dataInicial
+              and d.dataEmissao <= :dataFinal
+            order by d.cliente.id, d.dataEmissao, d.momentoEmissao, d.id
+            """)
+    List<ExtratosMovimentoProjection> findExtratosMovimentos(
+            @Param("clienteIds") Collection<Long> clienteIds,
             @Param("dataInicial") LocalDate dataInicial,
             @Param("dataFinal") LocalDate dataFinal
     );

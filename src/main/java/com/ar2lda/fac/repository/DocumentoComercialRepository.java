@@ -4,6 +4,8 @@ import com.ar2lda.fac.model.DocumentoComercial;
 import com.ar2lda.fac.model.EstadoDocumentoComercial;
 import com.ar2lda.fac.controller.dto.DocumentoComercialResumoDto;
 import com.ar2lda.fac.repository.projection.ExtratoAnteriorProjection;
+import com.ar2lda.fac.repository.projection.ExtratosAnteriorProjection;
+import com.ar2lda.fac.repository.projection.ExtratosMovimentoProjection;
 import com.ar2lda.fac.repository.projection.ExtratoMovimentoProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -130,6 +132,47 @@ public interface DocumentoComercialRepository extends JpaRepository<DocumentoCom
             """)
     List<ExtratoMovimentoProjection> findExtratoMovimentos(
             @Param("clienteId") Long clienteId,
+            @Param("dataInicial") LocalDate dataInicial,
+            @Param("dataFinal") LocalDate dataFinal
+    );
+    @Query("""
+            select d.cliente.id as clienteId, d.moeda.id as moedaId,
+                   sum(case when d.tipoDocumento.sinalContabilistico = 1 then d.valorTotal else 0 end) as debito,
+                   sum(case
+                        when d.tipoDocumento.sinalContabilistico = 2 then d.valorTotal
+                        when d.tipoDocumento.sinalContabilistico = 1 and d.tipoDocumento.liquidacaoImediata = true then d.valorTotal
+                        else 0
+                   end) as credito
+            from DocumentoComercial d
+            where d.cliente.id in :clienteIds
+              and d.estado = com.ar2lda.fac.model.EstadoDocumentoComercial.EMITIDO
+              and d.numeroDocumento is not null
+              and d.dataEmissao < :dataInicial
+            group by d.cliente.id, d.moeda.id
+            """)
+    List<ExtratosAnteriorProjection> findExtratosAnterior(
+            @Param("clienteIds") Collection<Long> clienteIds,
+            @Param("dataInicial") LocalDate dataInicial
+    );
+
+    @Query("""
+            select d.cliente.id as clienteId, d.id as id, d.dataEmissao as data, d.momentoEmissao as momento,
+                   d.tipoDocumento.id as tipoDocumentoId, d.serie as serie,
+                   d.numeroDocumento as numeroDocumento, d.tipoDocumento.descricao as descricao,
+                   d.dataVencimento as dataVencimento, d.moeda.id as moedaId,
+                   d.tipoDocumento.sinalContabilistico as sinalContabilistico,
+                   d.tipoDocumento.liquidacaoImediata as liquidacaoImediata,
+                   d.valorTotal as valor
+            from DocumentoComercial d
+            where d.cliente.id in :clienteIds
+              and d.estado = com.ar2lda.fac.model.EstadoDocumentoComercial.EMITIDO
+              and d.numeroDocumento is not null
+              and d.dataEmissao >= :dataInicial
+              and d.dataEmissao <= :dataFinal
+            order by d.cliente.id, d.dataEmissao, d.momentoEmissao, d.id
+            """)
+    List<ExtratosMovimentoProjection> findExtratosMovimentos(
+            @Param("clienteIds") Collection<Long> clienteIds,
             @Param("dataInicial") LocalDate dataInicial,
             @Param("dataFinal") LocalDate dataFinal
     );
