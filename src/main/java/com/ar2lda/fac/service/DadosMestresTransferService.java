@@ -34,6 +34,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import jakarta.transaction.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.usermodel.Cell;
@@ -42,7 +44,10 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
@@ -62,6 +67,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -73,6 +79,7 @@ public class DadosMestresTransferService {
     private static final int MAX_COLUMNS = 100;
     private static final int PREVIEW_LIMIT = 20;
     private static final int SESSION_TTL_MINUTES = 30;
+    private static final int EXPORT_PAGE_SIZE = 500;
 
     private static final List<String> CLIENTE_HEADERS = List.of("nome", "morada", "morada1", "localidade", "nif",
             "tel", "tm", "email", "email1", "tspiva", "iban", "retencao", "inativo", "observacoes",
@@ -100,6 +107,8 @@ public class DadosMestresTransferService {
     private final CurrentUserService currentUserService;
     private final ObjectMapper objectMapper;
     private final Clock clock;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional
     public ImportacaoValidacaoDto validar(TipoDadosMestres tipo, MultipartFile file) {
@@ -215,11 +224,61 @@ public class DadosMestresTransferService {
     @Transactional
     public ExportedFile exportar(TipoDadosMestres tipo, String formato, Boolean ativos) {
         List<String> headers = headers(tipo);
+        String normalizedFormat = normalizedExportFormat(formato);
+        if (!"pdf".equals(normalizedFormat)) return exportStreaming(tipo, normalizedFormat, ativos, headers);
         List<Map<String, String>> rows = tipo == TipoDadosMestres.CLIENTES ? exportClientes(ativos) : exportArtigos(ativos);
         auditoriaService.registar(TipoAuditoriaEvento.EXPORTACAO_DADOS_MESTRES, "EXPORTACAO", tipo,
                 "Exportação de dados mestres", dados(tipo, "exportacao", rows.size(), rows.size(), 0));
         return exportRows("exportacao-" + tipo.name().toLowerCase(Locale.ROOT) + "-" + OffsetDateTime.now(clock).toLocalDate(),
-                normalizedExportFormat(formato), headers, rows);
+                normalizedFormat, headers, rows);
+    }
+
+    private ExportedFile exportStreaming(TipoDadosMestres tipo, String formato, Boolean ativos, List<String> headers) {
+        String baseName = "exportacao-" + tipo.name().toLowerCase(Locale.ROOT) + "-" + OffsetDateTime.now(clock).toLocalDate();
+        int[] count = {0};
+        ExportedFile file = "xlsx".equals(formato) ? exportXlsxStreaming(baseName, headers, row -> { count[0]++; }, consumer -> forEachExportRow(tipo, ativos, consumer))
+                : exportCsvStreaming(baseName, headers, row -> { count[0]++; }, consumer -> forEachExportRow(tipo, ativos, consumer));
+        auditoriaService.registar(TipoAuditoriaEvento.EXPORTACAO_DADOS_MESTRES, "EXPORTACAO", tipo,
+                "Exportação de dados mestres", dados(tipo, "exportacao", count[0], count[0], 0));
+        return file;
+    }
+
+    private void forEachExportRow(TipoDadosMestres tipo, Boolean ativos, Consumer<Map<String, String>> consumer) {
+        for (int page = 0; ; page++) {
+            if (tipo == TipoDadosMestres.CLIENTES) {
+                var result = clienteRepository.findExportPage(PageRequest.of(page, EXPORT_PAGE_SIZE, Sort.by("id")));
+                result.stream().filter(c -> ativos == null || !ativos || !c.isInativo()).map(this::clienteRow).forEach(consumer);
+                boolean hasNext = result.hasNext();
+                entityManager.clear();
+                if (!hasNext) return;
+            } else {
+                var result = artigoRepository.findExportPage(PageRequest.of(page, EXPORT_PAGE_SIZE, Sort.by("codigo")));
+                result.stream().filter(a -> ativos == null || !ativos || !a.isInativo()).map(this::artigoRow).forEach(consumer);
+                boolean hasNext = result.hasNext();
+                entityManager.clear();
+                if (!hasNext) return;
+            }
+        }
+    }
+
+    private ExportedFile exportCsvStreaming(String baseName, List<String> headers, Consumer<Map<String, String>> counted, Consumer<Consumer<Map<String, String>>> source) {
+        StringBuilder content = new StringBuilder("\uFEFF").append(headers.stream().map(this::csv).collect(Collectors.joining(";"))).append("\r\n");
+        source.accept(row -> { counted.accept(row); content.append(headers.stream().map(h -> csv(safeExcel(row.get(h)))).collect(Collectors.joining(";"))).append("\r\n"); });
+        return new ExportedFile(baseName + ".csv", "text/csv;charset=UTF-8", content.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private ExportedFile exportXlsxStreaming(String baseName, List<String> headers, Consumer<Map<String, String>> counted, Consumer<Consumer<Map<String, String>>> source) {
+        SXSSFWorkbook workbook = new SXSSFWorkbook(100);
+        workbook.setCompressTempFiles(true);
+        try (workbook; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("dados"); Row header = sheet.createRow(0);
+            for (int c = 0; c < headers.size(); c++) header.createCell(c).setCellValue(headers.get(c));
+            int[] rowIndex = {1};
+            source.accept(values -> { counted.accept(values); Row row = sheet.createRow(rowIndex[0]++); for (int c = 0; c < headers.size(); c++) row.createCell(c).setCellValue(safeExcel(values.get(headers.get(c)))); });
+            workbook.write(out);
+            return new ExportedFile(baseName + ".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", out.toByteArray());
+        } catch (IOException exception) { throw new IllegalStateException("Erro ao gerar XLSX", exception); }
+        finally { workbook.dispose(); }
     }
 
     private ValidationResult validateRows(TipoDadosMestres tipo, List<Map<String, String>> rows) {
@@ -489,10 +548,12 @@ public class DadosMestresTransferService {
     }
 
     private List<Map<String, String>> exportClientes(Boolean ativos) {
-        return clienteRepository.findAll().stream()
-                .filter(c -> ativos == null || !ativos || !c.isInativo())
-                .map(this::clienteRow)
-                .toList();
+        List<Map<String, String>> rows = new ArrayList<>();
+        for (int page = 0; ; page++) {
+            var result = clienteRepository.findExportPage(PageRequest.of(page, EXPORT_PAGE_SIZE, Sort.by("id")));
+            result.stream().filter(c -> ativos == null || !ativos || !c.isInativo()).map(this::clienteRow).forEach(rows::add);
+            if (!result.hasNext()) return rows;
+        }
     }
 
     private Map<String, String> clienteRow(Cliente c) {
@@ -522,10 +583,12 @@ public class DadosMestresTransferService {
     }
 
     private List<Map<String, String>> exportArtigos(Boolean ativos) {
-        return artigoRepository.findAll().stream()
-                .filter(a -> ativos == null || !ativos || !a.isInativo())
-                .map(this::artigoRow)
-                .toList();
+        List<Map<String, String>> rows = new ArrayList<>();
+        for (int page = 0; ; page++) {
+            var result = artigoRepository.findExportPage(PageRequest.of(page, EXPORT_PAGE_SIZE, Sort.by("codigo")));
+            result.stream().filter(a -> ativos == null || !ativos || !a.isInativo()).map(this::artigoRow).forEach(rows::add);
+            if (!result.hasNext()) return rows;
+        }
     }
 
     private Map<String, String> artigoRow(Artigo a) {

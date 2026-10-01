@@ -8,10 +8,14 @@ import com.ar2lda.fac.controller.dto.ClienteComPendentesResumoDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
+    @EntityGraph(attributePaths = {"codPostal", "pais", "moeda", "mPagamento", "pPagamento", "riva", "transporte"})
+    @Query("select c from Cliente c")
+    Page<Cliente> findExportPage(Pageable pageable);
     @Query("""
             select c from Cliente c
             where (:inativo is null or c.inativo = :inativo)
