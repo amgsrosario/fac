@@ -5,6 +5,11 @@ import com.ar2lda.fac.model.Familia;
 import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.model.RIva;
 import com.ar2lda.fac.model.Transporte;
+import com.ar2lda.fac.model.Pais;
+import com.ar2lda.fac.model.Cliente;
+import com.ar2lda.fac.model.Artigo;
+import com.ar2lda.fac.model.TipoArtigo;
+import com.ar2lda.fac.model.TipoTaxaIva;
 import com.ar2lda.fac.repository.ArtigoRepository;
 import com.ar2lda.fac.repository.ClienteRepository;
 import com.ar2lda.fac.repository.CodPostalRepository;
@@ -12,6 +17,8 @@ import com.ar2lda.fac.repository.FamiliaRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
 import com.ar2lda.fac.repository.RIvaRepository;
 import com.ar2lda.fac.repository.TransporteRepository;
+import com.ar2lda.fac.repository.PaisRepository;
+import com.ar2lda.fac.repository.TipoTaxaIvaRepository;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -27,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -58,6 +66,8 @@ class DadosMestresImportExportTests {
     private TransporteRepository transporteRepository;
     @Autowired
     private FamiliaRepository familiaRepository;
+    @Autowired private PaisRepository paisRepository;
+    @Autowired private TipoTaxaIvaRepository tipoTaxaIvaRepository;
 
     private String transporteId;
     private Long familiaId;
@@ -72,6 +82,31 @@ class DadosMestresImportExportTests {
                 .orElseGet(() -> rIvaRepository.save(new RIva("CON", "Continente")));
         transporteId = transporteRepository.save(new Transporte("IMP", "Transporte importacao")).getId();
         familiaId = familiaRepository.save(new Familia("Familia importacao")).getId();
+        paisRepository.findById("PT").orElseGet(() -> paisRepository.save(new Pais("PT", "Portugal")));
+        tipoTaxaIvaRepository.findById("NORMAL").orElseGet(() -> tipoTaxaIvaRepository.save(new TipoTaxaIva("NORMAL", "Normal", false)));
+        tipoTaxaIvaRepository.findById("REDUZIDA").orElseGet(() -> tipoTaxaIvaRepository.save(new TipoTaxaIva("REDUZIDA", "Reduzida", false)));
+    }
+
+    @Test
+    void exportaClientesEArtigosEmMaisDeUmaPagina() throws Exception {
+        Pais pais = paisRepository.getReferenceById("PT"); Moeda moeda = moedaRepository.getReferenceById("EUR"); RIva riva = rIvaRepository.getReferenceById("CON"); Transporte transporte = transporteRepository.getReferenceById(transporteId);
+        var clientes = new ArrayList<Cliente>(); var artigos = new ArrayList<Artigo>();
+        for (int i = 0; i < 501; i++) {
+            Cliente c = new Cliente(); c.setNome("Cliente " + i); c.setMorada("Rua"); c.setNif(String.format("5%08d", i)); c.setCodPostal(codPostalRepository.getReferenceById("3750-029")); c.setPais(pais); c.setMoeda(moeda); c.setRiva(riva); c.setTransporte(transporte); clientes.add(c);
+            Artigo a = new Artigo(String.format("A%03d", i)); a.setDescricao("Artigo " + i); a.setTipoArtigo(TipoArtigo.ARTIGO); a.setUnidade("UN"); a.setFamilia(familiaRepository.getReferenceById(familiaId)); a.setIvaCompra(tipoTaxaIvaRepository.getReferenceById("REDUZIDA")); a.setIvaVenda(tipoTaxaIvaRepository.getReferenceById("NORMAL")); a.setPvp(BigDecimal.ONE); artigos.add(a);
+        }
+        clienteRepository.saveAll(clientes); artigoRepository.saveAll(artigos);
+        clienteRepository.flush(); artigoRepository.flush();
+        var clientesCsv = mockMvc.perform(get("/exportacoes/clientes?formato=csv")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(clientesCsv.lines().count()).isGreaterThanOrEqualTo(502);
+        var artigosCsv = mockMvc.perform(get("/exportacoes/artigos?formato=csv")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(artigosCsv.lines().count()).isGreaterThanOrEqualTo(502);
+        try (Workbook workbook = new XSSFWorkbook(new java.io.ByteArrayInputStream(mockMvc.perform(get("/exportacoes/clientes?formato=xlsx")).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray()))) {
+            assertThat(workbook.getSheet("dados").getLastRowNum()).isGreaterThanOrEqualTo(501);
+        }
+        try (Workbook workbook = new XSSFWorkbook(new java.io.ByteArrayInputStream(mockMvc.perform(get("/exportacoes/artigos?formato=xlsx")).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray()))) {
+            assertThat(workbook.getSheet("dados").getLastRowNum()).isGreaterThanOrEqualTo(501);
+        }
     }
 
     @Test
