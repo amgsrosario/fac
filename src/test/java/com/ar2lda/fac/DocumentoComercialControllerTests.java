@@ -583,6 +583,75 @@ class DocumentoComercialControllerTests {
     private com.ar2lda.fac.service.ExtratoClienteService extratoClienteService;
 
     @Test
+    void lookupsRemotosPreservamGramaticaPaginacaoEDefaults() throws Exception {
+        for (int i = 0; i < 45; i++) {
+            criarClienteTeste("Lookup " + String.format("%02d", i), "50988" + String.format("%04d", i));
+            Artigo novo = new Artigo("LOOK" + String.format("%02d", i));
+            novo.setDescricao("Lookup " + i);
+            novo.setTipoArtigo(TipoArtigo.ARTIGO);
+            novo.setUnidade("UN"); novo.setFamilia(artigo.getFamilia());
+            novo.setIvaCompra(artigo.getIvaCompra()); novo.setIvaVenda(artigo.getIvaVenda());
+            novo.setPvp(new BigDecimal("12.500000")); artigoRepository.save(novo);
+        }
+        Cliente alvo = criarClienteTeste("Último Águeda", "509999123");
+        alvo.setTel("912345678");
+        entityManager.flush(); entityManager.clear();
+        mockMvc.perform(get("/clientes/lookup").param("search", "lookup"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content.length()").value(20))
+                .andExpect(jsonPath("$.totalElements").value(45)).andExpect(jsonPath("$.totalPages").value(3));
+        mockMvc.perform(get("/clientes/lookup").param("search", "lookup").param("page", "2"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content.length()").value(5));
+        for (String search : List.of("ultimo agueda", "nome:^ultimo nif:=509999123", "telemóvel:=912345678", "nif:$9123")) {
+            mockMvc.perform(get("/clientes/lookup").param("search", search))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].id").value(alvo.getId()))
+                    .andExpect(jsonPath("$.content[0].moedaId").value("EUR"));
+        }
+        mockMvc.perform(get("/clientes/lookup").param("search", "nome:!lookup"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2));
+        mockMvc.perform(get("/artigos/lookup").param("search", "familia:=" + artigo.getFamilia().getId() + " codigo:=LOOK44"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].codigo").value("LOOK44"))
+                .andExpect(jsonPath("$.content[0].pvp").value(12.5))
+                .andExpect(jsonPath("$.content[0].unidade").value("UN"))
+                .andExpect(jsonPath("$.content[0].ivaVendaId").value("NORMAL"));
+        mockMvc.perform(get("/artigos/lookup").param("search", "pvp:=12.5").param("filter.codigo", "$44"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+        mockMvc.perform(get("/artigos/lookup").param("search", "iva:=NOR codigo:=LOOK44"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+        // Unknown qualifiers and symbols remain literal text, as in EntityLookup; structural fields are rejected.
+        for (String search : List.of("desconhecido:=12", ">LOOK44", "%' OR 1=1 --")) {
+            mockMvc.perform(get("/artigos/lookup").param("search", search))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
+        }
+        mockMvc.perform(get("/artigos/lookup").param("sort", "codigo;drop table artigo,asc")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/clientes/lookup").param("filter.password", "x")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/clientes/lookup").param("size", "500")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/clientes/lookup").param("context", "global").param("search", "=509999123"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void lookupsRemotosOrdenamNumericamenteComoOComponente() throws Exception {
+        criarClienteTeste("Ordenação A10", "509771010");
+        criarClienteTeste("Ordenação A2", "509771002");
+        entityManager.flush();
+        mockMvc.perform(get("/clientes/lookup").param("search", "ordenacao").param("sort", "nome,asc").param("size", "1"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].nome").value("Ordenação A2"))
+                .andExpect(jsonPath("$.totalPages").value(2));
+        mockMvc.perform(get("/clientes/lookup").param("search", "ordenacao").param("sort", "nome,asc").param("size", "1").param("page", "1"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].nome").value("Ordenação A10"));
+    }
+
+    @Test
+    void lookupsRemotosSemTaxasAtivasUsamIdComoRotulo() throws Exception {
+        tipoTaxaIvaRepository.findAll().forEach(taxa -> taxa.setInativo(true));
+        entityManager.flush();
+        mockMvc.perform(get("/artigos/lookup").param("search", "iva:=NORMAL codigo:=ARTLINHA"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
     void extratosClientesProcessamBlocosSemEntidadesEComSemanticaEquivalente() throws Exception {
         var clientesVolume = new java.util.ArrayList<Cliente>();
         for (int i = 0; i < 105; i++) {

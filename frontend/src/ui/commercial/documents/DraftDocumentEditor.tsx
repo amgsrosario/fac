@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, AuthSession } from "../../../api";
 import { DesktopShell, EntityLookupColumn, EntityLookupDialog, EntityLookupField, EntityLookupSearchField, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useFacToast } from "../../fac";
 import { CommercialSidebar } from "../shared";
+import { lookupSelected } from "../../../lookups/useRemoteLookup";
 
 type Page<T> = { content: T[]; totalPages?: number };
 type EstadoDocumento = "RASCUNHO" | "EMITIDO" | "ANULADO";
@@ -260,6 +261,11 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         if (doc.estado !== "RASCUNHO") {
           setNotice("Documento aberto em modo consulta. A edição fica bloqueada fora de RASCUNHO.");
         }
+        const [selectedClients, selectedArticles] = await Promise.all([
+          lookupSelected<Cliente>("/api/clientes/lookup", [doc.clienteId]),
+          lookupSelected<Artigo>("/api/artigos/lookup", realLines.flatMap((line) => line.artigoId ? [line.artigoId] : []))
+        ]);
+        setCatalogos({ ...loadedCatalogos, clientes: selectedClients, artigos: selectedArticles });
         const mappedHeader = headerFromDocument(doc);
         const mappedLines = realLines
           .slice()
@@ -310,10 +316,10 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     });
   }
 
-  function chooseClient(clienteId: string | null) {
-    const cliente = catalogos.clientes.find((item) => String(item.id) === clienteId);
+  function chooseClient(cliente: Cliente | null) {
+    if (cliente) setCatalogos((current) => ({ ...current, clientes: [cliente] }));
     updateHeader({
-      clienteId: clienteId ?? "",
+      clienteId: cliente ? String(cliente.id) : "",
       moedaId: cliente?.moedaId ?? header.moedaId,
       rivaId: cliente?.rivaId ?? header.rivaId,
       mPagamentoId: cliente?.mPagamentoId ? String(cliente.mPagamentoId) : header.mPagamentoId,
@@ -342,9 +348,10 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     return next;
   }
 
-  function chooseArticle(uid: string, artigoId: string | null, draft = false) {
+  function chooseArticle(uid: string, selected: Artigo | null, draft = false) {
     if (!canEditCurrent) return;
-    const artigo = catalogos.artigos.find((item) => item.codigo === artigoId);
+    const artigo = selected ?? undefined;
+    if (artigo) setCatalogos((current) => ({ ...current, artigos: [...current.artigos.filter((item) => item.codigo !== artigo.codigo && [...lines, activeLineRef.current].some((line) => line.artigoId === item.codigo)), artigo] }));
     if (draft) {
       if (!artigo) {
         replaceActiveLine(applyArticleToLine(activeLineRef.current, undefined));
@@ -814,7 +821,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   );
 }
 
-function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, readOnly }: { catalogos: Catalogos; header: HeaderState; onChooseClient: (clienteId: string | null) => void; onContinue: () => void; onUpdate: (patch: Partial<HeaderState>) => void; readOnly: boolean }) {
+function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, readOnly }: { catalogos: Catalogos; header: HeaderState; onChooseClient: (cliente: Cliente | null) => void; onContinue: () => void; onUpdate: (patch: Partial<HeaderState>) => void; readOnly: boolean }) {
   const series = catalogos.series.filter((serie) => serie.tipoDocumentoId === header.tipoDocumentoId);
   const selectedCliente = catalogos.clientes.find((cliente) => String(cliente.id) === header.clienteId) ?? null;
   return (
@@ -831,10 +838,10 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
             disabled={readOnly}
             emptyMessage="Sem clientes para selecionar."
             label="Cliente"
-            loading={catalogos.clientes.length === 0}
+            remoteLookup={{ endpoint: "/api/clientes/lookup", inativo: false }}
             optionLabel={clienteLookupLabel}
             optionMeta={(cliente) => [cliente.nif && `NIF ${cliente.nif}`, cliente.localidade].filter(Boolean).join(" · ")}
-            onSelect={(cliente) => onChooseClient(String(cliente.id))}
+            onSelect={(cliente) => onChooseClient(cliente)}
             placeholder="Selecionar cliente"
             preferenceKey="fac.lookup.draft.clientes"
             searchFields={clienteSearchFields}
@@ -870,8 +877,8 @@ function DraftLines(props: {
   lines: EditorLine[];
   onAddBlankLine: (tipoLinha: TipoLinha, afterUid?: string) => void;
   onActiveArticleQueryChange: (query: string) => void;
-  onChooseActiveArticle: (articleId: string | null) => void;
-  onChooseArticle: (uid: string, articleId: string | null) => void;
+  onChooseActiveArticle: (article: Artigo | null) => void;
+  onChooseArticle: (uid: string, article: Artigo | null) => void;
   onCommitActiveLine: (tipoLinha?: TipoLinha) => PendingLineCommitResult;
   onDuplicateLine: (uid: string) => void;
   onMoveLine: (uid: string, direction: -1 | 1) => void;
@@ -1023,12 +1030,12 @@ function DraftLines(props: {
         columns={artigoLookupColumns(props.catalogos.tiposIva)}
         dataKey="codigo"
         emptyMessage="Sem artigos para selecionar."
-        loading={props.catalogos.artigos.length === 0}
+        remoteLookup={{ endpoint: "/api/artigos/lookup", inativo: false }}
         onHide={() => setArticleDialogLineUid(null)}
         onSelect={(artigo) => {
           if (!articleDialogLine) return;
-          if (articleDialogLine.uid === props.activeLine.uid) props.onChooseActiveArticle(artigo.codigo);
-          else props.onChooseArticle(articleDialogLine.uid, artigo.codigo);
+          if (articleDialogLine.uid === props.activeLine.uid) props.onChooseActiveArticle(artigo);
+          else props.onChooseArticle(articleDialogLine.uid, artigo);
           setArticleDialogLineUid(null);
         }}
         preferenceKey="fac.lookup.draft.artigos"
@@ -1116,12 +1123,12 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
               dataKey="codigo"
               disabled={disabled}
               emptyMessage="Sem artigos para selecionar."
-              loading={catalogos.artigos.length === 0}
+              remoteLookup={{ endpoint: "/api/artigos/lookup", inativo: false }}
               optionLabel={artigoLookupLabel}
               optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, money(Number(artigo.pvp))].filter(Boolean).join(" · ")}
               onClear={() => active ? props.onChooseActiveArticle(null) : props.onChooseArticle(line.uid, null)}
               onQueryChange={active ? props.onActiveArticleQueryChange : undefined}
-              onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo.codigo) : props.onChooseArticle(line.uid, artigo.codigo)}
+              onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo) : props.onChooseArticle(line.uid, artigo)}
               placeholder="Pesquisar artigo ou serviço"
               preferenceKey="fac.lookup.draft.artigos"
               searchFields={artigoSearchFields(catalogos.tiposIva)}
@@ -1156,7 +1163,7 @@ function DraftLineCard(props: Parameters<typeof DraftLines>[0] & { active?: bool
     <article className={`fac-draft-line-card ${props.selectedLineUid === line.uid || active ? "selected" : ""} ${isTextLine ? "text-line" : ""} ${isTextLine && !line.descricao.trim() ? "text-line-empty" : ""} ${active ? "active-line" : ""}`} onFocus={() => !active && props.onSelectLine(line.uid)} onMouseDown={() => !active && props.onSelectLine(line.uid)}>
       <div className="fac-draft-card-top"><span>{active ? "Nova linha" : `Linha ${index + 1}`}</span></div>
       {!isTextLine && (
-        <EntityLookupField<Artigo> autoFocusRequest={active ? props.activeArticleFocusRequest : 0} clearable closeRequest={active ? props.activeArticleCloseRequest : 0} columns={artigoLookupColumns(catalogos.tiposIva)} dataKey="codigo" disabled={disabled} emptyMessage="Sem artigos para selecionar." loading={catalogos.artigos.length === 0} optionLabel={artigoLookupLabel} optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, money(Number(artigo.pvp))].filter(Boolean).join(" · ")} onClear={() => active ? props.onChooseActiveArticle(null) : props.onChooseArticle(line.uid, null)} onQueryChange={active ? props.onActiveArticleQueryChange : undefined} onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo.codigo) : props.onChooseArticle(line.uid, artigo.codigo)} placeholder="Pesquisar artigo" preferenceKey="fac.lookup.draft.artigos" searchFields={artigoSearchFields(catalogos.tiposIva)} selection={selectedArticle} title="Selecionar artigo" value={catalogos.artigos.filter((artigo) => !artigo.inativo)} valueLabel={selectedArticle ? selectedArticle.codigo : undefined} />
+        <EntityLookupField<Artigo> autoFocusRequest={active ? props.activeArticleFocusRequest : 0} clearable closeRequest={active ? props.activeArticleCloseRequest : 0} columns={artigoLookupColumns(catalogos.tiposIva)} dataKey="codigo" disabled={disabled} emptyMessage="Sem artigos para selecionar." remoteLookup={{ endpoint: "/api/artigos/lookup", inativo: false }} optionLabel={artigoLookupLabel} optionMeta={(artigo) => [artigo.unidade, artigo.familiaId ? `Família ${artigo.familiaId}` : null, money(Number(artigo.pvp))].filter(Boolean).join(" · ")} onClear={() => active ? props.onChooseActiveArticle(null) : props.onChooseArticle(line.uid, null)} onQueryChange={active ? props.onActiveArticleQueryChange : undefined} onSelect={(artigo) => active ? props.onChooseActiveArticle(artigo) : props.onChooseArticle(line.uid, artigo)} placeholder="Pesquisar artigo" preferenceKey="fac.lookup.draft.artigos" searchFields={artigoSearchFields(catalogos.tiposIva)} selection={selectedArticle} title="Selecionar artigo" value={catalogos.artigos.filter((artigo) => !artigo.inativo)} valueLabel={selectedArticle ? selectedArticle.codigo : undefined} />
       )}
       <input aria-label="Descrição da linha" className="fac-draft-cell fac-draft-cell-display" disabled={disabled} maxLength={80} onChange={(event) => update({ descricao: event.target.value })} placeholder="Descrição" value={line.descricao} />
       {hasArticle && (
@@ -1277,11 +1284,9 @@ function ivaCompactLabel(iva: TipoTaxaIva) {
 }
 
 async function loadCatalogos(): Promise<Catalogos> {
-  const [tiposPage, seriesPage, clientes, artigos, armazensPage, moedasPage, regimesPage, modosPage, prazosPage, transportesPage, tiposIvaPage] = await Promise.all([
+  const [tiposPage, seriesPage, armazensPage, moedasPage, regimesPage, modosPage, prazosPage, transportesPage, tiposIvaPage] = await Promise.all([
     fetchPage<TipoDocumento>("/api/tipos-documento?size=100&sort=id,asc"),
     fetchPage<Serie>("/api/series?size=100&sort=tipoDocumento.id,asc&sort=serie,asc"),
-    fetchAllPages<Cliente>("/api/clientes", "nome,asc"),
-    fetchAllPages<Artigo>("/api/artigos", "descricao,asc"),
     fetchPage<Armazem>("/api/armazens?size=100&sort=nome,asc"),
     fetchPage<CatalogoString>("/api/moedas?size=100&sort=nome,asc"),
     fetchPage<RegimeIva>("/api/riva?size=100&sort=nome,asc"),
@@ -1291,9 +1296,9 @@ async function loadCatalogos(): Promise<Catalogos> {
     fetchPage<TipoTaxaIva>("/api/tipos-taxa-iva?size=100&sort=descricao,asc")
   ]);
   return {
-    artigos: artigos.filter((artigo) => !artigo.inativo),
+    artigos: [],
     armazens: armazensPage.content,
-    clientes,
+    clientes: [],
     moedas: moedasPage.content,
     regimesIva: regimesPage.content,
     series: seriesPage.content,
@@ -1311,18 +1316,7 @@ async function fetchPage<T>(url: string): Promise<Page<T>> {
   return response.json();
 }
 
-async function fetchAllPages<T>(path: string, sort: string, pageSize = 500): Promise<T[]> {
-  const rows: T[] = [];
-  for (let pageNumber = 0; ; pageNumber += 1) {
-    const page = await fetchPage<T>(`${path}?page=${pageNumber}&size=${pageSize}&sort=${sort}`);
-    rows.push(...page.content);
-    if (page.totalPages !== undefined) {
-      if (pageNumber + 1 >= page.totalPages) return rows;
-    } else if (page.content.length < pageSize) {
-      return rows;
-    }
-  }
-}
+
 
 async function requestJson<T>(url: string, body?: unknown, method: "GET" | "POST" | "PUT" = "GET"): Promise<T> {
   const response = await apiFetch(url, body === undefined ? undefined : { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

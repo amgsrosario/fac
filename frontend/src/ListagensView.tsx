@@ -181,7 +181,7 @@ export default function ListagensView() {
   const loadRequestRef = useRef(0);
   const configured = useConfiguredColumns(`fac.listagens.${source}.colunas`, COLUMNS[source]);
 
-  useEffect(() => { loadFilterOptions(); }, []);
+
   useEffect(() => {
     if (isPendentesSource(source)) return;
     const timer = window.setTimeout(() => {
@@ -196,20 +196,6 @@ export default function ListagensView() {
     }
     return () => { loadRequestRef.current += 1; };
   }, [source, dataInicial, dataFinal, clienteIds, artigoIds, mostrarAnuladosComerciais, mostrarAnuladosFinanceiros, mostrarTextoComercial, pendentesClienteIds, pendentesDataReferencia, pendentesApenasVencidos, debouncedSearch, page, pageSize, sortKey, sortDirection, isPendentesSource(source) ? search : ""]);
-
-  async function loadFilterOptions() {
-    try {
-      const [clientesRows, artigosRows] = await Promise.all([
-        fetchAllPages<ClienteOption>("/api/clientes", "nome,asc"),
-        fetchAllPages<ArtigoOption>("/api/artigos", "descricao,asc")
-      ]);
-      setClientes(clientesRows.filter((cliente) => !cliente.inativo));
-      setArtigos(artigosRows);
-      setClientesExtrato(clientesRows);
-    } catch {
-      // As listagens continuam utilizaveis; apenas os seletores ficam sem opcoes.
-    }
-  }
 
   async function loadSource(target: SourceKey) {
     const requestId = ++loadRequestRef.current;
@@ -234,9 +220,6 @@ export default function ListagensView() {
     setMessage(null);
     clearSourceRows(target);
     try {
-      if (target === "extratoCliente" && clientesExtrato.length === 0) {
-        setClientesExtrato((await fetchPage<ClienteOption>("/api/clientes?size=500&sort=nome,asc")).content);
-      }
       if (target === "pendentes" || target === "pendentesAData") {
         const params = new URLSearchParams({ page: String(page), size: String(pageSize), pesquisa: search.trim() });
         if (target === "pendentesAData") params.set("dataReferencia", pendentesDataReferencia);
@@ -511,12 +494,12 @@ export default function ListagensView() {
         </div>
       </header>
       {message && <p className="fac-message">{message}</p>}
-      {isPendentesSource(source) && <div className="fac-pendentes-controls"><PendentesFilters apenasVencidos={pendentesApenasVencidos} clientes={clientes} dataReferencia={source === "pendentesAData" ? pendentesDataReferencia : undefined} onApenasVencidos={(value) => { loadRequestRef.current += 1; setPage(0); setPendentesApenasVencidos(value); }} onChange={(values) => { loadRequestRef.current += 1; setPage(0); setPendentesClienteIds(values); }} onDataReferencia={(value) => { loadRequestRef.current += 1; setPage(0); setPendentesDataReferencia(value); }} selectedValues={pendentesClienteIds}/></div>}
+      {isPendentesSource(source) && <div className="fac-pendentes-controls"><PendentesFilters onRememberCliente={(row) => setClientes((rows) => [...rows.filter((item) => item.id !== row.id), row])} apenasVencidos={pendentesApenasVencidos} clientes={clientes} dataReferencia={source === "pendentesAData" ? pendentesDataReferencia : undefined} onApenasVencidos={(value) => { loadRequestRef.current += 1; setPage(0); setPendentesApenasVencidos(value); }} onChange={(values) => { loadRequestRef.current += 1; setPage(0); setPendentesClienteIds(values); }} onDataReferencia={(value) => { loadRequestRef.current += 1; setPage(0); setPendentesDataReferencia(value); }} selectedValues={pendentesClienteIds}/></div>}
       {isPendentesSource(source) && <PendentesTotals totais={pendentesTotais}/>}
-      {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters artigos={artigos} clientes={clientes} dataFinal={dataFinal} dataInicial={dataInicial} mostrarAnulados={source === "comerciais" ? mostrarAnuladosComerciais : source === "financeiros" ? mostrarAnuladosFinanceiros : undefined} mostrarTexto={source === "linhasComerciais" ? mostrarTextoComercial : undefined} onArtigos={(values) => { setPage(0); setArtigoIds(values); }} onClientes={(values) => { setPage(0); setClienteIds(values); }} onDataFinal={(value) => { setPage(0); setDataFinal(value); }} onDataInicial={(value) => { setPage(0); setDataInicial(value); }} onMostrarAnulados={(value) => { setPage(0); if (source === "financeiros") setMostrarAnuladosFinanceiros(value); else setMostrarAnuladosComerciais(value); }} onMostrarTexto={(value) => { setPage(0); setMostrarTextoComercial(value); }} selectedArtigoIds={artigoIds} selectedClienteIds={clienteIds} showArtigo={source === "linhasComerciais"} />}
+      {source !== "extratoCliente" && !isPendentesSource(source) && <ListingFilters onRememberCliente={(row) => setClientes((rows) => [...rows.filter((item) => item.id !== row.id), row])} onRememberArtigo={(row) => setArtigos((rows) => [...rows.filter((item) => item.codigo !== row.codigo), row])} artigos={artigos} clientes={clientes} dataFinal={dataFinal} dataInicial={dataInicial} mostrarAnulados={source === "comerciais" ? mostrarAnuladosComerciais : source === "financeiros" ? mostrarAnuladosFinanceiros : undefined} mostrarTexto={source === "linhasComerciais" ? mostrarTextoComercial : undefined} onArtigos={(values) => { setPage(0); setArtigoIds(values); }} onClientes={(values) => { setPage(0); setClienteIds(values); }} onDataFinal={(value) => { setPage(0); setDataFinal(value); }} onDataInicial={(value) => { setPage(0); setDataInicial(value); }} onMostrarAnulados={(value) => { setPage(0); if (source === "financeiros") setMostrarAnuladosFinanceiros(value); else setMostrarAnuladosComerciais(value); }} onMostrarTexto={(value) => { setPage(0); setMostrarTextoComercial(value); }} selectedArtigoIds={artigoIds} selectedClienteIds={clienteIds} showArtigo={source === "linhasComerciais"} />}
       {source === "extratoCliente" && <p className="fac-muted">Extrato calculado a partir dos documentos emitidos. Os documentos anulados não integram os movimentos contabilísticos e cada moeda é apresentada separadamente.</p>}
       {source === "extratoCliente" && <div className="fac-extrato-filters">
-        <div className="fac-filter-field"><span>Clientes</span><MultiSelectFilter allLabel="Todos os clientes" options={clientesExtrato.map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}` }))} selectedValues={extratoClienteIds} onChange={(values) => { setExtratoClienteIds(values); setExtratos(null); }}/></div>
+        <div className="fac-filter-field"><span>Clientes</span><MultiSelectFilter remoteLookup={{ endpoint: "/api/clientes/lookup", context: "statement" }} optionFromRow={(row: ClienteOption) => ({ value: row.id, label: `${row.id} - ${row.nome}` })} onRememberRow={(row) => setClientesExtrato((rows) => [...rows.filter((item) => item.id !== row.id), row])} allLabel="Todos os clientes" options={clientesExtrato.map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}` }))} selectedValues={extratoClienteIds} onChange={(values) => { setExtratoClienteIds(values); setExtratos(null); }}/></div>
         <label><span>Data inicial</span><input onChange={(event) => setExtratoDataInicial(event.target.value)} type="date" value={extratoDataInicial}/></label>
         <label><span>Data final</span><input onChange={(event) => setExtratoDataFinal(event.target.value)} type="date" value={extratoDataFinal}/></label>
         <button className="fac-primary-button" disabled={loading} onClick={consultarExtrato} type="button">Consultar extrato</button>
@@ -540,6 +523,7 @@ export default function ListagensView() {
 }
 
 function PendentesFilters({
+  onRememberCliente,
   apenasVencidos,
   clientes,
   dataReferencia,
@@ -548,6 +532,7 @@ function PendentesFilters({
   onDataReferencia,
   selectedValues
 }: {
+  onRememberCliente: (row: ClienteOption) => void;
   apenasVencidos: boolean;
   clientes: ClienteOption[];
   dataReferencia?: string;
@@ -564,7 +549,7 @@ function PendentesFilters({
     </label>}
     <div className="fac-filter-field">
       <span>Clientes</span>
-      <MultiSelectFilter allLabel="Todos os clientes" options={clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}${cliente.nif ? ` - NIF ${cliente.nif}` : ""}` }))} selectedValues={selectedValues} onChange={onChange}/>
+      <MultiSelectFilter remoteLookup={{ endpoint: "/api/clientes/lookup", context: "listSimple", inativo: false }} optionFromRow={(row: ClienteOption) => clienteOptions([row])[0]} onRememberRow={onRememberCliente} allLabel="Todos os clientes" options={clientes.filter((cliente) => !cliente.inativo).map((cliente) => ({ value: cliente.id, label: `${cliente.id} - ${cliente.nome}${cliente.nif ? ` - NIF ${cliente.nif}` : ""}` }))} selectedValues={selectedValues} onChange={onChange}/>
     </div>
     <label className="fac-pendentes-checkbox">
       <input checked={apenasVencidos} onChange={(event) => onApenasVencidos(event.target.checked)} type="checkbox"/>
@@ -587,6 +572,7 @@ function PendentesTotals({ totais }: { totais: PendentesResponse["totais"] }) {
 }
 
 function ListingFilters({
+  onRememberCliente, onRememberArtigo,
   artigos,
   clientes,
   dataFinal,
@@ -603,6 +589,8 @@ function ListingFilters({
   selectedClienteIds,
   showArtigo
 }: {
+  onRememberCliente: (row: ClienteOption) => void;
+  onRememberArtigo: (row: ArtigoOption) => void;
   artigos: ArtigoOption[];
   clientes: ClienteOption[];
   dataFinal: string;
@@ -629,12 +617,12 @@ function ListingFilters({
       <label><span>Data final</span><input onChange={(event) => onDataFinal(event.target.value)} type="date" value={dataFinal} /></label>
       <div className="fac-filter-field">
         <span>Clientes</span>
-        <MultiSelectFilter allLabel="Todos os clientes" emptyMessage="Sem clientes encontrados." label="cliente" onChange={onClientes} options={clienteOptions(activeClientes)} searchPlaceholder="Pesquisar clientes" selectedValues={selectedClienteIds}/>
+        <MultiSelectFilter remoteLookup={{ endpoint: "/api/clientes/lookup", context: "list", inativo: false }} optionFromRow={(row: ClienteOption) => clienteOptions([row])[0]} onRememberRow={onRememberCliente} allLabel="Todos os clientes" emptyMessage="Sem clientes encontrados." label="cliente" onChange={onClientes} options={clienteOptions(activeClientes)} searchPlaceholder="Pesquisar clientes" selectedValues={selectedClienteIds}/>
       </div>
       {mostrarAnulados !== undefined && <label className="fac-listing-checkbox"><input checked={mostrarAnulados} onChange={(event) => onMostrarAnulados(event.target.checked)} type="checkbox"/><span>Mostrar anulados</span></label>}
       {showArtigo && <div className="fac-filter-field">
         <span>Artigos</span>
-        <MultiSelectFilter<string> allLabel="Todos os artigos" emptyMessage="Sem artigos encontrados." label="artigo" onChange={onArtigos} options={artigoOptions(activeArtigos)} searchPlaceholder="Pesquisar artigos" selectedValues={selectedArtigoIds}/>
+        <MultiSelectFilter<string, ArtigoOption> remoteLookup={{ endpoint: "/api/artigos/lookup", context: "list", inativo: false }} optionFromRow={(row) => artigoOptions([row])[0]} onRememberRow={onRememberArtigo} allLabel="Todos os artigos" emptyMessage="Sem artigos encontrados." label="artigo" onChange={onArtigos} options={artigoOptions(activeArtigos)} searchPlaceholder="Pesquisar artigos" selectedValues={selectedArtigoIds}/>
       </div>}
       {mostrarTexto !== undefined && <label className="fac-listing-checkbox"><input checked={mostrarTexto} onChange={(event) => onMostrarTexto(event.target.checked)} type="checkbox"/><span>Mostrar texto</span></label>}
       {(selectedClientes.length > 0 || selectedArtigos.length > 0) && <div className="fac-selected-chips" aria-label="Filtros selecionados">
@@ -873,18 +861,7 @@ function rowKey(source: SourceKey, row: unknown, index: number) {
 }
 
 async function fetchPage<T>(url: string): Promise<Page<T>> { return fetchJson<Page<T>>(url); }
-async function fetchAllPages<T>(path: string, sort: string, pageSize = 500): Promise<T[]> {
-  const rows: T[] = [];
-  for (let pageNumber = 0; ; pageNumber += 1) {
-    const page = await fetchPage<T>(`${path}?page=${pageNumber}&size=${pageSize}&sort=${sort}`);
-    rows.push(...page.content);
-    if (page.totalPages !== undefined) {
-      if (pageNumber + 1 >= page.totalPages) return rows;
-    } else if (page.content.length < pageSize) {
-      return rows;
-    }
-  }
-}
+
 async function fetchJson<T>(url: string): Promise<T> { const response = await apiFetch(url); if (!response.ok) throw new Error(await responseError(response)); return response.json(); }
 async function responseError(response: Response) { try { const payload = await response.json(); return payload.message || payload.error || `Erro HTTP ${response.status}`; } catch { return `Erro HTTP ${response.status}`; } }
 function downloadFilename(contentDisposition: string | null, fallback: string) {

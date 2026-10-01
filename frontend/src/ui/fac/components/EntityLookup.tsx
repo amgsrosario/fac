@@ -7,6 +7,8 @@ import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { OverlayPanel } from "primereact/overlaypanel";
 import "./EntityLookup.css";
+import { LookupOptions, useRemoteLookup } from "../../../lookups/useRemoteLookup";
+import { Paginator } from "primereact/paginator";
 
 export type EntityLookupColumn<T extends object> = {
   body?: (row: T) => ReactNode;
@@ -40,6 +42,7 @@ type EntityLookupDialogProps<T extends object> = {
   onSelect: (row: T) => void;
   preferenceKey?: string;
   remoteSearch?: boolean;
+  remoteLookup?: LookupOptions;
   searchFields?: EntityLookupSearchField<T>[];
   selection?: T | null;
   selectionLabel?: (row: T) => ReactNode;
@@ -117,12 +120,14 @@ export function EntityLookupField<T extends object>({
     () => dialogProps.searchFields ?? searchFieldsFromColumns(dialogProps.columns, dialogProps.globalFilterFields),
     [dialogProps.columns, dialogProps.globalFilterFields, dialogProps.searchFields]
   );
+  const remote = useRemoteLookup<T>(dialogProps.remoteLookup, { search: query }, !disabled && suggestionsOpen && !visible);
   const suggestions = useMemo(() => {
+    if (dialogProps.remoteLookup) return remote.rows;
     const trimmed = query.trim();
     if (!trimmed) return showAllSuggestionsOnEmptyQuery ? dialogProps.value.slice(0, suggestionLimit) : [];
     if (dialogProps.remoteSearch) return dialogProps.value.slice(0, suggestionLimit);
     return dialogProps.value.filter((row) => matchEntityQuery(row, trimmed, searchFields)).slice(0, suggestionLimit);
-  }, [dialogProps.remoteSearch, dialogProps.value, query, searchFields, showAllSuggestionsOnEmptyQuery, suggestionLimit]);
+  }, [dialogProps.remoteLookup, remote.rows, dialogProps.remoteSearch, dialogProps.value, query, searchFields, showAllSuggestionsOnEmptyQuery, suggestionLimit]);
 
   useEffect(() => {
     if (selection) {
@@ -165,7 +170,7 @@ export function EntityLookupField<T extends object>({
   }, []);
 
   useEffect(() => {
-    if (!canUseDocument || !suggestionsOpen || suggestions.length === 0) {
+    if (!canUseDocument || !suggestionsOpen || (!dialogProps.remoteLookup && suggestions.length === 0)) {
       setSuggestionsPlacement("below");
       setSuggestionsStyle(null);
       return;
@@ -203,7 +208,7 @@ export function EntityLookupField<T extends object>({
       window.removeEventListener("resize", updateSuggestionsLayout);
       window.removeEventListener("scroll", updateSuggestionsLayout, true);
     };
-  }, [canUseDocument, query, suggestions.length, suggestionsOpen]);
+  }, [canUseDocument, query, suggestions.length, suggestionsOpen, remote.loading, remote.error, dialogProps.remoteLookup]);
 
   function hide(restoreFocus = true) {
     setVisible(false);
@@ -269,7 +274,7 @@ export function EntityLookupField<T extends object>({
   }
 
   const suggestionsList =
-    canUseDocument && suggestionsOpen && suggestions.length > 0
+    canUseDocument && suggestionsOpen && (suggestions.length > 0 || Boolean(dialogProps.remoteLookup))
       ? createPortal(
           <div
             className={`fac-lookup-suggestions ${suggestionsPlacement === "above" ? "above" : ""}`}
@@ -278,6 +283,9 @@ export function EntityLookupField<T extends object>({
             role="listbox"
             style={suggestionsStyle ?? { left: 0, top: 0, visibility: "hidden", width: rootRef.current?.getBoundingClientRect().width ?? undefined }}
           >
+            {remote.loading && <span role="status">A pesquisar...</span>}
+            {remote.error && <span role="alert">{remote.error} <button type="button" onClick={remote.retry}>Tentar novamente</button></span>}
+            {dialogProps.remoteLookup && !remote.loading && !remote.error && suggestions.length === 0 && <span>{dialogProps.emptyMessage}</span>}
             {suggestions.map((row, index) => (
               <button
                 aria-selected={index === activeIndex}
@@ -293,6 +301,7 @@ export function EntityLookupField<T extends object>({
                 {optionMeta && <small>{optionMeta(row)}</small>}
               </button>
             ))}
+            {dialogProps.remoteLookup && remote.total > suggestions.length && <button type="button" onClick={openDialog}>Ver todos os resultados ({remote.total})</button>}
           </div>,
           document.body
         )
@@ -375,6 +384,7 @@ export function EntityLookupDialog<T extends object>({
   onSelect,
   preferenceKey,
   remoteSearch = false,
+  remoteLookup,
   searchFields: providedSearchFields,
   selection = null,
   selectionLabel,
@@ -399,9 +409,14 @@ export function EntityLookupDialog<T extends object>({
   const [filtersVisible, setFiltersVisible] = useState(false);
   const visibleColumns = columns.filter((column) => visibleFields.includes(column.field));
   const activeFilterCount = Object.values(columnFilters).filter((value) => value.trim()).length;
+  const [remotePage, setRemotePage] = useState(0);
+  const [remoteSort, setRemoteSort] = useState<Array<{ field: string; order: 1 | -1 | 0 }>>([]);
+  const remote = useRemoteLookup<T>(remoteLookup, { search: globalFilter, page: remotePage,
+    sort: remoteSort.map((sort) => `${sort.field},${sort.order === -1 ? "desc" : "asc"}`),
+    filters: Object.fromEntries(visibleColumns.map((column) => [column.field, columnFilters[column.field] ?? ""])) }, visible);
   const filteredValue = useMemo(
-    () => value.filter((row) => (remoteSearch || matchEntityQuery(row, globalFilter, searchFields)) && visibleColumns.every((column) => matchColumnFilter(row, column, columnFilters[column.field]))),
-    [columnFilters, globalFilter, remoteSearch, searchFields, value, visibleColumns]
+    () => remoteLookup ? remote.rows : value.filter((row) => (remoteSearch || matchEntityQuery(row, globalFilter, searchFields)) && visibleColumns.every((column) => matchColumnFilter(row, column, columnFilters[column.field]))),
+    [remoteLookup, remote.rows, columnFilters, globalFilter, remoteSearch, searchFields, value, visibleColumns]
   );
   const searchRef = useRef<HTMLInputElement>(null);
   const helpPanelRef = useRef<OverlayPanel>(null);
@@ -412,6 +427,7 @@ export function EntityLookupDialog<T extends object>({
     if (!visible) return;
     setSelected(selection);
     setGlobalFilter(initialQuery);
+    setRemotePage(0);
     window.setTimeout(() => searchRef.current?.focus(), 120);
   }, [initialQuery, selection, visible]);
 
@@ -421,12 +437,13 @@ export function EntityLookupDialog<T extends object>({
   }, [preferenceKey, visibleFields]);
 
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || remoteLookup) return;
     const selectedKey = entityKey(selected, dataKey);
     if (!filteredValue.some((row) => entityKey(row, dataKey) === selectedKey)) setSelected(null);
-  }, [dataKey, filteredValue, selected]);
+  }, [dataKey, filteredValue, selected, remoteLookup]);
 
   function changeColumns(nextFields: string[]) {
+    setRemotePage(0);
     const required = requiredFields.filter((field) => !nextFields.includes(field));
     const merged = Array.from(new Set([...required, ...nextFields]));
     setVisibleFields(merged.length > 0 ? merged : defaultVisibleFields);
@@ -439,11 +456,13 @@ export function EntityLookupDialog<T extends object>({
   }
 
   function resetColumns() {
+    setRemotePage(0);
     setVisibleFields(defaultVisibleFields);
   }
 
   function clearColumnFilters() {
     setColumnFilters({});
+    setRemotePage(0);
   }
 
   function toggleHelpPanel(event: ReactMouseEvent<HTMLButtonElement>) {
@@ -494,9 +513,9 @@ export function EntityLookupDialog<T extends object>({
       <div className="fac-entity-lookup-toolbar">
         <span className="p-input-icon-left fac-entity-lookup-search">
           <i className="pi pi-search" aria-hidden="true" />
-          <InputText onChange={(event) => { setGlobalFilter(event.target.value); onQueryChange?.(event.target.value); }} placeholder={searchPlaceholder} ref={searchRef} title={SEARCH_HELP} value={globalFilter} />
+          <InputText onChange={(event) => { setGlobalFilter(event.target.value); setRemotePage(0); onQueryChange?.(event.target.value); }} placeholder={searchPlaceholder} ref={searchRef} title={SEARCH_HELP} value={globalFilter} />
           {globalFilter && (
-            <button aria-label="Limpar pesquisa" className="fac-entity-lookup-clear" onClick={() => { setGlobalFilter(""); onQueryChange?.(""); }} type="button">
+            <button aria-label="Limpar pesquisa" className="fac-entity-lookup-clear" onClick={() => { setGlobalFilter(""); setRemotePage(0); onQueryChange?.(""); }} type="button">
               <i className="pi pi-times" aria-hidden="true" />
             </button>
           )}
@@ -539,13 +558,17 @@ export function EntityLookupDialog<T extends object>({
         </div>
         <button className="fac-entity-lookup-panel-reset" onClick={resetColumns} type="button">Restaurar predefinição</button>
       </OverlayPanel>
+      {remote.error && <div role="alert">{remote.error} <Button label="Tentar novamente" onClick={remote.retry} type="button" /></div>}
       <div className="fac-entity-lookup-table">
       <DataTable
         className={filtersVisible ? "fac-entity-lookup-datatable filters-visible" : "fac-entity-lookup-datatable"}
         dataKey={dataKey}
         emptyMessage={emptyMessage}
         filterDisplay={filtersVisible ? "row" : undefined}
-        loading={loading}
+        loading={remoteLookup ? remote.loading : loading}
+        lazy={Boolean(remoteLookup)}
+        multiSortMeta={remoteLookup ? remoteSort : undefined}
+        onSort={remoteLookup ? (event) => { setRemotePage(0); setRemoteSort((event.multiSortMeta ?? []).map((sort) => ({ field: sort.field, order: sort.order ?? 0 }))); } : undefined}
         onKeyDownCapture={(event) => {
           const target = event.target as HTMLElement;
           if (event.key === "Enter" && target.closest('[data-pc-section="bodyrow"]')) {
@@ -575,7 +598,7 @@ export function EntityLookupDialog<T extends object>({
             filterElement={() => (
               <InputText
                 className="fac-entity-lookup-column-filter"
-                onChange={(event) => setColumnFilters((current) => ({ ...current, [column.field]: event.target.value }))}
+                onChange={(event) => { setRemotePage(0); setColumnFilters((current) => ({ ...current, [column.field]: event.target.value })); }}
                 placeholder={column.header}
                 title={SEARCH_HELP}
                 value={columnFilters[column.field] ?? ""}
@@ -589,6 +612,7 @@ export function EntityLookupDialog<T extends object>({
           />
         ))}
       </DataTable>
+      {remoteLookup && remote.total > 20 && <Paginator first={remotePage * 20} rows={20} totalRecords={remote.total} onPageChange={(event) => setRemotePage(event.page)} />}
       </div>
     </Dialog>
   );
