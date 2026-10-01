@@ -2,6 +2,7 @@ import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import "./GlobalSearch.css";
+import { useRemoteLookup } from "./lookups/useRemoteLookup";
 
 type Page<T> = {
   content: T[];
@@ -67,21 +68,26 @@ const QUALIFIERS: Record<string, SearchType> = {
   documentos: "document"
 };
 
-let cachedData: GlobalSearchData | null = null;
-let cachedPromise: Promise<GlobalSearchData> | null = null;
+let cachedDocuments: DocumentoComercial[] | null = null;
+let cachedDocumentsPromise: Promise<DocumentoComercial[]> | null = null;
 
 export function GlobalSearch({ className = "" }: { className?: string }) {
   const navigate = useNavigate();
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
-  const [data, setData] = useState<GlobalSearchData | null>(cachedData);
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<GlobalSearchData | null>(null);
+  const [documentsLoading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [documentsError, setError] = useState<string | null>(null);
   const parsed = useMemo(() => parseQuery(query), [query]);
   const ready = isSearchReady(parsed.term);
+  const customers = useRemoteLookup<Cliente>({ endpoint: "/api/clientes/lookup", context: "global" }, { search: parsed.term, sort: ["nome,asc"] }, ready && (!parsed.type || parsed.type === "customer"));
+  const articles = useRemoteLookup<Artigo>({ endpoint: "/api/artigos/lookup", context: "global" }, { search: parsed.term, sort: ["codigo,asc"] }, ready && (!parsed.type || parsed.type === "article"));
+  const loading = documentsLoading || customers.loading || articles.loading;
+  const error = documentsError || customers.error || articles.error;
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -94,22 +100,21 @@ export function GlobalSearch({ className = "" }: { className?: string }) {
 
   useEffect(() => {
     setActiveIndex(0);
-    if (!ready) return;
+    setError(null);
+    setLoading(false);
+    if (!ready || (parsed.type && parsed.type !== "document")) return;
+    let current = true;
+    setLoading(true);
     const timer = window.setTimeout(() => {
-      setLoading(true);
-      setError(null);
-      loadGlobalSearchData()
-        .then((nextData) => {
-          setData(nextData);
-          setOpen(true);
-        })
-        .catch((err) => setError(err instanceof Error ? err.message : "Não foi possível pesquisar."))
-        .finally(() => setLoading(false));
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [ready, parsed.term]);
+      loadGlobalSearchDocuments()
+        .then((documents) => { if (current) setData({ documents, customers: [], articles: [] }); })
+        .catch((err) => { if (current) setError(err instanceof Error ? err.message : "Não foi possível pesquisar."); })
+        .finally(() => { if (current) setLoading(false); });
+    }, 300);
+    return () => { current = false; window.clearTimeout(timer); };
+  }, [ready, parsed.term, parsed.type, retry]);
 
-  const grouped = useMemo(() => groupResults(data, parsed), [data, parsed]);
+  const grouped = useMemo(() => groupResults({ documents: data?.documents ?? [], customers: customers.rows, articles: articles.rows }, parsed), [data, customers.rows, articles.rows, parsed]);
   const flatResults = useMemo(() => GROUPS.flatMap((group) => grouped[group.key]), [grouped]);
   const hasResults = flatResults.length > 0;
 
@@ -137,7 +142,7 @@ export function GlobalSearch({ className = "" }: { className?: string }) {
       setActiveIndex((current) => Math.max(current - 1, 0));
       return;
     }
-    if (event.key === "Enter" && flatResults[activeIndex]) {
+    if (event.key === "Enter" && !loading && !error && flatResults[activeIndex]) {
       event.preventDefault();
       choose(flatResults[activeIndex]);
     }
@@ -172,7 +177,7 @@ export function GlobalSearch({ className = "" }: { className?: string }) {
         <div className="fac-global-search-panel" role="listbox">
           {!ready && <p className="fac-global-search-state">Introduza pelo menos 2 caracteres.</p>}
           {ready && loading && <p className="fac-global-search-state">A pesquisar.</p>}
-          {ready && error && <p className="fac-global-search-state">{error}</p>}
+          {ready && error && <p className="fac-global-search-state">{error} <button type="button" onClick={() => { customers.retry(); articles.retry(); setRetry((n) => n + 1); }}>Tentar novamente</button></p>}
           {ready && !loading && !error && !hasResults && <p className="fac-global-search-state">Não foram encontrados resultados.</p>}
           {ready && !loading && !error && hasResults && GROUPS.map((group) => (
             <section className="fac-global-search-group" key={group.key}>
@@ -203,19 +208,14 @@ export function GlobalSearch({ className = "" }: { className?: string }) {
   );
 }
 
-async function loadGlobalSearchData() {
-  if (cachedData) return cachedData;
-  if (!cachedPromise) {
-    cachedPromise = Promise.all([
-      fetchAllPages<DocumentoComercial>("/api/documentos-comerciais", "dataEmissao,desc&sort=id,desc"),
-      fetchAllPages<Cliente>("/api/clientes", "nome,asc"),
-      fetchAllPages<Artigo>("/api/artigos", "codigo,asc")
-    ]).then(([documents, customers, articles]) => {
-      cachedData = { articles, customers, documents };
-      return cachedData;
-    });
+async function loadGlobalSearchDocuments() {
+  if (cachedDocuments) return cachedDocuments;
+  if (!cachedDocumentsPromise) {
+    cachedDocumentsPromise = fetchAllPages<DocumentoComercial>("/api/documentos-comerciais", "dataEmissao,desc&sort=id,desc")
+      .then((documents) => { cachedDocuments = documents; return documents; })
+      .catch((error) => { cachedDocumentsPromise = null; throw error; });
   }
-  return cachedPromise;
+  return cachedDocumentsPromise;
 }
 
 async function fetchAllPages<T>(baseUrl: string, sort: string) {
@@ -252,7 +252,6 @@ function groupResults(data: GlobalSearchData | null, parsed: ReturnType<typeof p
   }
   if (!parsed.type || parsed.type === "customer") {
     initial.customer = data.customers
-      .filter((cliente) => matchValues([cliente.id, cliente.nome, cliente.nif, cliente.localidade, cliente.email], parsed.term))
       .slice(0, 5)
       .map((cliente) => ({
         id: cliente.id,
@@ -264,7 +263,6 @@ function groupResults(data: GlobalSearchData | null, parsed: ReturnType<typeof p
   }
   if (!parsed.type || parsed.type === "article") {
     initial.article = data.articles
-      .filter((artigo) => matchValues([artigo.codigo, artigo.descricao, artigo.familiaId, artigo.unidade], parsed.term))
       .slice(0, 5)
       .map((artigo) => ({
         id: artigo.codigo,
