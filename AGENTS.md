@@ -7,6 +7,11 @@ análises desnecessariamente amplas do repositório.
 
 ## Âmbito da análise
 
+Antes de planear ou executar trabalho no TUULI AIR, ler
+`docs/governance/INSTITUTIONAL_MEMORY.md` e
+`docs/governance/OPERATIONAL_STATE.md`. São as fontes canónicas de continuidade
+institucional e estado operacional do projeto.
+
 1. Antes de começar, identificar os ficheiros estritamente necessários.
 2. Não analisar todo o repositório, salvo pedido expresso.
 3. Não abrir pastas ou módulos sem relação direta com a tarefa.
