@@ -5,8 +5,8 @@ Fonte canónica do estado corrente. Atualização: 2026-10-02, Europe/Lisbon. Su
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD remoto confirmado por fetch no início desta atualização: `b042b3bea660b8b5b65b87acc08ea331f75cc6f0`.
-- Este identificador representa a base confirmada após o merge JWT, não o commit documental que contém este ficheiro. Atualizar o HEAD confirmado após integrações posteriores.
+- HEAD remoto confirmado por fetch neste fecho pós-merge documental: `8877b9281f43212c479d5a96e5efb9a985a2d03a` (merge do PR #10, que integra `eac635e4504cdc95e3cdb4c4884a4075459b96d5`).
+- Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
 
