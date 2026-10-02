@@ -30,6 +30,7 @@ public class JwtService {
                 .issuedAt(issuedAt)
                 .expiresAt(issuedAt.plus(expirationMinutes, ChronoUnit.MINUTES))
                 .subject(utilizador.getCodigo())
+                .claim("token_version", utilizador.getTokenVersion())
                 .claim("email", utilizador.getEmail())
                 .claim("nome", utilizador.getNome())
                 .claim("papel", utilizador.getPapel().name())

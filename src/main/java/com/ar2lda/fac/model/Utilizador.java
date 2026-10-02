@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -43,6 +44,15 @@ public class Utilizador {
     @Setter
     @ToString.Include
     private boolean inativo;
+
+    @Column(name = "token_version", nullable = false)
+    private long tokenVersion;
+
+    @Version
+    @Column(name = "row_version", nullable = false)
+    private long rowVersion;
+
+    public void invalidarSessoes() { tokenVersion++; }
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
