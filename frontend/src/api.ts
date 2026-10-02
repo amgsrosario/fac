@@ -1,3 +1,5 @@
+import { hasCapability, type Permission } from "./permissions";
+
 export type AuthSession = {
   token: string;
   type: string;
@@ -5,11 +7,11 @@ export type AuthSession = {
   codigo: string;
   nome: string;
   papel: "ADMINISTRADOR" | "OPERADOR" | "CONSULTA";
-  permissoes: string[];
+  permissoes: Permission[];
 };
 
-export function hasPermission(permission: string) {
-  return getAuthSession()?.permissoes?.includes(permission) ?? false;
+export function hasPermission(permission: Permission, session: Pick<AuthSession, "permissoes"> | null = getAuthSession()) {
+  return hasCapability(session, permission);
 }
 
 const SESSION_KEY = "fac.auth.session";

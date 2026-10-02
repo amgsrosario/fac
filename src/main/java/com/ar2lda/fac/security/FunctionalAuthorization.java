@@ -13,18 +13,18 @@ public class FunctionalAuthorization {
     @Value("${fac.security.enabled:true}")
     private boolean securityEnabled;
 
-    public boolean has(String permissao) {
+    public boolean has(PermissaoFuncional permissao) {
         if (!securityEnabled) {
             return true;
         }
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null && authentication.isAuthenticated()
                 && authentication.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals(permissao));
+                .anyMatch(authority -> authority.getAuthority().equals(permissao.name()));
     }
 
     public void require(PermissaoFuncional permissao) {
-        if (!has(permissao.name())) {
+        if (!has(permissao)) {
             throw new AccessDeniedException("Permissao funcional necessaria: " + permissao.name());
         }
     }

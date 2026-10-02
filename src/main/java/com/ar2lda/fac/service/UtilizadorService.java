@@ -136,6 +136,7 @@ public class UtilizadorService {
             throw new BadRequestException("Não é permitido elevar o próprio perfil");
         }
         existing.setPapel(dto.papel());
+        if (anterior != dto.papel()) existing.invalidarSessoes();
         existing.marcarAtualizacao(OffsetDateTime.now(clock), actor);
         auditoriaService.registar(TipoAuditoriaEvento.UTILIZADOR_PERFIL_ALTERADO, "UTILIZADOR", existing.getCodigo(),
                 "Perfil do utilizador alterado", dados("perfilAnterior", anterior.name(), "perfilNovo", dto.papel().name()));

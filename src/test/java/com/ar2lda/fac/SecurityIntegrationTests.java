@@ -329,6 +329,141 @@ class SecurityIntegrationTests {
                         && "OPEXPORT".equals(evento.getUtilizadorId()));
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({
+            "ADMINISTRADOR,OPERADOR", "ADMINISTRADOR,CONSULTA", "OPERADOR,CONSULTA",
+            "CONSULTA,OPERADOR", "OPERADOR,ADMINISTRADOR", "CONSULTA,ADMINISTRADOR"
+    })
+    void mudancaEfetivaDePerfilInvalidaTokenEAtualizaAutoridades(
+            PapelUtilizador anterior, PapelUtilizador novo) throws Exception {
+        Utilizador alvo = new Utilizador("PERFIL", "Perfil teste", "perfil@fac.test",
+                passwordEncoder.encode("FacTest1!"), false);
+        alvo.setPapel(anterior);
+        utilizadorRepository.save(alvo);
+        String adminToken = login("SECTEST", "FacTest1!");
+        String oldToken = login("PERFIL", "FacTest1!");
+        mockMvc.perform(patch("/utilizadores/PERFIL/perfil")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType("application/json").content("{\"papel\":\"" + novo + "\"}"))
+                .andExpect(status().isOk());
+        entityManager.flush();
+        entityManager.clear();
+        org.assertj.core.api.Assertions.assertThat(utilizadorRepository.findById("PERFIL").orElseThrow()
+                .getTokenVersion()).isEqualTo(1L);
+        mockMvc.perform(get("/series").header("Authorization", "Bearer " + oldToken))
+                .andExpect(status().isUnauthorized());
+        String response = mockMvc.perform(post("/auth/login").contentType("application/json")
+                        .content("{\"username\":\"PERFIL\",\"password\":\"FacTest1!\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.papel").value(novo.name()))
+                .andReturn().getResponse().getContentAsString();
+        var json = com.fasterxml.jackson.databind.json.JsonMapper.builder().build().readTree(response);
+        var permissions = new java.util.HashSet<String>();
+        json.get("permissoes").forEach(value -> permissions.add(value.asText()));
+        org.assertj.core.api.Assertions.assertThat(permissions).containsExactlyInAnyOrderElementsOf(
+                novo.permissoes().stream().map(Enum::name).toList());
+        String newToken = json.get("token").asText();
+        mockMvc.perform(get("/series").header("Authorization", "Bearer " + newToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer " + newToken))
+                .andExpect(novo == PapelUtilizador.ADMINISTRADOR ? status().isOk() : status().isForbidden());
+        org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
+                .anyMatch(evento -> evento.getTipoEvento() == TipoAuditoriaEvento.UTILIZADOR_PERFIL_ALTERADO
+                        && "SECTEST".equals(evento.getUtilizadorId()));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(PapelUtilizador.class)
+    void mesmoPerfilNaoInvalidaSessao(PapelUtilizador papel) throws Exception {
+        Utilizador alvo = new Utilizador("IGUAL", "Mesmo perfil", "igual@fac.test",
+                passwordEncoder.encode("FacTest1!"), false);
+        alvo.setPapel(papel);
+        utilizadorRepository.save(alvo);
+        String token = login("IGUAL", "FacTest1!");
+        String admin = login("SECTEST", "FacTest1!");
+        mockMvc.perform(patch("/utilizadores/IGUAL/perfil")
+                        .header("Authorization", "Bearer " + admin)
+                        .contentType("application/json").content("{\"papel\":\"" + papel + "\"}"))
+                .andExpect(status().isOk());
+        entityManager.flush();
+        entityManager.clear();
+        org.assertj.core.api.Assertions.assertThat(utilizadorRepository.findById("IGUAL").orElseThrow()
+                .getTokenVersion()).isZero();
+        mockMvc.perform(get("/series").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void ultimoAdministradorNaoPodeSerDespromovidoNemInvalidado() throws Exception {
+        String token = login("SECTEST", "FacTest1!");
+        mockMvc.perform(patch("/utilizadores/SECTEST/perfil")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{\"papel\":\"CONSULTA\"}"))
+                .andExpect(status().isConflict());
+        org.assertj.core.api.Assertions.assertThat(utilizadorRepository.findById("SECTEST").orElseThrow()
+                .getTokenVersion()).isZero();
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void perfilAlteradoNaoPodeSerRestauradoPorGravacaoDesatualizada() throws Exception {
+        Utilizador user = new Utilizador("STALEPROFILE", "Concorrencia perfil", "staleprofile@fac.test",
+                passwordEncoder.encode("FacTest1!"), false);
+        user.setPapel(PapelUtilizador.OPERADOR);
+        utilizadorRepository.saveAndFlush(user);
+        entityManager.clear();
+        Utilizador stale = utilizadorRepository.findById("STALEPROFILE").orElseThrow();
+        entityManager.clear();
+        String admin = login("SECTEST", "FacTest1!");
+        mockMvc.perform(patch("/utilizadores/STALEPROFILE/perfil")
+                        .header("Authorization", "Bearer " + admin)
+                        .contentType("application/json").content("{\"papel\":\"CONSULTA\"}"))
+                .andExpect(status().isOk());
+        entityManager.flush();
+        entityManager.clear();
+        Utilizador current = utilizadorRepository.findById("STALEPROFILE").orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(current.getPapel()).isEqualTo(PapelUtilizador.CONSULTA);
+        org.assertj.core.api.Assertions.assertThat(current.getTokenVersion()).isEqualTo(1L);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> {
+            entityManager.merge(stale);
+            entityManager.flush();
+        }).isInstanceOf(jakarta.persistence.OptimisticLockException.class);
+    }
+
+    @Test
+    void pdfFinanceiroExigeCapacidadeEConfiguracaoAtTemGateProprio() throws Exception {
+        String token = scopedToken(java.util.List.of("SERIE_GERIR"));
+        mockMvc.perform(get("/documentos-financeiros/1/pdf").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/documentos-comerciais/1/pdf").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/documentos-financeiros/resumos").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+        var tipo = new com.ar2lda.fac.model.TipoDocumento("PAT", "Permissoes AT", null, null, null, null, 1, 1, 1, false);
+        entityManager.persist(tipo);
+        mockMvc.perform(post("/series").header("Authorization", "Bearer " + token)
+                .contentType("application/json").content("""
+                {"tipoDocumentoId":"PAT","serie":"SEMAT","nome":"Sem codigo AT"}
+                """)).andExpect(status().isCreated());
+        mockMvc.perform(post("/series").header("Authorization", "Bearer " + token)
+                .contentType("application/json").content("""
+                {"tipoDocumentoId":"PAT","serie":"COMAT","nome":"Com codigo AT",
+                "codigoAt":"ATPERM","dataCodigoAt":"2026-01-01"}
+                """)).andExpect(status().isForbidden());
+        mockMvc.perform(put("/series/PAT/SEMAT").header("Authorization", "Bearer " + token)
+                .contentType("application/json").content("""
+                {"nome":"Alteracao AT","codigoAt":"ATPERM","dataCodigoAt":"2026-01-01"}
+                """)).andExpect(status().isForbidden());
+    }
+
+    private String scopedToken(java.util.List<String> authorities) {
+        JwtClaimsSet claims = JwtClaimsSet.builder().issuer("fac").issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(300)).subject("SECTEST")
+                .claim("token_version", 0L).claim("authorities", authorities).build();
+        return jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims))
+                .getTokenValue();
+    }
+
     private String login(String username, String password) throws Exception {
         String response = mockMvc.perform(post("/auth/login").contentType("application/json").content("""
                 {"username":"%s","password":"%s"}

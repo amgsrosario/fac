@@ -14,7 +14,7 @@ class FlywaySchemaIntegrationTests {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void esquemaEstaNaVersaoDozeEContemEstruturasEReferenciaHistoricaCorrigida() {
+    void esquemaEstaNaVersaoQuinzeEContemEstruturasHistoricasESegurancaJwt() {
         Integer versao = jdbcTemplate.queryForObject(
                 "select max(version::integer) from flyway_schema_history where success",
                 Integer.class
@@ -105,7 +105,15 @@ class FlywaySchemaIntegrationTests {
                        and nome = 'AGUEDA E BORRALHA' and not extinta)
                 """, Integer.class);
 
-        assertThat(versao).isEqualTo(12);
+        Integer colunasSegurancaJwt = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.columns
+                where table_schema = 'public' and table_name = 'utilizador'
+                  and column_name in ('token_version', 'row_version')
+                  and data_type = 'bigint' and is_nullable = 'NO'
+                  and column_default = '0'
+                """, Integer.class);
+        assertThat(versao).isEqualTo(15);
+        assertThat(colunasSegurancaJwt).isEqualTo(2);
         assertThat(colunasSnapshot).isEqualTo(2);
         assertThat(estruturasBlocoTres).isEqualTo(3);
         assertThat(estruturasMd28).isEqualTo(10);

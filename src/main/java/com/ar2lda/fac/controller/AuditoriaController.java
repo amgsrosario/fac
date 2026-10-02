@@ -18,7 +18,7 @@ public class AuditoriaController {
     private final AuditoriaService service;
 
     @GetMapping
-    @PreAuthorize("@functionalAuthorization.has('AUDITORIA_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).AUDITORIA_CONSULTAR)")
     public Page<AuditoriaEventoResumoDto> consultar(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime ate,

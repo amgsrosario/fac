@@ -29,7 +29,7 @@ public class LinhaDocumentoComercialController {
     private final LinhaDocumentoComercialService service;
 
     @PostMapping
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EDITAR_RASCUNHO')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EDITAR_RASCUNHO)")
     public ResponseEntity<LinhaDocumentoComercialDto> create(
             @PathVariable Long documentoId,
             @RequestBody @Valid LinhaDocumentoComercialCreateDto dto) {
@@ -40,19 +40,19 @@ public class LinhaDocumentoComercialController {
     }
 
     @GetMapping
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_CONSULTAR)")
     public List<LinhaDocumentoComercialDto> list(@PathVariable Long documentoId) {
         return service.list(documentoId);
     }
 
     @GetMapping("/{linhaId}")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_CONSULTAR)")
     public LinhaDocumentoComercialDto getById(@PathVariable Long documentoId, @PathVariable Long linhaId) {
         return service.getById(documentoId, linhaId);
     }
 
     @PutMapping("/ordem")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EDITAR_RASCUNHO')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EDITAR_RASCUNHO)")
     public List<LinhaDocumentoComercialDto> reorder(
             @PathVariable Long documentoId,
             @RequestBody @Valid ReordenarLinhasDocumentoDto dto) {
@@ -60,7 +60,7 @@ public class LinhaDocumentoComercialController {
     }
 
     @PutMapping("/{linhaId}")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EDITAR_RASCUNHO')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EDITAR_RASCUNHO)")
     public ResponseEntity<Void> update(
             @PathVariable Long documentoId,
             @PathVariable Long linhaId,
@@ -70,7 +70,7 @@ public class LinhaDocumentoComercialController {
     }
 
     @DeleteMapping("/{linhaId}")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EDITAR_RASCUNHO')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EDITAR_RASCUNHO)")
     public ResponseEntity<Void> delete(@PathVariable Long documentoId, @PathVariable Long linhaId) {
         service.delete(documentoId, linhaId);
         return ResponseEntity.noContent().build();

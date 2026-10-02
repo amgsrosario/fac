@@ -49,7 +49,7 @@ public class DocumentoComercialController implements GenericController {
     private final DocumentoComercialPdfService pdfService;
 
     @PostMapping
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CRIAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_CRIAR)")
     public ResponseEntity<DocumentoComercialDto> create(
             @RequestBody @Valid DocumentoComercialComLinhaCreateDto dto) {
         DocumentoComercialDto created = criacaoService.createComPrimeiraLinha(dto);
@@ -58,7 +58,7 @@ public class DocumentoComercialController implements GenericController {
     }
 
     @GetMapping
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_CONSULTAR)")
     public Page<DocumentoComercialResumoDto> list(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) EstadoDocumentoComercial estado,
@@ -83,19 +83,19 @@ public class DocumentoComercialController implements GenericController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_CONSULTAR)")
     public DocumentoComercialDto getById(@PathVariable Long id) {
         return service.getById(id);
     }
 
     @GetMapping("/{id}/impressao")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_CONSULTAR)")
     public DocumentoComercialImpressaoDto getImpressao(@PathVariable Long id) {
         return service.getImpressao(id);
     }
 
     @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_OBTER_PDF')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_OBTER_PDF)")
     public ResponseEntity<byte[]> getPdf(@PathVariable Long id) {
         DocumentoComercialPdfService.PdfDocumento pdf = pdfService.gerar(id);
         return ResponseEntity.ok()
@@ -105,26 +105,26 @@ public class DocumentoComercialController implements GenericController {
     }
 
     @GetMapping("/{id}/diagnostico")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_CONSULTAR)")
     public DocumentoComercialDiagnosticoDto getDiagnostico(@PathVariable Long id) {
         return service.getDiagnostico(id);
     }
 
     @GetMapping(value = "/{id}/diagnostico/html", produces = MediaType.TEXT_HTML_VALUE)
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_CONSULTAR)")
     public String getDiagnosticoHtml(@PathVariable Long id) {
         return service.getDiagnosticoHtml(id);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EDITAR_RASCUNHO')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EDITAR_RASCUNHO)")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody @Valid DocumentoComercialUpdateDto dto) {
         service.update(id, dto);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/emitir")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_EMITIR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EMITIR)")
     public DocumentoComercialDto emitir(@PathVariable Long id, @RequestBody @Valid DocumentoComercialEmitirDto dto) {
         return service.emitir(id, dto);
     }
@@ -135,7 +135,7 @@ public class DocumentoComercialController implements GenericController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@functionalAuthorization.has('DOCUMENTO_ELIMINAR_RASCUNHO')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_ELIMINAR_RASCUNHO)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
