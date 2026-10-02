@@ -114,6 +114,7 @@ public class UtilizadorService {
                     "Tentativa de desativar o último administrador ativo");
         }
         existing.setInativo(novoInativo);
+        if (novoInativo) existing.invalidarSessoes();
         existing.marcarAtualizacao(OffsetDateTime.now(clock), currentUserService.currentCodeOrSystem());
         auditoriaService.registar(TipoAuditoriaEvento.UTILIZADOR_ESTADO_ALTERADO, "UTILIZADOR", existing.getCodigo(),
                 dto.ativo() ? "Utilizador ativado" : "Utilizador desativado",
@@ -146,6 +147,7 @@ public class UtilizadorService {
         Utilizador existing = findEntityByCodigo(codigo);
         validarPassword(dto.novaPassword(), existing.getCodigo());
         existing.setPasswordHash(passwordEncoder.encode(dto.novaPassword()));
+        existing.invalidarSessoes();
         existing.marcarAtualizacao(OffsetDateTime.now(clock), currentUserService.currentCodeOrSystem());
         auditoriaService.registar(TipoAuditoriaEvento.UTILIZADOR_PASSWORD_REDEFINIDA, "UTILIZADOR", existing.getCodigo(),
                 "Password do utilizador redefinida", "{\"versao\":1}");
