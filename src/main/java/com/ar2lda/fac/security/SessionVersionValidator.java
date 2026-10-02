@@ -14,7 +14,9 @@ class SessionVersionValidator implements OAuth2TokenValidator<Jwt> {
     private final UtilizadorRepository utilizadores;
     public OAuth2TokenValidatorResult validate(Jwt jwt) {
         Object claim = jwt.getClaim("token_version");
-        Long version = claim instanceof Number number ? number.longValue() : null;
+        Long version = claim instanceof Integer || claim instanceof Long
+                ? ((Number) claim).longValue()
+                : null;
         var user = utilizadores.findById(jwt.getSubject()).orElse(null);
         return user != null && !user.isInativo() && version != null && version == user.getTokenVersion()
                 ? OAuth2TokenValidatorResult.success()

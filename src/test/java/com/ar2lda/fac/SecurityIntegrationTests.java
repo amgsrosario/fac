@@ -11,10 +11,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -38,6 +45,12 @@ class SecurityIntegrationTests {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtEncoder jwtEncoder;
+
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
 
     @Autowired
     private AuditoriaEventoRepository auditoriaEventoRepository;
@@ -108,6 +121,95 @@ class SecurityIntegrationTests {
                 .andExpect(status().isBadRequest());
         org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
                 .anyMatch(evento -> evento.getTipoEvento() == TipoAuditoriaEvento.LOGIN_FALHADO);
+    }
+
+    @Test
+    void passwordResetInvalidatesExistingTokenAndRequiresNewPassword() throws Exception {
+        String oldToken = login("security@fac.test", "FacTest1!");
+
+        mockMvc.perform(post("/utilizadores/SECTEST/redefinir-password")
+                        .header("Authorization", "Bearer " + oldToken)
+                        .contentType("application/json")
+                        .content("{\"novaPassword\":\"Outra#2026Senha\"}"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer " + oldToken))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/auth/login").contentType("application/json")
+                        .content("{\"username\":\"security@fac.test\",\"password\":\"FacTest1!\"}"))
+                .andExpect(status().isBadRequest());
+
+        String newToken = login("security@fac.test", "Outra#2026Senha");
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer " + newToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deactivationInvalidatesTokenAndReactivationDoesNotRestoreIt() throws Exception {
+        String token = login("security@fac.test", "FacTest1!");
+        utilizadorRepository.save(new Utilizador("SECADMIN2", "Segundo administrador", "admin2@fac.test",
+                passwordEncoder.encode("FacTest1!"), false));
+        String adminToken = login("admin2@fac.test", "FacTest1!");
+
+        mockMvc.perform(patch("/utilizadores/SECTEST/estado")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{\"ativo\":false}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/auth/login").contentType("application/json")
+                        .content("{\"username\":\"security@fac.test\",\"password\":\"FacTest1!\"}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(patch("/utilizadores/SECTEST/estado")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType("application/json").content("{\"ativo\":true}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rejectsExpiredTamperedUnknownAndInvalidSessionVersionTokens() throws Exception {
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer "
+                        + signedToken("SECTEST", 0L, Instant.now().minusSeconds(120))))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer "
+                        + signedToken("UNKNOWN", 0L, Instant.now().plusSeconds(60))))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer "
+                        + signedToken("SECTEST", 99L, Instant.now().plusSeconds(60))))
+                .andExpect(status().isUnauthorized());
+        String token = signedToken("SECTEST", 0L, Instant.now().plusSeconds(60));
+        mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer " + token + "x"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rejectsMissingStringFractionalAndNegativeSessionVersions() throws Exception {
+        for (Object version : new Object[]{null, "0", 0.5d, -1L}) {
+            mockMvc.perform(get("/utilizadores").header("Authorization", "Bearer "
+                            + signedToken("SECTEST", version, Instant.now().plusSeconds(60))))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Test
+    void staleUserCannotOverwritePersistedSessionInvalidation() {
+        entityManager.flush();
+        Utilizador stale = utilizadorRepository.findById("SECTEST").orElseThrow();
+        entityManager.clear();
+        Utilizador current = utilizadorRepository.findById("SECTEST").orElseThrow();
+        current.invalidarSessoes();
+        entityManager.flush();
+        entityManager.clear();
+
+        org.assertj.core.api.Assertions.assertThat(utilizadorRepository.findById("SECTEST").orElseThrow()
+                .getTokenVersion()).isEqualTo(1L);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> {
+            entityManager.merge(stale);
+            entityManager.flush();
+        }).isInstanceOf(jakarta.persistence.OptimisticLockException.class);
     }
 
     @Test
@@ -235,5 +337,17 @@ class SecurityIntegrationTests {
                 .andReturn().getResponse().getContentAsString();
         return com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
                 .readTree(response).get("token").asText();
+    }
+
+    private String signedToken(String subject, Object version, Instant expiresAt) {
+        JwtClaimsSet.Builder builder = JwtClaimsSet.builder().issuer("fac").issuedAt(expiresAt.minusSeconds(60))
+                .expiresAt(expiresAt).subject(subject)
+                .claim("authorities", java.util.List.of("CONFIGURACAO_GERIR"));
+        if (version != null) {
+            builder.claim("token_version", version);
+        }
+        JwtClaimsSet claims = builder.build();
+        return jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims))
+                .getTokenValue();
     }
 }
