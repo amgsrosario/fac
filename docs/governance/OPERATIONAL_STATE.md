@@ -59,7 +59,8 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 - Nenhuma migration criada ou alterada. O teste de schema, anteriormente preso a V12, foi alinhado com V15 já existente e reforçado com verificação de token_version/row_version bigint não nulas, com default zero.
 - Suite integral: 236 testes aprovados, zero falhas/erros/omitidos, na PostgreSQL 16.3 descartável. Inclui Segurança 23, matriz HTTP com login real 6, Utilizadores 7, Safety 4 e schema V15. A matriz usa operações e PDFs reais, sem mocks dos serviços de negócio.
 - Frontend: TypeScript e build Vite aprovados; dois testes do helper aprovados com Playwright existente. Runtime Node Linux temporário utilizado para evitar limitações UNC do Node Windows, sem alterações globais ou ao CI.
-- Package final: BUILD SUCCESS. Revisão independente por review_permissions_final: APROVADA, BLOCKER 0 / MAJOR 0 / MINOR 0. Revisão estática do diff completo e ficheiros novos; o revisor não repetiu os testes executados pelo Executor. Publicação ainda não confirmada nesta fotografia.
+- Package final: BUILD SUCCESS. Revisão independente por review_permissions_final: APROVADA, BLOCKER 0 / MAJOR 0 / MINOR 0. Revisão estática do diff completo e ficheiros novos; o revisor não repetiu os testes executados pelo Executor.
+- Branch feature/permissions-foundation publicada em origin, com push normal confirmado. PR ainda não criado e CI não consultado nesta sessão; integração pendente.
 - Não existe gh/gh.exe nem conector GitHub disponível nesta sessão para criar/consultar PR e CI. A OP admite entrega do link para criação manual do PR contra feature/visual-redesign após o push da branch; CI e conflitos no GitHub devem ser confirmados antes do gate humano. Não declarar PR verde sem evidência.
 - Alterações preexistentes do checkout principal em docker-compose.yml e .worktrees/ preservadas e excluídas desta missão.
 
