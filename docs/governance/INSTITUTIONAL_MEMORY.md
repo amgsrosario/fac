@@ -62,8 +62,8 @@ só é adequado dentro da arquitectura protegida; o produto não exige VPN.
 - A aplicação possui protecção mínima própria contra abuso do login, por instância,
   com limites configuráveis, estado limitado, recuperação automática e resposta 429.
   Não depende exclusivamente do proxy nem introduz Redis/serviço externo.
-- Segurança desactivada é confinada ao contexto de teste: perfil exclusivo,
-  marcador e infraestrutura de testes ausentes do artefacto operacional.
+- Bypass de segurança é proibido em operação. Segurança desactivada é confinada ao
+  contexto de teste: perfil exclusivo, marcador e infraestrutura de testes ausentes do artefacto operacional.
 - Secrets operacionais JWT são obrigatórios e validados no arranque. Geração
   aleatória segura, continuidade entre instâncias/reinícios e rotação são deveres
   operacionais. SHA-256 não demonstra entropia. HS256 é preservado.
@@ -76,8 +76,9 @@ só é adequado dentro da arquitectura protegida; o produto não exige VPN.
   Não equivalem a garantia de ausência de XSS ou revogação ao fazer logout.
 
 O [contrato de operação do Security Gate](../security/SECURITY_GATE.md) detalha
-limites e responsabilidades. A implementação proposta permanece sujeita ao PR,
-CI, merge humano e fecho formal executivo; não antecipa encerramento fiscal.
+limites e responsabilidades. Estas decisões estão aprovadas, implementadas e
+integradas. A integração técnica não encerra, por si, o capítulo global de
+Segurança nem antecipa o encerramento fiscal.
 
 ## Metodologia e governação
 
