@@ -55,8 +55,12 @@ class SecurityIntegrationTests {
     @Autowired
     private AuditoriaEventoRepository auditoriaEventoRepository;
 
+    @Autowired private com.ar2lda.fac.security.LoginAttemptLimiter limiter;
+
     @BeforeEach
     void createUser() {
+        // Isolate each HTTP scenario; dedicated tests below and unit tests exercise production limits.
+        org.springframework.test.util.ReflectionTestUtils.setField(limiter, "windowStart", Long.MIN_VALUE);
         utilizadorRepository.save(new Utilizador(
                 "SECTEST",
                 "Utilizador de Seguranca",
@@ -454,6 +458,67 @@ class SecurityIntegrationTests {
                 .contentType("application/json").content("""
                 {"nome":"Alteracao AT","codigoAt":"ATPERM","dataCodigoAt":"2026-01-01"}
                 """)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void incompleteAndWronglyTypedClaimsAreUnauthorized() throws Exception {
+        java.util.Map<String,Object> valid = new java.util.LinkedHashMap<>();
+        valid.put("iss","fac"); valid.put("sub","SECTEST");
+        valid.put("exp", java.util.Date.from(Instant.now().plusSeconds(300)));
+        valid.put("token_version",0L); valid.put("authorities",java.util.List.of("CONFIGURACAO_GERIR"));
+        for (String key : java.util.List.of("exp","sub","iss","token_version","authorities")) {
+            var claims = new java.util.LinkedHashMap<>(valid); claims.remove(key);
+            assertInvalidClaims(claims);
+        }
+        for (var invalid : java.util.List.of(
+                java.util.Map.entry("sub",(Object)""), java.util.Map.entry("sub",(Object)123),
+                java.util.Map.entry("iss",(Object)"other"), java.util.Map.entry("iss",(Object)123),
+                java.util.Map.entry("exp",(Object)"not-a-date"),
+                java.util.Map.entry("authorities",(Object)"CONFIGURACAO_GERIR"),
+                java.util.Map.entry("authorities",(Object)java.util.List.of(123)),
+                java.util.Map.entry("authorities",(Object)java.util.List.of("UNKNOWN")))) {
+            var claims=new java.util.LinkedHashMap<>(valid); claims.put(invalid.getKey(),invalid.getValue());
+            assertInvalidClaims(claims);
+        }
+        mockMvc.perform(get("/utilizadores").header("Authorization","Bearer malformed")).andExpect(status().isUnauthorized());
+    }
+
+    private void assertInvalidClaims(java.util.Map<String,Object> claims) throws Exception {
+        // Sign raw JSON to test types that claim builders or Nimbus setters would otherwise coerce.
+        var secret = context.getBean(javax.crypto.SecretKey.class);
+        var header = new com.nimbusds.jose.JWSHeader(com.nimbusds.jose.JWSAlgorithm.HS256);
+        String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(claims);
+        var token = new com.nimbusds.jose.JWSObject(header,new com.nimbusds.jose.Payload(json));
+        token.sign(new com.nimbusds.jose.crypto.MACSigner(secret.getEncoded()));
+        mockMvc.perform(get("/utilizadores").header("Authorization","Bearer "+token.serialize()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Autowired private org.springframework.context.ApplicationContext context;
+
+    @Test
+    void loginIsLimitedBeforeDatabaseAuditAndDoesNotTrustForwardedHeaders() throws Exception {
+        long before=auditoriaEventoRepository.count();
+        for (int i=0;i<8;i++) mockMvc.perform(post("/auth/login").contentType("application/json")
+                .header("X-Forwarded-For","198.51.100."+i)
+                .content("{\"username\":\"missing-gate-user\",\"password\":\"Synthetic1!\"}"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value("Utilizador ou password invalidos"));
+        mockMvc.perform(post("/auth/login").contentType("application/json")
+                .header("X-Forwarded-For","203.0.113.99")
+                .content("{\"username\":\"missing-gate-user\",\"password\":\"Synthetic1!\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().exists("Retry-After"));
+        org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.count()).isEqualTo(before+8);
+        org.assertj.core.api.Assertions.assertThat(auditoriaEventoRepository.findAll())
+                .allMatch(e -> !e.getDadosEssenciais().contains("Synthetic1!"));
+    }
+
+    @Test
+    void healthIsPublicAndForeignOriginDoesNotReceiveCorsPermission() throws Exception {
+        mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options("/auth/login")
+                .header("Origin","https://foreign.invalid").header("Access-Control-Request-Method","POST"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().doesNotExist("Access-Control-Allow-Origin"));
     }
 
     private String scopedToken(java.util.List<String> authorities) {

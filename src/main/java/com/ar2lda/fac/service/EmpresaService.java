@@ -21,8 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Clock;
@@ -189,11 +187,8 @@ public class EmpresaService {
         if (!png && !jpg) throw new BadRequestException("Logotipo deve ser PNG ou JPEG");
         try {
             byte[] bytes = ficheiro.getBytes();
-            var image = ImageIO.read(new ByteArrayInputStream(bytes));
-            if (image == null) throw new BadRequestException("Logotipo inválido");
-            if (image.getWidth() > MAX_LOGO_DIMENSION || image.getHeight() > MAX_LOGO_DIMENSION) {
-                throw new BadRequestException("Logotipo excede as dimensões máximas");
-            }
+            if (bytes.length > MAX_LOGO_BYTES) throw new BadRequestException("Logotipo nao pode exceder 1 MiB");
+            ImageUploadGuard.check(bytes, png ? "png" : "jpeg", MAX_LOGO_DIMENSION);
             String mediaType = png ? "image/png" : "image/jpeg";
             String nome = png ? "empresa-logo.png" : "empresa-logo.jpg";
             return new LogoValidado(bytes, mediaType, nome);

@@ -52,6 +52,33 @@ Preservar o modelo existente: perfil → capacidades funcionais → authorities 
 - Consultas financeiras, pendentes, dashboard, listagens e extratos conservam os seus requisitos atuais de autenticação. Não criar gates novos por inferência.
 - As regras de último administrador e de autoelevação continuam a ser regras sobre perfis. row_version conserva a proteção contra gravações desatualizadas, incluindo mudanças de perfil.
 
+## Segurança operacional e exposição pública
+
+TUULI AIR suporta operação pública na Internet. Produção pública exige HTTPS;
+TLS termina na infraestrutura. Redireccionamento, certificados/renovação, HSTS
+no edge, firewall e gestão de secrets pertencem ao deployment. HTTP interno
+só é adequado dentro da arquitectura protegida; o produto não exige VPN.
+
+- A aplicação possui protecção mínima própria contra abuso do login, por instância,
+  com limites configuráveis, estado limitado, recuperação automática e resposta 429.
+  Não depende exclusivamente do proxy nem introduz Redis/serviço externo.
+- Segurança desactivada é confinada ao contexto de teste: perfil exclusivo,
+  marcador e infraestrutura de testes ausentes do artefacto operacional.
+- Secrets operacionais JWT são obrigatórios e validados no arranque. Geração
+  aleatória segura, continuidade entre instâncias/reinícios e rotação são deveres
+  operacionais. SHA-256 não demonstra entropia. HS256 é preservado.
+- Contrato JWT exige subject, expiração, issuer e tipos de claims de autorização,
+  antes de validar a identidade e versão persistida. Não se acrescenta audience.
+- Parsing de importações e imagens tem limites anteriores à materialização pesada;
+  headers/CSP mitigam a superfície browser sem mudar a arquitectura de sessão.
+- JWT em localStorage, logout local, ausência de refresh tokens/sessões individuais
+  e auditoria selectiva de recusas são riscos residuais aceites para esta versão.
+  Não equivalem a garantia de ausência de XSS ou revogação ao fazer logout.
+
+O [contrato de operação do Security Gate](../security/SECURITY_GATE.md) detalha
+limites e responsabilidades. A implementação proposta permanece sujeita ao PR,
+CI, merge humano e fecho formal executivo; não antecipa encerramento fiscal.
+
 ## Metodologia e governação
 
 Aplicar o AR2 AI Development System através de uma Ordem de Produção aprovada: descoberta focada → implementação dentro do âmbito → testes proporcionais → revisão independente quando prevista → correções legítimas → diff e staging seletivo → commit → push da branch da missão → PR contra a base vigente → CI → gate humano.

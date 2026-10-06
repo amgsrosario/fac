@@ -26,6 +26,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(LoginLimitException.class)
+    public ResponseEntity<?> handleLoginLimit(LoginLimitException ex, HttpServletRequest request) {
+        var body = baseBody(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", Long.toString(ex.retryAfter())).body(body);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<?> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
         return buildError(HttpStatus.FORBIDDEN, "Permissao funcional insuficiente", request.getRequestURI(), null);

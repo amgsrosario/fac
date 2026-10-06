@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.ar2lda.fac.security.LoginAttemptLimiter limiter;
 
     @PostMapping("/login")
-    public LoginResponseDto login(@RequestBody @Valid LoginRequestDto request) {
+    public LoginResponseDto login(@RequestBody @Valid LoginRequestDto request, jakarta.servlet.http.HttpServletRequest httpRequest) {
+        limiter.check(request.username(), httpRequest.getRemoteAddr());
         return authService.login(request);
     }
 }

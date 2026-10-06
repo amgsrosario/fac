@@ -439,24 +439,35 @@ public class DadosMestresTransferService {
             } else if (ch == '"') {
                 quoted = true;
             } else if (ch == ';') {
-                current.add(field.toString());
+                addCsvField(current, field.toString());
                 field.setLength(0);
             } else if (ch == '\n') {
-                current.add(trimCr(field.toString()));
+                addCsvField(current, trimCr(field.toString()));
                 field.setLength(0);
-                records.add(current);
+                addCsvRecord(records, current);
                 current = new ArrayList<>();
             } else {
                 field.append(ch);
             }
         }
         if (quoted) throw new BadRequestException("CSV malformado: aspas não terminadas");
-        current.add(trimCr(field.toString()));
-        if (!(current.size() == 1 && current.getFirst().isBlank())) records.add(current);
+        addCsvField(current, trimCr(field.toString()));
+        if (!(current.size() == 1 && current.getFirst().isBlank())) addCsvRecord(records, current);
         return rowsFromRecords(records);
     }
 
+    private void addCsvField(List<String> record, String value) {
+        if (record.size() >= MAX_COLUMNS) throw new BadRequestException("Numero maximo de colunas excedido");
+        record.add(value);
+    }
+
+    private void addCsvRecord(List<List<String>> records, List<String> record) {
+        if (records.size() >= MAX_ROWS + 1) throw new BadRequestException("Numero maximo de linhas excedido");
+        records.add(record);
+    }
+
     private ParsedFile parseXlsx(byte[] bytes) throws IOException {
+        XlsxUploadGuard.check(bytes, MAX_ROWS, MAX_COLUMNS);
         ZipSecureFile.setMinInflateRatio(0.01d);
         try (Workbook workbook = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
             if (workbook.getNumberOfSheets() < 1) throw new BadRequestException("XLSX sem folhas");
