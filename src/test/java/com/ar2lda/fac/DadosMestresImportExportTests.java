@@ -215,6 +215,15 @@ class DadosMestresImportExportTests {
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Coluna obrigatória ausente")));
     }
 
+    @Test
+    void rejeitaTraversalETamanhosAntesDeImportar() throws Exception {
+        for (String name : java.util.List.of("../clientes.csv","..\\clientes.csv"))
+            mockMvc.perform(multipart("/importacoes/clientes/validar").file(csv(name,"nome\nCliente\n")))
+                    .andExpect(status().isBadRequest());
+        mockMvc.perform(multipart("/importacoes/clientes/validar").file(new MockMultipartFile("file","clientes.csv","text/csv",new byte[10*1024*1024+1])))
+                .andExpect(status().isBadRequest());
+    }
+
     private MockMultipartFile csv(String filename, String content) {
         return new MockMultipartFile("file", filename, "text/csv", ("\uFEFF" + content).getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }

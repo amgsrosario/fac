@@ -7,11 +7,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -19,7 +17,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -37,11 +34,12 @@ public class SecurityConfig {
 
     @Bean
     PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BoundedBCryptPasswordEncoder();
     }
 
     @Bean
-    SecretKey jwtSecretKey(@Value("${fac.security.jwt.secret:}") String configuredSecret) {
+    SecretKey jwtSecretKey(@Value("${fac.security.jwt.secret:}") String configuredSecret, SecuritySettings settings) {
+        settings.validateSecret(configuredSecret);
         byte[] keyBytes = configuredSecret.isBlank()
                 ? randomKey()
                 : sha256(configuredSecret);
@@ -58,20 +56,34 @@ public class SecurityConfig {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefault(), sessionVersionValidator));
+        var defaultClaims = org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter.withDefaults(java.util.Map.of());
+        decoder.setClaimSetConverter(claims -> {
+            if (!(claims.get("sub") instanceof String) || !(claims.get("iss") instanceof String)
+                    || !(claims.get("exp") instanceof java.util.Date))
+                throw new org.springframework.security.oauth2.jwt.BadJwtException("Token invalido");
+            return defaultClaims.convert(claims);
+        });
+        JwtContractValidator contract = new JwtContractValidator();
+        var temporal = JwtValidators.createDefaultWithIssuer("fac");
+        decoder.setJwtValidator(jwt -> {
+            var result = contract.validate(jwt);
+            if (result.hasErrors()) return result;
+            result = temporal.validate(jwt);
+            return result.hasErrors() ? result : sessionVersionValidator.validate(jwt);
+        });
         return decoder;
     }
 
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            @Value("${fac.security.enabled:true}") boolean securityEnabled,
+            SecuritySettings settings,
             AdministrativeAccessDeniedHandler accessDeniedHandler
     ) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        if (securityEnabled) {
+        if (settings.enabled()) {
             http.authorizeHttpRequests(auth -> auth
                             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .requestMatchers("/actuator/health").permitAll()

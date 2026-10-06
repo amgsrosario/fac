@@ -2,7 +2,6 @@ package com.ar2lda.fac.security;
 
 import com.ar2lda.fac.model.Utilizador;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,15 +18,14 @@ public class JwtService {
 
     private final JwtEncoder jwtEncoder;
 
-    @Value("${fac.security.jwt.expiration-minutes:60}")
-    private long expirationMinutes;
+    private final SecuritySettings settings;
 
     public String generate(Utilizador utilizador) {
         Instant issuedAt = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("fac")
                 .issuedAt(issuedAt)
-                .expiresAt(issuedAt.plus(expirationMinutes, ChronoUnit.MINUTES))
+                .expiresAt(issuedAt.plus(settings.expirationMinutes(), ChronoUnit.MINUTES))
                 .subject(utilizador.getCodigo())
                 .claim("token_version", utilizador.getTokenVersion())
                 .claim("email", utilizador.getEmail())
@@ -41,6 +38,6 @@ public class JwtService {
     }
 
     public long expirationSeconds() {
-        return expirationMinutes * 60;
+        return settings.expirationMinutes() * 60;
     }
 }

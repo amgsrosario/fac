@@ -244,6 +244,15 @@ class EmpresaControllerTests {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void rejeitaLogoExcessivoEConteudoInvalido() throws Exception {
+        criarEmpresaMinima();
+        mockMvc.perform(multipart("/empresa/logotipo").file(new MockMultipartFile("file","logo.png","image/png",new byte[1_048_577])))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(multipart("/empresa/logotipo").file(new MockMultipartFile("file","logo.png","image/png","not-image".getBytes())))
+                .andExpect(status().isBadRequest());
+    }
+
     private void criarEmpresaMinima() throws Exception {
         mockMvc.perform(post("/empresa")
                         .contentType(MediaType.APPLICATION_JSON)

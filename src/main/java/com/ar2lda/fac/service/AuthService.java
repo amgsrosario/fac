@@ -24,12 +24,21 @@ public class AuthService {
     private final AuditoriaIsoladaService auditoriaIsoladaService;
     private final Clock clock;
 
+    private String dummyHash;
+
+    @jakarta.annotation.PostConstruct
+    void initialiseDummyHash() {
+        dummyHash = passwordEncoder.encode(java.util.UUID.randomUUID().toString());
+    }
+
     public LoginResponseDto login(LoginRequestDto request) {
         String username = request.username().trim();
         Utilizador utilizador = utilizadorRepository
                 .findByCodigoIgnoreCaseOrEmailIgnoreCase(username, username).orElse(null);
 
-        if (utilizador == null || utilizador.isInativo() || !passwordEncoder.matches(request.password(), utilizador.getPasswordHash())) {
+        String hash = utilizador == null || utilizador.isInativo() ? dummyHash : utilizador.getPasswordHash();
+        boolean matches = passwordEncoder.matches(request.password(), hash);
+        if (utilizador == null || utilizador.isInativo() || !matches) {
             auditoriaIsoladaService.registar(TipoAuditoriaEvento.LOGIN_FALHADO, "AUTENTICACAO", username, utilizador,
                     ResultadoAuditoria.FALHA, null, "Login recusado", "{\"versao\":1}");
             throw invalidCredentials();
