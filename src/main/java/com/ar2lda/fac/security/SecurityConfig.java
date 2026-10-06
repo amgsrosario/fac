@@ -1,6 +1,7 @@
 package com.ar2lda.fac.security;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import static com.ar2lda.fac.model.PermissaoFuncional.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -74,19 +75,19 @@ public class SecurityConfig {
             http.authorizeHttpRequests(auth -> auth
                             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .requestMatchers("/actuator/health").permitAll()
-                            .requestMatchers("/utilizadores/**", "/empresa/**").hasAuthority("CONFIGURACAO_GERIR")
-                            .requestMatchers(HttpMethod.POST, "/importacoes/**").hasAuthority("DADOS_MESTRES_IMPORTAR")
-                            .requestMatchers(HttpMethod.DELETE, "/importacoes/**").hasAuthority("DADOS_MESTRES_IMPORTAR")
-                            .requestMatchers(HttpMethod.GET, "/importacoes/clientes/modelo", "/importacoes/artigos/modelo").hasAuthority("DADOS_MESTRES_EXPORTAR")
-                            .requestMatchers(HttpMethod.GET, "/exportacoes/**").hasAuthority("DADOS_MESTRES_EXPORTAR")
-                            .requestMatchers(HttpMethod.POST, "/documentos-financeiros/*/anular").hasAuthority("DOCUMENTO_ANULAR")
-                            .requestMatchers(HttpMethod.POST, "/documentos-financeiros").hasAuthority("TESOURARIA_GERIR")
-                            .requestMatchers(HttpMethod.POST, "/clientes", "/artigos").hasAuthority("MESTRES_GERIR")
-                            .requestMatchers(HttpMethod.PUT, "/clientes/**", "/artigos/**").hasAuthority("MESTRES_GERIR")
-                            .requestMatchers(HttpMethod.DELETE, "/clientes/**", "/artigos/**").hasAuthority("MESTRES_GERIR")
-                            .requestMatchers(HttpMethod.POST, configurationPaths()).hasAuthority("CONFIGURACAO_GERIR")
-                            .requestMatchers(HttpMethod.PUT, configurationPaths()).hasAuthority("CONFIGURACAO_GERIR")
-                            .requestMatchers(HttpMethod.DELETE, configurationPaths()).hasAuthority("CONFIGURACAO_GERIR")
+                            .requestMatchers("/utilizadores/**", "/empresa/**").hasAuthority(CONFIGURACAO_GERIR.name())
+                            .requestMatchers(HttpMethod.POST, "/importacoes/**").hasAuthority(DADOS_MESTRES_IMPORTAR.name())
+                            .requestMatchers(HttpMethod.DELETE, "/importacoes/**").hasAuthority(DADOS_MESTRES_IMPORTAR.name())
+                            .requestMatchers(HttpMethod.GET, "/importacoes/clientes/modelo", "/importacoes/artigos/modelo").hasAuthority(DADOS_MESTRES_EXPORTAR.name())
+                            .requestMatchers(HttpMethod.GET, "/exportacoes/**").hasAuthority(DADOS_MESTRES_EXPORTAR.name())
+                            .requestMatchers(HttpMethod.POST, "/documentos-financeiros/*/anular").hasAuthority(DOCUMENTO_ANULAR.name())
+                            .requestMatchers(HttpMethod.POST, "/documentos-financeiros").hasAuthority(TESOURARIA_GERIR.name())
+                            .requestMatchers(HttpMethod.POST, "/clientes", "/artigos").hasAuthority(MESTRES_GERIR.name())
+                            .requestMatchers(HttpMethod.PUT, "/clientes/**", "/artigos/**").hasAuthority(MESTRES_GERIR.name())
+                            .requestMatchers(HttpMethod.DELETE, "/clientes/**", "/artigos/**").hasAuthority(MESTRES_GERIR.name())
+                            .requestMatchers(HttpMethod.POST, configurationPaths()).hasAuthority(CONFIGURACAO_GERIR.name())
+                            .requestMatchers(HttpMethod.PUT, configurationPaths()).hasAuthority(CONFIGURACAO_GERIR.name())
+                            .requestMatchers(HttpMethod.DELETE, configurationPaths()).hasAuthority(CONFIGURACAO_GERIR.name())
                             .anyRequest().authenticated())
                     .oauth2ResourceServer(oauth -> oauth
                             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))

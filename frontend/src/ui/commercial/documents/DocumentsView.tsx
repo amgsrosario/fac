@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FilterMatchMode } from "primereact/api";
 import { Paginator } from "primereact/paginator";
 import { GlobalSearch } from "../../../GlobalSearch";
-import { apiFetch, AuthSession } from "../../../api";
+import { apiFetch, hasPermission, AuthSession } from "../../../api";
 import {
   DesktopShell,
   EntityLookupColumn,
@@ -294,12 +294,12 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   const [motivoAnulacao, setMotivoAnulacao] = useState("");
   const [mobileScreen, setMobileScreen] = useState<MobileScreen>("list");
 
-  const canCreate = currentUser.permissoes.includes("DOCUMENTO_CRIAR");
-  const canEditDraft = currentUser.permissoes.includes("DOCUMENTO_EDITAR_RASCUNHO");
-  const canDeleteDraft = currentUser.permissoes.includes("DOCUMENTO_ELIMINAR_RASCUNHO");
-  const canEmit = currentUser.permissoes.includes("DOCUMENTO_EMITIR");
-  const canVoid = currentUser.permissoes.includes("DOCUMENTO_ANULAR");
-  const canPdf = currentUser.permissoes.includes("DOCUMENTO_OBTER_PDF");
+  const canCreate = hasPermission("DOCUMENTO_CRIAR", currentUser);
+  const canEditDraft = hasPermission("DOCUMENTO_EDITAR_RASCUNHO", currentUser);
+  const canDeleteDraft = hasPermission("DOCUMENTO_ELIMINAR_RASCUNHO", currentUser);
+  const canEmit = hasPermission("DOCUMENTO_EMITIR", currentUser);
+  const canVoid = hasPermission("DOCUMENTO_ANULAR", currentUser);
+  const canPdf = hasPermission("DOCUMENTO_OBTER_PDF", currentUser);
 
   useEffect(() => {
     loadData();

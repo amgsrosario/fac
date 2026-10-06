@@ -1,7 +1,7 @@
 import { KeyboardEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { InputNumber, InputNumberValueChangeEvent } from "primereact/inputnumber";
 import { useNavigate, useParams } from "react-router-dom";
-import { apiFetch, AuthSession } from "../../../api";
+import { apiFetch, hasPermission, AuthSession } from "../../../api";
 import { DesktopShell, EntityLookupColumn, EntityLookupDialog, EntityLookupField, EntityLookupSearchField, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useFacToast } from "../../fac";
 import { CommercialSidebar } from "../shared";
 import { lookupSelected } from "../../../lookups/useRemoteLookup";
@@ -209,12 +209,12 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     prazosPagamento: []
   });
 
-  const canCreate = currentUser.permissoes.includes("DOCUMENTO_CRIAR");
-  const canEdit = currentUser.permissoes.includes("DOCUMENTO_EDITAR_RASCUNHO");
-  const canDeleteDraft = currentUser.permissoes.includes("DOCUMENTO_ELIMINAR_RASCUNHO");
-  const canEmit = currentUser.permissoes.includes("DOCUMENTO_EMITIR");
-  const canVoid = currentUser.permissoes.includes("DOCUMENTO_ANULAR");
-  const canPdf = currentUser.permissoes.includes("DOCUMENTO_OBTER_PDF");
+  const canCreate = hasPermission("DOCUMENTO_CRIAR", currentUser);
+  const canEdit = hasPermission("DOCUMENTO_EDITAR_RASCUNHO", currentUser);
+  const canDeleteDraft = hasPermission("DOCUMENTO_ELIMINAR_RASCUNHO", currentUser);
+  const canEmit = hasPermission("DOCUMENTO_EMITIR", currentUser);
+  const canVoid = hasPermission("DOCUMENTO_ANULAR", currentUser);
+  const canPdf = hasPermission("DOCUMENTO_OBTER_PDF", currentUser);
   const isDraft = !documento || documento.estado === "RASCUNHO";
   const canEditCurrent = canEdit && isDraft;
   const canEmitCurrent = Boolean(isDraft && canEmit && canEditCurrent && (!documento || dirty || (diagnostico?.podeEmitir ?? false)));

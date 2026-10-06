@@ -14,7 +14,7 @@ import ImportExportView from "./ImportExportView";
 import { GlobalSearch } from "./GlobalSearch";
 import { EntityDetailOverlay } from "./EntityContext";
 import { integer as tuuliInteger, money as tuuliMoney } from "./ui/tuuli/format";
-import { apiFetch, AuthSession, responseError } from "./api";
+import { apiFetch, hasPermission, AuthSession, responseError } from "./api";
 import PostalCodeLookup from "./PostalCodeLookup";
 import { useFacToast } from "./ui/fac";
 
@@ -851,9 +851,9 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
   const isAdminView = visibleAdminMenuItems.some((item) => item.label === shellView);
 
   function canShowMenuItem(item: MenuItem) {
-    if (item.label === "Auditoria") return currentUser.permissoes?.includes("AUDITORIA_CONSULTAR");
-    if (item.label === "Configuracao") return currentUser.permissoes?.includes("CONFIGURACAO_GERIR");
-    if (item.label === "ImportExport") return currentUser.permissoes?.includes("DADOS_MESTRES_IMPORTAR") || currentUser.permissoes?.includes("DADOS_MESTRES_EXPORTAR");
+    if (item.label === "Auditoria") return hasPermission("AUDITORIA_CONSULTAR", currentUser);
+    if (item.label === "Configuracao") return hasPermission("CONFIGURACAO_GERIR", currentUser);
+    if (item.label === "ImportExport") return hasPermission("DADOS_MESTRES_IMPORTAR", currentUser) || hasPermission("DADOS_MESTRES_EXPORTAR", currentUser);
     return true;
   }
 
@@ -1023,7 +1023,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
             contaResumo={contaResumo}
             error={error}
             loading={clientesLoading}
-            canManage={currentUser.permissoes?.includes("MESTRES_GERIR") ?? false}
+            canManage={hasPermission("MESTRES_GERIR", currentUser)}
             selectedCliente={selectedCliente}
             selectedClienteId={selectedClienteId}
             onApplyMatrizZero={applyMatrizZero}

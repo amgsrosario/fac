@@ -3,7 +3,7 @@ import { FilterMatchMode } from "primereact/api";
 import { Paginator } from "primereact/paginator";
 import { useLocation } from "react-router-dom";
 import { GlobalSearch } from "../../../GlobalSearch";
-import { apiFetch, AuthSession } from "../../../api";
+import { apiFetch, hasPermission, AuthSession } from "../../../api";
 import {
   DEFAULT_PRODUCT_PROFILE,
   DesktopShell,
@@ -120,7 +120,7 @@ export default function ArticlesView({
   onLogout: () => void;
 }) {
   const location = useLocation();
-  const canManage = currentUser.permissoes?.includes("MESTRES_GERIR") ?? false;
+  const canManage = hasPermission("MESTRES_GERIR", currentUser);
   const { deviceClass, isMobile } = useDeviceClass();
   const { showToast } = useFacToast();
   const [services, setServices] = useState<Artigo[]>([]);

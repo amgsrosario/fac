@@ -30,7 +30,7 @@ public class SerieController implements GenericController {
     private final SerieService service;
 
     @PostMapping
-    @PreAuthorize("@functionalAuthorization.has('SERIE_GERIR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).SERIE_GERIR)")
     public ResponseEntity<SerieDto> create(@RequestBody @Valid SerieCreateDto dto) {
         SerieDto created = service.create(dto);
         URI location = ServletUriComponentsBuilder
@@ -42,19 +42,19 @@ public class SerieController implements GenericController {
     }
 
     @GetMapping
-    @PreAuthorize("@functionalAuthorization.has('SERIE_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).SERIE_CONSULTAR)")
     public Page<SerieDto> list(Pageable pageable) {
         return service.list(pageable);
     }
 
     @GetMapping("/{tipoDocumentoId}/{serie}")
-    @PreAuthorize("@functionalAuthorization.has('SERIE_CONSULTAR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).SERIE_CONSULTAR)")
     public SerieDto getById(@PathVariable String tipoDocumentoId, @PathVariable String serie) {
         return service.getById(tipoDocumentoId, serie);
     }
 
     @PutMapping("/{tipoDocumentoId}/{serie}")
-    @PreAuthorize("@functionalAuthorization.has('SERIE_GERIR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).SERIE_GERIR)")
     public ResponseEntity<Void> update(@PathVariable String tipoDocumentoId, @PathVariable String serie,
                                        @RequestBody @Valid SerieUpdateDto dto) {
         service.update(tipoDocumentoId, serie, dto);
@@ -62,7 +62,7 @@ public class SerieController implements GenericController {
     }
 
     @DeleteMapping("/{tipoDocumentoId}/{serie}")
-    @PreAuthorize("@functionalAuthorization.has('SERIE_GERIR')")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).SERIE_GERIR)")
     public ResponseEntity<Void> delete(@PathVariable String tipoDocumentoId, @PathVariable String serie) {
         service.delete(tipoDocumentoId, serie);
         return ResponseEntity.noContent().build();

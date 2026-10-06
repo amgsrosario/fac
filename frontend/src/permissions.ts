@@ -1,0 +1,26 @@
+// Contrato verificado contra PermissaoFuncional por PapelUtilizadorTests.
+export const PERMISSIONS = [
+  "DOCUMENTO_CONSULTAR",
+  "DOCUMENTO_CRIAR",
+  "DOCUMENTO_EDITAR_RASCUNHO",
+  "DOCUMENTO_ELIMINAR_RASCUNHO",
+  "DOCUMENTO_EMITIR",
+  "DOCUMENTO_ANULAR",
+  "DOCUMENTO_OBTER_PDF",
+  "SERIE_CONSULTAR",
+  "SERIE_GERIR",
+  "SERIE_CONFIGURAR_AT",
+  "AUDITORIA_CONSULTAR",
+  "MESTRES_GERIR",
+  "DADOS_MESTRES_IMPORTAR",
+  "DADOS_MESTRES_EXPORTAR",
+  "TESOURARIA_GERIR",
+  "CONFIGURACAO_GERIR",
+] as const;
+
+export type Permission = typeof PERMISSIONS[number];
+
+// Apenas apresentação/UX. A autorização efetiva pertence ao backend.
+export function hasCapability(session: { permissoes?: readonly string[] } | null | undefined, permission: Permission): boolean {
+  return session?.permissoes?.includes(permission) ?? false;
+}
