@@ -71,16 +71,22 @@ class FileAdmissionTests {
         }
     }
 
-    @Test void expandedEntryIsBoundedWithSmallCompressedFixture() throws Exception {
-        var out=new ByteArrayOutputStream();
-        try(var zip=new ZipOutputStream(out)) {
-            zip.putNextEntry(new ZipEntry("xl/sharedStrings.xml"));
-            byte[] chunk=new byte[8192];
-            for(int i=0;i<=XlsxUploadGuard.MAX_ENTRY_BYTES/chunk.length;i++) zip.write(chunk);
-            zip.closeEntry();
+    @Test void expandedEntryAndTotalBudgetsAreBoundedWithSmallCompressedFixtures() throws Exception {
+        // Valid ZIP, non-XML payload: rejection must come from expansion budgets, not XML syntax.
+        for(int entryCount : new int[]{1,3}) {
+            var out=new ByteArrayOutputStream();
+            int megabytes = entryCount == 1 ? 33 : 22;
+            try(var zip=new ZipOutputStream(out)) {
+                byte[] chunk=new byte[8192]; java.util.Arrays.fill(chunk,(byte)'Z');
+                for(int entry=0;entry<entryCount;entry++) {
+                    zip.putNextEntry(new ZipEntry("xl/media/payload"+entry+".dat"));
+                    for(int i=0;i<megabytes*1024*1024/chunk.length;i++) zip.write(chunk);
+                    zip.closeEntry();
+                }
+            }
+            assertThat(out.size()).isLessThan(100_000);
+            assertThatThrownBy(() -> XlsxUploadGuard.check(out.toByteArray(),10000,100)).isInstanceOf(BadRequestException.class);
         }
-        assertThat(out.size()).isLessThan(100_000);
-        assertThatThrownBy(() -> XlsxUploadGuard.check(out.toByteArray(),10000,100)).isInstanceOf(BadRequestException.class);
     }
     @Test void archiveEntryCountAndXmlExternalEntitiesAreRejected() throws Exception {
         var out=new ByteArrayOutputStream();
