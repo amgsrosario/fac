@@ -1,6 +1,6 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-02, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-06, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
@@ -50,25 +50,27 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 
 ## Fundação de Permissões
 
-**IMPLEMENTADA E VALIDADA LOCALMENTE; AINDA NÃO INTEGRADA. Merge reservado ao António.**
+**CONCLUÍDA E INTEGRADA. PR #12 merged; gate humano de merge concluído por António. Não existe trabalho funcional pendente desta missão.**
 
 - Base da missão confirmada por fetch: origin/feature/visual-redesign em da5c75fbcf5744611a7de39d3e1dfa15b62b86e7. A referência documental anterior na secção de base produtiva conserva o significado histórico do respetivo fecho.
-- Branch: feature/permissions-foundation. Worktree isolada: /home/arosario/.codex/worktrees/permissions-foundation/fac.
+- HEAD produtivo observado e confirmado no fecho pós-merge: 967a14743ccc8a162811ac614f4be049863fb7f6 (merge do PR #12). A ancestralidade dos commits 2a319954b7d8de7c5a5c5a16b67d1a5b086491c4 e c67b0673c578d36a5b306c4cf8a56d29e7c90170 foi confirmada. Este é um registo do fecho, não um HEAD eternamente atual; consultar Git para o estado corrente.
+- Branch feature/permissions-foundation removida localmente e em origin; worktree /home/arosario/.codex/worktrees/permissions-foundation/fac removida, com arquivo recuperável.
 - Três perfis e mapa exato das 16 capacidades preservados. Contrato backend tipado e catálogo/helper frontend partilhados. PDF financeiro alinhado com DOCUMENTO_OBTER_PDF; acesso dos três perfis preservado.
 - Mudanças efetivas de perfil incrementam token_version; tokens anteriores passam a 401. Pedidos com o mesmo perfil conservam a sessão. Novo login recebe as novas autoridades; último administrador, autoelevação e optimistic locking preservados.
 - Nenhuma migration criada ou alterada. O teste de schema, anteriormente preso a V12, foi alinhado com V15 já existente e reforçado com verificação de token_version/row_version bigint não nulas, com default zero.
 - Suite integral: 236 testes aprovados, zero falhas/erros/omitidos, na PostgreSQL 16.3 descartável. Inclui Segurança 23, matriz HTTP com login real 6, Utilizadores 7, Safety 4 e schema V15. A matriz usa operações e PDFs reais, sem mocks dos serviços de negócio.
 - Frontend: TypeScript e build Vite aprovados; dois testes do helper aprovados com Playwright existente. Runtime Node Linux temporário utilizado para evitar limitações UNC do Node Windows, sem alterações globais ou ao CI.
 - Package final: BUILD SUCCESS. Revisão independente por review_permissions_final: APROVADA, BLOCKER 0 / MAJOR 0 / MINOR 0. Revisão estática do diff completo e ficheiros novos; o revisor não repetiu os testes executados pelo Executor.
-- Branch feature/permissions-foundation publicada em origin, com push normal confirmado. PR ainda não criado e CI não consultado nesta sessão; integração pendente.
-- Não existe gh/gh.exe nem conector GitHub disponível nesta sessão para criar/consultar PR e CI. A OP admite entrega do link para criação manual do PR contra feature/visual-redesign após o push da branch; CI e conflitos no GitHub devem ser confirmados antes do gate humano. Não declarar PR verde sem evidência.
+- PR #12 integrado em feature/visual-redesign, confirmado pelo histórico Git após fetch. O estado do CI não foi consultado diretamente pelo Executor; a confirmação do merge não é uma declaração autónoma de CI verde.
+- Evidência local preservada em /home/arosario/Projetos/fac/target/permissions-foundation-validation (logs e revisão, ignorados pelo Git; não arquivo institucional permanente).
+- Segurança global continua aberta. Security Gate é o próximo marco e ainda NÃO foi iniciado.
 - Alterações preexistentes do checkout principal em docker-compose.yml e .worktrees/ preservadas e excluídas desta missão.
 
 ## Sequência estratégica vigente
 
 1. JWT / Gestão e Invalidação de Sessões — **CONCLUÍDA**.
-2. Fundação de Permissões — **IMPLEMENTADA; VALIDAÇÃO LOCAL APROVADA; ENTREGA/GATE HUMANO PENDENTES**.
-3. Security Gate.
+2. Fundação de Permissões — **CONCLUÍDA E INTEGRADA; GATE HUMANO CONCLUÍDO**.
+3. Security Gate — **PRÓXIMO MARCO; NÃO INICIADO**.
 4. Fecho Fiscal Sistemático.
 5. Auditoria Funcional Final.
 6. Preparação e Certificação AT.
@@ -80,5 +82,5 @@ Esta sequência é a orientação vigente do Executivo. A conclusão JWT não an
 
 - Não foi criado um fluxo de alteração de password pelo próprio utilizador; o caminho implementado nesta missão é o reset administrativo existente.
 - Logout permanece client-side; não existe revogação individual de JWT introduzida nesta missão.
-- A integração da Fundação de Permissões e o capítulo global Segurança continuam pendentes. Esta missão não antecipa o Security Gate.
+- Fundação de Permissões integrada, sem trabalho funcional pendente. O capítulo global Segurança continua aberto; Security Gate permanece por iniciar.
 - A publicação documental segue o fluxo de branch/PR contra `feature/visual-redesign`; o merge é uma decisão humana de António.
