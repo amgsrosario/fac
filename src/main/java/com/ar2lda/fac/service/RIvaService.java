@@ -29,12 +29,15 @@ public class RIvaService {
     private final RIvaRepository repository;
     private final TipoTaxaIvaRepository tipoTaxaIvaRepository;
     private final RIvaMapper mapper;
+    private final com.ar2lda.fac.repository.MIsencaoRepository mIsencaoRepository;
 
+    @org.springframework.transaction.annotation.Transactional
     public RIvaDto create(RIvaCreateDto dto) {
         if (repository.existsById(dto.id())) {
             throw new ConflictException("Regime de IVA já existe: " + dto.id());
         }
         RIva entity = mapper.fromCreateDTO(dto);
+        aplicarFiscal(entity, dto.mercado(), dto.tratamentoLiquidacao(), dto.fundamentoFiscal(), dto.mIsencaoId(), dto.jurisdicao(), dto.territorioFiscal());
         entity.substituirTaxas(buildTaxas(dto.taxas(), Set.of()));
         return mapper.toDTO(repository.save(entity));
     }
@@ -47,16 +50,19 @@ public class RIvaService {
         return mapper.toDTO(findEntityById(id));
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void update(String id, RIvaUpdateDto dto) {
         RIva existing = findEntityById(id);
         Set<String> tiposAtuais = existing.getTaxas().stream()
                 .map(taxa -> taxa.getTipoTaxaIva().getId())
                 .collect(java.util.stream.Collectors.toSet());
         mapper.applyUpdate(dto, existing);
+        aplicarFiscal(existing, dto.mercado(), dto.tratamentoLiquidacao(), dto.fundamentoFiscal(), dto.mIsencaoId(), dto.jurisdicao(), dto.territorioFiscal());
         existing.substituirTaxas(buildTaxas(dto.taxas(), tiposAtuais));
         repository.save(existing);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void delete(String id) {
         repository.delete(findEntityById(id));
         repository.flush();
@@ -65,6 +71,23 @@ public class RIvaService {
     private RIva findEntityById(String id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Regime de IVA não encontrado: " + id));
+    }
+
+    private void aplicarFiscal(RIva e, com.ar2lda.fac.model.MercadoFiscal mercado,
+            com.ar2lda.fac.model.TratamentoLiquidacao tratamento, String fundamento, String motivo,
+            String jurisdicao, com.ar2lda.fac.model.TerritorioFiscal territorio) {
+        if (mercado != null) e.setMercado(mercado);
+        if (tratamento != null) e.setTratamentoLiquidacao(tratamento);
+        if (territorio != null) e.setTerritorioFiscal(territorio);
+        if (jurisdicao != null && !"PT".equals(jurisdicao)) throw new BadRequestException("Jurisdição fiscal ainda não suportada");
+        e.setFundamentoFiscal(fundamento == null || fundamento.isBlank() ? null : fundamento.trim());
+        e.setMIsencao(motivo == null || motivo.isBlank() ? null : mIsencaoRepository.findById(motivo)
+                .orElseThrow(() -> new NotFoundException("Motivo de isenção não encontrado")));
+        if (e.getTratamentoLiquidacao() == com.ar2lda.fac.model.TratamentoLiquidacao.NAO_LIQUIDAR
+                && (e.getMIsencao() == null || e.getFundamentoFiscal() == null))
+            throw new BadRequestException("Não liquidação exige motivo e fundamento fiscal comprovados");
+        if (e.getTratamentoLiquidacao() == com.ar2lda.fac.model.TratamentoLiquidacao.NORMAL && e.getMIsencao() != null)
+            throw new BadRequestException("Tributação normal não admite motivo de não liquidação da operação");
     }
 
     private List<RIvaTaxa> buildTaxas(List<RIvaTaxaDto> taxas, Set<String> tiposAtuais) {

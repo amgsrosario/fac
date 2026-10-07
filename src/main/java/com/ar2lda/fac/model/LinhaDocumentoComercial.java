@@ -27,6 +27,12 @@ import java.math.BigDecimal;
 @ToString(onlyExplicitlyIncluded = true)
 public class LinhaDocumentoComercial {
 
+    @Column(precision=19,scale=6) @Setter private BigDecimal ivaCalculado;
+    @Column(precision=19,scale=6) @Setter private BigDecimal ivaLiquidado;
+    @Column(name="fiscal_misencao_codigo",length=3) @Setter private String fiscalMIsencaoCodigo;
+    @Column(length=500) @Setter private String fiscalFundamento;
+    @Enumerated(EnumType.STRING) @Column(length=30) @Setter private TratamentoLiquidacao fiscalTratamentoLiquidacao;
+    @Enumerated(EnumType.STRING) @Column(length=20) @Setter private ProjecaoFiscalQr fiscalProjecaoQr;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @ToString.Include
@@ -119,6 +125,11 @@ public class LinhaDocumentoComercial {
 
     @Column(name = "total_linha", precision = 19, scale = 6)
     private BigDecimal totalLinha;
+
+    public void limparSnapshotFiscal() {
+        artigoCodigo=null; unidade=null; tipoTaxaIvaCodigo=null; tipoTaxaIvaDescricao=null;
+        baseTributavel=null; valorImposto=null; totalLinha=null;
+    }
 
     public void consolidarSnapshotFiscal(BigDecimal baseTributavel, BigDecimal valorImposto, BigDecimal totalLinha) {
         if (artigo == null || tipoTaxaIva == null) {

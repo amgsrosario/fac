@@ -14,7 +14,7 @@ public record ClienteCreateDto(
         @Size(max = 50, message = "Localidade deve ter no máximo 50 caracteres")
         String localidade,
         @NotBlank(message = "NIF é obrigatório")
-        @Size(min = 9, max = 9, message = "NIF deve ter 9 caracteres")
+        @Size(max = 20, message = "Identificação fiscal deve ter no máximo 20 caracteres")
         String nif,
         @Size(max = 20, message = "Telefone deve ter no máximo 20 caracteres")
         String tel,
@@ -35,7 +35,6 @@ public record ClienteCreateDto(
         boolean inativo,
         @Size(max = 300, message = "Observações deve ter no máximo 300 caracteres")
         String observacoes,
-        @NotBlank(message = "Código Postal é obrigatório")
         String codPostalId,
         @NotBlank(message = "País é obrigatório")
         String paisId,

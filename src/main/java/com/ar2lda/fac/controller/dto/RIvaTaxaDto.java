@@ -11,6 +11,7 @@ public record RIvaTaxaDto(
         @NotBlank(message = "Tipo de taxa de IVA é obrigatório")
         @Size(max = 20, message = "Tipo de taxa de IVA deve ter no máximo 20 caracteres")
         String tipoTaxaIvaId,
+        @jakarta.validation.constraints.DecimalMin("0.00")
         @NotNull(message = "Valor da taxa é obrigatório")
         @Digits(integer = 2, fraction = 2, message = "Valor da taxa deve respeitar o formato 99.99")
         BigDecimal valor

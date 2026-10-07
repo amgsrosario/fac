@@ -12,5 +12,10 @@ public record RIvaUpdateDto(
         @Size(max = 30, message = "Nome deve ter no máximo 30 caracteres")
         String nome,
         @NotEmpty(message = "Regime de IVA deve ter pelo menos uma taxa")
-        List<@Valid RIvaTaxaDto> taxas
-) {}
+        List<@Valid RIvaTaxaDto> taxas,
+        com.ar2lda.fac.model.MercadoFiscal mercado, com.ar2lda.fac.model.TratamentoLiquidacao tratamentoLiquidacao, String fundamentoFiscal, String mIsencaoId, String jurisdicao, com.ar2lda.fac.model.TerritorioFiscal territorioFiscal
+) {
+    public RIvaUpdateDto(String nome, List<RIvaTaxaDto> taxas) {
+        this(nome, taxas, null, null, null, null, null, null);
+    }
+}

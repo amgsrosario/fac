@@ -45,7 +45,7 @@ const configs: Record<TableKey, Config> = {
   },
   riva: {
     key: "riva", label: "Regimes de IVA", endpoint: "/api/riva",
-    fields: [field("id", "Código", { required: true, maxLength: 3, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 30 })],
+    fields: [field("id", "Código", { required: true, maxLength: 3, createOnly: true }), field("nome", "Nome", { required: true, maxLength: 30 }), field("mercado", "Mercado / enquadramento", { type: "select", required: true, options: "mercadosFiscais" }), field("tratamentoLiquidacao", "Liquidação de IVA", { type: "select", required: true, options: "tratamentosLiquidacao" }), field("jurisdicao", "Jurisdição", { required: true, maxLength: 2 }), field("territorioFiscal", "Território fiscal", { type: "select", required: true, options: "territoriosFiscais" }), field("mIsencaoId", "Motivo de isenção / não liquidação", { type: "select", options: "motivosIsencao" }), field("fundamentoFiscal", "Fundamento fiscal", { maxLength: 500 })],
     columns: [{ key: "id", label: "Código" }, { key: "nome", label: "Nome" }, { key: "taxas", label: "Taxas" }],
     rowId: (row) => String(row.id), itemUrl: (row) => `/api/riva/${encodeURIComponent(String(row.id))}`
   },
@@ -81,6 +81,9 @@ export default function TabelasEspecificasView({ tableKey, onBack, startNew = fa
   const [values, setValues] = useState<Values>({});
   const [editing, setEditing] = useState<Row | null>(null);
   const [options, setOptions] = useState<Record<string, Option[]>>({
+    mercadosFiscais: [{ value: "NACIONAL", label: "Nacional" }, { value: "INTRACOMUNITARIO", label: "Intracomunitário" }, { value: "EXTERNO", label: "Externo" }, { value: "INVERSAO_SUJEITO_PASSIVO", label: "Inversão do sujeito passivo" }],
+    tratamentosLiquidacao: [{ value: "NORMAL", label: "IVA liquidado normalmente" }, { value: "NAO_LIQUIDAR", label: "IVA não liquidado" }],
+    territoriosFiscais: [{ value: "CONTINENTE", label: "Continente" }, { value: "ACORES", label: "Açores" }, { value: "MADEIRA", label: "Madeira" }],
     sinais: [{ value: "1", label: "1 - Débito" }, { value: "2", label: "2 - Crédito" }],
     areasGestao: [
       { value: "1", label: "1 - Documento comercial (área 1)" },
@@ -267,11 +270,12 @@ export default function TabelasEspecificasView({ tableKey, onBack, startNew = fa
     const required = new Set(config.fields.map((item) => item.options).filter(Boolean));
     if (isRiva) required.add("tiposTaxa");
     const result: Record<string, Option[]> = {};
-    const staticOptions = new Set(["sinais", "areasGestao", "entidadesDocumento", "codigosFiscais"]);
+    const staticOptions = new Set(["sinais", "areasGestao", "entidadesDocumento", "codigosFiscais", "tratamentosLiquidacao", "territoriosFiscais", "mercadosFiscais"]);
     await Promise.all([...required].filter((key) => !staticOptions.has(key!)).map(async (key) => {
       const definitions: Record<string, [string, (row: Row) => Option]> = {
         tiposDocumento: ["/api/tipos-documento?size=500&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.descricao}` })],
         paises: ["/api/paises?size=500&sort=nome,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.nome}` })],
+        motivosIsencao: ["/api/motivos-isencao?size=100&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.nome}` })],
         tiposTaxa: ["/api/tipos-taxa-iva?size=100&sort=id,asc", (row) => ({ value: String(row.id), label: `${row.id} - ${row.descricao}` })]
       };
       const definition = definitions[key!];
@@ -282,6 +286,7 @@ export default function TabelasEspecificasView({ tableKey, onBack, startNew = fa
 
   function reset() {
     setEditing(null); setValues(Object.fromEntries(config.fields.map((item) => [item.key, item.type === "checkbox" ? false : ""]))); setRates({});
+    if (isRiva) setValues((current) => ({ ...current, mercado: "NACIONAL", tratamentoLiquidacao: "NORMAL", jurisdicao: "PT", territorioFiscal: "CONTINENTE" }));
   }
 
   function edit(row: Row) {
@@ -358,7 +363,7 @@ export default function TabelasEspecificasView({ tableKey, onBack, startNew = fa
       : tableKey === "armazens" && item.key === "freguesiaId"
       ? <ReferenceLookup field={item} key={item.key} value={String(values[item.key] ?? "")} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />
       : <EditorField field={item} key={item.key} options={options[item.options ?? ""] ?? []} editing={Boolean(editing)} value={values[item.key]} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />)}</div>
-      {isRiva && <div className="fac-rate-grid"><p className="fac-muted">Taxas do regime</p>{rateOptions.map((option) => <label className="fac-field" key={option.value}><span>{option.label}</span><input min="0" onChange={(event) => setRates((current) => ({ ...current, [option.value]: event.target.value }))} step="0.01" type="number" value={rates[option.value] ?? ""}/></label>)}</div>}
+      {isRiva && <div className="fac-rate-grid"><p className="fac-muted">Taxas aplicáveis por categoria (a não liquidação não altera estas taxas)</p>{rateOptions.map((option) => <label className="fac-field" key={option.value}><span>{option.label}</span><input min="0" onChange={(event) => setRates((current) => ({ ...current, [option.value]: event.target.value }))} step="0.01" type="number" value={rates[option.value] ?? ""}/></label>)}</div>}
       <div className="fac-form-footer"><span className="fac-muted">{editing ? `A editar ${config.rowId(editing)}` : "Novo registo"}</span><button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar"}</button></div>
     </div>
     <p className={`fac-muted${isPagedCatalog ? " fac-catalog-maintenance-note" : ""}`}>A eliminação só é aceite para registos nunca utilizados.</p>

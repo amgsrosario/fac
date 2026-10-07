@@ -47,6 +47,7 @@ public class DocumentoComercialController implements GenericController {
     private final DocumentoComercialService service;
     private final DocumentoComercialCriacaoService criacaoService;
     private final DocumentoComercialPdfService pdfService;
+    private final com.ar2lda.fac.service.PreviewFiscalService previewFiscalService;
 
     @PostMapping
     @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_CRIAR)")
@@ -122,6 +123,16 @@ public class DocumentoComercialController implements GenericController {
         service.update(id, dto);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/preview-fiscal")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EDITAR_RASCUNHO)")
+    public com.ar2lda.fac.controller.dto.PreviewFiscalDto previewFiscal(@RequestBody @Valid com.ar2lda.fac.controller.dto.PreviewFiscalRequest request) {
+        return previewFiscalService.preview(request);
+    }
+
+    @PostMapping("/{id}/recalcular-fiscal")
+    @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EDITAR_RASCUNHO)")
+    public DocumentoComercialDto recalcularFiscal(@PathVariable Long id) { return service.recalcularFiscal(id); }
 
     @PostMapping("/{id}/emitir")
     @PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EMITIR)")

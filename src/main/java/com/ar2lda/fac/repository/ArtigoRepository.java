@@ -17,11 +17,12 @@ public interface ArtigoRepository extends JpaRepository<Artigo, String> {
     @Query("""
             select new com.ar2lda.fac.controller.dto.ArtigoDto(
                 a.codigo, a.abreviatura, a.codigoIdentificacao, a.descricao, a.tipoArtigo, a.unidade,
-                f.id, a.peso, ic.id, iv.id, a.pvp, a.inativo, a.retencao, a.observacoes)
+                f.id, a.peso, ic.id, iv.id, a.pvp, a.inativo, a.retencao, a.observacoes, mi.id, a.fundamentoFiscal)
             from Artigo a
             join a.familia f
             join a.ivaCompra ic
             join a.ivaVenda iv
+            left join a.mIsencao mi
             where (:searchEmpty = true
                    or lower(a.codigo) like :search
                    or lower(a.descricao) like :search

@@ -25,6 +25,11 @@ public record LinhaDocumentoComercialDto(
         String unidade,
         BigDecimal baseTributavel,
         BigDecimal valorImposto,
-        BigDecimal totalLinha
+        BigDecimal totalLinha,
+        ResultadoFiscalLinhaDto resultadoFiscal
 ) {
+    public LinhaDocumentoComercialDto(Long id, Long documentoComercialId, Integer numeroLinha, TipoLinhaDocumento tipoLinha, String artigoId, String descricao, BigDecimal quantidade, BigDecimal precoUnitario, BigDecimal valorBruto, TipoDescontoLinha tipoDesconto, BigDecimal desconto, BigDecimal valorDesconto, BigDecimal valorLinha, String tipoTaxaIvaId, BigDecimal percentagemIva, BigDecimal peso, String unidade, BigDecimal baseTributavel, BigDecimal valorImposto, BigDecimal totalLinha) {
+        this(id, documentoComercialId, numeroLinha, tipoLinha, artigoId, descricao, quantidade, precoUnitario, valorBruto, tipoDesconto, desconto, valorDesconto, valorLinha, tipoTaxaIvaId, percentagemIva, peso, unidade, baseTributavel, valorImposto, totalLinha, null);
+    }
+
 }

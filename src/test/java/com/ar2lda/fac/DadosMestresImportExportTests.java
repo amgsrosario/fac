@@ -110,6 +110,30 @@ class DadosMestresImportExportTests {
     }
 
     @Test
+    void importaEExportaClienteEstrangeiroSemReferenciaPostalPortuguesa() throws Exception {
+        paisRepository.save(new Pais("ES", "Espanha"));
+        String csvContent = clientesCsv("ESB123456789").replace(";3750-029;PT;", ";;ES;");
+        String response = mockMvc.perform(multipart("/importacoes/clientes/validar")
+                        .file(csv("estrangeiro.csv", csvContent)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.erros").isEmpty())
+                .andExpect(jsonPath("$.resumo.linhasValidas").value(1))
+                .andReturn().getResponse().getContentAsString();
+        String id = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
+                .readTree(response).get("id").asText();
+        mockMvc.perform(post("/importacoes/clientes/{id}/confirmar", id))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.criados").value(1));
+        var exported = mockMvc.perform(get("/exportacoes/clientes?formato=csv"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(exported).contains("\"ESB123456789\"").contains("\"\";\"ES\";\"EUR\"");
+        try (Workbook workbook = new XSSFWorkbook(new java.io.ByteArrayInputStream(
+                mockMvc.perform(get("/exportacoes/clientes?formato=xlsx"))
+                        .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray()))) {
+            assertThat(workbook.getSheet("dados").getLastRowNum()).isGreaterThanOrEqualTo(1);
+        }
+    }
+
+    @Test
     void validaEConfirmaImportacaoCsvDeClientesSemGravarNaPreValidacao() throws Exception {
         long before = clienteRepository.count();
 

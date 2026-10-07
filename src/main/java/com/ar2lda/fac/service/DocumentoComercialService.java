@@ -114,6 +114,7 @@ public class DocumentoComercialService {
         documento.setTipoDocumento(tipoDocumento);
         documento.setSerie(dto.serie());
         documento.setEstado(EstadoDocumentoComercial.RASCUNHO);
+        documento.setFiscalMotorVersion(MotorFiscalService.VERSION);
         documento.setDataEmissao(dto.dataEmissao());
         documento.setCliente(cliente);
 
@@ -311,6 +312,14 @@ public class DocumentoComercialService {
     }
 
     @Transactional
+    public DocumentoComercialDto recalcularFiscal(Long id) {
+        DocumentoComercial documento = findDocumentoForUpdate(id);
+        validateRascunho(documento);
+        linhaDocumentoComercialService.recalcularTotais(documento);
+        return mapper.toDTO(documento);
+    }
+
+    @Transactional
     public DocumentoComercialDto update(Long id, DocumentoComercialUpdateDto dto) {
         DocumentoComercial documento = findDocumentoForUpdate(id);
         validateRascunho(documento);
@@ -319,6 +328,7 @@ public class DocumentoComercialService {
                 dto.rivaId(), dto.mPagamentoId(), dto.pPagamentoId(), dto.transporteId(), dto.dataCarga(),
                 dto.horaCarga(), dto.matricula(), dto.dataDescarga(), dto.horaDescarga(), dto.peso(),
                 dto.observacoes());
+        linhaDocumentoComercialService.recalcularTotais(documento);
         DocumentoComercial saved = documentoRepository.save(documento);
         auditoriaService.registar(TipoAuditoriaEvento.DOCUMENTO_ALTERADO, "DOCUMENTO_COMERCIAL", id,
                 "Rascunho alterado", "{\"versao\":1}");
@@ -342,8 +352,12 @@ public class DocumentoComercialService {
         validateNaoAnulado(documento);
         validateTemLinhas(documento);
         validateDataEmissao(documento);
+        if (!"EUR".equals(documento.getMoeda().getId()))
+            throw new BadRequestException("Emissão fiscal não EUR exige conversão normativa ainda não habilitada");
 
         linhaDocumentoComercialService.recalcularTotais(documento);
+        if (documento.isFiscalRecalculoAviso() && !Boolean.TRUE.equals(dto.recalculoConfirmado()))
+            throw new BadRequestException("O recálculo alterou o rascunho; confirme os valores antes da emissão");
         validateTotaisCoerentes(documento);
 
         snapshotCliente(documento, documento.getCliente());
@@ -453,7 +467,7 @@ public class DocumentoComercialService {
         documento.setClienteNif(cliente.getNif());
         documento.setClienteMorada(cliente.getMorada());
         documento.setClienteMorada1(cliente.getMorada1());
-        documento.setClienteCodPostal(cliente.getCodPostal().getId());
+        documento.setClienteCodPostal(cliente.getCodPostal() == null ? null : cliente.getCodPostal().getId());
         documento.setClienteLocalidade(cliente.getLocalidade());
         documento.setClientePais(cliente.getPais().getId());
     }
@@ -468,7 +482,7 @@ public class DocumentoComercialService {
             documento.setEnvioPais(null);
             documento.setDescargaMorada(cliente.getMorada());
             documento.setDescargaMorada1(cliente.getMorada1());
-            documento.setDescargaCodPostal(cliente.getCodPostal().getId());
+            documento.setDescargaCodPostal(cliente.getCodPostal() == null ? null : cliente.getCodPostal().getId());
             documento.setDescargaLocalidade(cliente.getLocalidade());
             documento.setDescargaPais(cliente.getPais().getId());
             return;
@@ -646,7 +660,7 @@ public class DocumentoComercialService {
                 continue;
             }
             BigDecimal valorLinha = scale6(linha.getValorLinha());
-            BigDecimal valorIva = valorLinha
+            BigDecimal valorIva = linha.getIvaLiquidado() != null ? linha.getIvaLiquidado() : valorLinha
                     .multiply(linha.getPercentagemIva())
                     .divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
 

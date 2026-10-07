@@ -27,6 +27,7 @@ public class ArtigoService {
     private final FamiliaRepository familiaRepository;
     private final TipoTaxaIvaRepository tipoTaxaIvaRepository;
     private final ArtigoMapper mapper;
+    private final com.ar2lda.fac.repository.MIsencaoRepository mIsencaoRepository;
 
     @Transactional
     public ArtigoDto create(ArtigoCreateDto dto) {
@@ -39,6 +40,7 @@ public class ArtigoService {
         Artigo artigo = mapper.fromCreateDTO(dto);
         artigo.setCodigoIdentificacao(codigoIdentificacao);
         applyRelations(dto.familiaId(), dto.ivaCompraId(), dto.ivaVendaId(), artigo, true);
+        aplicarIsencao(artigo, dto.mIsencaoId(), dto.fundamentoFiscal());
         return mapper.toDTO(artigoRepository.save(artigo));
     }
 
@@ -66,6 +68,7 @@ public class ArtigoService {
         mapper.applyUpdate(dto, artigo);
         artigo.setCodigoIdentificacao(codigoIdentificacao);
         applyRelations(dto.familiaId(), dto.ivaCompraId(), dto.ivaVendaId(), artigo, false);
+        aplicarIsencao(artigo, dto.mIsencaoId(), dto.fundamentoFiscal());
         artigoRepository.save(artigo);
     }
 
@@ -73,6 +76,14 @@ public class ArtigoService {
     public void delete(String codigo) {
         artigoRepository.delete(findEntityByCodigo(codigo));
         artigoRepository.flush();
+    }
+
+    private void aplicarIsencao(Artigo artigo, String motivo, String fundamento) {
+        artigo.setMIsencao(motivo == null || motivo.isBlank() ? null : mIsencaoRepository.findById(motivo)
+                .orElseThrow(() -> new NotFoundException("Motivo de isenção não encontrado")));
+        artigo.setFundamentoFiscal(fundamento == null || fundamento.isBlank() ? null : fundamento.trim());
+        if (artigo.getMIsencao() != null && !"ISENTA".equals(artigo.getIvaVenda().getId()))
+            throw new BadRequestException("Fundamento próprio de isenção exige categoria ISENTA");
     }
 
     private Artigo findEntityByCodigo(String codigo) {

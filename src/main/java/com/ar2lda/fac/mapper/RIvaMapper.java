@@ -19,7 +19,8 @@ public interface RIvaMapper {
                 entity.getNome(),
                 entity.getTaxas().stream()
                         .map(taxa -> new RIvaTaxaDto(taxa.getTipoTaxaIva().getId(), taxa.getValor()))
-                        .toList()
+                        .toList(), entity.getMercado(), entity.getTratamentoLiquidacao(), entity.getFundamentoFiscal(),
+                entity.getMIsencao() == null ? null : entity.getMIsencao().getId(), entity.getJurisdicao(), entity.getTerritorioFiscal()
         );
     }
 

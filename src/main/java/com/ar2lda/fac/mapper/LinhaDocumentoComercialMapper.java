@@ -36,7 +36,10 @@ public interface LinhaDocumentoComercialMapper {
                 consolidado ? e.getUnidade() : e.getArtigo() != null ? e.getArtigo().getUnidade() : null,
                 e.getBaseTributavel(),
                 e.getValorImposto(),
-                e.getTotalLinha()
+                e.getTotalLinha(), e.getIvaCalculado() == null ? null : new com.ar2lda.fac.controller.dto.ResultadoFiscalLinhaDto(
+                    e.getValorBruto(), e.getValorDesconto(), e.getBaseTributavel(), e.getPercentagemIva(), e.getIvaCalculado(),
+                    e.getIvaLiquidado(), e.getTotalLinha(), e.getFiscalMIsencaoCodigo(), e.getFiscalFundamento(),
+                    e.getFiscalTratamentoLiquidacao().name())
         );
     }
 }
