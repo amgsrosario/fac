@@ -63,24 +63,25 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 - Package final: BUILD SUCCESS. Revisão independente por review_permissions_final: APROVADA, BLOCKER 0 / MAJOR 0 / MINOR 0. Revisão estática do diff completo e ficheiros novos; o revisor não repetiu os testes executados pelo Executor.
 - PR #12 integrado em feature/visual-redesign, confirmado pelo histórico Git após fetch. O estado do CI não foi consultado diretamente pelo Executor; a confirmação do merge não é uma declaração autónoma de CI verde.
 - Evidência local preservada em /home/arosario/Projetos/fac/target/permissions-foundation-validation (logs e revisão, ignorados pelo Git; não arquivo institucional permanente).
-- Segurança global continua aberta. Security Gate está em execução na missão descrita abaixo; a Fundação de Permissões não foi reaberta.
+- Segurança global continua aberta. Security Gate está integrado, com triagem npm pendente antes do fecho global de Segurança; a Fundação de Permissões não foi reaberta.
 - Alterações preexistentes do checkout principal em docker-compose.yml e .worktrees/ preservadas e excluídas desta missão.
 
 ## Security Gate
 
-**IMPLEMENTADO E VALIDADO LOCALMENTE; AINDA NÃO INTEGRADO. Segurança global permanece aberta até merge humano e decisão formal do Executivo.**
+**CONCLUÍDO E INTEGRADO. PR #14 merged; HUMAN MERGE concluído por António. Não existe trabalho funcional pendente desta missão. Segurança global permanece aberta, com triagem npm pendente antes do fecho formal pelo Executivo.**
 
 - Base confirmada: `origin/feature/visual-redesign`, observada em `b32720a8b7060314f1d7c3b8f79181bd41df3ca3`.
-- Entrega isolada: branch `feature/security-gate`, worktree `/home/arosario/Projetos/fac/.worktrees/security-gate`.
-- F1: bypass operacional recusado no arranque; excepção confinada ao contexto de testes e ausente do JAR operacional.
-- F2: secret operacional obrigatório/validado; chave aleatória apenas em desenvolvimento explicitamente activado/teste autorizado; duração JWT 1–1440 minutos, default 60.
-- F3: limiter próprio da aplicação por identificador/origem/global, limitado em memória por instância; resposta 429, recuperação automática, logs agregados sem credenciais; BCrypt nos caminhos de credenciais inválidas.
-- F4: limites precoces de CSV, admissão XLSX com expansão/estrutura limitadas incluindo parts OPC não canónicos, e formato/dimensões de imagens antes de decode. Limites funcionais e protecções de exportação preservados.
-- F5: claims essenciais e tipos validados antes de consulta de identidade; issuer `fac`, expiração obrigatória, versão persistida e invalidação existentes preservadas; sem audience nova.
-- F6: herança Nginx corrigida e CSP simples; headers HTTP efectivos verificados em páginas, health e erro proxy. Frontend real renderizado sob CSP em navegador, sem violações observadas no smoke de login.
+- HEAD produtivo observado e confirmado no fecho pós-merge: `f2e8dfe1c11fb61378bc01684b96eaf871343021`. Os commits `feaa5c16bd1e6af81e75f2fdbf7d01bcf2489d0e` e `b293e796eba8651417d31f65ce3e41636dc4b31c` estão integrados. Esta referência descreve o fecho; o HEAD corrente deve ser consultado no Git.
+- Branch `feature/security-gate` removida localmente e em `origin`; worktree `/home/arosario/Projetos/fac/.worktrees/security-gate` removida. Evidência local preservada em `target/security-gate-validation/b293e79` (ignorada pelo Git; não arquivo institucional permanente).
+- F1 — RESOLVIDO E INTEGRADO: bypass operacional recusado no arranque; excepção confinada ao contexto de testes e ausente do JAR operacional.
+- F2 — RESOLVIDO E INTEGRADO: secret operacional obrigatório/validado; chave aleatória apenas em desenvolvimento explicitamente activado/teste autorizado; duração JWT 1–1440 minutos, default 60.
+- F3 — RESOLVIDO E INTEGRADO: limiter próprio da aplicação por identificador/origem/global, limitado em memória por instância; resposta 429, recuperação automática, logs agregados sem credenciais; BCrypt nos caminhos de credenciais inválidas.
+- F4 — RESOLVIDO E INTEGRADO: limites precoces de CSV, admissão XLSX com expansão/estrutura limitadas incluindo parts OPC não canónicos, e formato/dimensões de imagens antes de decode. Limites funcionais e protecções de exportação preservados.
+- F5 — RESOLVIDO E INTEGRADO: claims essenciais e tipos validados antes de consulta de identidade; issuer `fac`, expiração obrigatória, versão persistida e invalidação existentes preservadas; sem audience nova.
+- F6 — RESOLVIDO E INTEGRADO: herança Nginx corrigida e CSP simples; headers HTTP efectivos verificados em páginas, health e erro proxy. Frontend real renderizado sob CSP em navegador, sem violações observadas no smoke de login.
 - Suite integral: 259 testes em 47 classes, zero falhas/erros/omitidos, com PostgreSQL 16.3 descartável e Flyway V15. Backend package e frontend TypeScript/Vite aprovados. Após endurecer o fallback de perfil dev implícito, 46 testes afectados e package repetidos antes da entrega. A prova adicional dos dois budgets de expansão XLSX passou em 6 testes de admissão/package, sem alteração funcional.
-- Revisão independente: MAJOR sobre worksheet não canónica corrigido e testado; revisão final da implementação/documentação APROVADA, BLOCKER 0 / MAJOR 0 / MINOR 0 (revisão estática; testes executados pelo Executor). [PR #14](https://github.com/amgsrosario/fac/pull/14) aberto contra `feature/visual-redesign`, branch publicada e sem conflitos. CI da implementação `feaa5c16bd1e6af81e75f2fdbf7d01bcf2489d0e` observado verde na [execução 37503911011](https://github.com/amgsrosario/fac/actions/runs/37503911011); actualizações posteriores continuam sujeitas aos checks do PR. Merge não executado.
-- Instalação pelo lockfile frontend reportou 7 vulnerabilidades (1 moderada, 6 altas). Não houve investigação externa de CVEs nem upgrade de dependências; avaliação de dependências permanece trabalho separado do Executivo.
+- Revisão independente: MAJOR sobre worksheet não canónica corrigido e testado; revisão final da implementação/documentação APROVADA, BLOCKER 0 / MAJOR 0 / MINOR 0 (revisão estática; testes executados pelo Executor). [PR #14](https://github.com/amgsrosario/fac/pull/14) merged em `feature/visual-redesign`; gate humano concluído. CI final de `b293e796eba8651417d31f65ce3e41636dc4b31c` confirmado verde na [execução 37504527078](https://github.com/amgsrosario/fac/actions/runs/37504527078).
+- Instalação pelo lockfile frontend reportou 7 vulnerabilidades (1 moderada, 6 altas). As 7 vulnerabilidades permanecem POR TRIAR. Não houve investigação externa de CVEs nem upgrade de dependências; a próxima acção é a triagem npm, sem correcções automáticas. Esta pendência mantém o capítulo global Segurança aberto.
 - Resíduos aceites: localStorage, logout local, ausência de refresh tokens/sessões individuais, auditoria selectiva de recusas. Limiter volátil por instância: restart/múltiplas instâncias alteram orçamento; origem pode ser partilhada atrás de proxy. PDF conserva materialização final e layout.
 - Produção pública exige HTTPS. TLS/redireccionamento/certificados/renovação/HSTS no edge, firewall e gestão/rotação de secrets são responsabilidades do deployment. Contrato completo em [SECURITY_GATE.md](../security/SECURITY_GATE.md).
 - Checkout principal e respectivas alterações preexistentes preservados. Sem migration, nova permissão, alteração de CI ou Fecho Fiscal iniciado.
@@ -89,8 +90,8 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 
 1. JWT / Gestão e Invalidação de Sessões — **CONCLUÍDA**.
 2. Fundação de Permissões — **CONCLUÍDA E INTEGRADA; GATE HUMANO CONCLUÍDO**.
-3. Security Gate — **IMPLEMENTADO LOCALMENTE; INTEGRAÇÃO E FECHO EXECUTIVO PENDENTES**.
-4. Fecho Fiscal Sistemático.
+3. Security Gate — **INTEGRADO; HUMAN MERGE CONCLUÍDO; TRIAGEM NPM PENDENTE ANTES DO FECHO GLOBAL DE SEGURANÇA**.
+4. Fecho Fiscal Sistemático — **NÃO INICIADO**.
 5. Auditoria Funcional Final.
 6. Preparação e Certificação AT.
 7. Piloto Controlado.
@@ -101,5 +102,5 @@ Esta sequência é a orientação vigente do Executivo. A conclusão JWT não an
 
 - Não foi criado um fluxo de alteração de password pelo próprio utilizador; o caminho implementado nesta missão é o reset administrativo existente.
 - Logout permanece client-side; não existe revogação individual de JWT introduzida nesta missão.
-- Fundação de Permissões integrada, sem trabalho funcional pendente. O capítulo global Segurança continua aberto; Security Gate está implementado localmente, sujeito aos gates descritos abaixo.
+- Fundação de Permissões integrada, sem trabalho funcional pendente. O capítulo global Segurança continua aberto; Security Gate está integrado; triagem npm e fecho formal executivo permanecem pendentes.
 - A publicação documental segue o fluxo de branch/PR contra `feature/visual-redesign`; o merge é uma decisão humana de António.
