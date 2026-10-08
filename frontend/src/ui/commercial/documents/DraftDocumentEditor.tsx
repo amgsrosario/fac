@@ -11,6 +11,13 @@ type EstadoDocumento = "RASCUNHO" | "EMITIDO" | "ANULADO";
 type TipoLinha = "COMERCIAL" | "TEXTO";
 type Step = "header" | "lines";
 
+type FiscalLineResult = {
+  valorBruto: string | number; valorDesconto: string | number; baseTributavel: string | number;
+  taxaAplicavel: string | number; ivaCalculado: string | number; ivaLiquidado: string | number;
+  totalLinha: string | number; mIsencaoCodigo?: string | null; fundamentoFiscal?: string | null;
+  tratamentoLiquidacao: "NORMAL" | "NAO_LIQUIDAR";
+};
+type FiscalPreview = { linhas: (FiscalLineResult | null)[]; totais: { valorBruto: string | number; valorDesconto: string | number; valorIvaTotal: string | number; valorTotal: string | number } };
 type DocumentoComercial = {
   id: number;
   tipoDocumentoId: string;
@@ -34,9 +41,11 @@ type DocumentoComercial = {
   valorTotal?: string | number | null;
   moedaCodigo?: string | null;
   moedaSimbolo?: string | null;
+  resultadoFiscal?: { recalculoAviso?: boolean; tratamentoLiquidacao?: string; fundamentoFiscal?: string | null } | null;
 };
 
 type LinhaDocumento = {
+  resultadoFiscal?: FiscalLineResult | null;
   id: number;
   documentoComercialId: number;
   numeroLinha: number;
@@ -107,6 +116,8 @@ type HeaderState = {
 };
 
 type EditorLine = {
+  resultadoFiscal?: FiscalLineResult | null;
+  totalPersistido?: string | number | null;
   uid: string;
   id?: number;
   tipoLinha: TipoLinha;
@@ -132,7 +143,7 @@ type SaveDraftOptions = {
   notify?: boolean;
 };
 
-type Totals = { subtotal: number; discount: number; vat: number; total: number };
+type Totals = { subtotal: number; discount: number; vat: number; total: number } | null;
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -190,6 +201,8 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [fiscalPreview, setFiscalPreview] = useState<{ key: string; result?: FiscalPreview; error?: string } | null>(null);
+  const [recalculationWarning, setRecalculationWarning] = useState(false);
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
   const [impressao, setImpressao] = useState<DocumentoImpressao | null>(null);
   const [anularOpen, setAnularOpen] = useState(false);
@@ -217,13 +230,45 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const canPdf = hasPermission("DOCUMENTO_OBTER_PDF", currentUser);
   const isDraft = !documento || documento.estado === "RASCUNHO";
   const canEditCurrent = canEdit && isDraft;
-  const canEmitCurrent = Boolean(isDraft && canEmit && canEditCurrent && (!documento || dirty || (diagnostico?.podeEmitir ?? false)));
   const canVoidCurrent = Boolean(documento && documento.estado === "EMITIDO" && canVoid && (diagnostico?.podeAnular ?? false));
   const canOpenPdfCurrent = Boolean(documento && documento.estado !== "RASCUNHO" && canPdf);
   const showEmitAction = Boolean(isDraft && canEmit && canEditCurrent);
   const showSaveDraftAction = Boolean(isDraft && canEditCurrent && (!documento || dirty));
   const saveDraftLabel = saving ? "A guardar..." : documento ? "Guardar alterações" : "Guardar rascunho";
-  const draftTotals = useMemo(() => calculateTotals(isLineFilled(activeLine) ? [...lines, activeLine] : lines, catalogos, header.rivaId), [activeLine, catalogos, header.rivaId, lines]);
+  const fiscalLines = isPendingLineEmpty(activeLine) ? lines : [...lines, activeLine];
+  const previewPayload = { rivaId: header.rivaId, dataEmissao: header.dataEmissao, linhas: fiscalLines.map(lineCreatePayload) };
+  const previewKey = JSON.stringify(previewPayload);
+  const preview = fiscalPreview?.key === previewKey ? fiscalPreview.result : undefined;
+  const previewError = fiscalPreview?.key === previewKey ? fiscalPreview.error : undefined;
+  const withFiscalResult = (line: EditorLine): EditorLine => isDraft && canEditCurrent
+    ? { ...line, resultadoFiscal: preview?.linhas[fiscalLines.findIndex((item) => item.uid === line.uid)] ?? null, totalPersistido: null }
+    : line;
+  const draftTotals: Totals = isDraft && canEditCurrent ? preview ? {
+    subtotal: Number(preview.totais.valorBruto), discount: Number(preview.totais.valorDesconto),
+    vat: Number(preview.totais.valorIvaTotal), total: Number(preview.totais.valorTotal)
+  } : null : documento ? { subtotal: Number(documento.valorBruto), discount: Number(documento.valorDesconto), vat: Number(documento.valorIvaTotal), total: Number(documento.valorTotal) } : null;
+
+  const canEmitCurrent = Boolean(isDraft && canEmit && canEditCurrent && preview && (!documento || dirty || (diagnostico?.podeEmitir ?? false)));
+
+  useEffect(() => {
+    if (loading || !isDraft || !canEditCurrent) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      if (!header.rivaId || !header.dataEmissao || !fiscalLines.some((line) => line.artigoId)) {
+        setFiscalPreview(null);
+        return;
+      }
+      const validation = fiscalLines.map(validateLine).find(Boolean);
+      if (validation) { setFiscalPreview({ key: previewKey, error: validation }); return; }
+      try {
+        const result = await requestJson<FiscalPreview>("/api/documentos-comerciais/preview-fiscal", JSON.parse(previewKey), "POST");
+        if (!cancelled) setFiscalPreview({ key: previewKey, result });
+      } catch (err) {
+        if (!cancelled) setFiscalPreview({ key: previewKey, error: err instanceof Error ? err.message : "Não foi possível validar o cálculo fiscal." });
+      }
+    }, 300);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [previewKey, loading, isDraft, canEditCurrent]);
   const sidebar = embedded ? null : <CommercialSidebar active="documents" currentUser={currentUser} onLogout={() => confirmLeave(dirty) && onLogout()} />;
 
   useEffect(() => {
@@ -252,8 +297,12 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       const loadedCatalogos = await loadCatalogos();
       setCatalogos(loadedCatalogos);
       if (documentId) {
-        const [doc, realLines, diag, printModel] = await Promise.all([
-          requestJson<DocumentoComercial>(`/api/documentos-comerciais/${documentId}`),
+        let doc = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${documentId}`);
+        if (doc.estado === "RASCUNHO" && canEdit) {
+          doc = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${documentId}/recalcular-fiscal`, {}, "POST");
+        }
+        setRecalculationWarning(Boolean(doc.resultadoFiscal?.recalculoAviso));
+        const [realLines, diag, printModel] = await Promise.all([
           requestJson<LinhaDocumento[]>(`/api/documentos-comerciais/${documentId}/linhas`),
           requestJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${documentId}/diagnostico`),
           requestJson<DocumentoImpressao>(`/api/documentos-comerciais/${documentId}/impressao`)
@@ -287,6 +336,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         const parametros = await fetchOptional<ParametrosDocumentoComercial>("/api/parametros-documento-comercial");
         const { header: nextHeader, warnings } = initialiseHeader(loadedCatalogos, parametros);
         setDocumento(null);
+        setRecalculationWarning(false);
         setHeader(nextHeader);
         setLines([]);
         setOriginalHeaderKey(headerKey(nextHeader));
@@ -585,6 +635,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       const nextHeader = headerFromDocument(freshDoc);
       setDirty(false);
       setDocumento(freshDoc);
+      if (freshDoc.resultadoFiscal?.recalculoAviso) setRecalculationWarning(true);
       setHeader(nextHeader);
       setLines(resequenceLines(freshEditorLines.map((line) => ({ ...line, dirty: false }))));
       replaceActiveLine(emptyLine());
@@ -625,17 +676,24 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   async function emitDocument() {
     if (saving || !canEmitCurrent) return;
     const reference = documento ? documentRef(documento) : "este documento";
-    if (!window.confirm(`Emitir definitivamente ${reference}? Depois de emitido, o documento fica imutável.`)) return;
+    const recalculationConfirmed = recalculationWarning;
+    if (!window.confirm(`${recalculationWarning ? "O rascunho foi recalculado pelas regras fiscais actuais. Confirma os valores apresentados antes de emitir.\n\n" : ""}Emitir definitivamente ${reference}? Depois de emitido, o documento fica imutável.`)) return;
     const requiresSave = !documento || dirty;
     const draft = requiresSave
       ? await saveDraft({ navigateAfterSave: false, notify: false })
       : documento;
     if (!draft) return;
+    if (draft.resultadoFiscal?.recalculoAviso && !recalculationConfirmed) {
+      setRecalculationWarning(true);
+      setNotice("O rascunho foi guardado e recalculado. Revê os valores apresentados e confirma novamente a emissão.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${draft.id}/emitir`, { emissorId: currentUser.codigo }, "POST");
+      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${draft.id}/emitir`, { emissorId: currentUser.codigo, recalculoConfirmado: recalculationConfirmed }, "POST");
       await refreshAfterStateChange(emitted.id, "Documento emitido.");
+      setRecalculationWarning(false);
       if (!documentId) navigate(`/documentos/${emitted.id}`, { replace: true });
     } catch (err) {
       const reason = err instanceof Error ? err.message : "Não foi possível emitir o documento.";
@@ -740,6 +798,8 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         </div>
       </header>
       {error && <FacMessage tone="error" title="Erro">{error}</FacMessage>}
+      {recalculationWarning && isDraft && <FacMessage tone="warning" title="Rascunho recalculado">As regras fiscais actuais alteraram os valores do rascunho. Revê as linhas e os totais antes da emissão.</FacMessage>}
+      {previewError && isDraft && <FacMessage tone="error" title="Cálculo fiscal">{previewError}</FacMessage>}
       {notice && <div className="fac-draft-message success" role="status"><span aria-hidden="true">✓</span><span>{notice}</span></div>}
       {loading ? (
         <div className="fac-draft-loading">A carregar rascunho.</div>
@@ -757,12 +817,12 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
             }} onUpdate={updateHeader} readOnly={!canEditCurrent} />
           ) : (
             <DraftLines
-              activeLine={activeLine}
+              activeLine={withFiscalResult(activeLine)}
               activeArticleCloseRequest={activeArticleCloseRequest}
               activeArticleFocusRequest={activeArticleFocusRequest}
               activeQuantityFocusRequest={activeQuantityFocusRequest}
               catalogos={catalogos}
-              lines={lines}
+              lines={lines.map(withFiscalResult)}
               onAddBlankLine={addBlankLine}
               onActiveArticleQueryChange={updateActiveArticleQuery}
               onChooseActiveArticle={(value) => chooseArticle(activeLine.uid, value, true)}
@@ -1045,11 +1105,12 @@ function DraftLines(props: {
         value={props.catalogos.artigos.filter((artigo) => !artigo.inativo)}
         visible={Boolean(articleDialogLine)}
       />
+      {!props.readOnly && !props.totals && <p className="fac-muted" role="status">Os totais serão apresentados após validação fiscal das linhas.</p>}
       <aside className="fac-draft-totals">
-        <div><span>Subtotal</span><strong>{money(props.totals.subtotal)}</strong></div>
-        <div><span>Descontos</span><strong>{money(props.totals.discount)}</strong></div>
-        <div><span>IVA</span><strong>{money(props.totals.vat)}</strong></div>
-        <div className="fac-draft-total-final"><span>Total</span><strong>{money(props.totals.total)}</strong></div>
+        <div><span>Subtotal</span><strong>{props.totals ? money(props.totals.subtotal) : "—"}</strong></div>
+        <div><span>Descontos</span><strong>{props.totals ? money(props.totals.discount) : "—"}</strong></div>
+        <div><span>IVA</span><strong>{props.totals ? money(props.totals.vat) : "—"}</strong></div>
+        <div className="fac-draft-total-final"><span>Total</span><strong>{props.totals ? money(props.totals.total) : "—"}</strong></div>
       </aside>
     </section>
   );
@@ -1141,13 +1202,13 @@ function DraftLineRow(props: Parameters<typeof DraftLines>[0] & { active?: boole
           </>
         )}
       </td>
-      <td className="fac-draft-description-cell" {...cellProps(1)}><input aria-label="Descrição da linha" className="fac-draft-cell fac-draft-cell-display" data-active-line={active || undefined} disabled={disabled} maxLength={80} onChange={(event) => update({ descricao: event.target.value })} title={line.descricao} value={line.descricao} /></td>
+      <td className="fac-draft-description-cell" {...cellProps(1)}><input aria-label="Descrição da linha" className="fac-draft-cell fac-draft-cell-display" data-active-line={active || undefined} disabled={disabled} maxLength={80} onChange={(event) => update({ descricao: event.target.value })} title={line.descricao} value={line.descricao} />{hasArticle && fiscalDescription(line) && <small className="fac-muted">{fiscalDescription(line)}</small>}</td>
       <td {...cellProps(2, hasArticle)}>{hasArticle ? <DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ quantidade: value })} value={line.quantidade} /> : inactiveCell}</td>
       <td className="fac-draft-unit-cell" {...cellProps(3, hasArticle)}>{hasArticle ? <input aria-label="Unidade" className="fac-draft-cell fac-draft-cell-code fac-draft-cell-display" data-active-line={active || undefined} disabled={disabled} maxLength={6} onChange={(event) => update({ unidade: event.target.value })} title={line.unidade} value={line.unidade} /> : inactiveCell}</td>
       <td {...cellProps(4, hasArticle)}>{hasArticle ? <DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ precoUnitario: value })} value={line.precoUnitario} /> : inactiveCell}</td>
       <td {...cellProps(5, hasArticle)}>{hasArticle ? <DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ desconto: value })} value={line.desconto} /> : inactiveCell}</td>
       <td className="fac-draft-vat-cell fac-draft-choice-cell" {...cellProps(6, hasArticle)}>{hasArticle ? <><span className="fac-draft-cell-rest">{line.tipoTaxaIvaId ? ivaCompactLabel(catalogos.tiposIva.find((iva) => iva.id === line.tipoTaxaIvaId) ?? { descricao: line.tipoTaxaIvaId, id: line.tipoTaxaIvaId, inativo: false }) : "IVA"}</span><select aria-label="IVA" className="fac-draft-cell fac-draft-cell-code fac-draft-cell-display" data-active-line={active || undefined} disabled={disabled} onChange={(event) => update({ tipoTaxaIvaId: event.target.value })} title={catalogos.tiposIva.find((iva) => iva.id === line.tipoTaxaIvaId)?.descricao} value={line.tipoTaxaIvaId}><option value="">IVA</option>{catalogos.tiposIva.map((iva) => <option key={iva.id} value={iva.id}>{ivaCompactLabel(iva)}</option>)}</select></> : inactiveCell}</td>
-      <td className={`fac-draft-money ${active ? "fac-draft-money-empty" : ""}`}>{hasArticle ? money(lineTotal(line, catalogos, props.rivaId)) : ""}</td>
+      <td className={`fac-draft-money ${active ? "fac-draft-money-empty" : ""}`}>{hasArticle ? lineTotal(line) : ""}</td>
       <td className="fac-draft-row-actions">{active ? null : <RowActions {...props} index={index} line={line} />}</td>
     </tr>
   );
@@ -1170,7 +1231,8 @@ function DraftLineCard(props: Parameters<typeof DraftLines>[0] & { active?: bool
         <>
           <div className="fac-draft-card-grid"><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ quantidade: value })} value={line.quantidade} /><input aria-label="Unidade" className="fac-draft-cell fac-draft-cell-code fac-draft-cell-display" disabled={disabled} maxLength={6} onChange={(event) => update({ unidade: event.target.value })} value={line.unidade} /></div>
           <div className="fac-draft-card-grid"><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ precoUnitario: value })} value={line.precoUnitario} /><DecimalInput active={active} disabled={disabled} min={0} onChange={(value) => update({ desconto: value })} value={line.desconto} /><select aria-label="IVA" className="fac-draft-cell fac-draft-cell-code fac-draft-cell-display" disabled={disabled} onChange={(event) => update({ tipoTaxaIvaId: event.target.value })} value={line.tipoTaxaIvaId}><option value="">IVA</option>{catalogos.tiposIva.map((iva) => <option key={iva.id} value={iva.id}>{ivaCompactLabel(iva)}</option>)}</select></div>
-          <div className="fac-draft-card-total"><span>Total</span><strong>{money(lineTotal(line, catalogos, props.rivaId))}</strong></div>
+          {fiscalDescription(line) && <p className="fac-muted">{fiscalDescription(line)}</p>}
+          <div className="fac-draft-card-total"><span>Total</span><strong>{lineTotal(line)}</strong></div>
         </>
       )}
       {!active && <div className="fac-draft-row-actions"><RowActions {...props} index={index} line={line} /></div>}
@@ -1398,6 +1460,8 @@ function lineFromDto(line: LinhaDocumento): EditorLine {
     tipoDesconto: line.tipoDesconto ?? "VALOR",
     desconto: value(line.desconto ?? line.valorDesconto ?? 0),
     tipoTaxaIvaId: line.tipoTaxaIvaId ?? "",
+    resultadoFiscal: line.resultadoFiscal,
+    totalPersistido: line.totalLinha,
     dirty: false
   });
 }
@@ -1525,32 +1589,16 @@ function isValidCommercialLine(line: EditorLine) {
   return Boolean(line.artigoId) && validateLine(line) === null;
 }
 
-function calculateTotals(lines: EditorLine[], catalogos: Catalogos, rivaId: string): Totals {
-  return lines.reduce<Totals>((acc, line) => {
-    if (!line.artigoId) return acc;
-    const values = lineCommercialValues(line, catalogos, rivaId);
-    return {
-      subtotal: acc.subtotal + values.base,
-      discount: acc.discount + values.discount,
-      vat: acc.vat + values.vat,
-      total: acc.total + values.total
-    };
-  }, { discount: 0, subtotal: 0, total: 0, vat: 0 });
+function lineTotal(line: EditorLine) {
+  const total = line.resultadoFiscal?.totalLinha ?? line.totalPersistido;
+  return total == null ? "—" : money(Number(total));
 }
 
-function lineTotal(line: EditorLine, catalogos: Catalogos, rivaId: string) {
-  if (!line.artigoId) return 0;
-  return lineCommercialValues(line, catalogos, rivaId).total;
-}
-
-function lineCommercialValues(line: EditorLine, catalogos: Catalogos, rivaId: string) {
-  const base = Number(line.quantidade || 0) * Number(line.precoUnitario || 0);
-  const rawDiscount = Number(line.desconto || 0);
-  const discount = line.tipoDesconto === "PERCENTAGEM" ? base * (rawDiscount / 100) : rawDiscount;
-  const taxable = Math.max(base - discount, 0);
-  const iva = catalogos.regimesIva.find((item) => item.id === rivaId)?.taxas.find((taxa) => taxa.tipoTaxaIvaId === line.tipoTaxaIvaId)?.valor;
-  const vat = taxable * (Number(iva ?? 0) / 100);
-  return { base, discount, taxable, total: taxable + vat, vat };
+function fiscalDescription(line: EditorLine) {
+  const fiscal = line.resultadoFiscal;
+  if (!fiscal) return null;
+  const foundation = [fiscal.mIsencaoCodigo, fiscal.fundamentoFiscal].filter(Boolean).join(" — ");
+  return `Taxa aplicável ${Number(fiscal.taxaAplicavel).toLocaleString("pt-PT")}% · IVA calculado ${money(Number(fiscal.ivaCalculado))} · IVA liquidado ${money(Number(fiscal.ivaLiquidado))}${fiscal.tratamentoLiquidacao === "NAO_LIQUIDAR" ? " · IVA não liquidado" : ""}${foundation ? ` · ${foundation}` : ""}`;
 }
 
 function resequenceLines(lines: EditorLine[]) {

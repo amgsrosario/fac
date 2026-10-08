@@ -26,8 +26,16 @@ import java.time.OffsetDateTime;
 @ToString(onlyExplicitlyIncluded = true)
 public class DocumentoComercial {
 
-    public static final int CURRENT_FISCAL_SNAPSHOT_VERSION = 2;
+    public static final int CURRENT_FISCAL_SNAPSHOT_VERSION = 3;
 
+    @Column @Setter private Integer fiscalMotorVersion;
+    @Column(nullable=false) @Setter private boolean fiscalRecalculoAviso;
+    @Column(length=40) @Setter private String fiscalMercado;
+    @Column(length=30) @Setter private String fiscalTratamentoLiquidacao;
+    @Column(length=500) @Setter private String fiscalFundamento;
+    @Column(name="fiscal_misencao_codigo",length=3) @Setter private String fiscalMIsencaoCodigo;
+    @Column(length=10) @Setter private String fiscalJurisdicao;
+    @Column(length=20) @Setter private String fiscalTerritorioFiscal;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @ToString.Include
@@ -224,7 +232,7 @@ public class DocumentoComercial {
     @Setter
     private String clienteMorada1;
 
-    @Column(length = 20, nullable = false)
+    @Column(length = 20)
     @Setter
     private String clienteCodPostal;
 
@@ -520,6 +528,7 @@ public class DocumentoComercial {
     public boolean isFiscalmenteConsolidado() {
         return (estado == EstadoDocumentoComercial.EMITIDO || estado == EstadoDocumentoComercial.ANULADO)
                 && (Integer.valueOf(1).equals(fiscalSnapshotVersion)
+                    || Integer.valueOf(2).equals(fiscalSnapshotVersion)
                     || Integer.valueOf(CURRENT_FISCAL_SNAPSHOT_VERSION).equals(fiscalSnapshotVersion))
                 && numeroDocumento != null
                 && numeroDocumentoCompleto != null
@@ -538,7 +547,7 @@ public class DocumentoComercial {
                 && hasText(clienteNome)
                 && hasText(clienteNif)
                 && hasText(clienteMorada)
-                && hasText(clienteCodPostal)
+                && (!"PT".equals(clientePais) || hasText(clienteCodPostal))
                 && hasText(clientePais)
                 && hasText(tipoDocumentoCodigo)
                 && hasText(serie)

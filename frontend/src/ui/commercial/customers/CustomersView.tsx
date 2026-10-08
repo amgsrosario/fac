@@ -691,7 +691,7 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
       <FormSection title="Identificação">
         <FacInputText disabled label="Código" value={editorMode === "edit" && selected ? String(selected.id) : "Automático"} />
         <FacInputText label="Nome" maxLength={80} onChange={(event) => onChangeForm({ ...form, nome: event.target.value })} required value={form.nome} />
-        <FacInputText label="NIF" maxLength={9} onChange={(event) => onChangeForm({ ...form, nif: event.target.value })} required value={form.nif} />
+        <FacInputText label="NIF / Identificação fiscal" maxLength={form.paisId === "PT" ? 9 : 20} onChange={(event) => onChangeForm({ ...form, nif: event.target.value })} required value={form.nif} />
       </FormSection>
 
       <FormSection title="Contactos">
@@ -703,7 +703,7 @@ function CustomerFormFields({ catalogos, editorMessage, editorMode, form, formId
       <FormSection title="Morada">
         <FacInputText label="Morada" maxLength={60} onChange={(event) => onChangeForm({ ...form, morada: event.target.value })} required value={form.morada} />
         <FacInputText label="Morada complementar" maxLength={60} onChange={(event) => onChangeForm({ ...form, morada1: event.target.value })} value={form.morada1} />
-        <PostalCodeLookup required value={form.codPostalId} onChange={(value) => onChangeForm({ ...form, codPostalId: value })} />
+        <PostalCodeLookup required={form.paisId === "PT"} value={form.codPostalId} onChange={(value) => onChangeForm({ ...form, codPostalId: value })} />
         <FacInputText label="Localidade" maxLength={50} onChange={(event) => onChangeForm({ ...form, localidade: event.target.value })} value={form.localidade} />
         <FacSelect label="País" onChange={(value) => onChangeForm({ ...form, paisId: value ?? "" })} options={catalogOptions(catalogos.paises)} value={form.paisId} />
       </FormSection>
@@ -862,10 +862,11 @@ async function responseError(response: Response) {
 
 function validate(form: ClienteForm) {
   if (!form.nome.trim()) return "O nome é obrigatório.";
-  if (form.nif.trim().length !== 9) return "O NIF deve ter 9 caracteres.";
+  if (!form.nif.trim() || form.nif.trim().length > 20) return "Indica uma identificação fiscal até 20 caracteres.";
+  if (form.paisId === "PT" && !/^[0-9]{9}$/.test(form.nif.trim())) return "O NIF português deve ter 9 algarismos.";
   if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) return "Indica um email valido.";
   if (!form.morada.trim()) return "A morada e obrigatoria.";
-  if (!form.codPostalId.trim()) return "O código postal é obrigatório.";
+  if (form.paisId === "PT" && !form.codPostalId.trim()) return "O código postal é obrigatório para clientes portugueses.";
   if (!form.paisId) return "O país é obrigatório.";
   if (!form.moedaId) return "A moeda e obrigatoria.";
   if (!form.transporteId) return "O transporte é obrigatório.";

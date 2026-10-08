@@ -30,6 +30,7 @@ import java.util.concurrent.Future;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -210,7 +211,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         LinhaDocumentoComercial linha = linhaRepository
                 .findByDocumentoComercialIdOrderByNumeroLinha(id).getFirst();
 
-        assertThat(emitido.getFiscalSnapshotVersion()).isEqualTo(2);
+        assertThat(emitido.getFiscalSnapshotVersion()).isEqualTo(3);
         assertThat(emitido.isFiscalmenteConsolidado()).isTrue();
         assertThat(linha.getArtigoCodigo()).isEqualTo("ARTINT");
         assertThat(linha.getBaseTributavel()).isEqualByComparingTo("10.000000");
@@ -397,6 +398,156 @@ class DocumentoComercialEmissaoIntegridadeTests {
         cleanupDocumentsForType("IC1");
 
         assertThat(documentoRepository.existsById(documentoAlheio)).isTrue();
+    }
+
+    @Test
+    void fundacaoNaoLiquidaPreservaTaxaImpostoFundamentoPdfQrEHistorico() throws Exception {
+        Long id = criarRascunho("LOCK");
+        Long linhaId = linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(id).getFirst().getId();
+        mockMvc.perform(put("/documentos-comerciais/{id}/linhas/{linha}", id, linhaId).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"artigoId\":\"ARTINT\",\"quantidade\":5,\"precoUnitario\":10,\"tipoTaxaIvaId\":\"REDUZIDA\"}"))
+                .andExpect(status().isNoContent());
+        configurarNaoLiquidacao();
+        mudarRegime(id, "FNL");
+        mockMvc.perform(get("/documentos-comerciais/{id}/linhas", id))
+                .andExpect(jsonPath("$[0].percentagemIva").value(6))
+                .andExpect(jsonPath("$[0].resultadoFiscal.ivaCalculado").value(3))
+                .andExpect(jsonPath("$[0].resultadoFiscal.ivaLiquidado").value(0))
+                .andExpect(jsonPath("$[0].resultadoFiscal.totalLinha").value(50))
+                .andExpect(jsonPath("$[0].resultadoFiscal.mIsencaoCodigo").value("M16"));
+        mockMvc.perform(post("/documentos-comerciais/{id}/emitir", id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"emissorId\":\"EMITINT\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.valorTotal").value(50));
+        var antes = documentoService.getById(id);
+        assertThat(antes.qrPayload()).contains("I2:50.00", "N:0.00", "O:50.00");
+        assertThat(pdfText(mockMvc.perform(get("/documentos-comerciais/{id}/pdf", id)).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray())).contains("IVA calculado", "IVA liquidado", "M16");
+        jdbcTemplate.update("update riva set fundamento_fiscal='ALTERADO', tratamento_liquidacao='NORMAL' where id='FNL'");
+        jdbcTemplate.update("update misencao set nome='ALTERADO' where id='M16'");
+        jdbcTemplate.update("update riva_taxa set valor=8 where id_riva='FNL' and id_tipo_taxa_iva='REDUZIDA'");
+        jdbcTemplate.update("update artigo set id_iva_venda='NORMAL' where codigo='ARTINT'");
+        jdbcTemplate.update("update tipotaxaiva set descricao='ALTERADA' where id='REDUZIDA'");
+        assertThat(documentoService.getById(id).qrPayload()).isEqualTo(antes.qrPayload());
+        mockMvc.perform(get("/documentos-comerciais/{id}/linhas", id))
+                .andExpect(jsonPath("$[0].resultadoFiscal.ivaCalculado").value(3))
+                .andExpect(jsonPath("$[0].resultadoFiscal.fundamentoFiscal").value("IVA Isento Art.º 14.º do RITI"));
+        assertThat(pdfText(mockMvc.perform(get("/documentos-comerciais/{id}/pdf", id)).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray())).contains("IVA calculado", "M16", "IVA Isento");
+        mockMvc.perform(post("/documentos-comerciais/{id}/recalcular-fiscal", id)).andExpect(status().isConflict());
+    }
+
+    @Test
+    void rascunhoLegacyRecalculaAvisaEExigeConfirmacaoSemAlterarEmitidos() throws Exception {
+        Long id = criarRascunho("LOCK");
+        jdbcTemplate.update("update linha_documento_comercial set preco_unitario=.335,valor_bruto=.335,valor_desconto=0,valor_linha=.335 where id_documento_comercial=?", id);
+        jdbcTemplate.update("update documento_comercial set fiscal_motor_version=null,valor_total=.41205 where id=?", id);
+        mockMvc.perform(post("/documentos-comerciais/{id}/recalcular-fiscal", id))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.valorTotal").value(.42))
+                .andExpect(jsonPath("$.resultadoFiscal.recalculoAviso").value(true));
+        mockMvc.perform(post("/documentos-comerciais/{id}/emitir", id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"emissorId\":\"EMITINT\"}")).andExpect(status().isBadRequest());
+        mockMvc.perform(post("/documentos-comerciais/{id}/emitir", id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"emissorId\":\"EMITINT\",\"recalculoConfirmado\":true}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.valorTotal").value(.42));
+    }
+
+    @Test
+    void emissaoNaoEurRecusaQrSemConversaoMasPreservaMoedaDoRascunho() throws Exception {
+        moedaRepository.saveAndFlush(new Moeda("USD", "US Dollar", BigDecimal.ONE, BigDecimal.ONE, "$", 2, "USD"));
+        Long id = criarRascunho("LOCK");
+        jdbcTemplate.update("update documento_comercial set id_moeda='USD' where id=?", id);
+        mockMvc.perform(post("/documentos-comerciais/{id}/emitir", id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"emissorId\":\"EMITINT\"}")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/documentos-comerciais/{id}", id)).andExpect(jsonPath("$.moedaId").value("USD"))
+                .andExpect(jsonPath("$.estado").value("RASCUNHO"));
+    }
+
+    @Test
+    void retencaoNaoSuportadaRecusaRecalculoSemModificarValorLegacy() throws Exception {
+        Long id = criarRascunho("LOCK");
+        jdbcTemplate.update("update documento_comercial set valor_retencao=1 where id=?", id);
+        mockMvc.perform(post("/documentos-comerciais/{id}/recalcular-fiscal", id))
+                .andExpect(status().isBadRequest());
+        assertThat(jdbcTemplate.queryForObject("select valor_retencao from documento_comercial where id=?", BigDecimal.class, id))
+                .isEqualByComparingTo("1");
+    }
+
+    @Test
+    void previewEGravacaoRejeitamPrecisaoSuperiorASeisCasas() throws Exception {
+        Long id = criarRascunho("LOCK");
+        String linha = "{\"artigoId\":\"ARTINT\",\"quantidade\":1,\"precoUnitario\":0.3350001}";
+        mockMvc.perform(post("/documentos-comerciais/preview-fiscal").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rivaId\":\"CON\",\"dataEmissao\":\"2026-06-22\",\"linhas\":[" + linha + "]}"))
+                .andExpect(status().isBadRequest());
+        long antes = linhaRepository.count();
+        mockMvc.perform(post("/documentos-comerciais/{id}/linhas", id).contentType(MediaType.APPLICATION_JSON)
+                .content(linha)).andExpect(status().isBadRequest());
+        assertThat(linhaRepository.count()).isEqualTo(antes);
+    }
+
+    @Test
+    void previewFiscalNaoPersisteEFechaTresLinhasAoCentimo() throws Exception {
+        String linha = "{\"artigoId\":\"ARTINT\",\"quantidade\":1,\"precoUnitario\":0.01}";
+        long antes = documentoRepository.count();
+        mockMvc.perform(post("/documentos-comerciais/preview-fiscal").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rivaId\":\"CON\",\"dataEmissao\":\"2026-06-22\",\"linhas\":["+linha+","+linha+","+linha+"]}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totais.valorTotal").value(.03))
+                .andExpect(jsonPath("$.totais.valorIvaTotal").value(0));
+        assertThat(documentoRepository.count()).isEqualTo(antes);
+    }
+
+    @Test
+    void alterarRivaReavaliaTodasLinhasSemDirtyEIsencaoPropriaPersisteFundamento() throws Exception {
+        Long id = criarRascunho("LOCK");
+        mockMvc.perform(post("/documentos-comerciais/{id}/linhas",id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"artigoId\":\"ARTINT\",\"quantidade\":5,\"precoUnitario\":10,\"tipoTaxaIvaId\":\"REDUZIDA\"}"))
+                .andExpect(status().isCreated());
+        configurarNaoLiquidacao();
+        jdbcTemplate.update("insert into riva_taxa(id_riva,id_tipo_taxa_iva,valor) values('FNL','NORMAL',23) on conflict(id_riva,id_tipo_taxa_iva) do update set valor=23");
+        mudarRegime(id,"FNL");
+        mockMvc.perform(get("/documentos-comerciais/{id}/linhas",id))
+                .andExpect(jsonPath("$[0].resultadoFiscal.ivaCalculado").value(2.3))
+                .andExpect(jsonPath("$[0].resultadoFiscal.ivaLiquidado").value(0))
+                .andExpect(jsonPath("$[1].resultadoFiscal.ivaCalculado").value(3))
+                .andExpect(jsonPath("$[1].resultadoFiscal.ivaLiquidado").value(0));
+        mockMvc.perform(get("/documentos-comerciais/{id}",id)).andExpect(jsonPath("$.valorTotal").value(60));
+        jdbcTemplate.update("update artigo set id_iva_venda='ISENTA',id_misencao='M07',fundamento_fiscal='Isento artigo 9.º do CIVA' where codigo='ARTINT'");
+        Long isento=criarRascunho("LOCK");
+        mockMvc.perform(post("/documentos-comerciais/{id}/emitir",isento).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"emissorId\":\"EMITINT\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.valorIvaTotal").value(0));
+        mockMvc.perform(get("/documentos-comerciais/{id}/linhas",isento))
+                .andExpect(jsonPath("$[0].resultadoFiscal.mIsencaoCodigo").value("M07"))
+                .andExpect(jsonPath("$[0].resultadoFiscal.taxaAplicavel").value(0));
+    }
+
+    @Test
+    void territorioMadeiraEClienteEstrangeiroMantemMoedaIndependente() throws Exception {
+        Pais estrangeiro=paisRepository.findById("ES").orElseGet(()->paisRepository.save(new Pais("ES","Espanha")));
+        cliente.setPais(estrangeiro);cliente.setNif("ESB123456789");cliente.setCodPostal(null);clienteRepository.save(cliente);
+        jdbcTemplate.update("insert into riva(id,nome,territorio_fiscal) values('FMD','Madeira teste','MADEIRA') on conflict(id) do nothing");
+        Long id=criarRascunho("LOCK");
+        Long linha=linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(id).getFirst().getId();
+        mockMvc.perform(put("/documentos-comerciais/{id}/linhas/{linha}",id,linha).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"artigoId\":\"ARTINT\",\"quantidade\":5,\"precoUnitario\":10,\"tipoTaxaIvaId\":\"REDUZIDA\"}"))
+                .andExpect(status().isNoContent());
+        mudarRegime(id,"FMD");
+        mockMvc.perform(post("/documentos-comerciais/{id}/emitir",id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"emissorId\":\"EMITINT\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.valorTotal").value(52))
+                .andExpect(jsonPath("$.moedaId").value("EUR")).andExpect(jsonPath("$.fiscalmenteConsolidado").value(true));
+        assertThat(documentoService.getById(id).qrPayload()).contains("I1:PT-MA", "B:ESB123456789", "C:ES", "I4:2.00");
+    }
+
+    private void configurarNaoLiquidacao() {
+        jdbcTemplate.update("insert into riva(id,nome,mercado,tratamento_liquidacao,fundamento_fiscal,id_misencao) values('FNL','Não liquidação teste','INTRACOMUNITARIO','NAO_LIQUIDAR','IVA Isento Art.º 14.º do RITI','M16') on conflict(id) do update set tratamento_liquidacao='NAO_LIQUIDAR',fundamento_fiscal='IVA Isento Art.º 14.º do RITI'");
+        jdbcTemplate.update("insert into riva_taxa(id_riva,id_tipo_taxa_iva,valor) values('FNL','REDUZIDA',6) on conflict(id_riva,id_tipo_taxa_iva) do update set valor=6");
+    }
+
+    private void mudarRegime(Long id, String regime) throws Exception {
+        mockMvc.perform(put("/documentos-comerciais/{id}",id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"dataEmissao\":\"2026-06-22\",\"armazemCargaId\":\""+armazem.getId()+"\",\"rivaId\":\""+regime+"\"}"))
+                .andExpect(status().isNoContent());
     }
 
     private Long criarRascunho(String serie) throws Exception {

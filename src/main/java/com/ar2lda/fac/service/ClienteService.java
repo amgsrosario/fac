@@ -5,6 +5,7 @@ import com.ar2lda.fac.controller.dto.ClienteComPendentesResumoDto;
 import com.ar2lda.fac.controller.dto.ClienteDto;
 import com.ar2lda.fac.controller.dto.ClienteUpdateDto;
 import com.ar2lda.fac.exception.ConflictException;
+import com.ar2lda.fac.exception.BadRequestException;
 import com.ar2lda.fac.exception.NotFoundException;
 import com.ar2lda.fac.mapper.ClienteMapper;
 import com.ar2lda.fac.model.Cliente;
@@ -52,6 +53,7 @@ public class ClienteService {
 
     @Transactional
     public ClienteDto create(ClienteCreateDto dto) {
+        validateIdentity(dto.nif(), dto.paisId(), dto.codPostalId());
         if (clienteRepository.existsByNif(dto.nif())) {
             throw new ConflictException("Já existe um cliente com o NIF: " + dto.nif());
         }
@@ -97,6 +99,7 @@ public class ClienteService {
 
     @Transactional
     public ClienteDto update(Long id, ClienteUpdateDto dto) {
+        validateIdentity(dto.nif(), dto.paisId(), dto.codPostalId());
         Cliente cliente = findEntityById(id);
         if (clienteRepository.existsByNifAndIdNot(dto.nif(), id)) {
             throw new ConflictException("Já existe um cliente com o NIF: " + dto.nif());
@@ -129,7 +132,19 @@ public class ClienteService {
         cliente.setTransporte(findTransporte(transporteId));
     }
 
+    private void validateIdentity(String nif, String paisId, String codPostalId) {
+        if ("PT".equalsIgnoreCase(paisId)) {
+            if (nif == null || !nif.matches("[0-9]{9}")) {
+                throw new BadRequestException("O NIF português deve ter 9 algarismos");
+            }
+            if (codPostalId == null || codPostalId.isBlank()) {
+                throw new BadRequestException("Código postal é obrigatório para clientes portugueses");
+            }
+        }
+    }
+
     private CodPostal findCodPostal(String id) {
+        if (id == null || id.isBlank()) return null;
         return codPostalRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Código postal não encontrado: " + id));
     }

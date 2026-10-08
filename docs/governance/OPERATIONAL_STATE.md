@@ -1,6 +1,6 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-06, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-07, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
@@ -10,7 +10,7 @@ Fonte canónica do estado corrente. Atualização: 2026-10-06, Europe/Lisbon. Su
 
 ## JWT / Gestão e Invalidação de Sessões
 
-**CONCLUÍDA E INTEGRADA. Segurança JWT: FECHADA. Capítulo global Segurança: AINDA NÃO FECHADO.**
+**CONCLUÍDA E INTEGRADA. Segurança JWT: FECHADA. Capítulo global Segurança: FORMALMENTE ENCERRADO por decisão posterior do Executivo.**
 
 | Entrega | Estado confirmado |
 | --- | --- |
@@ -63,12 +63,12 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 - Package final: BUILD SUCCESS. Revisão independente por review_permissions_final: APROVADA, BLOCKER 0 / MAJOR 0 / MINOR 0. Revisão estática do diff completo e ficheiros novos; o revisor não repetiu os testes executados pelo Executor.
 - PR #12 integrado em feature/visual-redesign, confirmado pelo histórico Git após fetch. O estado do CI não foi consultado diretamente pelo Executor; a confirmação do merge não é uma declaração autónoma de CI verde.
 - Evidência local preservada em /home/arosario/Projetos/fac/target/permissions-foundation-validation (logs e revisão, ignorados pelo Git; não arquivo institucional permanente).
-- Segurança global continua aberta. Security Gate está integrado, com triagem npm pendente antes do fecho global de Segurança; a Fundação de Permissões não foi reaberta.
+- Segurança formalmente encerrada por decisão do Executivo. Security Gate integrado; manutenção npm futura não bloqueante, sem reabertura da Fundação de Permissões.
 - Alterações preexistentes do checkout principal em docker-compose.yml e .worktrees/ preservadas e excluídas desta missão.
 
 ## Security Gate
 
-**CONCLUÍDO E INTEGRADO. PR #14 merged; HUMAN MERGE concluído por António. Não existe trabalho funcional pendente desta missão. Segurança global permanece aberta, com triagem npm pendente antes do fecho formal pelo Executivo.**
+**CONCLUÍDO E INTEGRADO. PR #14 merged; HUMAN MERGE concluído por António. Não existe trabalho funcional pendente desta missão. Segurança formalmente encerrada pelo Executivo; manutenção npm futura não bloqueante.**
 
 - Base confirmada: `origin/feature/visual-redesign`, observada em `b32720a8b7060314f1d7c3b8f79181bd41df3ca3`.
 - HEAD produtivo observado e confirmado no fecho pós-merge: `f2e8dfe1c11fb61378bc01684b96eaf871343021`. Os commits `feaa5c16bd1e6af81e75f2fdbf7d01bcf2489d0e` e `b293e796eba8651417d31f65ce3e41636dc4b31c` estão integrados. Esta referência descreve o fecho; o HEAD corrente deve ser consultado no Git.
@@ -81,17 +81,33 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 - F6 — RESOLVIDO E INTEGRADO: herança Nginx corrigida e CSP simples; headers HTTP efectivos verificados em páginas, health e erro proxy. Frontend real renderizado sob CSP em navegador, sem violações observadas no smoke de login.
 - Suite integral: 259 testes em 47 classes, zero falhas/erros/omitidos, com PostgreSQL 16.3 descartável e Flyway V15. Backend package e frontend TypeScript/Vite aprovados. Após endurecer o fallback de perfil dev implícito, 46 testes afectados e package repetidos antes da entrega. A prova adicional dos dois budgets de expansão XLSX passou em 6 testes de admissão/package, sem alteração funcional.
 - Revisão independente: MAJOR sobre worksheet não canónica corrigido e testado; revisão final da implementação/documentação APROVADA, BLOCKER 0 / MAJOR 0 / MINOR 0 (revisão estática; testes executados pelo Executor). [PR #14](https://github.com/amgsrosario/fac/pull/14) merged em `feature/visual-redesign`; gate humano concluído. CI final de `b293e796eba8651417d31f65ce3e41636dc4b31c` confirmado verde na [execução 37504527078](https://github.com/amgsrosario/fac/actions/runs/37504527078).
-- Instalação pelo lockfile frontend reportou 7 vulnerabilidades (1 moderada, 6 altas). As 7 vulnerabilidades permanecem POR TRIAR. Não houve investigação externa de CVEs nem upgrade de dependências; a próxima acção é a triagem npm, sem correcções automáticas. Esta pendência mantém o capítulo global Segurança aberto.
+- Instalação pelo lockfile frontend reportou 7 vulnerabilidades (1 moderada, 6 altas). O registo descreve a instalação observada no Security Gate. A OP fiscal confirma a decisão posterior: Segurança formalmente encerrada; manutenção de dependências npm é futura e não bloqueante, sem reabrir o Security Gate. Não foram actualizadas dependências nesta missão fiscal.
 - Resíduos aceites: localStorage, logout local, ausência de refresh tokens/sessões individuais, auditoria selectiva de recusas. Limiter volátil por instância: restart/múltiplas instâncias alteram orçamento; origem pode ser partilhada atrás de proxy. PDF conserva materialização final e layout.
 - Produção pública exige HTTPS. TLS/redireccionamento/certificados/renovação/HSTS no edge, firewall e gestão/rotação de secrets são responsabilidades do deployment. Contrato completo em [SECURITY_GATE.md](../security/SECURITY_GATE.md).
-- Checkout principal e respectivas alterações preexistentes preservados. Sem migration, nova permissão, alteração de CI ou Fecho Fiscal iniciado.
+- Checkout principal e respectivas alterações preexistentes preservados. No fecho do Security Gate não houve migration, nova permissão ou alteração de CI. A missão fiscal posterior encontra-se abaixo.
+
+## Fundação fiscal RIVA + motor monetário
+
+**IMPLEMENTADA NA BRANCH DA MISSÃO; AINDA NÃO INTEGRADA. Merge reservado a António.**
+
+- Branch/worktree: `codex/fiscal-riva-foundation`, `.worktrees/fiscal-riva-foundation`. Base remota observada na abertura: `95dc3de6895abe55b9ec0b1a574250a232d54ee6`, `feature/visual-redesign`; consultar Git para HEAD corrente.
+- V16 acrescenta enquadramento RIVA, fundamento próprio do artigo, resultados fiscais e snapshot V3, postal opcional estrangeiro e taxas territoriais. V17 referencia 33 códigos Mxx oficiais AT V4.0 / 18-06-2026, preservando códigos/designações existentes.
+- IVA calculado/liquidado separados; monetário HALF_UP por linha a cêntimos; RIVA recalcula todas as linhas; legado rascunho avisa diferenças; históricos V1/V2 não são recalculados.
+- Combinações habilitadas: tributação normal, isenção inerente M07, não liquidação M10 nacional ou M16 intracomunitária para bens, com fundamento explícito. O enquadramento configurado não verifica elegibilidade documental/VIES. Outras projeções normativas exigem evolução própria; catálogo completo não implica habilitação geral.
+- Emissão não EUR e retenção documental não zero são recusadas enquanto não existir conversão/distribuição fiscal demonstrada. Estruturas monetárias e dados legacy preservados. Taxas territoriais são referência atual, não motor de legislação histórica.
+- Validação em PostgreSQL 16.3 descartável: regressão final integral `mvn -o test`: 283/283, zero falhas/erros/skips; upgrade V15→V17 1/1 preserva catálogos personalizados e emitido V2, valida e reinicializa sem migrations. As correções de revisão estão incluídas nesta regressão; 30 testes dirigidos também passaram. Package `mvn -o -DskipTests package`: BUILD SUCCESS.
+- Frontend: TypeScript/build aprovados; 11 Playwright aprovados, incluindo apresentação fiscal com API simulada. Não confundir mocks com prova de enquadramento legal; testes backend verificam emissão/PDF/QR reais.
+- Revisão independente final por `fiscal_final_review` e `fiscal_ui_review`: APROVADA, BLOCKER 0 / MAJOR 0. Quatro MAJOR anteriores corrigidos e testados: precisão preview/gravação, M16 em serviços, QR não EUR e retenção. Mock frontend alinhado com M16; aviso descoberto ao guardar exige nova confirmação. Revisões estáticas; testes executados pelos executores.
+- Entrega: commit funcional `2e1c51d31e56d8b24cc6f0432a0d7cbc10ab4d16` publicado exclusivamente na branch da missão. [PR #16](https://github.com/amgsrosario/fac/pull/16) aberto contra `feature/visual-redesign`, sem conflitos confirmados. CI do commit funcional confirmado verde na [execução 37656472445](https://github.com/amgsrosario/fac/actions/runs/37656472445) (safety tests e package). A publicação deste registo documental requer nova confirmação de CI do HEAD final; não encadear commits para registar o próprio hash. Gate restante: revisão/merge humano de António. MERGE NÃO EFECTUADO.
+- Próximo bloco fiscal: circuito posterior NC/ND/RC/NL conforme nova OP; SAF-T, assinatura/certificação e fiscalidade não portuguesa fora desta fundação.
+- Alterações preexistentes do checkout principal preservadas; nenhuma base persistente/demo usada em testes; CI/dependências não alterados.
 
 ## Sequência estratégica vigente
 
 1. JWT / Gestão e Invalidação de Sessões — **CONCLUÍDA**.
 2. Fundação de Permissões — **CONCLUÍDA E INTEGRADA; GATE HUMANO CONCLUÍDO**.
-3. Security Gate — **INTEGRADO; HUMAN MERGE CONCLUÍDO; TRIAGEM NPM PENDENTE ANTES DO FECHO GLOBAL DE SEGURANÇA**.
-4. Fecho Fiscal Sistemático — **NÃO INICIADO**.
+3. Security Gate — **INTEGRADO; HUMAN MERGE CONCLUÍDO; SEGURANÇA FORMALMENTE ENCERRADA**.
+4. Fecho Fiscal Sistemático — **EM CURSO: FUNDAÇÃO FISCAL RIVA + MOTOR MONETÁRIO**.
 5. Auditoria Funcional Final.
 6. Preparação e Certificação AT.
 7. Piloto Controlado.
@@ -102,5 +118,5 @@ Esta sequência é a orientação vigente do Executivo. A conclusão JWT não an
 
 - Não foi criado um fluxo de alteração de password pelo próprio utilizador; o caminho implementado nesta missão é o reset administrativo existente.
 - Logout permanece client-side; não existe revogação individual de JWT introduzida nesta missão.
-- Fundação de Permissões integrada, sem trabalho funcional pendente. O capítulo global Segurança continua aberto; Security Gate está integrado; triagem npm e fecho formal executivo permanecem pendentes.
+- Fundação de Permissões integrada, sem trabalho funcional pendente. Segurança formalmente encerrada; Security Gate integrado; manutenção npm futura não bloqueante.
 - A publicação documental segue o fluxo de branch/PR contra `feature/visual-redesign`; o merge é uma decisão humana de António.

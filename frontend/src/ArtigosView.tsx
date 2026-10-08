@@ -22,6 +22,8 @@ type Artigo = {
   peso?: number;
   ivaCompraId: string;
   ivaVendaId: string;
+  mIsencaoId?: string | null;
+  fundamentoFiscal?: string | null;
   pvp: number;
   inativo: boolean;
   retencao: boolean;
@@ -52,6 +54,8 @@ type ArtigoForm = {
   peso: string;
   ivaCompraId: string;
   ivaVendaId: string;
+  mIsencaoId: string;
+  fundamentoFiscal: string;
   pvp: string;
   inativo: boolean;
   retencao: boolean;
@@ -69,6 +73,8 @@ const emptyForm: ArtigoForm = {
   peso: "0",
   ivaCompraId: "",
   ivaVendaId: "",
+  mIsencaoId: "",
+  fundamentoFiscal: "",
   pvp: "0",
   inativo: false,
   retencao: false,
@@ -94,6 +100,7 @@ export default function ArtigosView() {
   const canManage = hasPermission("MESTRES_GERIR");
   const [artigos, setArtigos] = useState<Artigo[]>([]);
   const [familias, setFamilias] = useState<Familia[]>([]);
+  const [motivosIsencao, setMotivosIsencao] = useState<{ id: string; nome: string }[]>([]);
   const [tiposIva, setTiposIva] = useState<TipoTaxaIva[]>([]);
   const [selectedCodigo, setSelectedCodigo] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -136,14 +143,16 @@ export default function ArtigosView() {
     setLoading(true);
     setMessage(null);
     try {
-      const [artigosPage, familiasPage, tiposIvaPage] = await Promise.all([
+      const [artigosPage, familiasPage, tiposIvaPage, motivosPage] = await Promise.all([
         fetchPage<Artigo>("/api/artigos?size=200&sort=codigo,asc"),
         fetchPage<Familia>("/api/familias?size=200&sort=descricao,asc"),
-        fetchPage<TipoTaxaIva>("/api/tipos-taxa-iva?size=100&sort=descricao,asc")
+        fetchPage<TipoTaxaIva>("/api/tipos-taxa-iva?size=100&sort=descricao,asc"),
+        fetchPage<{ id: string; nome: string }>("/api/motivos-isencao?size=100&sort=id,asc")
       ]);
       setArtigos(artigosPage.content);
       setFamilias(familiasPage.content);
       setTiposIva(tiposIvaPage.content);
+      setMotivosIsencao(motivosPage.content);
       setSelectedCodigo((current) => current ?? artigosPage.content[0]?.codigo ?? null);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível carregar artigos.");
@@ -288,6 +297,8 @@ export default function ArtigosView() {
                 {tiposIva.map((tipo) => <option disabled={tipo.inativo && tipo.id !== form.ivaVendaId} key={tipo.id} value={tipo.id}>{tipo.descricao}{tipo.inativo ? " (inativo)" : ""}</option>)}
               </select>
             </Field>
+            <Field label="Motivo de isenção próprio do artigo"><select onChange={(event) => change("mIsencaoId", event.target.value)} value={form.mIsencaoId}><option value="">Sem motivo</option>{motivosIsencao.map((motivo) => <option key={motivo.id} value={motivo.id}>{motivo.id} — {motivo.nome}</option>)}</select></Field>
+            <Field label="Fundamento fiscal próprio do artigo"><input maxLength={500} onChange={(event) => change("fundamentoFiscal", event.target.value)} value={form.fundamentoFiscal} /></Field>
           </FormSection>
 
           <section className={`fac-article-more-options ${moreOptionsOpen ? "open" : ""}`}>
@@ -507,6 +518,8 @@ function toForm(artigo: Artigo): ArtigoForm {
     peso: String(artigo.peso ?? 0),
     ivaCompraId: artigo.ivaCompraId,
     ivaVendaId: artigo.ivaVendaId,
+    mIsencaoId: artigo.mIsencaoId ?? "",
+    fundamentoFiscal: artigo.fundamentoFiscal ?? "",
     pvp: String(artigo.pvp),
     inativo: artigo.inativo,
     retencao: artigo.retencao,
@@ -526,6 +539,8 @@ function toPayload(form: ArtigoForm, creating: boolean) {
     peso: form.peso === "" ? null : Number(form.peso),
     ivaCompraId: creating ? form.ivaVendaId : form.ivaCompraId || form.ivaVendaId,
     ivaVendaId: form.ivaVendaId,
+    mIsencaoId: blankToNull(form.mIsencaoId),
+    fundamentoFiscal: blankToNull(form.fundamentoFiscal),
     pvp: Number(form.pvp),
     inativo: form.inativo,
     retencao: form.retencao,

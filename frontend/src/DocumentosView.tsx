@@ -28,6 +28,7 @@ const DOCUMENTO_COLUMNS: ConfigurableColumn[] = [
 ];
 
 type DocumentoComercial = {
+  resultadoFiscal?: { recalculoAviso?: boolean } | null;
   id: number;
   tipoDocumentoId: string;
   serie: string;
@@ -56,6 +57,7 @@ type DocumentoComercial = {
 };
 
 type LinhaDocumento = {
+  resultadoFiscal?: { taxaAplicavel: number; ivaCalculado: number; ivaLiquidado: number; fundamentoFiscal?: string | null; mIsencaoCodigo?: string | null } | null;
   id: number;
   numeroLinha: number;
   artigoId: string;
@@ -227,10 +229,18 @@ export default function DocumentosView() {
     }
   }
 
+  async function recalculateDraft(documentoId: number) {
+    if (!hasPermission("DOCUMENTO_EDITAR_RASCUNHO")) return;
+    const refreshed = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${documentoId}/recalcular-fiscal`, "POST", {});
+    setDocumentos((current) => current.map((item) => item.id === refreshed.id ? refreshed : item));
+    if (refreshed.resultadoFiscal?.recalculoAviso) setNotice("O rascunho foi recalculado pelas regras fiscais actuais. Revê os valores antes de emitir.");
+  }
+
   async function loadLinhas(documentoId: number) {
     setLinesLoading(true);
     setMessage(null);
     try {
+      if (documentos.find((item) => item.id === documentoId)?.estado === "RASCUNHO") await recalculateDraft(documentoId);
       setLinhas(await fetchJson<LinhaDocumento[]>(`/api/documentos-comerciais/${documentoId}/linhas`));
     } catch (error) {
       setLinhas([]);
@@ -316,6 +326,8 @@ export default function DocumentosView() {
     setMessage(null);
     setNotice(null);
     try {
+      await recalculateDraft(selected.id);
+      setLinhas(await fetchJson<LinhaDocumento[]>(`/api/documentos-comerciais/${selected.id}/linhas`));
       const diagnosticoAtual = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
       setDiagnostico(diagnosticoAtual);
       setEmissionOpen(true);
@@ -332,7 +344,7 @@ export default function DocumentosView() {
     setLoading(true);
     setMessage(null);
     try {
-      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, "POST", { emissorId: getAuthSession()?.codigo });
+      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, "POST", { emissorId: getAuthSession()?.codigo, recalculoConfirmado: Boolean(selected.resultadoFiscal?.recalculoAviso) });
       const diagnosticoEmitido = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
       setDocumentos((current) => current.map((item) => item.id === emitted.id ? emitted : item));
       setEmissionOpen(false);
@@ -683,6 +695,8 @@ export default function DocumentosView() {
             <button className="fac-ghost-button" onClick={() => setEmissionOpen(false)} type="button">Fechar conferencia</button>
           </div>
 
+          {selected.resultadoFiscal?.recalculoAviso && <p className="fac-message" role="status">Rascunho recalculado: confirma os valores fiscais apresentados antes da emissão.</p>}
+          {linhas.filter((line) => line.resultadoFiscal).map((line) => <p className="fac-muted" key={line.id}>Linha {line.numeroLinha}: taxa aplicável {decimal(line.resultadoFiscal!.taxaAplicavel)}% · IVA calculado {money(line.resultadoFiscal!.ivaCalculado)} · IVA liquidado {money(line.resultadoFiscal!.ivaLiquidado)}{line.resultadoFiscal!.fundamentoFiscal ? ` · ${line.resultadoFiscal!.mIsencaoCodigo ?? ""} ${line.resultadoFiscal!.fundamentoFiscal}` : ""}</p>)}
           <div className="fac-emission-summary">
             <div><span>Total do cabeçalho</span><strong>{money(diagnostico.totais.cabecalhoValorTotal)} {selected.moedaId}</strong></div>
             <div><span>Total calculado pelas linhas</span><strong>{money(diagnostico.totais.linhasValorTotal)} {selected.moedaId}</strong></div>

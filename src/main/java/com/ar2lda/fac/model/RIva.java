@@ -16,6 +16,15 @@ import java.util.List;
 @ToString(onlyExplicitlyIncluded = true)
 public class RIva {
 
+    @Enumerated(EnumType.STRING) @Column(length=40, nullable=false) @Setter
+    private MercadoFiscal mercado = MercadoFiscal.NACIONAL;
+    @Enumerated(EnumType.STRING) @Column(length=30, nullable=false) @Setter
+    private TratamentoLiquidacao tratamentoLiquidacao = TratamentoLiquidacao.NORMAL;
+    @Column(length=500) @Setter private String fundamentoFiscal;
+    @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="id_misencao") @Setter private MIsencao mIsencao;
+    @Column(length=10, nullable=false) @Setter private String jurisdicao = "PT";
+    @Enumerated(EnumType.STRING) @Column(length=20, nullable=false) @Setter
+    private TerritorioFiscal territorioFiscal = TerritorioFiscal.CONTINENTE;
     @Id
     @Column(length = 3, nullable = false)
     @ToString.Include

@@ -40,8 +40,8 @@ public class Cliente {
     @ToString.Include
     private String localidade;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_codpostal", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_codpostal")
     @Setter
     private CodPostal codPostal;
 

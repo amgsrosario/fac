@@ -321,7 +321,9 @@ public class DadosMestresTransferService {
         required(line, row, errors, "morada", "CLIENTE_MORADA_OBRIGATORIA");
         required(line, row, errors, "nif", "CLIENTE_NIF_OBRIGATORIO");
         required(line, row, errors, "email", "CLIENTE_EMAIL_OBRIGATORIO");
-        required(line, row, errors, "codPostalId", "CLIENTE_CODPOSTAL_OBRIGATORIO");
+        if ("PT".equalsIgnoreCase(value(row, "paisId"))) {
+            required(line, row, errors, "codPostalId", "CLIENTE_CODPOSTAL_OBRIGATORIO");
+        }
         required(line, row, errors, "paisId", "CLIENTE_PAIS_OBRIGATORIO");
         required(line, row, errors, "moedaId", "CLIENTE_MOEDA_OBRIGATORIA");
         required(line, row, errors, "transporteId", "CLIENTE_TRANSPORTE_OBRIGATORIO");
@@ -332,8 +334,8 @@ public class DadosMestresTransferService {
         validateEmail(line, row, errors, "email1", "CLIENTE_EMAIL_INVALIDO");
         String nif = value(row, "nif");
         if (!nif.isBlank()) {
-            if (nif.length() != 9 || !nif.chars().allMatch(Character::isDigit)
-                    || ("PT".equalsIgnoreCase(value(row, "paisId")) && !validPtNif(nif))) {
+            if (nif.length() > 20 || ("PT".equalsIgnoreCase(value(row, "paisId"))
+                    && (!nif.matches("[0-9]{9}") || !validPtNif(nif)))) {
                 errors.add(issue(line, "nif", nif, "CLIENTE_NIF_INVALIDO", "NIF inválido"));
             } else if (!seenNifs.add(nif)) {
                 duplicates++;
@@ -583,7 +585,7 @@ public class DadosMestresTransferService {
         row.put("retencao", String.valueOf(c.isRetencao()));
         row.put("inativo", String.valueOf(c.isInativo()));
         row.put("observacoes", c.getObservacoes());
-        row.put("codPostalId", c.getCodPostal().getId());
+        row.put("codPostalId", c.getCodPostal() == null ? "" : c.getCodPostal().getId());
         row.put("paisId", c.getPais().getId());
         row.put("moedaId", c.getMoeda().getId());
         row.put("mPagamentoId", c.getMPagamento() == null ? "" : String.valueOf(c.getMPagamento().getId()));

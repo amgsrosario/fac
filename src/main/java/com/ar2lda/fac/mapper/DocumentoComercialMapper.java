@@ -94,7 +94,9 @@ public interface DocumentoComercialMapper {
                 e.getMoedaSimbolo(),
                 e.getMoedaCasasDecimais(),
                 e.getTaxaCambio(),
-                e.getRegimeIvaCodigo()
+                e.getRegimeIvaCodigo(), e.getFiscalMotorVersion() == null ? null : new com.ar2lda.fac.controller.dto.ResultadoFiscalDocumentoDto(
+                    e.getFiscalMotorVersion(), e.getFiscalMercado(), e.getFiscalTratamentoLiquidacao(), e.getFiscalFundamento(),
+                    e.getFiscalMIsencaoCodigo(), e.getFiscalJurisdicao(), e.getFiscalTerritorioFiscal(), e.isFiscalRecalculoAviso())
         );
     }
 }

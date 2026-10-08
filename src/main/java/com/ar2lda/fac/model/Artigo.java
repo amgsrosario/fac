@@ -21,6 +21,8 @@ import java.math.BigDecimal;
 @ToString(onlyExplicitlyIncluded = true)
 public class Artigo {
 
+    @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="id_misencao") @Setter private MIsencao mIsencao;
+    @Column(length=500) @Setter private String fundamentoFiscal;
     @Id
     @Column(length = 50, nullable = false)
     @ToString.Include

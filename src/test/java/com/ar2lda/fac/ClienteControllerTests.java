@@ -1,6 +1,8 @@
 package com.ar2lda.fac;
 
 import com.ar2lda.fac.model.CodPostal;
+import com.ar2lda.fac.model.Pais;
+import com.ar2lda.fac.repository.PaisRepository;
 import com.ar2lda.fac.model.Moeda;
 import com.ar2lda.fac.model.RIva;
 import com.ar2lda.fac.model.Transporte;
@@ -50,6 +52,9 @@ class ClienteControllerTests {
     @Autowired
     private TransporteRepository transporteRepository;
 
+    @Autowired
+    private PaisRepository paisRepository;
+
     private String transporteId;
 
     @BeforeEach
@@ -61,6 +66,57 @@ class ClienteControllerTests {
         rIvaRepository.findById("CON")
                 .orElseGet(() -> rIvaRepository.save(new RIva("CON", "Continente")));
         transporteId = transporteRepository.save(new Transporte("CLI", "Transporte teste")).getId();
+    }
+
+    @Test
+    void criaClienteEstrangeiroSemCodigoPostalPortuguesEActualizaIdentificacao() throws Exception {
+        paisRepository.save(new Pais("ES", "Espanha"));
+        String payload = clienteFiscalPayload("ESB123456789", "ES", null);
+        String result = mockMvc.perform(post("/clientes").contentType(MediaType.APPLICATION_JSON).content(payload))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nif").value("ESB123456789"))
+                .andExpect(jsonPath("$.codPostalId").doesNotExist())
+                .andReturn().getResponse().getContentAsString();
+        long id = new com.fasterxml.jackson.databind.ObjectMapper().readTree(result).get("id").asLong();
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/clientes/" + id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(clienteFiscalPayload("ESB987654321", "ES", null)))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/clientes/" + id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nif").value("ESB987654321"))
+                .andExpect(jsonPath("$.codPostalId").doesNotExist());
+    }
+
+    @Test
+    void mantemObrigatoriedadePostalEFormatoNifPortugues() throws Exception {
+        mockMvc.perform(post("/clientes").contentType(MediaType.APPLICATION_JSON)
+                        .content(clienteFiscalPayload("509123456", "PT", null)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/clientes").contentType(MediaType.APPLICATION_JSON)
+                        .content(clienteFiscalPayload("PT509123456", "PT", "3750-003")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void limitaIdentificacaoEstrangeiraACapacidadePersistida() throws Exception {
+        paisRepository.save(new Pais("ES", "Espanha"));
+        mockMvc.perform(post("/clientes").contentType(MediaType.APPLICATION_JSON)
+                        .content(clienteFiscalPayload("123456789012345678901", "ES", null)))
+                .andExpect(status().isBadRequest());
+    }
+
+    private String clienteFiscalPayload(String nif, String pais, String postal) throws Exception {
+        var json = new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode();
+        json.put("nome", "Cliente fiscal");
+        json.put("morada", "Rua teste");
+        json.put("nif", nif);
+        json.put("email", "fiscal@fac.test");
+        json.put("paisId", pais);
+        json.put("moedaId", "EUR");
+        json.put("transporteId", transporteId);
+        if (postal != null) json.put("codPostalId", postal);
+        return json.toString();
     }
 
     @Test

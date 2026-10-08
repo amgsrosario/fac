@@ -43,6 +43,7 @@ public class LinhaDocumentoComercialService {
     private final ArtigoRepository artigoRepository;
     private final TipoTaxaIvaRepository tipoTaxaIvaRepository;
     private final LinhaDocumentoComercialMapper mapper;
+    private final MotorFiscalService motorFiscalService;
 
     @Transactional
     public LinhaDocumentoComercialDto create(Long documentoId, LinhaDocumentoComercialCreateDto dto) {
@@ -173,6 +174,7 @@ public class LinhaDocumentoComercialService {
     private void applyTextoValues(LinhaDocumentoComercial linha, String descricao) {
         linha.setDescricao(descricao == null || descricao.isBlank() ? "" : descricao);
         linha.setArtigo(null);
+        linha.limparSnapshotFiscal();
         linha.setQuantidade(null);
         linha.setPrecoUnitario(null);
         linha.setValorBruto(null);
@@ -182,6 +184,8 @@ public class LinhaDocumentoComercialService {
         linha.setValorLinha(null);
         linha.setTipoTaxaIva(null);
         linha.setPercentagemIva(null);
+        linha.setIvaCalculado(null); linha.setIvaLiquidado(null); linha.setFiscalMIsencaoCodigo(null);
+        linha.setFiscalFundamento(null); linha.setFiscalTratamentoLiquidacao(null); linha.setFiscalProjecaoQr(null);
         linha.setPeso(null);
     }
 
@@ -190,49 +194,23 @@ public class LinhaDocumentoComercialService {
                                       BigDecimal desconto, String tipoTaxaIvaId, BigDecimal peso) {
         Artigo artigo = findArtigo(requireText(artigoId, "Artigo e obrigatorio"));
         TipoTaxaIva tipoTaxaIva = findTipoTaxaIvaOrDefault(tipoTaxaIvaId, artigo.getIvaVenda());
+        MotorMonetario.validarQuantidadePreco(quantidade, precoUnitario);
+        MotorMonetario.validarDesconto(desconto);
         BigDecimal quantidade6 = scale6(requireValue(quantidade, "Quantidade e obrigatoria"));
         BigDecimal preco6 = scale6(requireValue(precoUnitario, "Preco unitario e obrigatorio"));
         TipoDescontoLinha tipo = tipoDesconto != null ? tipoDesconto : TipoDescontoLinha.VALOR;
         BigDecimal desconto6 = desconto != null ? scale6(desconto) : ZERO;
-        BigDecimal valorBruto = quantidade6.multiply(preco6).setScale(6, RoundingMode.HALF_UP);
-        BigDecimal valorDesconto = calcularValorDesconto(valorBruto, tipo, desconto6);
-
-        if (valorDesconto.compareTo(valorBruto) > 0) {
-            throw new BadRequestException("Valor do desconto não pode ser superior ao valor bruto da linha");
-        }
-
         linha.setTipoLinha(TipoLinhaDocumento.COMERCIAL);
         linha.setArtigo(artigo);
         linha.setDescricao(descricao == null || descricao.isBlank() ? artigo.getDescricao() : descricao);
         linha.setQuantidade(quantidade6);
         linha.setPrecoUnitario(preco6);
-        linha.setValorBruto(valorBruto);
         linha.setTipoDesconto(tipo);
         linha.setDesconto(desconto6);
-        linha.setValorDesconto(valorDesconto);
-        linha.setValorLinha(valorBruto.subtract(valorDesconto).setScale(6, RoundingMode.HALF_UP));
         linha.setTipoTaxaIva(tipoTaxaIva);
-        linha.setPercentagemIva(findPercentagemIva(documento, tipoTaxaIva));
+        linha.setPercentagemIva(BigDecimal.ZERO);
         linha.setPeso(peso != null ? peso.setScale(3, RoundingMode.HALF_UP) : calcularPeso(artigo, quantidade6));
-    }
-
-    private BigDecimal calcularValorDesconto(BigDecimal valorBruto, TipoDescontoLinha tipo, BigDecimal desconto) {
-        if (tipo == TipoDescontoLinha.PERCENTAGEM) {
-            if (desconto.compareTo(BigDecimal.valueOf(100)) > 0) {
-                throw new BadRequestException("Desconto percentual não pode ser superior a 100");
-            }
-            return valorBruto.multiply(desconto)
-                    .divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
-        }
-        return desconto;
-    }
-
-    private BigDecimal findPercentagemIva(DocumentoComercial documento, TipoTaxaIva tipoTaxaIva) {
-        BigDecimal taxa = documento.getRiva().getTaxa(tipoTaxaIva.getId());
-        if (taxa == null) {
-            throw new BadRequestException("Regime de IVA do documento não tem taxa para " + tipoTaxaIva.getId());
-        }
-        return taxa;
+        motorFiscalService.aplicar(linha, documento);
     }
 
     private BigDecimal calcularPeso(Artigo artigo, BigDecimal quantidade) {
@@ -243,6 +221,13 @@ public class LinhaDocumentoComercialService {
     }
 
     public void recalcularTotais(DocumentoComercial documento) {
+        if (documento.getEstado() != EstadoDocumentoComercial.RASCUNHO)
+            throw new BadRequestException("Documento emitido não pode ser recalculado");
+        if (documento.getValorRetencao() != null && documento.getValorRetencao().signum() != 0)
+            throw new BadRequestException("Retenção documental exige distribuição fiscal por linha ainda não habilitada");
+        BigDecimal totalAnterior = documento.getValorTotal();
+        boolean legacy = documento.getFiscalMotorVersion() == null;
+        motorFiscalService.enquadrar(documento);
         List<LinhaDocumentoComercial> linhas = linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(documento.getId());
 
         BigDecimal valorBruto = ZERO;
@@ -260,16 +245,21 @@ public class LinhaDocumentoComercialService {
             if (linha.getTipoLinha() == TipoLinhaDocumento.TEXTO) {
                 continue;
             }
+            BigDecimal brutoAntes=linha.getValorBruto(), descontoAntes=linha.getValorDesconto(), taxaAntes=linha.getPercentagemIva();
+            motorFiscalService.aplicar(linha, documento);
+            if (legacy && (brutoAntes == null || brutoAntes.compareTo(linha.getValorBruto()) != 0
+                    || descontoAntes == null || descontoAntes.compareTo(linha.getValorDesconto()) != 0
+                    || taxaAntes == null || taxaAntes.compareTo(linha.getPercentagemIva()) != 0))
+                documento.setFiscalRecalculoAviso(true);
             valorBruto = valorBruto.add(linha.getValorBruto());
             valorDesconto = valorDesconto.add(linha.getValorDesconto());
             if (linha.getPeso() != null) {
                 peso = peso.add(linha.getPeso());
             }
 
-            String tipoTaxa = linha.getTipoTaxaIva().getId();
+            String tipoTaxa = linha.getFiscalProjecaoQr() == com.ar2lda.fac.model.ProjecaoFiscalQr.ISENTA ? "ISENTA" : linha.getTipoTaxaIva().getId();
             BigDecimal valorLinha = linha.getValorLinha();
-            BigDecimal valorIva = valorLinha.multiply(linha.getPercentagemIva())
-                    .divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+            BigDecimal valorIva = linha.getIvaLiquidado();
 
             switch (tipoTaxa) {
                 case "ISENTA" -> valorIsento = valorIsento.add(valorLinha);
@@ -303,13 +293,15 @@ public class LinhaDocumentoComercialService {
                 .add(valorSujeitoReduzida)
                 .add(valorSujeitoIntermedia)
                 .add(valorSujeitoNormal)
-                .add(valorIvaTotal)
-                .subtract(documento.getValorRetencao() != null ? documento.getValorRetencao() : ZERO);
+                .add(valorIvaTotal);
         documento.setValorIvaTotal(valorIvaTotal.setScale(6, RoundingMode.HALF_UP));
         documento.setValorTotal(valorTotal.setScale(6, RoundingMode.HALF_UP));
         documento.setPeso(linhas.stream().noneMatch(linha -> linha.getTipoLinha() == TipoLinhaDocumento.COMERCIAL)
                 ? null
                 : peso.setScale(3, RoundingMode.HALF_UP));
+        if (legacy && totalAnterior != null && totalAnterior.compareTo(documento.getValorTotal()) != 0)
+            documento.setFiscalRecalculoAviso(true);
+        linhaRepository.saveAll(linhas);
         documentoRepository.save(documento);
     }
 
@@ -320,10 +312,7 @@ public class LinhaDocumentoComercialService {
             if (linha.getTipoLinha() == TipoLinhaDocumento.TEXTO) {
                 continue;
             }
-            BigDecimal base = linha.getValorLinha().setScale(6, RoundingMode.HALF_UP);
-            BigDecimal imposto = base.multiply(linha.getPercentagemIva())
-                    .divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
-            linha.consolidarSnapshotFiscal(base, imposto, base.add(imposto).setScale(6, RoundingMode.HALF_UP));
+            linha.consolidarSnapshotFiscal(linha.getValorLinha(), linha.getIvaLiquidado(), linha.getTotalLinha());
         }
         linhaRepository.saveAll(linhas);
     }

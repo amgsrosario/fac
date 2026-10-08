@@ -29,7 +29,7 @@ public interface ArtigoMapper {
                 entity.getPvp(),
                 entity.isInativo(),
                 entity.isRetencao(),
-                entity.getObservacoes()
+                entity.getObservacoes(), entity.getMIsencao() == null ? null : entity.getMIsencao().getId(), entity.getFundamentoFiscal()
         );
     }
 

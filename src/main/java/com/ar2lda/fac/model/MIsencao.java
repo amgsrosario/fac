@@ -11,6 +11,10 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class MIsencao {
 
+    @Column(length=500) @Setter private String descricaoOficial;
+    @Column(length=500) @Setter private String fundamentoOficial;
+    @Column(length=1000) @Setter private String fonteOficial;
+    @Column(length=40) @Setter private String versaoOficial;
     @Id
     @Column(length = 3, nullable = false)
     @Setter

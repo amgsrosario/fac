@@ -46,7 +46,12 @@ public class QrFiscalPayloadBuilder {
         add(fields, "F", documento.dataEmissao().format(QR_DATE));
         add(fields, "G", required(documento.numeroDocumentoCompleto(), "Número completo do documento"));
         add(fields, "H", required(documento.atcud(), "ATCUD"));
-        add(fields, "I1", "PT");
+        String territorio = documento.resultadoFiscal() == null ? "PT" : switch (documento.resultadoFiscal().territorioFiscal()) {
+            case "ACORES" -> "PT-AC";
+            case "MADEIRA" -> "PT-MA";
+            default -> "PT";
+        };
+        add(fields, "I1", territorio);
         addMoneyIfPositive(fields, "I2", documento.valorIsento());
         addMoneyIfPositive(fields, "I3", documento.valorSujeitoReduzida());
         addMoneyIfPositive(fields, "I4", documento.valorIvaReduzida());

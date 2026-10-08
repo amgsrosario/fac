@@ -42,6 +42,11 @@ public record ArtigoCreateDto(
         boolean inativo,
         boolean retencao,
         @Size(max = 250, message = "Observações deve ter no máximo 250 caracteres")
-        String observacoes
+        String observacoes,
+        String mIsencaoId, String fundamentoFiscal
 ) {
+    public ArtigoCreateDto(String codigo, String abreviatura, String codigoIdentificacao, String descricao, TipoArtigo tipoArtigo, String unidade, Long familiaId, BigDecimal peso, String ivaCompraId, String ivaVendaId, BigDecimal pvp, boolean inativo, boolean retencao, String observacoes) {
+        this(codigo, abreviatura, codigoIdentificacao, descricao, tipoArtigo, unidade, familiaId, peso, ivaCompraId, ivaVendaId, pvp, inativo, retencao, observacoes, null, null);
+    }
+
 }

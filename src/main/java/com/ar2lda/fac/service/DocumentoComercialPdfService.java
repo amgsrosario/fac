@@ -261,7 +261,15 @@ public class DocumentoComercialPdfService {
                 + td(money(linha.valorDesconto()), "number")
                 + td(decimal(linha.percentagemIva(), 2) + "%", "number")
                 + td(money(linha.valorLinha()), "number")
-                + "</tr>";
+                + "</tr>" + fiscalLinha(linha);
+    }
+
+    private String fiscalLinha(LinhaDocumentoComercialDto linha) {
+        var fiscal = linha.resultadoFiscal();
+        if (fiscal == null) return "";
+        String texto = "IVA calculado: " + money(fiscal.ivaCalculado()) + "; IVA liquidado: " + money(fiscal.ivaLiquidado());
+        if (fiscal.fundamentoFiscal() != null) texto += "; " + fiscal.fundamentoFiscal() + " (" + fiscal.mIsencaoCodigo() + ")";
+        return "<tr class=\"text-row\"><td></td><td colspan=\"7\">" + esc(texto) + "</td></tr>";
     }
 
     private String footer(EmitenteFiscalSnapshotDto empresa, DocumentoComercialDto documento) {
