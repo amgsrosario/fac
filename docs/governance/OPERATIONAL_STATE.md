@@ -102,6 +102,23 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 - Próximo bloco fiscal: NC/ND e RC/NL, sujeitos a nova OP; implementação ainda NÃO iniciada neste fecho; SAF-T, assinatura/certificação e fiscalidade não portuguesa fora desta fundação.
 - Alterações preexistentes do checkout principal preservadas; nenhuma base persistente/demo usada em testes; CI/dependências não alterados.
 
+## OP19 — Contrato financeiro e preparação da implementação
+
+Documentação local preparada e revista pelo Executor. OP19-R identificou
+MAJOR1/MINOR3; correcções documentais OP19-C aplicadas, nova verificação
+independente limitada concluída por op19_independent_review: APROVAR,
+BLOCKER0/MAJOR0/MINOR0. Publicação aguarda autorização do PO; aprovação
+exclusivamente documental, sem validação jurídica ou implementação. Produto aprovado pela OP19; arquitetura proposta.
+[Entregáveis e limites](../fiscal/op19/README.md). PR16 e PR17 confirmados merged
+na linha produtiva por GitHub após fetch; base observada na abertura desta OP:
+c2f7e20703b6627beba670954da9c9e187ba556b (referência histórica, não HEAD perpétuo).
+Não foi localizado relatório OP18 em docs versionados. Contrato, 36 cenários de
+aceitação futuros, dossier AT e sequência de OPs preparados sem implementar
+NC/ND/RC/NL, sem executar testes funcionais/migrations, sem push ou PR.
+Gates legais NL/RCzero/descontos/adiantamentos permanecem abertos. Segurança
+continua formalmente encerrada. Próximo passo: revisão/publicação documental
+por instrução do PO; implementação exige nova OP.
+
 ## Sequência estratégica vigente
 
 1. JWT / Gestão e Invalidação de Sessões — **CONCLUÍDA**.

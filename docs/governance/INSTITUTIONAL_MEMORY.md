@@ -95,6 +95,21 @@ de deployment mantêm-se. Este fecho não antecipa o encerramento fiscal.
 - Taxas territoriais são referência atual com estrutura de vigência extensível, sem reconstrução legislativa histórica. Matrizes continentais existentes conservam valores explícitos; zero não representa não liquidação.
 - PDF/QR de emitidos consomem snapshots persistidos. Modelo interno rico e projeção AT são separados; esta fundação não declara conformidade SAF-T, assinatura ou certificação AT.
 
+## Contrato comercial e financeiro aprovado — OP19
+
+As decisões funcionais da OP19 estão aprovadas; a arquitetura é proposta e a
+implementação nova depende de outra OP. [Contrato e dossier](../fiscal/op19/README.md).
+FT/ND podem gerar dívida; NC gera crédito autónomo, com a fatura aberta ou paga.
+Saldo líquido zero não liquida posições. Compensação total/parcial é expressa,
+sem encontro automático, e pode não movimentar dinheiro. Desconto financeiro
+no RC distingue dívida extinta e caixa, sem NC automática. NC/ND admitem modo
+assistido por uma/várias faturas e livre fundamentado, sem obrigação universal
+de selecionar manualmente cada linha; preservar suporte e fiscalidade histórica.
+Créditos NC e adiantamentos têm naturezas distintas. Estornos respeitam
+as dependências efetivas e preservam originais/auditoria. Classificação NL,
+RCzero, adiantamentos e tratamento fiscal dos descontos exigem validação
+específica antes da ativação; estas decisões não declaram conformidade AT.
+
 ## Metodologia e governação
 
 Aplicar o AR2 AI Development System através de uma Ordem de Produção aprovada: descoberta focada → implementação dentro do âmbito → testes proporcionais → revisão independente quando prevista → correções legítimas → diff e staging seletivo → commit → push da branch da missão → PR contra a base vigente → CI → gate humano.
