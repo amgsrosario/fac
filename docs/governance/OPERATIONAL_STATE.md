@@ -1,6 +1,6 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-07, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-09, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
@@ -88,9 +88,9 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 
 ## Fundação fiscal RIVA + motor monetário
 
-**IMPLEMENTADA NA BRANCH DA MISSÃO; AINDA NÃO INTEGRADA. Merge reservado a António.**
+**CONCLUÍDA E INTEGRADA. PR #16 merged em `feature/visual-redesign`; gate humano de merge concluído por António. Não existe trabalho funcional pendente desta missão.**
 
-- Branch/worktree: `codex/fiscal-riva-foundation`, `.worktrees/fiscal-riva-foundation`. Base remota observada na abertura: `95dc3de6895abe55b9ec0b1a574250a232d54ee6`, `feature/visual-redesign`; consultar Git para HEAD corrente.
+- Branch local `codex/fiscal-riva-foundation` e worktree `.worktrees/fiscal-riva-foundation` removidas no fecho após confirmação da integração e working tree limpa. Branch remota preservada. Base remota observada na abertura: `95dc3de6895abe55b9ec0b1a574250a232d54ee6`, `feature/visual-redesign`; consultar Git para HEAD corrente.
 - V16 acrescenta enquadramento RIVA, fundamento próprio do artigo, resultados fiscais e snapshot V3, postal opcional estrangeiro e taxas territoriais. V17 referencia 33 códigos Mxx oficiais AT V4.0 / 18-06-2026, preservando códigos/designações existentes.
 - IVA calculado/liquidado separados; monetário HALF_UP por linha a cêntimos; RIVA recalcula todas as linhas; legado rascunho avisa diferenças; históricos V1/V2 não são recalculados.
 - Combinações habilitadas: tributação normal, isenção inerente M07, não liquidação M10 nacional ou M16 intracomunitária para bens, com fundamento explícito. O enquadramento configurado não verifica elegibilidade documental/VIES. Outras projeções normativas exigem evolução própria; catálogo completo não implica habilitação geral.
@@ -98,8 +98,8 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 - Validação em PostgreSQL 16.3 descartável: regressão final integral `mvn -o test`: 283/283, zero falhas/erros/skips; upgrade V15→V17 1/1 preserva catálogos personalizados e emitido V2, valida e reinicializa sem migrations. As correções de revisão estão incluídas nesta regressão; 30 testes dirigidos também passaram. Package `mvn -o -DskipTests package`: BUILD SUCCESS.
 - Frontend: TypeScript/build aprovados; 11 Playwright aprovados, incluindo apresentação fiscal com API simulada. Não confundir mocks com prova de enquadramento legal; testes backend verificam emissão/PDF/QR reais.
 - Revisão independente final por `fiscal_final_review` e `fiscal_ui_review`: APROVADA, BLOCKER 0 / MAJOR 0. Quatro MAJOR anteriores corrigidos e testados: precisão preview/gravação, M16 em serviços, QR não EUR e retenção. Mock frontend alinhado com M16; aviso descoberto ao guardar exige nova confirmação. Revisões estáticas; testes executados pelos executores.
-- Entrega: commit funcional `2e1c51d31e56d8b24cc6f0432a0d7cbc10ab4d16` publicado exclusivamente na branch da missão. [PR #16](https://github.com/amgsrosario/fac/pull/16) aberto contra `feature/visual-redesign`, sem conflitos confirmados. CI do commit funcional confirmado verde na [execução 37656472445](https://github.com/amgsrosario/fac/actions/runs/37656472445) (safety tests e package). A publicação deste registo documental requer nova confirmação de CI do HEAD final; não encadear commits para registar o próprio hash. Gate restante: revisão/merge humano de António. MERGE NÃO EFECTUADO.
-- Próximo bloco fiscal: circuito posterior NC/ND/RC/NL conforme nova OP; SAF-T, assinatura/certificação e fiscalidade não portuguesa fora desta fundação.
+- Entrega integrada: commits `2e1c51d31e56d8b24cc6f0432a0d7cbc10ab4d16` e `c707a04eb0c56d2474472c08e8b3179d4d0ec126` confirmados como ancestrais da base produtiva. [PR #16](https://github.com/amgsrosario/fac/pull/16) merged por António em 08-10-2026, com destino `feature/visual-redesign`. CI do HEAD final da missão confirmado verde na [execução 37656846468](https://github.com/amgsrosario/fac/actions/runs/37656846468) (safety tests e package). HUMAN MERGE CONCLUÍDO; missão encerrada operacionalmente. O HEAD Git corrente deve ser consultado no Git, sem actualizações documentais autorreferenciais.
+- Próximo bloco fiscal: NC/ND e RC/NL, sujeitos a nova OP; implementação ainda NÃO iniciada neste fecho; SAF-T, assinatura/certificação e fiscalidade não portuguesa fora desta fundação.
 - Alterações preexistentes do checkout principal preservadas; nenhuma base persistente/demo usada em testes; CI/dependências não alterados.
 
 ## Sequência estratégica vigente
@@ -107,7 +107,7 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 1. JWT / Gestão e Invalidação de Sessões — **CONCLUÍDA**.
 2. Fundação de Permissões — **CONCLUÍDA E INTEGRADA; GATE HUMANO CONCLUÍDO**.
 3. Security Gate — **INTEGRADO; HUMAN MERGE CONCLUÍDO; SEGURANÇA FORMALMENTE ENCERRADA**.
-4. Fecho Fiscal Sistemático — **EM CURSO: FUNDAÇÃO FISCAL RIVA + MOTOR MONETÁRIO**.
+4. Fecho Fiscal Sistemático — **FUNDAÇÃO FISCAL RIVA + MOTOR MONETÁRIO INTEGRADA; PRÓXIMO BLOCO NC/ND E RC/NL AINDA NÃO INICIADO**.
 5. Auditoria Funcional Final.
 6. Preparação e Certificação AT.
 7. Piloto Controlado.
