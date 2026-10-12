@@ -5,7 +5,7 @@ Fonte canónica do estado corrente. Atualização: 2026-10-12, Europe/Lisbon. Su
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD remoto confirmado por fetch neste fecho pós-merge documental: `8877b9281f43212c479d5a96e5efb9a985a2d03a` (merge do PR #10, que integra `eac635e4504cdc95e3cdb4c4884a4075459b96d5`).
+- HEAD produtivo observado e reconfirmado no reconhecimento OP22-GOV: `2cbb9341dc8f6ffa70605a986eb9daeda93be23e`, merge do PR #20.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -135,15 +135,33 @@ repositório, ainda sem uso como fonte de saldo operacional. [Estado de evidênc
 
 ## OP21 — Originação FT
 
-Branch local codex/financial-ft-origin-op21, base remota observada91ef3c42…,
-worktree isolada. Adaptador de emissão/anulação e V19 aditiva implementados
-localmente; originação FT integrada no código da missão, liquidação RC ainda
-não integrada. Pendente permanece autoridade e nenhuma conta corrente nova.
-Regressão dirigida97/97 e núcleo/migration/safety22/22 aprovados; package
-BUILD SUCCESS. Revisão independente op21_review: APROVAR,
-BLOCKER0/MAJOR0/MINOR0. Entrega local validada e commit autorizado pela OP21.
-Sem push/PR; prontidão para merge exige CI apropriado ou decisão expressa do PO.
-[Modelo](../fiscal/op21/FT_ORIGINATION.md) / [evidências e diagnóstico CI](../fiscal/op21/VALIDATION.md).
+**CONCLUÍDA E INTEGRADA. PR #20 merged em feature/visual-redesign; gate humano de merge concluído.**
+
+- Commit7a3741f04f3241e5ce21fb7936bed74e93f79b8d integrado; merge2cbb9341dc8f6ffa70605a986eb9daeda93be23e confirmado por Git/GitHub.
+- FinancialCore implementado (OP20); adaptador de originação/anulação FT e V19 integrados pela OP21. RC ainda processado pelo legado; Pendente continua fonte operacional. Nenhum saldo do núcleo promovido a conta corrente.
+- CI aprovado na [execução38237821996](https://github.com/amgsrosario/fac/actions/runs/38237821996): TestDatabaseSafetyValidatorTests e mvn -B -DskipTests package. Não executou integração PostgreSQL, concorrência financeira ou regressão integral.
+- Evidência local separada da OP21:97/97 testes dirigidos,22/22 núcleo/migration/safety, package BUILD SUCCESS; revisão independente op21_review APROVAR, BLOCKER0/MAJOR0/MINOR0. Resultados anteriores, não repetidos nesta OP documental.
+- Branch/worktree OP21 permanecem existentes, preservadas. Nenhuma limpeza nesta missão.
+- [Modelo](../fiscal/op21/FT_ORIGINATION.md) e [validação](../fiscal/op21/VALIDATION.md) registam a entrega local original; para o estado pós-merge corrente prevalece esta fonte canónica.
+
+## OP22 — Preparação e decisão arquitectónica
+
+**OP22 EM PREPARAÇÃO; IMPLEMENTAÇÃO FUNCIONAL NÃO INICIADA.**
+
+Alternativa B aprovada pelo Product Owner como orientação futura: FinancialCore
+será fonte única e Pendente perderá saldo independente. Ainda não implementado.
+Primeira fronteira a preparar: FT/RC com escrita/leitura/anulação/consistência.
+[ADR-001](decisions/ADR-001-financial-source.md) regista decisão e fundamentos;
+[GOV-ALT-001](INSTITUTIONAL_MEMORY.md#gov-alt-001--transparência-e-avaliação-de-alternativas)
+formaliza a avaliação obrigatória das alternativas.
+
+Esta OP22-GOV é exclusivamente documental, em branch/worktree isolada. Aprovação
+B não autoriza as decisões reservadas na ADR, alterações funcionais nem eliminação
+ou reconstrução de dados. Formalização local validada: diff exclusivamente
+documental, git diff --check e links/âncoras aprovados. Revisão independente
+op22_gov_review: APROVAR, BLOCKER0/MAJOR0/MINOR0. Commit local autorizado
+pela OP22-GOV; publicação documental aguarda autorização do PO, sem push ou PR.
+TaxIA não foi acedido nem alterado.
 
 ## Sequência estratégica vigente
 
