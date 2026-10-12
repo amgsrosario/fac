@@ -126,9 +126,46 @@ e operações são históricos e atómicos com documento/Pendente. Pendente e
 conta corrente mantêm autoridade operacional; RC legado não escreve no núcleo.
 Uma posição não afectada após RC legado é uma diferença deliberada, sem
 sincronização silenciosa nem apresentação como saldo corrente. Originação FT
-integrada no código da missão; liquidação RC ainda não integrada.
+integrada pelo PR #20; liquidação RC ainda não integrada.
 [Limites e rastreabilidade](../fiscal/op21/FT_ORIGINATION.md). Integração NC/ND,
 RC/NL e migração histórica exigem autorização própria; não declara certificação.
+
+## GOV-ALT-001 — Transparência e avaliação de alternativas
+
+Sempre que uma decisão técnica, funcional, arquitectónica, operacional ou
+estratégica admita alternativas materialmente distintas:
+
+1. Identificar expressamente a existência de alternativas.
+2. Apresentar as alternativas viáveis, com benefícios, custos, riscos, limitações e consequências futuras.
+3. Explicitar os pressupostos de cada alternativa, distinguindo factos confirmados de hipóteses.
+4. Apresentar uma recomendação fundamentada, separada da decisão.
+5. Submeter a decisão ao Product Owner antes de emitir ordens de implementação.
+6. Não interpretar uma recomendação técnica como aprovação.
+7. Registar decisões duradouras e respectivos fundamentos nas fontes institucionais.
+
+A profundidade da comparação deve ser proporcional ao impacto e à reversibilidade.
+**O Executivo Operacional recomenda; o Product Owner decide.** Esta regra aplica-se
+ao TUULI. Incorporação no TaxIA exige missão separada no respetivo repositório;
+não foi executada a partir do TUULI.
+
+## Arquitetura financeira — alternativa B aprovada
+
+Por decisão expressa do Product Owner na OP22-GOV, foi aprovada a substituição
+progressiva do legado. TUULI AIR está em desenvolvimento/demo; os dados atuais
+são descartáveis e não existem históricos financeiros de produção a preservar.
+Não desenvolver compatibilidade histórica apenas para conservar essa demo.
+Isto não autoriza migração/eliminação efetiva de dados nem enfraquece a preservação
+fiscal e auditável dos documentos emitidos pelo produto.
+
+Destino: FinancialCore como única fonte de verdade financeira; Pendente deixará
+de manter saldo independente e poderá subsistir como interface/projeção derivada.
+Primeira fronteira a preparar: FT/RC, com escrita, leitura, anulação e consistência.
+Não ativar fronteiras incompletas como circuitos estabilizados. A orientação é
+futura: os saldos operacionais atuais ainda são legados. [ADR-001](decisions/ADR-001-financial-source.md)
+conserva alternativas, fundamentos, consequências, riscos e decisões reservadas.
+A aprovação B não aprova regras fiscais, precisão de recebimentos, evolução de
+estornos, NC/ND/NL, descontos, adiantamentos, compensações/RC sem caixa, migração
+ou eliminação de dados, SAF-T ou conformidade/certificação AT; requerem autorização própria.
 
 ## Metodologia e governação
 
