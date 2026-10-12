@@ -167,6 +167,20 @@ A aprovação B não aprova regras fiscais, precisão de recebimentos, evoluçã
 estornos, NC/ND/NL, descontos, adiantamentos, compensações/RC sem caixa, migração
 ou eliminação de dados, SAF-T ou conformidade/certificação AT; requerem autorização própria.
 
+## TUULI-FIN-TIME-001 — Efeito financeiro documental
+
+Decisão expressa do Product Owner na continuação OP22-A: a data de efeito
+financeiro de uma operação originada por documento é obrigatoriamente a data
+de emissão desse documento (FT, RC, NC e demais documentos, sob regras próprias).
+Não existe segunda data financeira editável independente. Timestamp técnico
+permanece imutável para auditoria, distinto de SystemEntryDate SAF-T e da data
+de efeito. Não autoriza retrodatação arbitrária nem dispensa validação legal.
+Estornos/anulações não herdam automaticamente o timestamp técnico como efeito;
+a sua semântica legal/funcional permanece por definir antes de consultas históricas.
+[ADR-002](decisions/ADR-002-financial-document-time.md). OP22-A implementa leitura
+corrente e data derivada para FT vinculada; saldos por data financeira suspensos.
+A aprovação não activa RC, não altera precisão nem promove o núcleo a saldo operacional.
+
 ## Metodologia e governação
 
 Aplicar o AR2 AI Development System através de uma Ordem de Produção aprovada: descoberta focada → implementação dentro do âmbito → testes proporcionais → revisão independente quando prevista → correções legítimas → diff e staging seletivo → commit → push da branch da missão → PR contra a base vigente → CI → gate humano.

@@ -146,7 +146,7 @@ repositório, ainda sem uso como fonte de saldo operacional. [Estado de evidênc
 
 ## OP22 — Preparação e decisão arquitectónica
 
-**OP22 EM PREPARAÇÃO; IMPLEMENTAÇÃO FUNCIONAL NÃO INICIADA.**
+**OP22-A CONCLUÍDA LOCALMENTE NO ÂMBITO AUTORIZADO; SEM ACTIVAÇÃO OPERACIONAL.**
 
 Alternativa B aprovada pelo Product Owner como orientação futura: FinancialCore
 será fonte única e Pendente perderá saldo independente. Ainda não implementado.
@@ -155,13 +155,28 @@ Primeira fronteira a preparar: FT/RC com escrita/leitura/anulação/consistênci
 [GOV-ALT-001](INSTITUTIONAL_MEMORY.md#gov-alt-001--transparência-e-avaliação-de-alternativas)
 formaliza a avaliação obrigatória das alternativas.
 
-Esta OP22-GOV é exclusivamente documental, em branch/worktree isolada. Aprovação
-B não autoriza as decisões reservadas na ADR, alterações funcionais nem eliminação
-ou reconstrução de dados. Formalização local validada: diff exclusivamente
-documental, git diff --check e links/âncoras aprovados. Revisão independente
-op22_gov_review: APROVAR, BLOCKER0/MAJOR0/MINOR0. Commit local autorizado
-pela OP22-GOV; publicação documental aguarda autorização do PO, sem push ou PR.
-TaxIA não foi acedido nem alterado.
+OP22-GOV integrada pelo PR #21, merge12a3aed7f35085ab0f852c48530ee21a467c490c,
+confirmado no reconhecimento Git desta missão. Base observada OP22-A; consultar
+Git para HEAD corrente, sem actualizações autorreferenciais. TaxIA não alterado.
+
+TUULI-FIN-TIME-001 APROVADA: efeito financeiro documental = data de emissão;
+timestamp técnico independente para auditoria, distinto de SystemEntryDate SAF-T.
+[ADR-002](decisions/ADR-002-financial-document-time.md). Não autoriza retrodatação
+arbitrária; estornos/anulações exigem decisão de semântica legal/funcional.
+
+OP22-A implementa contratos internos de posições, saldos correntes separados,
+identificação V19 e histórico auditável; FT vinculada expõe efeito derivado da
+emissão. Ainda local e sem publicação/activação. SETTLE sem vínculo RC;
+REVERSE sem efeito documental definido. Saldo/movimentos por data financeira
+SUSPENSOS; timestamp técnico nunca utilizado como substituto. Nenhuma alteração
+estrutural de persistência nesta missão. Política RC6/núcleo2 permanece reservada.
+Pendente permanece fonte operacional; RC legado não escreve no núcleo.
+[Contratos](../fiscal/op22-a/QUERY_CONTRACTS.md) e [validação](../fiscal/op22-a/VALIDATION.md).
+Validação local:99 testes distintos aprovados (mais7 reexecuções dirigidas),
+PostgreSQL16.3 descartável V19, package BUILD SUCCESS, diff/links aprovados.
+Revisão independente op22_a_review: APROVAR, BLOCKER0/MAJOR0/MINOR0.
+Entrega preparada para commit local; publicação aguarda autorização do PO,
+sem push/PR/merge. Consultas históricas suspensas conforme autorização expressa.
 
 ## Sequência estratégica vigente
 
