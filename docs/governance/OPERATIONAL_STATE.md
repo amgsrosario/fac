@@ -1,6 +1,6 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-09, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-12, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
@@ -107,17 +107,28 @@ V14 acrescenta `token_version` e V15 acrescenta `row_version`, ambas com valor i
 Documentação local preparada e revista pelo Executor. OP19-R identificou
 MAJOR1/MINOR3; correcções documentais OP19-C aplicadas, nova verificação
 independente limitada concluída por op19_independent_review: APROVAR,
-BLOCKER0/MAJOR0/MINOR0. Publicação aguarda autorização do PO; aprovação
+BLOCKER0/MAJOR0/MINOR0. PR18 confirmado integrado em feature/visual-redesign
+(merge194ffd458b7405822d4934bac5cfef5feb87486b); gate humano concluído; aprovação
 exclusivamente documental, sem validação jurídica ou implementação. Produto aprovado pela OP19; arquitetura proposta.
 [Entregáveis e limites](../fiscal/op19/README.md). PR16 e PR17 confirmados merged
 na linha produtiva por GitHub após fetch; base observada na abertura desta OP:
 c2f7e20703b6627beba670954da9c9e187ba556b (referência histórica, não HEAD perpétuo).
-Não foi localizado relatório OP18 em docs versionados. Contrato, 36 cenários de
-aceitação futuros, dossier AT e sequência de OPs preparados sem implementar
-NC/ND/RC/NL, sem executar testes funcionais/migrations, sem push ou PR.
+Não foi localizado relatório OP18 em docs versionados. Contrato,36 cenários de
+aceitação futuros, dossier AT e sequência de OPs integrados documentalmente
+pelo PR18. A OP19 não implementou NC/ND/RC/NL nem executou testes funcionais
+ou migrations. A evidência de implementação da fundação OP20 consta abaixo.
 Gates legais NL/RCzero/descontos/adiantamentos permanecem abertos. Segurança
-continua formalmente encerrada. Próximo passo: revisão/publicação documental
-por instrução do PO; implementação exige nova OP.
+continua formalmente encerrada. OP20 autorizada para fundação interna isolada; integração documental exige
+intervenção posterior.
+
+## OP20 — Fundação financeira
+
+Implementação local em codex/financial-core-op20, base produtiva observada na
+abertura194ffd458b7405822d4934bac5cfef5feb87486b. Serviço interno/V18 aditiva;
+nenhum circuito documental ativado nem endpoint novo. Validação concluída:22 testes núcleo/migration/safety,84 regressão dirigida,
+1 compatibilidade histórica e package aprovados. Revisão independente
+op20_core_review: APROVAR, BLOCKER0/MAJOR0/MINOR0. Entrega local validada,
+commit autorizado pela OP20; sem push/PR e sem integração produtiva. [Estado de evidência](../fiscal/op20/VALIDATION.md).
 
 ## Sequência estratégica vigente
 

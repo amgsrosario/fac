@@ -110,6 +110,14 @@ as dependências efetivas e preservam originais/auditoria. Classificação NL,
 RCzero, adiantamentos e tratamento fiscal dos descontos exigem validação
 específica antes da ativação; estas decisões não declaram conformidade AT.
 
+## Fundação financeira isolada — OP20
+
+A OP20 autoriza uma fundação interna de posições, afectações, caixa separado,
+idempotência e estornos, sem ativação nos circuitos documentais atuais. Reutilizar
+o motor monetário RIVA e preservar dados emitidos. Integração, migração histórica,
+novos endpoints e decisões fiscais exigem OP própria; núcleo não é certificação.
+[Contrato técnico](../fiscal/op20/FINANCIAL_CORE.md).
+
 ## Metodologia e governação
 
 Aplicar o AR2 AI Development System através de uma Ordem de Produção aprovada: descoberta focada → implementação dentro do âmbito → testes proporcionais → revisão independente quando prevista → correções legítimas → diff e staging seletivo → commit → push da branch da missão → PR contra a base vigente → CI → gate humano.

@@ -45,6 +45,7 @@ import com.ar2lda.fac.repository.UtilizadorRepository;
 import com.ar2lda.fac.repository.AuditoriaEventoRepository;
 import com.ar2lda.fac.model.TipoAuditoriaEvento;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -82,6 +83,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class DocumentoComercialControllerTests {
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate financialIsolationDb;
+    private Long financialOperationsBefore;
+    @BeforeEach void rememberFinancialCoreIsolation() {
+        financialOperationsBefore=financialIsolationDb.queryForObject("select count(*) from financial_operation", Long.class);
+    }
+    @AfterEach void documentaryCircuitsDoNotCallFinancialCore() {
+        org.assertj.core.api.Assertions.assertThat(financialIsolationDb.queryForObject("select count(*) from financial_operation", Long.class))
+                .as("Existing commercial/receipt circuits remain isolated from OP20")
+                .isEqualTo(financialOperationsBefore);
+    }
+
 
     @TestConfiguration
     static class FixedClockConfig {
