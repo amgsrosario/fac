@@ -84,13 +84,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class DocumentoComercialControllerTests {
     @Autowired private org.springframework.jdbc.core.JdbcTemplate financialIsolationDb;
+    @Autowired private jakarta.persistence.EntityManager financialFixtureEntities;
     private Long financialOperationsBefore;
-    @BeforeEach void rememberFinancialCoreIsolation() {
-        financialOperationsBefore=financialIsolationDb.queryForObject("select count(*) from financial_operation", Long.class);
+    @BeforeEach void rememberLegacyReceiptIsolation() {
+        financialOperationsBefore=financialIsolationDb.queryForObject("select count(*) from financial_operation where kind='SETTLE'", Long.class);
     }
-    @AfterEach void documentaryCircuitsDoNotCallFinancialCore() {
-        org.assertj.core.api.Assertions.assertThat(financialIsolationDb.queryForObject("select count(*) from financial_operation", Long.class))
-                .as("Existing commercial/receipt circuits remain isolated from OP20")
+    @AfterEach void legacyReceiptsDoNotSettleFinancialCore() {
+        org.assertj.core.api.Assertions.assertThat(financialIsolationDb.queryForObject("select count(*) from financial_operation where kind='SETTLE'", Long.class))
+                .as("Legacy receipts do not settle OP21 positions")
                 .isEqualTo(financialOperationsBefore);
     }
 
@@ -2973,6 +2974,27 @@ class DocumentoComercialControllerTests {
                         .param("dataInicial", "2026-01-01").param("dataFinal", "2026-12-31")
                         .param("sort", "campoInexistente,asc"))
                 .andExpect(status().isBadRequest());
+    }
+
+
+    @Test
+    void ftOriginKeepsPendingAuthoritativeAfterLegacyReceipt() throws Exception {
+        Long id = emitirDocumentoComercialComLinhas(1);
+        var pos = financialIsolationDb.queryForMap("select p.* from financial_position p join financial_document_origin o on o.position_id=p.id where o.document_id=?", id);
+        org.assertj.core.api.Assertions.assertThat((BigDecimal)pos.get("original")).isEqualByComparingTo("12.30");
+        org.assertj.core.api.Assertions.assertThat(pos.get("nature")).isEqualTo("DEBT");
+        var pending=pendenteRepository.findByDocumentoComercialId(id).orElseThrow();
+        mockMvc.perform(post("/documentos-financeiros").contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {"clienteId":%d,"tipoDocumentoId":"RCB","serie":"A","dataEmissao":"2026-06-06",
+                 "moedaId":"EUR","mPagamentoId":"MDC","emissorId":"EMISSOR",
+                 "linhas":[{"pendenteId":%d,"valorALiquidar":12.30,"descontoPercentual":0,"descontoValor":0}]}
+                """.formatted(cliente.getId(),pending.getId())))
+            .andExpect(status().isCreated());
+        financialFixtureEntities.flush();
+        org.assertj.core.api.Assertions.assertThat(financialIsolationDb.queryForObject("select valor_pendente from pendente where id=?",BigDecimal.class,pending.getId())).isEqualByComparingTo("0");
+        org.assertj.core.api.Assertions.assertThat(financialIsolationDb.queryForObject("select available from financial_position where id=?",BigDecimal.class,pos.get("id"))).isEqualByComparingTo("12.30");
+        mockMvc.perform(get("/pendentes/clientes/{id}/abertos",cliente.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
     }
 
     private Long emitirDocumentoComercialComLinhas(int... quantidades) throws Exception {

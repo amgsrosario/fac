@@ -118,6 +118,18 @@ o motor monetário RIVA e preservar dados emitidos. Integração, migração his
 novos endpoints e decisões fiscais exigem OP própria; núcleo não é certificação.
 [Contrato técnico](../fiscal/op20/FINANCIAL_CORE.md).
 
+## Originação FT — OP21
+
+A integração aprovada limita-se à originação de dívida para novas FT EUR e ao
+estorno dessa criação quando a anulação comercial existente o permite. Vínculo
+e operações são históricos e atómicos com documento/Pendente. Pendente e
+conta corrente mantêm autoridade operacional; RC legado não escreve no núcleo.
+Uma posição não afectada após RC legado é uma diferença deliberada, sem
+sincronização silenciosa nem apresentação como saldo corrente. Originação FT
+integrada no código da missão; liquidação RC ainda não integrada.
+[Limites e rastreabilidade](../fiscal/op21/FT_ORIGINATION.md). Integração NC/ND,
+RC/NL e migração histórica exigem autorização própria; não declara certificação.
+
 ## Metodologia e governação
 
 Aplicar o AR2 AI Development System através de uma Ordem de Produção aprovada: descoberta focada → implementação dentro do âmbito → testes proporcionais → revisão independente quando prevista → correções legítimas → diff e staging seletivo → commit → push da branch da missão → PR contra a base vigente → CI → gate humano.

@@ -103,6 +103,7 @@ public class DocumentoComercialService {
     private final AuditoriaIsoladaService auditoriaIsoladaService;
     private final FunctionalAuthorization authorization;
     private final Clock clock;
+    private final com.ar2lda.fac.financial.FinancialFtOrigin financialFtOrigin;
 
     @Transactional
     public DocumentoComercialDto create(DocumentoComercialCreateDto dto) {
@@ -387,6 +388,7 @@ public class DocumentoComercialService {
 
         DocumentoComercial saved = documentoRepository.save(documento);
         pendenteService.criarDeDocumento(saved);
+        financialFtOrigin.originateNewEmission(saved, emissor);
         auditoriaService.registarComo(TipoAuditoriaEvento.DOCUMENTO_EMITIDO, "DOCUMENTO_COMERCIAL", saved.getId(),
                 emissor, ResultadoAuditoria.SUCESSO, saved.getNumeroDocumentoCompleto(), "Documento emitido",
                 "{\"versao\":1,\"estadoAnterior\":\"RASCUNHO\",\"estadoNovo\":\"EMITIDO\",\"numero\":"
@@ -423,6 +425,7 @@ public class DocumentoComercialService {
                     exception.getMessage(), "{\"versao\":1,\"estado\":\"" + documento.getEstado() + "\"}");
             throw exception;
         }
+        financialFtOrigin.reverseLinkedOrigin(documento, utilizador, motivo);
         documento.anular(motivo, utilizador, OffsetDateTime.now(clock));
         DocumentoComercial saved = documentoRepository.save(documento);
         auditoriaService.registarComo(TipoAuditoriaEvento.DOCUMENTO_ANULADO, "DOCUMENTO_COMERCIAL", saved.getId(),
