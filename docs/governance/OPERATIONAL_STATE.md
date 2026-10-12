@@ -195,12 +195,15 @@ fronteira adiada à B2. Nova anulação e histórico por data suspensos. V20 blo
 anulação/reverse indevidos de RC internamente vinculado; RC sem vínculo mantido.
 Nenhuma demo/dado histórico apagado, reconstruído ou migrado. Nenhum endpoint novo.
 [Contrato/corte](../fiscal/op22-b1/RECEIPT_INTEGRATION.md) e [evidência](../fiscal/op22-b1/VALIDATION.md).
-Validação local117 testes distintos aprovados em PostgreSQL16.3 descartável/V20;
-package BUILD SUCCESS. Revisão técnica independente op22_b1_review APROVAR,
-BLOCKER0/MAJOR0/MINOR0 após corrigir/testar MAJOR1/MINOR1. Revisão foi de agente
-Codex; revisão cruzada Claude prevista na fonte central não executada nesta sessão.
-Entrega local validada para commit autorizado pela OP; sem publicação/CI, que continuam dependentes
-da autorização posterior e circuito de revisão institucional aplicável.
+Validação local actual125 cenários distintos aprovados em PostgreSQL16.3
+próprio/V21;23 RC,22 núcleo/queries,4 safety,71 regressão documental,5 schema/migrations.
+Revisão subsequente encontrou MAJOR-001: inserção de componentes após consumir
+constraints RC na mesma transacção. Reprodução V20 demonstrou commit indevido.
+Correcção aditiva V21 sela componentes/afectações após vínculo RC, sem alterar
+V18/V20 nem activar circuito. Upgrades V19/V20→V21 e segundo arranque aprovados.
+Nova revisão independente Codex major001_review APROVAR, BLOCKER0/MAJOR0/MINOR0.
+Package final BUILD SUCCESS. Entrega complementar local, sem push/PR/CI nesta
+etapa. Revisão cruzada Claude permanece pendente e não foi substituída por Codex.
 AR2-Governance consultado emace6e54a613ce25c959f31accae3ec7b129b307e, estritamente
 leitura; GOV-TUULI-002 preservada, sem alteração ou cancelamento nesta missão.
 

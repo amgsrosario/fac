@@ -80,12 +80,12 @@ class FiscalMigrationCompatibilityTests {
 
                 Flyway current = Flyway.configure().dataSource(fixtureUrl, username, password)
                         .locations("classpath:db/migration").cleanDisabled(true).load();
-                assertThat(current.migrate().migrationsExecuted).isEqualTo(5);
+                assertThat(current.migrate().migrationsExecuted).isEqualTo(6);
                 current.validate();
                 try(var preserved=DriverManager.getConnection(fixtureUrl,username,password)) {
                     assertThat(value(preserved,"select count(*) from financial_document_origin")).isEqualTo("0");
                 }
-                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("20");
+                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("21");
                 assertThat(current.migrate().migrationsExecuted).isZero();
                 try (Connection fixture = DriverManager.getConnection(fixtureUrl, username, password)) {
                     assertThat(value(fixture, "select nome || '|' || id_ivasaft from misencao where id='M07'"))

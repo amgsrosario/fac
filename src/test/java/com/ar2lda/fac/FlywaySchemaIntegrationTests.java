@@ -112,7 +112,7 @@ class FlywaySchemaIntegrationTests {
                   and data_type = 'bigint' and is_nullable = 'NO'
                   and column_default = '0'
                 """, Integer.class);
-        assertThat(versao).isEqualTo(20);
+        assertThat(versao).isEqualTo(21);
         assertThat(jdbcTemplate.queryForObject("select count(*) from information_schema.tables where table_schema='public' and table_name in ('financial_receipt','financial_receipt_line')",Integer.class)).isEqualTo(2);
         assertThat(jdbcTemplate.queryForObject("select count(*) from information_schema.tables where table_name='financial_document_origin' and table_schema='public'",Integer.class)).isEqualTo(1);
         assertThat(jdbcTemplate.queryForObject("select count(*) from information_schema.tables where table_schema='public' and table_name in ('financial_position','financial_operation','financial_allocation','financial_component')", Integer.class)).isEqualTo(4);

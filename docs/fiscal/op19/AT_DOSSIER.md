@@ -128,6 +128,8 @@ NL, RCzero, descontos, adiantamentos e rectificações/rappels permanecem aberto
 T01/T02: liquidação FT/RC parcial/múltipla, idempotência antes da numeração,
 contexto, concorrência e atomicidade preparados em componente interno. T03:
 V20 vincula documento/operação e linha/afectação, sem importar históricos.
+V21 impede extensões do ledger após vínculo RC, independentemente do modo das
+constraints; prova e regressões MAJOR-001 em [VALIDATION](../op22-b1/VALIDATION.md).
 Efeito de SETTLE deriva da emissão RC (TUULI-FIN-TIME-001); data financeira
 autónoma não criada. Precisão da primeira fatia aprovada: EUR/cêntimos exactos,
 sem desconto novo; legado mantido enquanto inactivo. Leituras operacionais ainda

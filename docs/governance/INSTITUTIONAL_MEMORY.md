@@ -187,7 +187,8 @@ PO aprovou API existente como projecção do FinancialCore, EUR e cêntimos exac
 sem descontos financeiros na primeira activação, e preparação de corte limpo da
 demo sem eliminação/migração de dados. Esta decisão delimita a precisão da fatia
 nova; não altera RC legado nem aprova outras moedas/descontos/adiantamentos.
-B1 implementa emissor interno idempotente e vínculos aditivos V20, projecções
+B1 implementa emissor interno idempotente e vínculos aditivos V20, com V21 a
+selar componentes/afectações após o vínculo RC; projecções
 isoladas e diagnóstico de dados, sem chamadas nos endpoints operacionais.
 Timestamp técnico separado; efeito de SETTLE vinculado deriva da emissão RC.
 

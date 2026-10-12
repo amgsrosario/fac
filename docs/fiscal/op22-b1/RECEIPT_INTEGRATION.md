@@ -19,6 +19,7 @@ Spring/JPA/JDBC. FinancialReceiptProjections oferece leitura compatível de dív
 em PendenteDto e totais do núcleo; não foi injectado nos serviços operacionais.
 Migração V20 é aditiva: duas tabelas de identidade/vínculos e guards de integridade,
 sem backfill, conversão de valores ou alterações às migrations V18/V19.
+V21 sela componentes/afectações depois do vínculo RC, sem alterar a V20.
 
 ## Pedido, documento e ledger
 
@@ -50,6 +51,11 @@ conservam snapshots anteriores/posteriores retirados do núcleo, ordem original
 do pedido e vínculo exclusivo a financial_allocation. Total = dívida extinta =
 CASH_IN nesta fronteira; sem CASH_OUT/DISCOUNT. Empresa/cliente/moeda/documento,
 montantes, linha/afectação e bijecção são verificados também por guards SQL.
+V21 impede qualquer nova componente/afectação de operação já vinculada a RC,
+por triggers BEFORE INSERT não diferíveis, incluindo a transacção criadora.
+O emissor monta o ledger antes de criar o vínculo; V20 valida esse estado inicial.
+Consumir constraints com IMMEDIATE e regressar a DEFERRED não reabre a operação.
+Operações sem RC conservam os guards e comportamento genérico V18.
 Documento, número/ATCUD, linhas, ledger, vínculos e auditoria confirmam/revertem juntos.
 Retries de pedidos que falharam não reutilizam documentos ou números parcialmente
 persistidos. Os sequences técnicos podem ter lacunas por rollback, sem impor

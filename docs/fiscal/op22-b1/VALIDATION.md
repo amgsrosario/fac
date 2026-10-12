@@ -7,10 +7,10 @@ persistente/demo utilizada. Registos FT sintéticos são fixtures SQL; a emissã
 numeração, ledger, vínculos e commits são reais. Spies apenas injectam falhas;
 JDBC, repositórios e SQL não são simulados. Regressão separada cobre FT emitida real.
 
-## Estado efectivo
+## Estado validado do commit184eafc (anterior à MAJOR-001)
 
 - Primeira versão:9 integração RC +4 safety aprovados.
-- Código actual:16 FinancialReceiptIntegrationTests aprovados, com commits reais.
+- Nesse commit:16 FinancialReceiptIntegrationTests aprovados, com commits reais.
 - TestDatabaseSafetyValidatorTests4; FinancialCoreIntegrationTests15;
   FinancialQueriesIntegrationTests7; DocumentoComercialControllerTests46;
   DocumentoComercialEmissaoIntegridadeTests25; FinancialCoreMigrationTests1;
@@ -84,3 +84,63 @@ MissingOrigin prova ausência de importação/backfill. Cutover diagnóstico sem
 recusa activação. Guard de estorno vinculado testado sem atribuir semântica temporal.
 Testes históricos por data e nova anulação não executados: partes deliberadamente
 suspensas. Frontend/CI/SAF-T não alterados, nem tratados como provas de conformidade.
+
+## Correcção MAJOR-001 — componentes financeiros após vínculo RC
+
+A nova revisão Codex encontrou um MAJOR distinto das observações anteriores.
+Reprodução efectiva em PostgreSQL16.3 descartável, schema V20: emissor interno
+RC10 numa transacção externa → SET CONSTRAINTS ALL IMMEDIATE → ALL DEFERRED →
+CASH_OUT1 e DISCOUNT1 → COMMIT. O teste temporário confirmou os dois componentes
+persistidos e desconto documental0; teste1/1 aprovado demonstra a vulnerabilidade,
+não uma validação da integridade. A fixture de reprodução não foi usada como base
+validada após a correcção. Teste temporário substituído por regressão que exige rejeição.
+
+Alternativas técnicas:
+
+| Protecção | Benefício | Custo/risco |
+| --- | --- | --- |
+| Bloquear inserções após vínculo | Imediata, independente das constraints, ledger RC selado | Exige montar componentes/afectações antes do vínculo; emissor já o faz |
+| Revalidar RC em cada inserção | Poderia permitir extensões compatíveis | Alarga função/dispatch e triggers diferidos, aceita mutações desnecessárias |
+
+Escolhida a primeira: extensão de uma liquidação RC finalizada não é necessária
+nesta fronteira. Migration aditiva V21 com função e dois triggers BEFORE INSERT
+não diferíveis; apenas operações presentes em financial_receipt são seladas.
+V18 e V20 mantêm checksums. V20 continua a validar o conteúdo antes/do vínculo;
+V18 impede extensão de operações consolidadas fora da transacção criadora.
+Nenhuma validação depende exclusivamente de Java. Nenhuma alteração de dados,
+backfill ou reparação automática de ledger já corrompido. Sem activação/B2.
+
+Testes permanentes acrescentados: ataque equilibrado exacto, CASH_OUT, DISCOUNT,
+afectação de outra posição sem vínculo de linha, emissão válida após ambos os
+modos, operação genérica sem RC com par equilibrado e violação antes do vínculo.
+Modos inicial diferido, IMMEDIATE e IMMEDIATE→DEFERRED cobertos separadamente.
+Falhas tardias confirmam rollback de documento, linhas, operação, afectações,
+componentes, vínculos, auditoria, numerador e residual. A afectação usa outra
+posição para não confundir a rejeição com a constraint de unicidade.
+
+Revalidação da correcção em PostgreSQL16.3 próprio, porta25443, schema V21:
+23 RC +15 core +7 queries +4 safety +46 controller +25 integridade +2 receipt
+migrations +1 core migration +1 fiscal compatibility +1 schema = **125 cenários
+distintos aprovados**, zero falhas/erros/skips. As execuções31/31,24/24 e71/71
+incluem repetição do upgrade V19: não somadas como126 testes distintos.
+Upgrade V19→V21 e V20→V21, assim como V17/V15→V21, aprovados; segundo arranque0.
+Fixtures preservam RC legado de seis casas, ATCUD/QR e ledger anterior; triggers
+V21 confirmados não diferíveis. Inicialização de schema vazio aprovada.
+Nova revisão independente Codex major001_review: **APROVAR**, BLOCKER0/MAJOR0/MINOR0.
+Revisor analisou SQL, ordem do emissor, concorrência, testes e documentação por
+leitura; resultados executados pertencem ao executor.
+
+Comandos adicionais (Maven em cache, sem instalar dependências):
+
+```sh
+FAC_TEST_DATASOURCE_URL=jdbc:postgresql://localhost:25443/tuuli_op22_b1_major001_fixed_test mvn -o -B -Dtest=FinancialReceiptIntegrationTests,TestDatabaseSafetyValidatorTests,FinancialReceiptMigrationTests,FinancialCoreMigrationTests,FiscalMigrationCompatibilityTests,FlywaySchemaIntegrationTests test
+FAC_TEST_DATASOURCE_URL=jdbc:postgresql://localhost:25443/tuuli_op22_b1_major001_fixed_test mvn -o -B -Dtest=FinancialCoreIntegrationTests,FinancialQueriesIntegrationTests,FinancialReceiptMigrationTests test
+FAC_TEST_DATASOURCE_URL=jdbc:postgresql://localhost:25443/tuuli_op22_b1_major001_legacy_test mvn -o -B -Dtest=DocumentoComercialControllerTests,DocumentoComercialEmissaoIntegridadeTests test
+mvn -o -B -DskipTests package
+```
+
+Package final BUILD SUCCESS; diff e37 destinos locais Markdown validados.
+Logs da reprodução e das três revalidações conservados em /tmp/tuuli-major001-*.log
+como evidência auxiliar local, não fonte institucional nem requisito de acesso.
+Commit adicional preserva184eafc; nenhum push/PR/merge autorizado nesta correcção.
+Revisão cruzada Claude permanece pendente; revisão Codex não a substitui.

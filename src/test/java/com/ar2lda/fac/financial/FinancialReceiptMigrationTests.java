@@ -1,7 +1,8 @@
 package com.ar2lda.fac.financial;
 
 import org.flywaydb.core.Flyway;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import java.net.URI;
 import java.sql.*;
 import java.util.UUID;
@@ -11,7 +12,9 @@ class FinancialReceiptMigrationTests {
     static String scalar(Connection c,String sql) throws SQLException {
         try(var s=c.createStatement();var r=s.executeQuery(sql)) { assertThat(r.next()).isTrue();return r.getString(1); }
     }
-    @Test void upgradeV19PreservesLegacyPrecisionAndLedgerAndSecondStart() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings={"19","20"})
+    void upgradePreservesLegacyPrecisionAndLedgerAndSecondStart(String version) throws Exception {
         String url=System.getenv("FAC_TEST_DATASOURCE_URL");assertThat(url).isNotBlank();
         URI u=URI.create(url.substring(5));assertThat(u.getPath()).endsWith("_test");
         String user=System.getenv().getOrDefault("FAC_TEST_DATASOURCE_USERNAME","postgres");
@@ -20,7 +23,7 @@ class FinancialReceiptMigrationTests {
         try(var admin=DriverManager.getConnection(url,user,password);var stmt=admin.createStatement()) {
             stmt.execute("create database "+name);String fixture="jdbc:postgresql://"+u.getRawAuthority()+"/"+name;
             try {
-                Flyway.configure().dataSource(fixture,user,password).target("19").cleanDisabled(true).load().migrate();
+                Flyway.configure().dataSource(fixture,user,password).target(version).cleanDisabled(true).load().migrate();
                 String before;
                 try(var c=DriverManager.getConnection(fixture,user,password);var s=c.createStatement()) {
                     c.setAutoCommit(false);
@@ -50,12 +53,13 @@ class FinancialReceiptMigrationTests {
                     c.commit();before=scalar(c,"select concat_ws('|',valor_pagamento_bruto,valor_desconto_financeiro,atcud,qr_payload) from documento_financeiro where id=1");
                 }
                 var current=Flyway.configure().dataSource(fixture,user,password).cleanDisabled(true).load();
-                assertThat(current.migrate().migrationsExecuted).isEqualTo(1);current.validate();
-                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("20");assertThat(current.migrate().migrationsExecuted).isZero();
+                assertThat(current.migrate().migrationsExecuted).isEqualTo(21-Integer.parseInt(version));current.validate();
+                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("21");assertThat(current.migrate().migrationsExecuted).isZero();
                 try(var c=DriverManager.getConnection(fixture,user,password);var s=c.createStatement()) {
                     assertThat(scalar(c,"select concat_ws('|',valor_pagamento_bruto,valor_desconto_financeiro,atcud,qr_payload) from documento_financeiro where id=1")).isEqualTo(before);
                     assertThat(scalar(c,"select available::text from financial_position where id=1")).isEqualTo("100.00");
                     assertThat(scalar(c,"select count(*) from financial_receipt")).isEqualTo("0");
+                    assertThat(scalar(c,"select count(*) from pg_trigger where tgname in ('financial_receipt_allocation_sealed','financial_receipt_component_sealed') and not tgdeferrable")).isEqualTo("2");
                     s.execute("update documento_financeiro set anulado=true where id=1");
                     assertThat(scalar(c,"select anulado::text from documento_financeiro where id=1")).isEqualTo("true");
                 }

@@ -244,4 +244,76 @@ class FinancialReceiptIntegrationTests {
         assertThat(numerator()).isZero();assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("10");
     }
 
+
+    void verifyConstraintTiming(int mode) {
+        if(mode>0) db.execute("set constraints all immediate");
+        if(mode==2) db.execute("set constraints all deferred");
+    }
+    void assertSealedRollback(Debt d,int mode,java.util.function.LongConsumer append) {
+        String[] tables={"documento_financeiro","linha_documento_financeiro","financial_operation",
+            "financial_allocation","financial_component","financial_receipt","financial_receipt_line","auditoria_evento"};
+        long[] before=Arrays.stream(tables).mapToLong(this::count).toArray();
+        long number=numerator();var residual=queries.position(scope(),d.position()).residual();
+        assertThatThrownBy(()->new org.springframework.transaction.support.TransactionTemplate(tx).execute(status->{
+            var receipt=issuer.issue(key(),request(d,"10"));
+            long op=db.queryForObject("select operation_id from financial_receipt where document_id=?",Long.class,receipt.id());
+            verifyConstraintTiming(mode);append.accept(op);return null;
+        })).isInstanceOf(RuntimeException.class).hasRootCauseMessage("ERROR: Cannot append to a receipt-bound financial operation\n  Where: PL/pgSQL function financial_receipt_entry_guard() line 4 at RAISE");
+        for(int i=0;i<tables.length;i++) assertThat(count(tables[i])).as(tables[i]).isEqualTo(before[i]);
+        assertThat(numerator()).isEqualTo(number);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo(residual);
+    }
+    @Test void consumedDeferredChecksCannotPermitForbiddenBalancedPair() {
+        var d=debt("20");
+        assertSealedRollback(d,2,op->db.update("insert into financial_component(operation_id,kind,amount) values(?,'CASH_OUT',1),(?,'DISCOUNT',1)",op,op));
+    }
+    @Test void cashOutAfterReceiptBindingIsAlwaysRejected() {
+        var d=debt("20");
+        for(int mode=0;mode<3;mode++) assertSealedRollback(d,mode,op->db.update("insert into financial_component(operation_id,kind,amount) values(?,'CASH_OUT',1)",op));
+    }
+    @Test void discountAfterReceiptBindingIsAlwaysRejected() {
+        var d=debt("20");
+        for(int mode=0;mode<3;mode++) assertSealedRollback(d,mode,op->db.update("insert into financial_component(operation_id,kind,amount) values(?,'DISCOUNT',1)",op));
+    }
+    @Test void incompatibleAllocationAfterReceiptBindingIsAlwaysRejected() {
+        var d=debt("20");var other=debt("20");
+        for(int mode=0;mode<3;mode++) assertSealedRollback(d,mode,op->db.update("""
+            insert into financial_allocation(operation_id,position_id,empresa_id,cliente_id,moeda_id,amount,effect)
+            values(?,?,1,?,'EUR',1,'CONSUME')
+            """,op,other.position(),client));
+        assertThat(queries.position(scope(),other.position()).residual()).isEqualByComparingTo("20");
+    }
+    @Test void validReceiptCommitsAfterImmediateAndDeferredChecks() {
+        var d=debt("20");
+        long op=new org.springframework.transaction.support.TransactionTemplate(tx).execute(status->{
+            var receipt=issuer.issue(key(),request(d,"10"));verifyConstraintTiming(2);
+            return db.queryForObject("select operation_id from financial_receipt where document_id=?",Long.class,receipt.id());
+        });
+        assertThat(db.queryForList("select kind from financial_component where operation_id=?",String.class,op)).containsExactly("CASH_IN");
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("10");
+    }
+    @Test void genericSettlementStillPermitsBalancedComponentsWithinCreatingTransaction() {
+        var d=debt("20");
+        long op=new org.springframework.transaction.support.TransactionTemplate(tx).execute(status->{
+            long id=core.settle(scope(),key(),new FinancialCore.Settlement(List.of(new FinancialCore.Part(d.position(),m("10"))),m("10"),m("0"),m("0")),"B1_EMISSOR");
+            verifyConstraintTiming(2);
+            db.update("insert into financial_component(operation_id,kind,amount) values(?,'CASH_OUT',1),(?,'DISCOUNT',1)",id,id);
+            return id;
+        });
+        assertThat(db.queryForList("select kind from financial_component where operation_id=? order by kind",String.class,op)).containsExactly("CASH_IN","CASH_OUT","DISCOUNT");
+        assertThat(db.queryForObject("select count(*) from financial_receipt where operation_id=?",Long.class,op)).isZero();
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("10");
+    }
+    @Test void forbiddenComponentsBeforeReceiptBindingStillFailDeferredValidation() {
+        var d=debt("20");long receipts=count("financial_receipt"),number=numerator();
+        doAnswer(invocation->{
+            long op=(Long)invocation.callRealMethod();
+            db.update("insert into financial_component(operation_id,kind,amount) values(?,'CASH_OUT',1),(?,'DISCOUNT',1)",op,op);
+            return op;
+        }).when(core).settle(any(),anyString(),any(),anyString());
+        assertThatThrownBy(()->issuer.issue(key(),request(d,"10"))).isInstanceOf(RuntimeException.class).hasStackTraceContaining("Incomplete financial receipt");
+        assertThat(count("financial_receipt")).isEqualTo(receipts);assertThat(numerator()).isEqualTo(number);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("20");
+    }
+
 }
