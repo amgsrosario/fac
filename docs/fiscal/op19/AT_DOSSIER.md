@@ -121,3 +121,17 @@ expõe essa data; saldo/movimentos financeiros a uma data suspensos por ausênci
 de vínculo SETTLE/RC e semântica temporal de estornos/anulações. Timestamp técnico
 não é SystemEntryDate SAF-T. Nenhuma nova aprovação jurídica/certificação; gates
 NL, RCzero, descontos, adiantamentos e rectificações/rappels permanecem abertos.
+
+## Evolução OP22-B1 — emissor RC interno, sem activação
+
+[Contrato/corte](../op22-b1/RECEIPT_INTEGRATION.md) e [evidência](../op22-b1/VALIDATION.md).
+T01/T02: liquidação FT/RC parcial/múltipla, idempotência antes da numeração,
+contexto, concorrência e atomicidade preparados em componente interno. T03:
+V20 vincula documento/operação e linha/afectação, sem importar históricos.
+Efeito de SETTLE deriva da emissão RC (TUULI-FIN-TIME-001); data financeira
+autónoma não criada. Precisão da primeira fatia aprovada: EUR/cêntimos exactos,
+sem desconto novo; legado mantido enquanto inactivo. Leituras operacionais ainda
+não transferidas integralmente; anulação/histórico dependem de decisão temporal.
+Guards impedem estornos/anulações de RC internos fora dessa decisão.
+Não declara admissibilidade jurídica/certificação; L01–L09 e questões NL/RCzero,
+adiantamentos, descontos, rectificações/rappels e SAF-T mantêm seus gates próprios.

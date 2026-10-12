@@ -94,3 +94,13 @@ Detalhes e ordem fina dependem das próximas OPs; não constituem decisões fisc
 ou plano funcional já autorizado. Evidências/estado corrente ficam em
 [OPERATIONAL_STATE.md](../OPERATIONAL_STATE.md). Fundamentos duradouros ficam na
 [Memória Institucional](../INSTITUTIONAL_MEMORY.md).
+
+## Delimitação posterior aprovada — OP22-B1
+
+PO aprovou primeira fatia pela API existente como projecção, EUR/cêntimos exactos,
+sem descontos financeiros na activação nova. RC legado preservado enquanto
+inactivo. Corte da demo preparado sem eliminar/reconstruir/migrar dados.
+B1 implementa componentes internos e vínculos V20; não activa a fronteira.
+As restantes matérias reservadas conservam os seus gates, especialmente efeito
+temporal de anulação/histórico, moedas/tipos futuros e certificação.
+[Implementação e limites](../../fiscal/op22-b1/RECEIPT_INTEGRATION.md).

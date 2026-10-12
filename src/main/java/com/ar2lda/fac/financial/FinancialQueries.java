@@ -14,12 +14,13 @@ public interface FinancialQueries {
     enum OperationKind { CREATE, SETTLE, REVERSE }
     enum Effect { CONSUME, RESTORE, CANCEL }
     enum ComponentKind { CASH_IN, CASH_OUT, DISCOUNT }
-    enum DocumentLinkStatus { NOT_RECORDED }
+    enum DocumentLinkStatus { NOT_RECORDED, LINKED }
 
     record Page<T>(List<T> items, long total, int offset, int limit) {
         public Page { items = List.copyOf(items); }
     }
     record CommercialOrigin(long documentId, String reference, LocalDate issueDate, LocalDate dueDate) {}
+    record FinancialDocument(long documentId, String reference, LocalDate issueDate) {}
     record PositionView(long id, Scope scope, Nature nature, String origin, String reference,
                         BigDecimal original, BigDecimal residual, State state, long creationOperationId,
                         Optional<CommercialOrigin> commercialOrigin, Instant recordedAt) {
@@ -32,13 +33,20 @@ public interface FinancialQueries {
                       Long reverseOfAllocationId, OperationKind operationKind, Long reverseOfOperationId,
                       Instant recordedAt) {}
     record Component(long id, ComponentKind kind, BigDecimal amount, boolean reversal, Long reverseOfComponentId) {}
-    /** No financial-document association exists yet. Never guess an RC from amount/client/date. */
+    /** Financial documents are identified only by a persisted link, never guessed from amount/client/date. */
     record OperationView(long id, Scope scope, OperationKind kind, String actor, String reason,
                          Instant recordedAt, Long reverseOfOperationId, Long reversedByOperationId,
                          Optional<CommercialOrigin> creationDocument, DocumentLinkStatus financialDocumentLink,
+                         Optional<FinancialDocument> financialDocument,
                          List<Component> components) {
         public OperationView { components = List.copyOf(components); }
-        public Optional<LocalDate> financialEffectDate() { return creationDocument.map(CommercialOrigin::issueDate); }
+        public Optional<LocalDate> financialEffectDate() {
+            return switch(kind) {
+                case CREATE -> creationDocument.map(CommercialOrigin::issueDate);
+                case SETTLE -> financialDocument.map(FinancialDocument::issueDate);
+                case REVERSE -> Optional.empty(); // Reversal effect semantics have NOT been approved.
+            };
+        }
     }
 
     Page<PositionView> positions(Scope scope, Selection selection, Nature nature, int offset, int limit);

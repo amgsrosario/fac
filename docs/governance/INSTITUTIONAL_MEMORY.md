@@ -181,6 +181,24 @@ a sua semântica legal/funcional permanece por definir antes de consultas histó
 corrente e data derivada para FT vinculada; saldos por data financeira suspensos.
 A aprovação não activa RC, não altera precisão nem promove o núcleo a saldo operacional.
 
+## OP22-B1 — preparação FT/RC aprovada, ainda inactiva
+
+PO aprovou API existente como projecção do FinancialCore, EUR e cêntimos exactos,
+sem descontos financeiros na primeira activação, e preparação de corte limpo da
+demo sem eliminação/migração de dados. Esta decisão delimita a precisão da fatia
+nova; não altera RC legado nem aprova outras moedas/descontos/adiantamentos.
+B1 implementa emissor interno idempotente e vínculos aditivos V20, projecções
+isoladas e diagnóstico de dados, sem chamadas nos endpoints operacionais.
+Timestamp técnico separado; efeito de SETTLE vinculado deriva da emissão RC.
+
+Anulação nova/histórico continuam suspensos por semântica temporal pendente;
+ninguém repõe snapshots antigos para desfazer afectações independentes. Nenhuma
+activação antes de emissão/leitura/anulação/dados coerentes. B2 tem de completar
+consumidores e decisões temporais; Pendente permanece autoridade operacional
+apenas enquanto o circuito legado estiver activo. Na futura fronteira nova,
+Pendente poderá manter identidade/metadados, mas não saldo financeiro independente.
+[Contrato e limites](../fiscal/op22-b1/RECEIPT_INTEGRATION.md).
+
 ## Metodologia e governação
 
 Aplicar o AR2 AI Development System através de uma Ordem de Produção aprovada: descoberta focada → implementação dentro do âmbito → testes proporcionais → revisão independente quando prevista → correções legítimas → diff e staging seletivo → commit → push da branch da missão → PR contra a base vigente → CI → gate humano.

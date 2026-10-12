@@ -35,3 +35,12 @@ aprovada. Saldo/movimentos a uma data financeira ficam suspensos. Nenhuma nova
 estrutura ou data autónoma foi implementada; alterações estruturais requerem
 comparação e aprovação prévia GOV-ALT-001. Não activar RC nem alterar anulações.
 [Contratos e limitações](../../fiscal/op22-a/QUERY_CONTRACTS.md).
+
+## Evolução posterior OP22-B1 — implementação parcial, ainda inactiva
+
+V20 identifica RC/SETTLE imutavelmente; emissão RC já consultável como
+financialEffectDate do SETTLE vinculado, sem data financeira autónoma. Origem FT
+mantém regra anterior. REVERSE e saldo/movimentos a uma data financeira continuam
+sem implementação documental temporal: a decisão sobre anulação ainda é necessária.
+B1 não interpreta timestamp, data original ou data de registo como efeito do estorno.
+[Contrato e testes](../../fiscal/op22-b1/RECEIPT_INTEGRATION.md).
