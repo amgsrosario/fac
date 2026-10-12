@@ -94,8 +94,18 @@ Esta sequência não autoriza código, migrations, deployment ou novas APIs.
 
 [Modelo implementado](../op20/FINANCIAL_CORE.md) e [evidência efetiva](../op20/VALIDATION.md).
 T01/T02: posições, afectações, caixa, desconto, compensação, idempotência e
-estornos implementados localmente no núcleo; testados no núcleo (22 testes dirigidos, incluindo safety/migration). Não
-integrados nos circuitos FT/FR/NC/ND/RC/NL, não publicados, não validados
+estornos implementados no núcleo, integrado pelo PR19; testados no núcleo (22 testes dirigidos, incluindo safety/migration). Não
+integrados nos circuitos documentais na OP20; não validados
 juridicamente e não certificados. T03: preservação de metadados do núcleo e
 migration aditiva; migração histórica e snapshots documentais financeiros
 continuam não satisfeitos. L01–L09 não recebem aprovação normativa por esta OP.
+
+## Evolução OP21 — originação FT, sem liquidação RC
+
+[Implementação e requisitos1–14](../op21/FT_ORIGINATION.md) e
+[evidência/CI](../op21/VALIDATION.md). T01/F01 parcialmente integrado no código
+local para novas FT EUR, com posição DEBT e vínculo único. T02: idempotência e
+estorno da criação ligados à emissão/anulação existentes, sem nova regra fiscal.
+V19 é aditiva, sem backfill de emitidos. RC, saldos apresentados, NC/ND e migração
+histórica ainda não integrados. L01–L09 permanecem sem nova validação normativa;
+prova de integração não equivale a admissibilidade legal ou certificação AT.

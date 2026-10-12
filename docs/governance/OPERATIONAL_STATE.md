@@ -123,12 +123,27 @@ intervenção posterior.
 
 ## OP20 — Fundação financeira
 
-Implementação local em codex/financial-core-op20, base produtiva observada na
+OP20 CONCLUÍDA E INTEGRADA: PR19 merged em feature/visual-redesign,
+merge91ef3c42f668875d0aa8468f3886e91fb7f358d6. Base produtiva observada na
 abertura194ffd458b7405822d4934bac5cfef5feb87486b. Serviço interno/V18 aditiva;
 nenhum circuito documental ativado nem endpoint novo. Validação concluída:22 testes núcleo/migration/safety,84 regressão dirigida,
 1 compatibilidade histórica e package aprovados. Revisão independente
 op20_core_review: APROVAR, BLOCKER0/MAJOR0/MINOR0. Entrega local validada,
-commit autorizado pela OP20; sem push/PR e sem integração produtiva. [Estado de evidência](../fiscal/op20/VALIDATION.md).
+commit e8da26b438aa73117b24e8afeb700318933d099e integrado. CI do PR19
+sem execuções/checks encontrados; não declarado verde. Núcleo integrado no
+repositório, ainda sem uso como fonte de saldo operacional. [Estado de evidência](../fiscal/op20/VALIDATION.md).
+
+## OP21 — Originação FT
+
+Branch local codex/financial-ft-origin-op21, base remota observada91ef3c42…,
+worktree isolada. Adaptador de emissão/anulação e V19 aditiva implementados
+localmente; originação FT integrada no código da missão, liquidação RC ainda
+não integrada. Pendente permanece autoridade e nenhuma conta corrente nova.
+Regressão dirigida97/97 e núcleo/migration/safety22/22 aprovados; package
+BUILD SUCCESS. Revisão independente op21_review: APROVAR,
+BLOCKER0/MAJOR0/MINOR0. Entrega local validada e commit autorizado pela OP21.
+Sem push/PR; prontidão para merge exige CI apropriado ou decisão expressa do PO.
+[Modelo](../fiscal/op21/FT_ORIGINATION.md) / [evidências e diagnóstico CI](../fiscal/op21/VALIDATION.md).
 
 ## Sequência estratégica vigente
 

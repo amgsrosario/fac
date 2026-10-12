@@ -3,6 +3,11 @@ package com.ar2lda.fac;
 import com.ar2lda.fac.model.*;
 import com.ar2lda.fac.repository.*;
 import com.ar2lda.fac.service.FiscalQrService;
+import com.ar2lda.fac.financial.FinancialCore;
+import com.ar2lda.fac.exception.BadRequestException;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import com.ar2lda.fac.service.DocumentoComercialService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
@@ -60,6 +65,8 @@ class DocumentoComercialEmissaoIntegridadeTests {
     @Autowired private FiscalQrService fiscalQrService;
     @Autowired private DocumentoComercialService documentoService;
     @Autowired private JdbcTemplate jdbcTemplate;
+    @SpyBean private FinancialCore financialCore;
+    @Autowired private org.springframework.core.env.Environment testEnvironment;
 
     private Cliente cliente;
     private Armazem armazem;
@@ -251,6 +258,14 @@ class DocumentoComercialEmissaoIntegridadeTests {
                 .andExpect(jsonPath("$.qrPayload").isNotEmpty())
                 .andExpect(jsonPath("$.valorBruto").value(10.000000))
                 .andExpect(jsonPath("$.valorTotal").value(12.300000));
+        assertThat(originCount(id)).isEqualTo(1L);
+        var position=jdbcTemplate.queryForMap("select p.*,f.actor from financial_document_origin o join financial_position p on p.id=o.position_id join financial_operation f on f.id=p.creation_id where o.document_id=?",id);
+        assertThat(position.get("nature")).isEqualTo("DEBT");
+        assertThat((BigDecimal)position.get("original")).isEqualByComparingTo("12.30");
+        assertThat((BigDecimal)position.get("available")).isEqualByComparingTo("12.30");
+        assertThat(position.get("cliente_id")).isEqualTo(cliente.getId());
+        assertThat(position.get("actor")).isEqualTo("EMITINT");
+        assertThat(jdbcTemplate.queryForObject("select valor_pendente from pendente where id_documento_comercial=?",BigDecimal.class,id)).isEqualByComparingTo("12.30");
     }
 
     @Test
@@ -296,6 +311,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
                         .content("{\"emissorId\":\"EMITINT\"}"))
                 .andExpect(status().isConflict());
 
+        assertThat(originCount(id)).isEqualTo(1L);
         assertThat(serie("LOCK").getNumerador()).isEqualTo(1L);
         assertThat(documentoRepository.findById(id).orElseThrow().getNumeroDocumento()).isEqualTo(1L);
     }
@@ -312,6 +328,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         assertThat(documento.getNumeroDocumentoCompleto()).isEqualTo("IC1 LOCK/1");
         assertThat(documento.getAtcud()).isEqualTo("IC12026-1");
         assertThat(documento.getQrPayload()).isNotBlank();
+        assertThat(originCount(id)).isEqualTo(1L);
     }
 
     @Test
@@ -539,6 +556,75 @@ class DocumentoComercialEmissaoIntegridadeTests {
         assertThat(documentoService.getById(id).qrPayload()).contains("I1:PT-MA", "B:ESB123456789", "C:ES", "I4:2.00");
     }
 
+    private long originCount(Long id) {
+        return jdbcTemplate.queryForObject("select count(*) from financial_document_origin where document_id=?",Long.class,id);
+    }
+
+    @Test
+    void financialOriginFailureRollsBackInvoicePendingNumberAndCreatedHistory() throws Exception {
+        Long id=criarRascunho("LOCK");
+        doAnswer(invocation -> { invocation.callRealMethod(); throw new BadRequestException("OP21 simulated origin failure"); })
+                .when(financialCore).create(any(),anyString(),any(),anyString(),any(),any(),anyString());
+        mockMvc.perform(post("/documentos-comerciais/{id}/emitir",id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"emissorId\":\"EMITINT\"}")).andExpect(status().isBadRequest());
+        assertRascunhoSemDadosFiscais(id,"LOCK");
+        assertThat(jdbcTemplate.queryForObject("select count(*) from financial_operation",Long.class)).isZero();
+        assertThat(jdbcTemplate.queryForObject("select count(*) from financial_position",Long.class)).isZero();
+        assertThat(jdbcTemplate.queryForObject("select count(*) from pendente where id_documento_comercial=?",Long.class,id)).isZero();
+    }
+
+    @Test
+    void cancellationReversesOriginOnceAndPreservesSnapshot() throws Exception {
+        Long id=criarRascunho("LOCK");assertThat(emitir(id).call()).isEqualTo(200);
+        var before=documentoRepository.findById(id).orElseThrow();String qr=before.getQrPayload();
+        assertThat(originCount(id)).isEqualTo(1L);
+        mockMvc.perform(post("/documentos-comerciais/{id}/anular",id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"Anulação OP21 teste\"}")).andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("select count(*) from financial_operation where kind='REVERSE'",Long.class)).isEqualTo(1L);
+        assertThat(jdbcTemplate.queryForObject("select cancelled from financial_position p join financial_document_origin o on o.position_id=p.id where o.document_id=?",Boolean.class,id)).isTrue();
+        assertThat(documentoRepository.findById(id).orElseThrow().getQrPayload()).isEqualTo(qr);
+        mockMvc.perform(post("/documentos-comerciais/{id}/anular",id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"Anulação OP21 teste\"}")).andExpect(status().isConflict());
+        assertThat(jdbcTemplate.queryForObject("select count(*) from financial_operation where kind='REVERSE'",Long.class)).isEqualTo(1L);
+    }
+
+    @Test
+    void excludedDocumentTypesDoNotOriginateAndDraftRemainsUnlinked() throws Exception {
+        for(String code:List.of("FR","NC","ND")) {
+            var type=tipoDocumentoRepository.findById("IC1").orElseThrow();type.setCodigoFiscal(code);
+            type.setLiquidacaoImediata(code.equals("FR"));tipoDocumentoRepository.saveAndFlush(type);
+            Long id=criarRascunho("LOCK");assertThat(originCount(id)).isZero();
+            assertThat(emitir(id).call()).isEqualTo(200);assertThat(originCount(id)).isZero();
+        }
+    }
+
+    @Test
+    void reversalFailureRollsBackCommercialAndFinancialCancellation() throws Exception {
+        Long id=criarRascunho("LOCK");assertThat(emitir(id).call()).isEqualTo(200);
+        doAnswer(invocation -> { invocation.callRealMethod(); throw new BadRequestException("OP21 simulated reversal failure"); })
+                .when(financialCore).reverse(any(),anyString(),anyLong(),anyString(),anyString());
+        mockMvc.perform(post("/documentos-comerciais/{id}/anular",id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"Anulação OP21 teste\"}")).andExpect(status().isBadRequest());
+        assertThat(documentoRepository.findById(id).orElseThrow().getEstado()).isEqualTo(EstadoDocumentoComercial.EMITIDO);
+        assertThat(jdbcTemplate.queryForObject("select cancelled from financial_position p join financial_document_origin o on o.position_id=p.id where o.document_id=?",Boolean.class,id)).isFalse();
+        assertThat(jdbcTemplate.queryForObject("select valor_pendente from pendente where id_documento_comercial=?",BigDecimal.class,id)).isEqualByComparingTo("12.30");
+        assertThat(jdbcTemplate.queryForObject("select count(*) from financial_operation where kind='REVERSE'",Long.class)).isZero();
+    }
+
+    @Test
+    void historicalEmissionWithoutOriginCanBeCancelledWithoutBackfill() throws Exception {
+        Long id=criarRascunho("LOCK");
+        var legacy=documentoRepository.findById(id).orElseThrow();
+        legacy.setNumeroDocumento(91L);legacy.atribuirNumeroDocumentoCompleto("IC1 LOCK/91");
+        legacy.setEmissor(utilizadorRepository.findById("EMITINT").orElseThrow());
+        legacy.setEstado(EstadoDocumentoComercial.EMITIDO);documentoRepository.saveAndFlush(legacy);
+        assertThat(originCount(id)).isZero();
+        mockMvc.perform(post("/documentos-comerciais/{id}/anular",id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"Anulação histórica teste\"}")).andExpect(status().isOk());
+        assertThat(originCount(id)).isZero();
+        assertThat(jdbcTemplate.queryForObject("select count(*) from financial_operation",Long.class)).isZero();
+    }
+
     private void configurarNaoLiquidacao() {
         jdbcTemplate.update("insert into riva(id,nome,mercado,tratamento_liquidacao,fundamento_fiscal,id_misencao) values('FNL','Não liquidação teste','INTRACOMUNITARIO','NAO_LIQUIDAR','IVA Isento Art.º 14.º do RITI','M16') on conflict(id) do update set tratamento_liquidacao='NAO_LIQUIDAR',fundamento_fiscal='IVA Isento Art.º 14.º do RITI'");
         jdbcTemplate.update("insert into riva_taxa(id_riva,id_tipo_taxa_iva,valor) values('FNL','REDUZIDA',6) on conflict(id_riva,id_tipo_taxa_iva) do update set valor=6");
@@ -612,6 +698,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
     }
 
     private void assertRascunhoSemDadosFiscais(Long id, String serie) {
+        assertThat(originCount(id)).isZero();
         DocumentoComercial documento = documentoRepository.findById(id).orElseThrow();
         assertThat(documento.getEstado()).isEqualTo(EstadoDocumentoComercial.RASCUNHO);
         assertThat(documento.getNumeroDocumento()).isNull();
@@ -653,6 +740,12 @@ class DocumentoComercialEmissaoIntegridadeTests {
     }
 
     private void cleanupFixture() {
+        // Immutable histories cannot be DELETEd. Reset only this isolated test database fixture.
+        com.ar2lda.fac.testinfra.TestDatabaseSafetyValidator.validate(testEnvironment.getActiveProfiles(),
+                jdbcTemplate.queryForObject("select current_database()", String.class),
+                testEnvironment.getProperty("fac.test-database.destructive-operations-enabled", Boolean.class, false));
+        jdbcTemplate.execute("truncate financial_document_origin,financial_allocation,financial_component,financial_position,financial_operation");
+        reset(financialCore);
         cleanupDocumentsForType("IC1");
         cleanupDocumentsForType("IC2");
         jdbcTemplate.update("delete from artigo where codigo = 'ARTINT'");
