@@ -109,3 +109,15 @@ estorno da criação ligados à emissão/anulação existentes, sem nova regra f
 V19 é aditiva, sem backfill de emitidos. RC, saldos apresentados, NC/ND e migração
 histórica ainda não integrados. L01–L09 permanecem sem nova validação normativa;
 prova de integração não equivale a admissibilidade legal ou certificação AT.
+
+## Evolução OP22-A — consultas internas e efeito documental
+
+[Contratos](../op22-a/QUERY_CONTRACTS.md) e [evidência](../op22-a/VALIDATION.md).
+T01/T02: leituras tipadas por contexto, dívida/crédito/residual e vínculos
+persistidos, sem activar RC/conta corrente. T03: identificadores e histórico
+imutável reutilizados; não se presume RC a partir de atributos coincidentes.
+TUULI-FIN-TIME-001 aprovada pelo PO: efeito = emissão documental. FT vinculada
+expõe essa data; saldo/movimentos financeiros a uma data suspensos por ausência
+de vínculo SETTLE/RC e semântica temporal de estornos/anulações. Timestamp técnico
+não é SystemEntryDate SAF-T. Nenhuma nova aprovação jurídica/certificação; gates
+NL, RCzero, descontos, adiantamentos e rectificações/rappels permanecem abertos.

@@ -85,6 +85,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DocumentoComercialControllerTests {
     @Autowired private org.springframework.jdbc.core.JdbcTemplate financialIsolationDb;
     @Autowired private jakarta.persistence.EntityManager financialFixtureEntities;
+    @Autowired private com.ar2lda.fac.financial.FinancialQueries financialQueries;
     private Long financialOperationsBefore;
     @BeforeEach void rememberLegacyReceiptIsolation() {
         financialOperationsBefore=financialIsolationDb.queryForObject("select count(*) from financial_operation where kind='SETTLE'", Long.class);
@@ -2994,7 +2995,27 @@ class DocumentoComercialControllerTests {
         financialFixtureEntities.flush();
         org.assertj.core.api.Assertions.assertThat(financialIsolationDb.queryForObject("select valor_pendente from pendente where id=?",BigDecimal.class,pending.getId())).isEqualByComparingTo("0");
         org.assertj.core.api.Assertions.assertThat(financialIsolationDb.queryForObject("select available from financial_position where id=?",BigDecimal.class,pos.get("id"))).isEqualByComparingTo("12.30");
+        org.assertj.core.api.Assertions.assertThat(financialQueries.byCommercialDocument(new com.ar2lda.fac.financial.FinancialCore.Scope(1,cliente.getId(),"EUR"),id).orElseThrow().residual()).isEqualByComparingTo("12.30");
         mockMvc.perform(get("/pendentes/clientes/{id}/abertos",cliente.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void financialQueryUsesDocumentIssueDateAndPreservesLegacyBalances() throws Exception {
+        Long id=emitirDocumentoComercialComLinhas(1);
+        financialFixtureEntities.flush();
+        var scope=new com.ar2lda.fac.financial.FinancialCore.Scope(1,cliente.getId(),"EUR");
+        var view=financialQueries.byCommercialDocument(scope,id).orElseThrow();
+        var doc=view.commercialOrigin().orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(doc.documentId()).isEqualTo(id);
+        org.assertj.core.api.Assertions.assertThat(doc.issueDate()).isEqualTo(LocalDate.of(2026,6,6));
+        org.assertj.core.api.Assertions.assertThat(doc.dueDate()).isEqualTo(LocalDate.of(2026,7,6));
+        org.assertj.core.api.Assertions.assertThat(doc.reference()).isNotBlank();
+        org.assertj.core.api.Assertions.assertThat(view.residual()).isEqualByComparingTo("12.30");
+        org.assertj.core.api.Assertions.assertThat(view.financialEffectDate()).contains(doc.issueDate());
+        org.assertj.core.api.Assertions.assertThat(view.recordedAt()).isEqualTo(financialIsolationDb.queryForObject("select created_at from financial_position where id=?",java.sql.Timestamp.class,view.id()).toInstant());
+        org.assertj.core.api.Assertions.assertThat(financialQueries.operation(scope,view.creationOperationId()).creationDocument()).contains(doc);
+        org.assertj.core.api.Assertions.assertThat(financialQueries.byCommercialDocument(new com.ar2lda.fac.financial.FinancialCore.Scope(1,cliente.getId()+100000,"EUR"),id)).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(pendenteRepository.findByDocumentoComercialId(id).orElseThrow().getValorPendente()).isEqualByComparingTo("12.30");
     }
 
     private Long emitirDocumentoComercialComLinhas(int... quantidades) throws Exception {
