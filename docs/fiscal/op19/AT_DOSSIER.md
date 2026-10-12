@@ -89,3 +89,13 @@ questões financeiras não reabrem a missão Security Gate.
 
 Cada OP futura precisa de autorização própria, âmbito e critérios de saída.
 Esta sequência não autoriza código, migrations, deployment ou novas APIs.
+
+## Evolução OP20 — fundação interna
+
+[Modelo implementado](../op20/FINANCIAL_CORE.md) e [evidência efetiva](../op20/VALIDATION.md).
+T01/T02: posições, afectações, caixa, desconto, compensação, idempotência e
+estornos implementados localmente no núcleo; testados no núcleo (22 testes dirigidos, incluindo safety/migration). Não
+integrados nos circuitos FT/FR/NC/ND/RC/NL, não publicados, não validados
+juridicamente e não certificados. T03: preservação de metadados do núcleo e
+migration aditiva; migração histórica e snapshots documentais financeiros
+continuam não satisfeitos. L01–L09 não recebem aprovação normativa por esta OP.

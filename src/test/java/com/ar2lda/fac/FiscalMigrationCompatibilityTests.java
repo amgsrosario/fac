@@ -80,9 +80,9 @@ class FiscalMigrationCompatibilityTests {
 
                 Flyway current = Flyway.configure().dataSource(fixtureUrl, username, password)
                         .locations("classpath:db/migration").cleanDisabled(true).load();
-                assertThat(current.migrate().migrationsExecuted).isEqualTo(2);
+                assertThat(current.migrate().migrationsExecuted).isEqualTo(3);
                 current.validate();
-                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("17");
+                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("18");
                 assertThat(current.migrate().migrationsExecuted).isZero();
                 try (Connection fixture = DriverManager.getConnection(fixtureUrl, username, password)) {
                     assertThat(value(fixture, "select nome || '|' || id_ivasaft from misencao where id='M07'"))
