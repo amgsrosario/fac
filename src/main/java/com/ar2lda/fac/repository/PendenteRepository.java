@@ -26,6 +26,10 @@ public interface PendenteRepository extends JpaRepository<Pendente, Long> {
 
     Optional<Pendente> findByDocumentoComercialId(Long documentoComercialId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Pendente p where p.documentoComercial.id = :documentoId")
+    Optional<Pendente> findByDocumentoComercialIdForUpdate(@Param("documentoId") Long documentoId);
+
     List<Pendente> findByClienteIdOrderByDataDocumentoAscNumeroDocumentoAsc(Long clienteId);
 
     @Query(value = """

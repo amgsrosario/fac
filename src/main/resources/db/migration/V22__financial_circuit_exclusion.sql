@@ -32,6 +32,8 @@ BEGIN
      LOOP PERFORM financial_circuit_touch(debt_id); END LOOP;
    END IF;
  ELSIF TG_TABLE_NAME='financial_allocation' THEN
+   -- Serialize discovery against a concurrent documentary association.
+   PERFORM id FROM financial_position WHERE id=NEW.position_id FOR UPDATE;
    IF EXISTS(SELECT 1 FROM financial_document_origin WHERE position_id=NEW.position_id)
    AND NOT EXISTS(SELECT 1 FROM financial_document_origin o JOIN pendente p ON p.id_documento_comercial=o.document_id WHERE o.position_id=NEW.position_id)
    THEN RAISE EXCEPTION 'Shared documentary debt identity is required'; END IF;
@@ -39,6 +41,10 @@ BEGIN
      WHERE o.position_id=NEW.position_id ORDER BY p.id
    LOOP PERFORM financial_circuit_touch(debt_id); END LOOP;
  ELSIF TG_TABLE_NAME='financial_document_origin' THEN
+   PERFORM id FROM financial_position WHERE id=NEW.position_id FOR UPDATE;
+   -- A row lock alone leaves an old RR snapshot usable after an origin-first
+   -- commit. Publish a row version without changing the financial amount.
+   UPDATE financial_position SET available=available WHERE id=NEW.position_id;
    IF NOT EXISTS(SELECT 1 FROM pendente WHERE id_documento_comercial=NEW.document_id)
    THEN RAISE EXCEPTION 'Shared documentary debt identity is required'; END IF;
    FOR debt_id IN SELECT id FROM pendente WHERE id_documento_comercial=NEW.document_id ORDER BY id

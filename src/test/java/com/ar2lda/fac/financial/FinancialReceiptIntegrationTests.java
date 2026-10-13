@@ -24,6 +24,7 @@ class FinancialReceiptIntegrationTests {
     @Autowired FinancialReceiptProjections projections;
     @Autowired FinancialQueries queries;
     @Autowired DocumentoFinanceiroService legacy;
+    @Autowired DocumentoComercialService commercial;
     @Autowired JdbcTemplate db;
     @Autowired org.springframework.transaction.PlatformTransactionManager tx;
     @Autowired UtilizadorRepository users;
@@ -483,6 +484,125 @@ class FinancialReceiptIntegrationTests {
             assertThat(db.queryForObject("select count(*) from pendente where id_documento_comercial=?",Long.class,d.document())).isZero();
             assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("90");
         } finally {changed.countDown();pool.shutdownNow();}
+    }
+
+    void raceWrite(boolean allocation,Debt d,long position) {
+        if(!allocation) {
+            db.update("insert into financial_document_origin(document_id,position_id) values(?,?)",d.document(),position);
+            return;
+        }
+        long op=db.queryForObject("""
+            insert into financial_operation(empresa_id,cliente_id,moeda_id,kind,request_key,request_payload,actor,reason)
+            values(1,?,'EUR','SETTLE',?,'race','B1_EMISSOR','race') returning id
+            """,Long.class,client,key());
+        db.update("insert into financial_allocation(operation_id,position_id,empresa_id,cliente_id,moeda_id,amount,effect) values(?,?,1,?,'EUR',10,'CONSUME')",op,position,client);
+        db.update("update financial_position set available=available-10 where id=?",position);
+        db.update("insert into financial_component(operation_id,kind,amount) values(?,'CASH_IN',10)",op);
+    }
+    void awaitPhase(CountDownLatch latch) {
+        try {assertThat(latch.await(15,TimeUnit.SECONDS)).isTrue();}
+        catch(InterruptedException e) {Thread.currentThread().interrupt();throw new IllegalStateException(e);}
+    }
+    List<Object> raceOriginAgainstAllocation(int isolation,boolean allocationFirst,boolean returnDeferred,Debt d,long position) throws Exception {
+        var pool=Executors.newFixedThreadPool(2);var firstReady=new CountDownLatch(1);
+        var secondStarted=new CountDownLatch(1);var secondReady=new CountDownLatch(1);var commit=new CountDownLatch(1);
+        String secondName="b2-origin-race-"+key();
+        java.util.function.BiFunction<Boolean,Boolean,Object> writer=(first,allocation)->{
+            try {
+                var transaction=new org.springframework.transaction.support.TransactionTemplate(tx);transaction.setIsolationLevel(isolation);
+                return transaction.execute(status->{
+                    if(!first) db.queryForObject("select set_config('application_name',?,true)",String.class,secondName);
+                    db.queryForObject("select count(*) from financial_document_origin",Long.class); // Establish RR snapshot before the other commit.
+                    if(!first) secondStarted.countDown();
+                    raceWrite(allocation,d,position);
+                    db.execute("set constraints all immediate");
+                    if(returnDeferred) db.execute("set constraints all deferred");
+                    (first?firstReady:secondReady).countDown();awaitPhase(commit);
+                    return Boolean.TRUE;
+                });
+            } catch(RuntimeException ex) {return ex;}
+            finally {if(first) firstReady.countDown();else secondStarted.countDown();}
+        };
+        try {
+            var first=pool.submit(()->writer.apply(true,allocationFirst));awaitPhase(firstReady);
+            var second=pool.submit(()->writer.apply(false,!allocationFirst));awaitPhase(secondStarted);
+            long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);boolean waiting=false;
+            while(secondReady.getCount()!=0 && !second.isDone() && System.nanoTime()<deadline) {
+                waiting=Boolean.TRUE.equals(db.queryForObject("select exists(select 1 from pg_stat_activity where application_name=? and wait_event_type='Lock')",Boolean.class,secondName));
+                if(waiting) break;Thread.sleep(10);
+            }
+            assertThat(waiting || secondReady.getCount()==0 || second.isDone()).as("second writer must either finish checks or wait on database lock").isTrue();
+            commit.countDown();return List.of(first.get(15,TimeUnit.SECONDS),second.get(15,TimeUnit.SECONDS));
+        } finally {commit.countDown();pool.shutdownNow();}
+    }
+    boolean mixedDebt(long pending) {
+        return Boolean.TRUE.equals(db.queryForObject("""
+            select exists(select 1 from pendente p join financial_document_origin o on o.document_id=p.id_documento_comercial
+            join financial_allocation a on a.position_id=o.position_id where p.id=? and a.effect='CONSUME'
+            and not exists(select 1 from financial_allocation r where r.reverse_of=a.id)
+            and exists(select 1 from linha_documento_financeiro l join documento_financeiro f on f.id=l.id_documento_financeiro
+            left join financial_receipt receipt on receipt.document_id=f.id where l.id_pendente=p.id and not f.anulado and receipt.document_id is null))
+            """,Boolean.class,pending));
+    }
+
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> originAllocationRaces() {
+        var cases=new ArrayList<org.junit.jupiter.params.provider.Arguments>();
+        for(int isolation:List.of(org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED,org.springframework.transaction.TransactionDefinition.ISOLATION_REPEATABLE_READ))
+            for(boolean first:List.of(true,false)) for(boolean deferred:List.of(true,false))
+                cases.add(org.junit.jupiter.params.provider.Arguments.of(isolation,first,deferred));
+        return cases.stream();
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.MethodSource("originAllocationRaces")
+    void concurrentOriginAndSqlAllocationCannotCommitMixedDebt(int isolation,boolean allocationFirst,boolean deferred) throws Exception {
+        var d=debt("100",false);legacy.create(request(d,"30"));
+        var p=core.create(scope(),key(),FinancialCore.Nature.DEBT,"DOCUMENTO_COMERCIAL:"+d.document(),"FT",m("100"),"B1_EMISSOR");
+        var result=raceOriginAgainstAllocation(isolation,allocationFirst,deferred,d,p.id());
+        assertThat(result.getFirst()).isEqualTo(Boolean.TRUE);
+        assertThat(result.get(1)).isInstanceOf(RuntimeException.class);
+        var exception=(RuntimeException)result.get(1);
+        assertThat(exception).hasStackTraceContaining(isolation==org.springframework.transaction.TransactionDefinition.ISOLATION_REPEATABLE_READ
+                ? "could not serialize access due to concurrent update" : "Incompatible liquidation circuits");
+        assertThat(mixedDebt(d.pending())).isFalse();
+        assertThat(queries.position(scope(),p.id()).residual()).isEqualByComparingTo(allocationFirst?"90":"100");
+        assertThat(db.queryForObject("select count(*) from financial_document_origin where position_id=?",Long.class,p.id())).isEqualTo(allocationFirst?0L:1L);
+        assertThat(numerator()).isEqualTo(1);
+    }
+    Object verifyPendingBeforeResource(Debt d,Callable<?> action,String table,long resource) throws Exception {
+        var pool=Executors.newSingleThreadExecutor();var started=new CountDownLatch(1);
+        var future=new java.util.concurrent.atomic.AtomicReference<Future<?>>();String name="b2-lock-order-"+key();
+        try {
+            new org.springframework.transaction.support.TransactionTemplate(tx).execute(status->{
+                db.queryForList("select id from pendente where id=? for update",d.pending());
+                future.set(pool.submit(()->new org.springframework.transaction.support.TransactionTemplate(tx).execute(worker->{
+                    db.queryForObject("select set_config('application_name',?,true)",String.class,name);started.countDown();
+                    try {return action.call();}catch(RuntimeException e){throw e;}catch(Exception e){throw new IllegalStateException(e);}
+                })));
+                awaitPhase(started);boolean waiting=false;long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);
+                while(!waiting && System.nanoTime()<deadline) {
+                    waiting=Boolean.TRUE.equals(db.queryForObject("select exists(select 1 from pg_stat_activity where application_name=? and wait_event_type='Lock')",Boolean.class,name));
+                    if(!waiting) try {Thread.sleep(10);}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IllegalStateException(e);}
+                }
+                assertThat(waiting).isTrue();
+                // If the worker acquired this resource before Pendente, NOWAIT detects the inversion.
+                db.queryForList("select id from "+table+" where id=? for update nowait",resource);
+                return null;
+            });
+            return future.get().get(15,TimeUnit.SECONDS);
+        } finally {pool.shutdownNow();}
+    }
+    @Test void genericReverseLocksPendingBeforePositionAndPreservesHistory() throws Exception {
+        var d=debt("100");long op=core.settle(scope(),key(),new FinancialCore.Settlement(List.of(new FinancialCore.Part(d.position(),m("10"))),m("10"),m("0"),m("0")),"B1_EMISSOR");
+        long reversal=(Long)verifyPendingBeforeResource(d,()->core.reverse(scope(),key(),op,"Generic reversal","B1_EMISSOR"),"financial_position",d.position());
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("100");
+        assertThat(db.queryForObject("select reverse_of from financial_operation where id=?",Long.class,reversal)).isEqualTo(op);
+    }
+    @Test void invoiceCancellationLocksPendingBeforeDocumentAndPosition() throws Exception {
+        var d=debt("100");db.update("update documento_comercial set id_emissor='B1_EMISSOR' where id=?",d.document());
+        verifyPendingBeforeResource(d,()->commercial.anular(d.document(),new AnularDocumentoRequest("Lock order regression")),"documento_comercial",d.document());
+        assertThat(db.queryForObject("select estado from documento_comercial where id=?",String.class,d.document())).isEqualTo("ANULADO");
+        assertThat(queries.position(scope(),d.position()).residual()).isZero();
+        assertThat(db.queryForObject("select cancelled from financial_position where id=?",Boolean.class,d.position())).isTrue();
     }
 
 }

@@ -221,11 +221,17 @@ Guard transaccional nos dois emissores e V22 persistente, com serialização com
 pela identidade Pendente e classificação final diferida. Origem FT não significa
 consumo. Protecção cobre consumos activos e linhas legadas activas, SQL directo,
 vínculos tardios e snapshots concorrentes. Saldo Pendente/consumidores mantidos.
-Validação local: 140 cenários distintos aprovados em PostgreSQL 16.3 descartável,
+Validação local actual: 150 cenários distintos aprovados em PostgreSQL 16.3 descartável,
 schema V22 e upgrades/segundo arranque aprovados; package BUILD SUCCESS.
 [Evidência B2.1](../fiscal/op22-b2-1/VALIDATION.md), distinta do CI limitado B1.
-Sem anulação nova, REVERSE, semântica temporal, corte/migração ou activação RC.
-Nenhum push/PR/merge autorizado; revisão Claude B2.1 pendente.
+Sem novas regras de anulação/REVERSE, semântica temporal, corte/migração ou activação RC.
+Primeira revisão Claude sobre f716ad6: APROVAR, BLOCKER 0 / MAJOR 0 / MINOR 2,
+comunicada pelo PO. Write skew reproduzido em 8 experiências concorrentes e
+corrigido na V22 local por lock/versão MVCC da posição. Reverse genérico e anulação
+FT antecipam bloqueios do pendente, sem alterar efeitos ou desbloquear RC vinculado.
+Revalidação: 47 RC +32 núcleo/queries/safety/migrations +71 comercial/legado,
+sem falhas/skips; package BUILD SUCCESS. Segunda revisão Claude pendente.
+Nenhum push/PR/merge autorizado.
 
 ## Sequência estratégica vigente
 

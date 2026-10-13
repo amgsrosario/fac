@@ -398,6 +398,8 @@ public class DocumentoComercialService {
 
     @Transactional
     public DocumentoComercialDto anular(Long id, AnularDocumentoRequest request) {
+        // Keep debt identity ahead of documentary/financial locks; cancellation rules are unchanged.
+        var lockedPending = pendenteRepository.findByDocumentoComercialIdForUpdate(id);
         DocumentoComercial documento = findDocumentoForUpdate(id);
         Utilizador utilizador = currentUserService.resolve(
                 documento.getEmissor() == null ? null : documento.getEmissor().getCodigo(),
@@ -412,7 +414,7 @@ public class DocumentoComercialService {
             if (linhaDocumentoFinanceiroRepository.existsActiveLinesForDocumentoComercial(documento.getId())) {
                 throw new ConflictException("O documento nao pode ser anulado porque possui movimentos financeiros associados");
             }
-            pendenteRepository.findByDocumentoComercialId(documento.getId()).ifPresent(pendente -> {
+            lockedPending.ifPresent(pendente -> {
                 if (pendente.getValorPendente().compareTo(pendente.getValorDocumento()) != 0) {
                     throw new ConflictException("O documento nao pode ser anulado porque possui movimentos financeiros associados");
                 }

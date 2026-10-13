@@ -4,7 +4,7 @@
 porta 127.0.0.1:25444, bases próprias _test; nenhum volume/demo existente usado.
 Java 21/Maven 3.9.16 em cache, sem instalar dependências. Perfil test/safety activo.
 
-## Execuções efectivas e estado final
+## Estado validado de f716ad6, anterior às correcções Claude
 
 A versão final foi validada em bases novas _validated_test, sem repair/checksum
 alterado em schema existente. Execuções finais: 68/68 (núcleo/RC/schema/migrations),
@@ -59,4 +59,57 @@ injectadas anteriores continuam cobertos pelos 23 testes B1. Testes fazem commit
 PostgreSQL reais; spies apenas injectam falhas específicas, não simulam ledger.
 CI B1 cobriu safety/package; não é apresentado como execução destes testes SQL.
 
-Revisão independente Claude B2.1: PENDENTE. Nenhum push/PR/merge nesta etapa.
+## Correcções após primeira revisão Claude
+
+PO comunicou APROVAR / BLOCKER 0 / MAJOR 0 / MINOR 2 sobre f716ad6.
+MINOR-001 reproduzido no executor Codex em PostgreSQL16.3 descartável próprio,
+tuuli-op22-b2-1-claude-disposable, porta25445, base tuuli_op22_b2_1_baseline_test.
+Teste temporário executou 8 experiências: READ COMMITTED/REPEATABLE READ × origem
+primeiro/afectação primeiro × constraints consumidas em IMMEDIATE/permanência ou
+retorno a DEFERRED. Ambas as transacções fizeram commit e o SELECT final comprovou
+mistura de linhas legadas activas com consumo vinculado não estornado, nas 8.
+1 teste aprovado nesse ensaio confirma a vulnerabilidade, não valida a integridade.
+Teste temporário substituído por 8 casos parametrizados que exigem rejeição.
+
+Coordenação real: primeira transacção conclui checks sem commit; segunda estabelece
+snapshot e escreve. O executor consulta pg_stat_activity: se o escritor terminar
+checks (V22 antiga) ou esperar num bloqueio (V22 corrigida), liberta o primeiro
+commit. Não usa timeout de aplicação como mecanismo esperado de rejeição.
+Depois verifica commits, origem, residual, invariante e numeração.
+
+Correcção da própria V22 não publicada: FOR UPDATE na posição em ambos os ramos;
+origem também faz UPDATE available=available para criar versão MVCC em RR.
+Sem V23, repair, alteração de valores ou migração de dados. Baseline preservada;
+versão corrigida aplicada a bases novas _test, sem reutilizar checksum antigo.
+
+MINOR-002: reverse genérico antecipa locks de Pendente ordenados, mantendo replay,
+validações e efeitos; anulação FT bloqueia Pendente antes de documento/núcleo.
+Provas com transacção real retendo Pendente e NOWAIT no recurso seguinte confirmam
+que esse recurso ainda não foi bloqueado pelo escritor à espera. Regressão confirma
+restauração 100 no reverse genérico e FT anulada/posição cancelada, sem permitir
+anulação/reverse de RC vinculado. Funções de efeito temporal/histórico não mudam.
+
+Resultados finais das correcções: 47/47 RC +32/32 núcleo/queries/safety/migrations
++71/71 comercial/legado = **150 cenários distintos aprovados**, sem falhas/erros/skips.
+Distribuição: 47 RC,15 core,7 queries,4 safety,46 controller,25 integridade,
+3 upgrades receipt,1 upgrade core,1 compatibilidade fiscal,1 schema.
+A suite RC inclui 8 casos parametrizados do write skew e 2 provas de bloqueios,
+para além dos 37 cenários anteriores. O ensaio baseline 1/1 com 8 violações não é
+somado como validação aprovada. Migrations V19/V20/V21→V22 e segunda inicialização
+aprovadas; migrações anteriores preservadas e nenhum CI novo executado.
+Package final: BUILD SUCCESS; diff/check e referências documentais aprovados.
+
+Comandos finais (Maven em cache, porta25445, apenas bases novas):
+
+```sh
+FAC_TEST_DATASOURCE_URL=jdbc:postgresql://localhost:25445/tuuli_op22_b2_1_claude_fixed_test mvn -o -B -Dtest=FinancialReceiptIntegrationTests test
+FAC_TEST_DATASOURCE_URL=jdbc:postgresql://localhost:25445/tuuli_op22_b2_1_claude_fixed_test mvn -o -B -Dtest=FinancialCoreIntegrationTests,FinancialQueriesIntegrationTests,TestDatabaseSafetyValidatorTests,FinancialReceiptMigrationTests,FinancialCoreMigrationTests,FiscalMigrationCompatibilityTests,FlywaySchemaIntegrationTests test
+FAC_TEST_DATASOURCE_URL=jdbc:postgresql://localhost:25445/tuuli_op22_b2_1_claude_legacy_test mvn -o -B -Dtest=DocumentoComercialControllerTests,DocumentoComercialEmissaoIntegridadeTests test
+mvn -o -B -DskipTests package
+```
+
+Logs auxiliares /tmp/tuuli-b2-1-claude-{baseline,fixed,regression,legacy,package}.log.
+Evidência produzida pelo executor Codex, não pelo revisor Claude. As bases com
+V22 antiga foram preservadas; não se usa repair nem se presume compatibilidade
+de checksum. V22 não integrada foi corrigida na origem, sem V23 desnecessária.
+Segunda revisão independente Claude: PENDENTE. Nenhum push/PR/merge nesta etapa.
