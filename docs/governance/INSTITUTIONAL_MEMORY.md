@@ -187,7 +187,8 @@ PO aprovou API existente como projecção do FinancialCore, EUR e cêntimos exac
 sem descontos financeiros na primeira activação, e preparação de corte limpo da
 demo sem eliminação/migração de dados. Esta decisão delimita a precisão da fatia
 nova; não altera RC legado nem aprova outras moedas/descontos/adiantamentos.
-B1 implementa emissor interno idempotente e vínculos aditivos V20, com V21 a
+B1 está integrada pelo PR #23, sem activação operacional. Implementa emissor
+interno idempotente e vínculos aditivos V20, com V21 a
 selar componentes/afectações após o vínculo RC; projecções
 isoladas e diagnóstico de dados, sem chamadas nos endpoints operacionais.
 Timestamp técnico separado; efeito de SETTLE vinculado deriva da emissão RC.
@@ -199,6 +200,16 @@ consumidores e decisões temporais; Pendente permanece autoridade operacional
 apenas enquanto o circuito legado estiver activo. Na futura fronteira nova,
 Pendente poderá manter identidade/metadados, mas não saldo financeiro independente.
 [Contrato e limites](../fiscal/op22-b1/RECEIPT_INTEGRATION.md).
+
+## OP22-B2.1 — defesa bidireccional autorizada
+
+PO autorizou protecção transaccional e persistente contra liquidação da mesma
+dívida pelos circuitos legado e núcleo. A origem FT isolada não atribui exclusividade;
+considerar linhas legadas activas e consumo financeiro efectivo não estornado.
+Identidade Pendente pode serializar escritores sem fornecer o saldo ao núcleo.
+Implementação local não activa RC, não transfere consumidores, não altera precisão,
+anulação/efeito temporal nem reconcilia dados. [Contrato](../fiscal/op22-b2-1/CIRCUIT_PROTECTION.md).
+Revisão independente/publicação B2.1 mantêm os gates próprios; B1 não os substitui.
 
 ## Metodologia e governação
 

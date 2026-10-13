@@ -92,6 +92,12 @@ public class FinancialCore {
         var cashIn=money(request.cashIn()); var cashOut=money(request.cashOut()); var discount=money(request.discount());
         String payload="SETTLE:"+parts+":"+cashIn+":"+cashOut+":"+discount;
         Long old=replay(s,key,payload); if(old!=null) return old;
+        // Documentary debts share identity locks with both receipt circuits.
+        // Do this before position locks; non-documentary core positions are unaffected.
+        var placeholders=String.join(",",Collections.nCopies(parts.size(),"?"));
+        db.queryForList("select p.id from pendente p join financial_document_origin o "
+                + "on o.document_id=p.id_documento_comercial where o.position_id in ("
+                + placeholders+") order by p.id for update of p",parts.keySet().toArray());
         BigDecimal debt=BigDecimal.ZERO,credit=BigDecimal.ZERO;
         for(var entry:parts.entrySet()) {
             db.queryForList("select id from financial_position where id=? for update",entry.getKey());

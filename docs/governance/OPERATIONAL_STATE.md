@@ -146,7 +146,7 @@ repositório, ainda sem uso como fonte de saldo operacional. [Estado de evidênc
 
 ## OP22 — Preparação e decisão arquitectónica
 
-**OP22-A INTEGRADA PELO PR #22; OP22-B1 VALIDADA LOCALMENTE, SEM ACTIVAÇÃO OPERACIONAL.**
+**OP22-A INTEGRADA PELO PR #22; OP22-B1 INTEGRADA PELO PR #23; OP22-B2.1 LOCAL, SEM ACTIVAÇÃO OPERACIONAL.**
 
 Alternativa B aprovada pelo Product Owner como orientação futura: FinancialCore
 será fonte única e Pendente perderá saldo independente. Ainda não implementado.
@@ -205,12 +205,27 @@ Nova revisão independente Codex major001_review APROVAR, BLOCKER0/MAJOR0/MINOR0
 Package final BUILD SUCCESS. Entrega complementar local, sem push/PR/CI nesta
 etapa de correcção MAJOR. Revisão Claude do diff completo até2e3d3ba comunicada
 pelo PO em13-10-2026: APROVAR, BLOCKER 0 / MAJOR 0 / MINOR 2, sem executar testes.
-Observações documentais tratadas; publicação autorizada, merge humano pendente.
+Observações documentais tratadas; PR #23 integrado, gate humano concluído.
+Merge observado 549e902bca8e53a9e23b47afbb2ab405fe7bcc8d; circuito novo inactivo.
+CI B1 aprovado: safety e package, distinto da integração PostgreSQL local.
 Condição impeditiva B2: RC legado pode liquidar FT parcialmente liquidada pelo
 emissor novo porque usa saldo Pendente. Impedir coexistência antes da activação;
 nenhuma alteração funcional ao legado neste fecho.
 AR2-Governance consultado em ace6e54a613ce25c959f31accae3ec7b129b307e, estritamente
 leitura; GOV-TUULI-002 preservada, sem alteração ou cancelamento nesta missão.
+
+### OP22-B2.1 — protecção bidireccional, entrega local
+
+Branch codex/financial-circuit-guard-op22-b2-1, base observada do merge B1 acima.
+Guard transaccional nos dois emissores e V22 persistente, com serialização comum
+pela identidade Pendente e classificação final diferida. Origem FT não significa
+consumo. Protecção cobre consumos activos e linhas legadas activas, SQL directo,
+vínculos tardios e snapshots concorrentes. Saldo Pendente/consumidores mantidos.
+Validação local: 140 cenários distintos aprovados em PostgreSQL 16.3 descartável,
+schema V22 e upgrades/segundo arranque aprovados; package BUILD SUCCESS.
+[Evidência B2.1](../fiscal/op22-b2-1/VALIDATION.md), distinta do CI limitado B1.
+Sem anulação nova, REVERSE, semântica temporal, corte/migração ou activação RC.
+Nenhum push/PR/merge autorizado; revisão Claude B2.1 pendente.
 
 ## Sequência estratégica vigente
 

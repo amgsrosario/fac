@@ -316,4 +316,173 @@ class FinancialReceiptIntegrationTests {
         assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("20");
     }
 
+    @Test void coreThenLegacyIsRejectedBeforeNumberAndReplaySurvives() {
+        var d=debt("100");String k=key();var receipt=issuer.issue(k,request(d,"30"));
+        long docs=count("documento_financeiro");
+        assertThatThrownBy(()->legacy.create(request(d,"10"))).isInstanceOf(RuntimeException.class).hasMessageContaining("active FinancialCore");
+        assertThat(numerator()).isEqualTo(1);assertThat(count("documento_financeiro")).isEqualTo(docs);
+        assertThat(issuer.issue(k,request(d,"30")).id()).isEqualTo(receipt.id());
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("70");
+    }
+    @Test void legacyThenCoreIsRejectedBeforeNumberWithoutInferringOwnershipFromOrigin() {
+        var d=debt("100");legacy.create(request(d,"30"));long docs=count("documento_financeiro");
+        assertThatThrownBy(()->issuer.issue(key(),request(d,"10"))).isInstanceOf(RuntimeException.class).hasMessageContaining("legacy");
+        assertThat(numerator()).isEqualTo(1);assertThat(count("documento_financeiro")).isEqualTo(docs);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("100");
+    }
+    @Test void crossCircuitConcurrentReceiptsCommitExactlyOne() throws Exception {
+        var d=debt("100");String another=key().substring(0,8);
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at) values('BRC',?,'Teste',0,'B1RC')",another);
+        var dto=request(d,"30");var old=new DocumentoFinanceiroCreateDto("BRC",another,dto.dataEmissao(),client,"EUR","B1P",null,"B1_EMISSOR",null,dto.linhas());
+        var results=concurrent(()->issuer.issue(key(),dto),()->legacy.create(old));
+        assertThat(results.stream().filter(DocumentoFinanceiroDto.class::isInstance).count()).isEqualTo(1);
+        assertThat(results.stream().filter(RuntimeException.class::isInstance).count()).isEqualTo(1);
+        assertThat(db.queryForObject("select sum(numerador) from serie where id_tipo_documento='BRC' and serie in (?,?)",Long.class,serie,another)).isEqualTo(1);
+    }
+    @Test void oppositeDebtOrdersAcrossCircuitsCannotCommitBoth() throws Exception {
+        var d=debt("100");var e=debt("100");String another=key().substring(0,8);
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at) values('BRC',?,'Teste',0,'B1RC')",another);
+        var dto=request(LocalDate.of(2026,2,1),List.of(line(d,"20"),line(e,"30")));
+        var old=new DocumentoFinanceiroCreateDto("BRC",another,dto.dataEmissao(),client,"EUR","B1P",null,"B1_EMISSOR",null,List.of(line(e,"30"),line(d,"20")));
+        var results=concurrent(()->issuer.issue(key(),dto),()->legacy.create(old));
+        assertThat(results.stream().filter(DocumentoFinanceiroDto.class::isInstance).count()).isEqualTo(1);
+        assertThat(results.stream().filter(RuntimeException.class::isInstance).count()).isEqualTo(1);
+        assertThat(results.toString()).doesNotContain("deadlock detected");
+    }
+    void insertRawLegacyLine(long parent,long sourceLine) {
+        db.update("""
+            insert into linha_documento_financeiro(id_documento_financeiro,numero_linha,id_pendente,
+              valor_pendente_antes,valor_pagamento_bruto,valor_desconto_financeiro,valor_pagamento_liquido,
+              data_documento,data_vencimento,id_tipo_documento,numero_documento,serie_documento,valor_documento,
+              desconto_percentual,novo_valor_pendente,id_moeda)
+            select ?,2,id_pendente,valor_pendente_antes,valor_pagamento_bruto,valor_desconto_financeiro,
+              valor_pagamento_liquido,data_documento,data_vencimento,id_tipo_documento,numero_documento,
+              serie_documento,valor_documento,desconto_percentual,novo_valor_pendente,id_moeda
+            from linha_documento_financeiro where id=?
+            """,parent,sourceLine);
+    }
+    @Test void rawLegacyInsertionCannotBypassEitherConstraintMode() {
+        var d=debt("100");var e=debt("100");var old=legacy.create(request(e,"10"));var receipt=issuer.issue(key(),request(d,"10"));
+        long lines=count("linha_documento_financeiro");
+        for(int mode=0;mode<3;mode++) {
+            final int timing=mode;
+            assertThatThrownBy(()->new org.springframework.transaction.support.TransactionTemplate(tx).execute(status->{
+                verifyConstraintTiming(timing);insertRawLegacyLine(old.id(),receipt.linhas().getFirst().id());return null;
+            })).isInstanceOf(RuntimeException.class).hasStackTraceContaining("Incompatible liquidation circuits");
+            assertThat(count("linha_documento_financeiro")).isEqualTo(lines);
+        }
+    }
+    @Test void rawCoreConsumptionAfterLegacyRollsBackAllLedgerWrites() {
+        var d=debt("100");legacy.create(request(d,"10"));
+        long ops=count("financial_operation"),allocs=count("financial_allocation"),components=count("financial_component");
+        assertThatThrownBy(()->core.settle(scope(),key(),new FinancialCore.Settlement(List.of(new FinancialCore.Part(d.position(),m("10"))),m("10"),m("0"),m("0")),"B1_EMISSOR"))
+            .isInstanceOf(RuntimeException.class).hasStackTraceContaining("Incompatible liquidation circuits");
+        assertThat(count("financial_operation")).isEqualTo(ops);assertThat(count("financial_allocation")).isEqualTo(allocs);assertThat(count("financial_component")).isEqualTo(components);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("100");
+    }
+    @Test void rawLegacyLineReassignmentIsRejected() {
+        var d=debt("100");var e=debt("100");var old=legacy.create(request(e,"10"));issuer.issue(key(),request(d,"10"));
+        assertThatThrownBy(()->db.update("update linha_documento_financeiro set id_pendente=? where id=?",d.pending(),old.linhas().getFirst().id()))
+            .isInstanceOf(RuntimeException.class).hasStackTraceContaining("Incompatible liquidation circuits");
+        assertThat(db.queryForObject("select id_pendente from linha_documento_financeiro where id=?",Long.class,old.linhas().getFirst().id())).isEqualTo(e.pending());
+    }
+
+    @Test void directSqlCoreConsumptionCannotBypassDeferredOrImmediateChecks() {
+        var d=debt("100");legacy.create(request(d,"10"));
+        long ops=count("financial_operation"),allocs=count("financial_allocation"),components=count("financial_component");
+        for(int mode=0;mode<3;mode++) {
+            final int timing=mode;
+            assertThatThrownBy(()->new org.springframework.transaction.support.TransactionTemplate(tx).execute(status->{
+                if(timing==2) verifyConstraintTiming(2);
+                long op=db.queryForObject("""
+                    insert into financial_operation(empresa_id,cliente_id,moeda_id,kind,request_key,request_payload,actor,reason)
+                    values(1,?,'EUR','SETTLE',?,'raw','B1_EMISSOR','raw') returning id
+                    """,Long.class,client,key());
+                db.update("insert into financial_allocation(operation_id,position_id,empresa_id,cliente_id,moeda_id,amount,effect) values(?,?,1,?,'EUR',10,'CONSUME')",op,d.position(),client);
+                db.update("update financial_position set available=available-10 where id=?",d.position());
+                db.update("insert into financial_component(operation_id,kind,amount) values(?,'CASH_IN',10)",op);
+                if(timing==1) db.execute("set constraints all immediate");
+                return null;
+            })).isInstanceOf(RuntimeException.class).hasStackTraceContaining("Incompatible liquidation circuits");
+            assertThat(count("financial_operation")).isEqualTo(ops);assertThat(count("financial_allocation")).isEqualTo(allocs);assertThat(count("financial_component")).isEqualTo(components);
+            assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("100");
+        }
+    }
+    @Test void staleRepeatableReadCannotIssueCoreReceiptAfterLegacyCommit() throws Exception {
+        var d=debt("100");var ready=new CountDownLatch(1);var legacyDone=new CountDownLatch(1);
+        var pool=Executors.newSingleThreadExecutor();
+        try {
+            var future=pool.submit(()->{
+                var transaction=new org.springframework.transaction.support.TransactionTemplate(tx);
+                transaction.setIsolationLevel(org.springframework.transaction.TransactionDefinition.ISOLATION_REPEATABLE_READ);
+                return transaction.execute(status->{
+                    db.queryForObject("select count(*) from pendente",Long.class);ready.countDown();
+                    try {assertThat(legacyDone.await(15,TimeUnit.SECONDS)).isTrue();}catch(InterruptedException ex){Thread.currentThread().interrupt();throw new IllegalStateException(ex);}
+                    return issuer.issue(key(),request(d,"10"));
+                });
+            });
+            assertThat(ready.await(15,TimeUnit.SECONDS)).isTrue();
+            legacy.create(request(d,"10"));legacyDone.countDown();
+            assertThatThrownBy(()->future.get(20,TimeUnit.SECONDS)).hasStackTraceContaining("could not serialize access due to concurrent update");
+            assertThat(numerator()).isEqualTo(1);assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("100");
+        } finally {legacyDone.countDown();pool.shutdownNow();}
+    }
+    @Test void lateOriginCannotHideExistingMixedConsumption() {
+        var d=debt("100",false);legacy.create(request(d,"10"));
+        var p=core.create(scope(),key(),FinancialCore.Nature.DEBT,"DOCUMENTO_COMERCIAL:"+d.document(),"FT",m("100"),"B1_EMISSOR");
+        core.settle(scope(),key(),new FinancialCore.Settlement(List.of(new FinancialCore.Part(p.id(),m("10"))),m("10"),m("0"),m("0")),"B1_EMISSOR");
+        assertThatThrownBy(()->db.update("insert into financial_document_origin(document_id,position_id) values(?,?)",d.document(),p.id()))
+            .isInstanceOf(RuntimeException.class).hasStackTraceContaining("Incompatible liquidation circuits");
+        assertThat(db.queryForObject("select count(*) from financial_document_origin where document_id=?",Long.class,d.document())).isZero();
+    }
+
+    @Test void directLegacyReactivationCannotBypassCircuitExclusion() {
+        var d=debt("100");var old=legacy.create(request(d,"10"));legacy.anular(old.id());
+        issuer.issue(key(),request(d,"10"));
+        assertThatThrownBy(()->db.update("update documento_financeiro set anulado=false where id=?",old.id()))
+            .isInstanceOf(RuntimeException.class).hasStackTraceContaining("Incompatible liquidation circuits");
+        assertThat(db.queryForObject("select anulado from documento_financeiro where id=?",Boolean.class,old.id())).isTrue();
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("90");
+    }
+
+    @Test void documentaryOriginWithoutSharedIdentityIsRejected() {
+        var d=debt("100",false);db.update("delete from pendente where id=?",d.pending());
+        var p=core.create(scope(),key(),FinancialCore.Nature.DEBT,"DOCUMENTO_COMERCIAL:"+d.document(),"FT",m("100"),"B1_EMISSOR");
+        assertThatThrownBy(()->db.update("insert into financial_document_origin(document_id,position_id) values(?,?)",d.document(),p.id()))
+            .isInstanceOf(RuntimeException.class).hasStackTraceContaining("Shared documentary debt identity is required");
+    }
+    @Test void mappedConsumptionWithoutSharedIdentityIsRejected() {
+        var d=debt("100");db.update("delete from pendente where id=?",d.pending());long operations=count("financial_operation");
+        assertThatThrownBy(()->core.settle(scope(),key(),new FinancialCore.Settlement(List.of(new FinancialCore.Part(d.position(),m("10"))),m("10"),m("0"),m("0")),"B1_EMISSOR"))
+            .isInstanceOf(RuntimeException.class).hasStackTraceContaining("Shared documentary debt identity is required");
+        assertThat(count("financial_operation")).isEqualTo(operations);assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("100");
+    }
+
+    @Test void staleRecreatedIdentityMustObserveMappedPosition() throws Exception {
+        var d=debt("100");var ready=new CountDownLatch(1);var changed=new CountDownLatch(1);
+        var pool=Executors.newSingleThreadExecutor();
+        try {
+            var future=pool.submit(()->{
+                var transaction=new org.springframework.transaction.support.TransactionTemplate(tx);
+                transaction.setIsolationLevel(org.springframework.transaction.TransactionDefinition.ISOLATION_REPEATABLE_READ);
+                return transaction.execute(status->{
+                    db.queryForObject("select count(*) from pendente",Long.class);ready.countDown();
+                    try {assertThat(changed.await(15,TimeUnit.SECONDS)).isTrue();}catch(InterruptedException ex){Thread.currentThread().interrupt();throw new IllegalStateException(ex);}
+                    return db.update("""
+                        insert into pendente(id_documento_comercial,id_cliente,id_tipo_documento,numero_documento,
+                          serie_documento,valor_documento,valor_pendente,data_documento,data_vencimento,id_moeda)
+                        select id_documento_comercial,id_cliente,id_tipo_documento,numero_documento,serie_documento,
+                          valor_documento,valor_pendente,data_documento,data_vencimento,id_moeda from pendente where id=?
+                        """,d.pending());
+                });
+            });
+            assertThat(ready.await(15,TimeUnit.SECONDS)).isTrue();
+            core.settle(scope(),key(),new FinancialCore.Settlement(List.of(new FinancialCore.Part(d.position(),m("10"))),m("10"),m("0"),m("0")),"B1_EMISSOR");
+            db.update("delete from pendente where id=?",d.pending());changed.countDown();
+            assertThatThrownBy(()->future.get(20,TimeUnit.SECONDS)).hasStackTraceContaining("could not serialize access due to concurrent update");
+            assertThat(db.queryForObject("select count(*) from pendente where id_documento_comercial=?",Long.class,d.document())).isZero();
+            assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("90");
+        } finally {changed.countDown();pool.shutdownNow();}
+    }
+
 }

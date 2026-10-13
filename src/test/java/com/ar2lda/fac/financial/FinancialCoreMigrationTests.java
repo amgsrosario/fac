@@ -17,7 +17,7 @@ class FinancialCoreMigrationTests {
    try{
     var previous=Flyway.configure().dataSource(fixture,user,password).target("17").cleanDisabled(true).load();previous.migrate();
     try(var c=DriverManager.getConnection(fixture,user,password);var s=c.createStatement()){s.execute("update riva set nome='OP20 preserve legacy' where id='CON'");}
-    var current=Flyway.configure().dataSource(fixture,user,password).cleanDisabled(true).load();assertThat(current.migrate().migrationsExecuted).isEqualTo(4);current.validate();assertThat(current.info().current().getVersion().getVersion()).isEqualTo("21");assertThat(current.migrate().migrationsExecuted).isZero();
+    var current=Flyway.configure().dataSource(fixture,user,password).cleanDisabled(true).load();assertThat(current.migrate().migrationsExecuted).isEqualTo(5);current.validate();assertThat(current.info().current().getVersion().getVersion()).isEqualTo("22");assertThat(current.migrate().migrationsExecuted).isZero();
     try(var c=DriverManager.getConnection(fixture,user,password);var s=c.createStatement();var rs=s.executeQuery("select nome,(select count(*) from financial_position) from riva where id='CON'")){assertThat(rs.next()).isTrue();assertThat(rs.getString(1)).isEqualTo("OP20 preserve legacy");assertThat(rs.getLong(2)).isZero();}
    }finally{stmt.execute("drop database "+name+" with (force)");}
   }
