@@ -112,12 +112,16 @@ public class JdbcFinancialQueries implements FinancialQueries {
         scope(s); require(id>0,"Invalid operation");
         return db.query("""
             select op.*, r.id as reversed_by, o.document_id, p.reference, d.data_emissao, d.data_vencimento,
+                   f.id as financial_document_id,f.data_emissao as receipt_date,
+                   concat(f.id_tipo_documento,' ',f.serie,'/',f.numero_documento) as receipt_reference,
                    c.id as component_id,c.kind as component_kind,c.amount,c.reversed,c.reverse_of as reverse_component
             from financial_operation op
             left join financial_operation r on r.reverse_of=op.id
             left join financial_position p on p.creation_id=op.id
             left join financial_document_origin o on o.position_id=p.id
             left join documento_comercial d on d.id=o.document_id
+            left join financial_receipt receipt on receipt.operation_id=op.id
+            left join documento_financeiro f on f.id=receipt.document_id
             left join financial_component c on c.operation_id=op.id
             where op.empresa_id=? and op.cliente_id=? and op.moeda_id=? and op.id=? order by c.id
             """,rs -> {
@@ -126,15 +130,18 @@ public class JdbcFinancialQueries implements FinancialQueries {
                 String actor=rs.getString("actor"),reason=rs.getString("reason"); var at=rs.getTimestamp("created_at").toInstant();
                 Long reverse=rs.getObject("reverse_of",Long.class), reversedBy=rs.getObject("reversed_by",Long.class);
                 var origin=document(rs); var components=new ArrayList<Component>();
+                Long financialId=rs.getObject("financial_document_id",Long.class);
+                var financialDoc=financialId==null ? Optional.<FinancialDocument>empty() : Optional.of(new FinancialDocument(
+                        financialId,rs.getString("receipt_reference"),rs.getObject("receipt_date",LocalDate.class)));
                 do { if(rs.getObject("component_id")!=null) components.add(new Component(rs.getLong("component_id"),
                         ComponentKind.valueOf(rs.getString("component_kind")),rs.getBigDecimal("amount"),
                         rs.getBoolean("reversed"),rs.getObject("reverse_component",Long.class))); } while(rs.next());
                 return new OperationView(opId,s,kind,actor,reason,at,reverse,reversedBy,origin,
-                        DocumentLinkStatus.NOT_RECORDED,components);
+                        financialDoc.isPresent()?DocumentLinkStatus.LINKED:DocumentLinkStatus.NOT_RECORDED,financialDoc,components);
             },s.empresa(),s.cliente(),s.moeda(),id);
     }
     @Override public Balance balanceAt(Scope s, LocalDate financialDate) {
         scope(s); require(financialDate!=null,"Financial date required");
-        throw new UnsupportedOperationException("Financial-date balances suspended: settlement documentary links and reversal effect semantics are not defined (TUULI-FIN-TIME-001)");
+        throw new UnsupportedOperationException("Financial-date balances suspended: reversal effect semantics and complete operational scope are not defined (TUULI-FIN-TIME-001)");
     }
 }

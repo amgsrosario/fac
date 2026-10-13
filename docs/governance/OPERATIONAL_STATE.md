@@ -146,7 +146,7 @@ repositório, ainda sem uso como fonte de saldo operacional. [Estado de evidênc
 
 ## OP22 — Preparação e decisão arquitectónica
 
-**OP22-A CONCLUÍDA LOCALMENTE NO ÂMBITO AUTORIZADO; SEM ACTIVAÇÃO OPERACIONAL.**
+**OP22-A INTEGRADA PELO PR #22; OP22-B1 VALIDADA LOCALMENTE, SEM ACTIVAÇÃO OPERACIONAL.**
 
 Alternativa B aprovada pelo Product Owner como orientação futura: FinancialCore
 será fonte única e Pendente perderá saldo independente. Ainda não implementado.
@@ -166,7 +166,7 @@ arbitrária; estornos/anulações exigem decisão de semântica legal/funcional.
 
 OP22-A implementa contratos internos de posições, saldos correntes separados,
 identificação V19 e histórico auditável; FT vinculada expõe efeito derivado da
-emissão. Ainda local e sem publicação/activação. SETTLE sem vínculo RC;
+emissão. OP22-A integrada no merge70e82c122ec477ceb804e6c837f5bb529120acd7. No âmbito da OP22-A, SETTLE sem vínculo RC;
 REVERSE sem efeito documental definido. Saldo/movimentos por data financeira
 SUSPENSOS; timestamp técnico nunca utilizado como substituto. Nenhuma alteração
 estrutural de persistência nesta missão. Política RC6/núcleo2 permanece reservada.
@@ -175,8 +175,42 @@ Pendente permanece fonte operacional; RC legado não escreve no núcleo.
 Validação local:99 testes distintos aprovados (mais7 reexecuções dirigidas),
 PostgreSQL16.3 descartável V19, package BUILD SUCCESS, diff/links aprovados.
 Revisão independente op22_a_review: APROVAR, BLOCKER0/MAJOR0/MINOR0.
-Entrega preparada para commit local; publicação aguarda autorização do PO,
-sem push/PR/merge. Consultas históricas suspensas conforme autorização expressa.
+Entrega OP22-A publicada e PR #22 merged, confirmado por Git/GitHub. CI do HEAD
+b83f418 aprovado na execução38269640856 (safety e package; não integração SQL).
+Consultas históricas suspensas conforme autorização expressa.
+
+### OP22-B1 — infraestrutura RC inactiva
+
+Base observada 70e82c122ec477ceb804e6c837f5bb529120acd7. Branch/worktree isolada
+codex/financial-receipts-op22-b1. Emissor interno: pedido persistente antes do
+número, EUR/cêntimos exactos sem descontos, parcial/múltiplo, vínculo RC/SETTLE e
+linha/afectação V20. FinancialQueries consulta a emissão RC como efeito financeiro
+apenas quando existe vínculo; timestamp técnico não usado como efeito.
+Projecção isolada PendenteDto/totais usa saldo do núcleo; não activada nos serviços.
+Diagnóstico identifica dados não reconciliados e nunca permite activação em B1.
+
+Legacy RC/Pendente e seus leitores continuam activos sem mudança funcional.
+Transferência de clientes/dashboard/diagnósticos/listagens/extratos e restante
+fronteira adiada à B2. Nova anulação e histórico por data suspensos. V20 bloqueia
+anulação/reverse indevidos de RC internamente vinculado; RC sem vínculo mantido.
+Nenhuma demo/dado histórico apagado, reconstruído ou migrado. Nenhum endpoint novo.
+[Contrato/corte](../fiscal/op22-b1/RECEIPT_INTEGRATION.md) e [evidência](../fiscal/op22-b1/VALIDATION.md).
+Validação local actual 125 cenários distintos aprovados em PostgreSQL 16.3
+próprio/V21;23 RC,22 núcleo/queries,4 safety,71 regressão documental,5 schema/migrations.
+Revisão subsequente encontrou MAJOR-001: inserção de componentes após consumir
+constraints RC na mesma transacção. Reprodução V20 demonstrou commit indevido.
+Correcção aditiva V21 sela componentes/afectações após vínculo RC, sem alterar
+V18/V20 nem activar circuito. Upgrades V19/V20→V21 e segundo arranque aprovados.
+Nova revisão independente Codex major001_review APROVAR, BLOCKER0/MAJOR0/MINOR0.
+Package final BUILD SUCCESS. Entrega complementar local, sem push/PR/CI nesta
+etapa de correcção MAJOR. Revisão Claude do diff completo até2e3d3ba comunicada
+pelo PO em13-10-2026: APROVAR, BLOCKER 0 / MAJOR 0 / MINOR 2, sem executar testes.
+Observações documentais tratadas; publicação autorizada, merge humano pendente.
+Condição impeditiva B2: RC legado pode liquidar FT parcialmente liquidada pelo
+emissor novo porque usa saldo Pendente. Impedir coexistência antes da activação;
+nenhuma alteração funcional ao legado neste fecho.
+AR2-Governance consultado em ace6e54a613ce25c959f31accae3ec7b129b307e, estritamente
+leitura; GOV-TUULI-002 preservada, sem alteração ou cancelamento nesta missão.
 
 ## Sequência estratégica vigente
 
