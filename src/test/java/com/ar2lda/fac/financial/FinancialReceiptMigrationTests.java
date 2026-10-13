@@ -13,7 +13,7 @@ class FinancialReceiptMigrationTests {
         try(var s=c.createStatement();var r=s.executeQuery(sql)) { assertThat(r.next()).isTrue();return r.getString(1); }
     }
     @ParameterizedTest
-    @ValueSource(strings={"19","20"})
+    @ValueSource(strings={"19","20","21"})
     void upgradePreservesLegacyPrecisionAndLedgerAndSecondStart(String version) throws Exception {
         String url=System.getenv("FAC_TEST_DATASOURCE_URL");assertThat(url).isNotBlank();
         URI u=URI.create(url.substring(5));assertThat(u.getPath()).endsWith("_test");
@@ -53,8 +53,8 @@ class FinancialReceiptMigrationTests {
                     c.commit();before=scalar(c,"select concat_ws('|',valor_pagamento_bruto,valor_desconto_financeiro,atcud,qr_payload) from documento_financeiro where id=1");
                 }
                 var current=Flyway.configure().dataSource(fixture,user,password).cleanDisabled(true).load();
-                assertThat(current.migrate().migrationsExecuted).isEqualTo(21-Integer.parseInt(version));current.validate();
-                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("21");assertThat(current.migrate().migrationsExecuted).isZero();
+                assertThat(current.migrate().migrationsExecuted).isEqualTo(22-Integer.parseInt(version));current.validate();
+                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("22");assertThat(current.migrate().migrationsExecuted).isZero();
                 try(var c=DriverManager.getConnection(fixture,user,password);var s=c.createStatement()) {
                     assertThat(scalar(c,"select concat_ws('|',valor_pagamento_bruto,valor_desconto_financeiro,atcud,qr_payload) from documento_financeiro where id=1")).isEqualTo(before);
                     assertThat(scalar(c,"select available::text from financial_position where id=1")).isEqualTo("100.00");

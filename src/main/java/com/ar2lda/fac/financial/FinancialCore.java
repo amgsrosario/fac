@@ -92,6 +92,12 @@ public class FinancialCore {
         var cashIn=money(request.cashIn()); var cashOut=money(request.cashOut()); var discount=money(request.discount());
         String payload="SETTLE:"+parts+":"+cashIn+":"+cashOut+":"+discount;
         Long old=replay(s,key,payload); if(old!=null) return old;
+        // Documentary debts share identity locks with both receipt circuits.
+        // Do this before position locks; non-documentary core positions are unaffected.
+        var placeholders=String.join(",",Collections.nCopies(parts.size(),"?"));
+        db.queryForList("select p.id from pendente p join financial_document_origin o "
+                + "on o.document_id=p.id_documento_comercial where o.position_id in ("
+                + placeholders+") order by p.id for update of p",parts.keySet().toArray());
         BigDecimal debt=BigDecimal.ZERO,credit=BigDecimal.ZERO;
         for(var entry:parts.entrySet()) {
             db.queryForList("select id from financial_position where id=? for update",entry.getKey());
@@ -116,6 +122,16 @@ public class FinancialCore {
         scope(s); text(reason,500);
         String payload="REVERSE:"+original+":"+reason;
         Long old=replay(s,key,payload); if(old!=null) return old;
+        // Match settlement order before any operation/position lock. History is immutable.
+        db.queryForList("""
+            select pending.id from pendente pending
+            join financial_document_origin origin on origin.document_id=pending.id_documento_comercial
+            join financial_position position on position.id=origin.position_id
+            where position.empresa_id=? and position.cliente_id=? and position.moeda_id=?
+              and (position.creation_id=? or exists(select 1 from financial_allocation a
+                where a.operation_id=? and a.position_id=position.id))
+            order by pending.id for update of pending
+            """,s.empresa(),s.cliente(),s.moeda(),original,original);
         var operations=db.queryForList("select * from financial_operation where id=? and empresa_id=? and cliente_id=? and moeda_id=? for update",original,s.empresa(),s.cliente(),s.moeda());
         require(operations.size()==1,"Operation outside scope"); var row=operations.getFirst();
         require(!"REVERSE".equals(row.get("kind")),"Cannot reverse a reversal");

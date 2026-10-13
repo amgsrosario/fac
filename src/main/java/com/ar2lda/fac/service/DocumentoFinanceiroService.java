@@ -74,6 +74,7 @@ public class DocumentoFinanceiroService {
     private final EmpresaMapper empresaMapper;
     private final ClienteMapper clienteMapper;
     private final AuditoriaService auditoriaService;
+    private final com.ar2lda.fac.financial.FinancialCircuitGuard circuitGuard;
 
     @Transactional
     public DocumentoFinanceiroDto create(DocumentoFinanceiroCreateDto dto) {
@@ -84,6 +85,15 @@ public class DocumentoFinanceiroService {
         Moeda moeda = findMoeda(dto.moedaId());
         MPagamento mPagamento = findMPagamento(dto.mPagamentoId());
         Utilizador emissor = currentUserService.resolve(dto.emissorId(), "emitir documento financeiro");
+
+        // Acquire all debt identities in the same order as the internal issuer.
+        // The original input order and legacy monetary calculations remain unchanged.
+        dto.linhas().stream().map(LinhaDocumentoFinanceiroCreateDto::pendenteId)
+                .distinct().sorted().forEach(id -> {
+                    Pendente pending = findPendente(id);
+                    validatePendente(cliente, moeda, pending);
+                    circuitGuard.requireLegacyEligible(id);
+                });
 
         DocumentoFinanceiro documento = new DocumentoFinanceiro();
         documento.setCliente(cliente);

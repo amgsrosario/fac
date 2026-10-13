@@ -44,6 +44,7 @@ public class FinancialReceiptIssuer {
     private final EmpresaMapper companyMapper;
     private final ClienteMapper clientMapper;
     private final AuditoriaService audit;
+    private final FinancialCircuitGuard circuitGuard;
 
     private static void require(boolean value,String message) { if(!value) throw new BadRequestException(message); }
     public static BigDecimal exactCents(BigDecimal value) {
@@ -85,10 +86,6 @@ public class FinancialReceiptIssuer {
         require("RC".equals(type.getCodigoFiscal()),"Only fiscal RC supported by receipt adapter");
         var currency=currencies.findById("EUR").orElseThrow();
         var payment=payments.findById(dto.mPagamentoId().toUpperCase(Locale.ROOT)).orElseThrow(()->new BadRequestException("Unknown payment method"));
-        var number=series.proximoNumeroParaEmissao(dto.tipoDocumentoId(),dto.serie());
-        // The series lock is held until this transaction commits: revalidate chronological order here.
-        var last=documents.findUltimaDataEmissao(dto.tipoDocumentoId(),dto.serie());
-        require(last==null || !dto.dataEmissao().isBefore(last),"Receipt predates last issued document of series");
         var scope=new FinancialCore.Scope(1,client.getId(),"EUR");
         var candidates=new ArrayList<Candidate>();
         // Technical Pendente identities are locked in stable order; their balance is never used or updated.
@@ -102,10 +99,7 @@ public class FinancialReceiptIssuer {
             require("FT".equals(fiscalType),"Only FT positions are eligible for the new receipt circuit");
             var linked=db.queryForList("select position_id from financial_document_origin where document_id=?",doc.getId());
             require(linked.size()==1,"Invoice has no FinancialCore origin; no legacy fallback or backfill");
-            require(!Boolean.TRUE.equals(db.queryForObject("""
-                select exists(select 1 from linha_documento_financeiro l join documento_financeiro d on d.id=l.id_documento_financeiro
-                left join financial_receipt r on r.document_id=d.id where l.id_pendente=? and not d.anulado and r.document_id is null)
-                """,Boolean.class,pending.getId())),"Invoice has unreconciled legacy receipts");
+            circuitGuard.requireCoreEligible(pending.getId());
             long position=((Number)linked.getFirst().get("position_id")).longValue();
             candidates.add(new Candidate(pending,position,line.valorALiquidar()));
         }
@@ -119,6 +113,10 @@ public class FinancialReceiptIssuer {
             byIdentity.put(candidate.pending().getId(),new Checked(candidate.pending(),p,candidate.amount()));
         }
         var checked=normalised.stream().map(l->byIdentity.get(l.pendenteId())).toList();
+        var number=series.proximoNumeroParaEmissao(dto.tipoDocumentoId(),dto.serie());
+        // The series lock is held until this transaction commits: revalidate chronological order here.
+        var last=documents.findUltimaDataEmissao(dto.tipoDocumentoId(),dto.serie());
+        require(last==null || !dto.dataEmissao().isBefore(last),"Receipt predates last issued document of series");
         var document=new DocumentoFinanceiro(); document.setCliente(client); document.setTipoDocumento(type); document.setSerie(dto.serie());
         document.setNumeroDocumento(number.numeroSequencial()); document.atribuirAtcud(number.codigoValidacaoAt(),atcud.gerar(number.codigoValidacaoAt(),number.numeroSequencial()));
         document.setDataEmissao(dto.dataEmissao()); document.setMoeda(currency); document.setMPagamento(payment);
