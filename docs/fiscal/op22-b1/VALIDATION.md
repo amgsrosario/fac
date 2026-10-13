@@ -1,13 +1,13 @@
 # OP22-B1 — Evidência de validação
 
-12-10-2026 · Branch codex/financial-receipts-op22-b1; base70e82c122ec477ceb804e6c837f5bb529120acd7.
-PostgreSQL16.3 descartável própria tuuli-op22-b1-disposable,127.0.0.1:25442;
+12-10-2026 · Branch codex/financial-receipts-op22-b1; base 70e82c122ec477ceb804e6c837f5bb529120acd7.
+PostgreSQL 16.3 descartável própria tuuli-op22-b1-disposable,127.0.0.1:25442;
 URLs só para bases `_test`, perfil test e safety validator activos. Nenhuma base
 persistente/demo utilizada. Registos FT sintéticos são fixtures SQL; a emissão RC,
 numeração, ledger, vínculos e commits são reais. Spies apenas injectam falhas;
 JDBC, repositórios e SQL não são simulados. Regressão separada cobre FT emitida real.
 
-## Estado validado do commit184eafc (anterior à MAJOR-001)
+## Estado validado do commit 184eafc (anterior à MAJOR-001)
 
 - Primeira versão:9 integração RC +4 safety aprovados.
 - Nesse commit:16 FinancialReceiptIntegrationTests aprovados, com commits reais.
@@ -26,7 +26,7 @@ JDBC, repositórios e SQL não são simulados. Regressão separada cobre FT emit
 - Package final `mvn -o -B -DskipTests package`: BUILD SUCCESS.
 - Revisão independente op22_b1_review, exclusivamente leitura: APROVAR,
   BLOCKER0 / MAJOR0 / MINOR0 após correcções. Revisão documental final APROVAR, sem findings adicionais.
-- Diff completo/checks e43 destinos Markdown locais aprovados; entrega validada para commit local.
+- Diff completo/checks e 43 destinos Markdown locais aprovados; entrega validada para commit local.
   Sem push, PR ou CI executado nesta missão; CI posterior não dispensado.
 
 A revisão efectivamente realizada é de agente Codex independente, não de Claude.
@@ -143,4 +143,13 @@ Package final BUILD SUCCESS; diff e37 destinos locais Markdown validados.
 Logs da reprodução e das três revalidações conservados em /tmp/tuuli-major001-*.log
 como evidência auxiliar local, não fonte institucional nem requisito de acesso.
 Commit adicional preserva184eafc; nenhum push/PR/merge autorizado nesta correcção.
-Revisão cruzada Claude permanece pendente; revisão Codex não a substitui.
+## Fecho da revisão cruzada — 13-10-2026
+
+Product Owner comunicou revisão Claude independente do diff completo até
+2e3d3ba8f9efc507b24c61dc30fec395412307f3: APROVAR, BLOCKER 0 / MAJOR 0 / MINOR 2.
+Claude confirmou cobertura e invariantes por leitura; não executou testes.
+MINOR-001: condição impeditiva de activação B2 por coexistência RC legado/novo
+registada no contrato e estado operacional. MINOR-002: nove correcções de espaços
+(4 VALIDATION, 1 RECEIPT_INTEGRATION, 4 OPERATIONAL_STATE).
+Fecho exclusivamente documental; evidência dos125 cenários e package reutilizada.
+Publicação da branch e PR contra feature/visual-redesign autorizada; merge reservado ao PO.

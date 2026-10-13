@@ -1,6 +1,6 @@
 # OP22-B1 — Infraestrutura FT/RC inactiva
 
-12-10-2026 · Base observada70e82c122ec477ceb804e6c837f5bb529120acd7, PR #22 merged.
+12-10-2026 · Base observada 70e82c122ec477ceb804e6c837f5bb529120acd7, PR #22 merged.
 Governação AR2 v1 consultada no commitace6e54a613ce25c959f31accae3ec7b129b307e:
 README, STRATEGY, AI_DEVELOPMENT_SYSTEM, PROJECTS, DECISION_LOG, CURRENT_STATE e
 SUCCESSION_PROTOCOL. Estados centrais são fotografias históricas, não inventário
@@ -100,6 +100,14 @@ somente projecção isolada de dívidas e totais do núcleo no contexto FT prepa
 Completar a fronteira e as decisões de anulação em B2 antes de ligar qualquer
 componente. Uma tabela Pendente com saldo obsoleto NÃO pode ficar com consumidores
 activos desse campo após o futuro cutover.
+
+## Condição impeditiva de activação OP22-B2
+
+O RC legado pode liquidar uma FT já parcialmente liquidada pelo emissor novo,
+porque consulta o saldo armazenado em Pendente. A OP22-B2 deve impedir esta
+coexistência de escritas antes de activar o novo circuito. Não basta validar
+os contadores de inspectCutover(); esta condição exige controlo da fronteira
+operacional. Nenhuma alteração funcional ao legado é introduzida neste fecho.
 
 ## Preparação do corte da demo
 
