@@ -81,8 +81,22 @@ AI_DEVELOPMENT_SYSTEM.md central exclusivamente em leitura. Rever também os
 pressupostos de identidade obrigatória e triggers de inserção/reassociação.
 Primeira revisão Claude sobre f716ad61da26e87ec5ac70ff7b392d9f1f04dc24 comunicada
 pelo PO: APROVAR, BLOCKER 0 / MAJOR 0 / MINOR 2. MINOR-001 reproduzido e corrigido
-na própria V22 não integrada; MINOR-002 tratado apenas pela ordem de bloqueios.
-A segunda revisão Claude das correcções permanece PENDENTE. Não declarar a
-aprovação anterior como aprovação desta nova versão.
+na própria V22 antes da integração; MINOR-002 tratado apenas pela ordem de bloqueios.
+Segunda revisão Claude sobre 9e4272e78a89b5abf383afaa51eada29c6813428: APROVAR,
+BLOCKER0/MAJOR0/MINOR0, comunicada pelo Executivo na autorização de publicação.
+Auditoria Flyway pré-publicação: PUBLICAR, sem incompatibilidades comprovadas.
+
+## Fecho pós-merge — 13-10-2026
+
+PR #24 integrado em feature/visual-redesign por merge normal; commits originais
+preservados. Código B2.1 aprovado/integrado, circuito novo RC ainda inactivo.
+CI do PR verde cobre safety/package; 150 cenários PostgreSQL são evidência local
+separada. Não se declara aplicação da V22 em qualquer ambiente de demonstração.
+Demo Ubuntu não verificada: verificar estado real/histórico/checksums Flyway antes
+de actualizar. Nenhum deployment, migration, limpeza ou activação neste fecho.
+Anulação de RC vinculado, histórico temporal, consumidores e corte continuam
+pendentes de missões/decisões próprias. Ver [estado operacional](../../governance/OPERATIONAL_STATE.md).
+Este fecho documental está preparado para revisão Claude própria; não confundir
+com a aprovação independente já concluída sobre o código B2.1.
 
 [Evidência de validação](VALIDATION.md).

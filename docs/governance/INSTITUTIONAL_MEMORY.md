@@ -120,13 +120,19 @@ novos endpoints e decisões fiscais exigem OP própria; núcleo não é certific
 
 ## Originação FT — OP21
 
-A integração aprovada limita-se à originação de dívida para novas FT EUR e ao
-estorno dessa criação quando a anulação comercial existente o permite. Vínculo
-e operações são históricos e atómicos com documento/Pendente. Pendente e
-conta corrente mantêm autoridade operacional; RC legado não escreve no núcleo.
-Uma posição não afectada após RC legado é uma diferença deliberada, sem
-sincronização silenciosa nem apresentação como saldo corrente. Originação FT
-integrada pelo PR #20; liquidação RC ainda não integrada.
+À data da OP21, a integração aprovada limitava-se à originação de dívida para
+novas FT EUR e ao estorno dessa criação quando a anulação comercial existente
+permitia. Vínculo e operações eram históricos e atómicos com documento/Pendente.
+Naquele estado, Pendente e conta corrente mantinham autoridade operacional e o
+RC legado não escrevia no núcleo. Uma posição não afectada após RC legado era
+uma diferença deliberada, sem sincronização silenciosa nem apresentação como
+saldo corrente. Originação FT integrada pelo PR #20; a afirmação de liquidação
+RC ainda não integrada refere-se exclusivamente àquele momento da OP21.
+
+Evolução posterior: PR #23 integrou a infraestrutura interna RC, mantendo-a
+inactiva; PR #24 integrou a protecção bidireccional. A liquidação RC operacional
+no FinancialCore ainda não foi activada. O circuito legado continua a não escrever
+no núcleo; estas capacidades posteriores não são atribuídas à OP21.
 [Limites e rastreabilidade](../fiscal/op21/FT_ORIGINATION.md). Integração NC/ND,
 RC/NL e migração histórica exigem autorização própria; não declara certificação.
 
@@ -201,15 +207,25 @@ apenas enquanto o circuito legado estiver activo. Na futura fronteira nova,
 Pendente poderá manter identidade/metadados, mas não saldo financeiro independente.
 [Contrato e limites](../fiscal/op22-b1/RECEIPT_INTEGRATION.md).
 
-## OP22-B2.1 — defesa bidireccional autorizada
+## OP22-B2.1 — defesa bidireccional integrada
 
 PO autorizou protecção transaccional e persistente contra liquidação da mesma
 dívida pelos circuitos legado e núcleo. A origem FT isolada não atribui exclusividade;
 considerar linhas legadas activas e consumo financeiro efectivo não estornado.
 Identidade Pendente pode serializar escritores sem fornecer o saldo ao núcleo.
-Implementação local não activa RC, não transfere consumidores, não altera precisão,
-anulação/efeito temporal nem reconcilia dados. [Contrato](../fiscal/op22-b2-1/CIRCUIT_PROTECTION.md).
-Revisão independente/publicação B2.1 mantêm os gates próprios; B1 não os substitui.
+OP22-B2.1 integrada pelo PR #24 em feature/visual-redesign; aprovação humana de
+merge concluída. Segunda revisão Claude sem findings e auditoria Flyway favorável
+comunicadas pelo Executivo. A entrega não activa RC, não transfere consumidores,
+não altera precisão ou regras de anulação/efeito temporal nem reconcilia dados.
+[Contrato](../fiscal/op22-b2-1/CIRCUIT_PROTECTION.md). Evidência PostgreSQL local e
+CI limitado são distintos; não constituem certificação fiscal ou validação da demo.
+
+Demo Ubuntu permanece por verificar: antes de qualquer actualização, confirmar
+estado real e histórico/checksums Flyway. A aprovação de publicação não autoriza
+deployment. Novo circuito RC permanece inactivo até completar a fronteira FT/RC.
+Anulação de RC vinculado, efeito temporal de estornos, consultas históricas,
+consumidores, chave idempotente pública e corte exigem ordens/decisões próprias.
+GOV-ALT-001 mantém a apresentação de alternativas antes de decisões materiais.
 
 ## Metodologia e governação
 

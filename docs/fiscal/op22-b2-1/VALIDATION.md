@@ -111,5 +111,23 @@ mvn -o -B -DskipTests package
 Logs auxiliares /tmp/tuuli-b2-1-claude-{baseline,fixed,regression,legacy,package}.log.
 Evidência produzida pelo executor Codex, não pelo revisor Claude. As bases com
 V22 antiga foram preservadas; não se usa repair nem se presume compatibilidade
-de checksum. V22 não integrada foi corrigida na origem, sem V23 desnecessária.
-Segunda revisão independente Claude: PENDENTE. Nenhum push/PR/merge nesta etapa.
+de checksum. Antes da integração, V22 foi corrigida na origem, sem V23 desnecessária.
+Essa etapa local precedeu a segunda revisão e a publicação registadas abaixo.
+
+## Fecho institucional pós-merge — 13-10-2026
+
+Git/GitHub confirmam PR #24 merged para feature/visual-redesign. Merge observado
+`e8d86eae2672756b84d6178644eeaa63c691601b`, com `9e4272e` como segundo pai;
+`f716ad6` também ancestral. Não se pretende acompanhar o HEAD Git por commits
+sucessivos deste documento.
+Segunda revisão Claude do commit 9e4272e: APROVAR, BLOCKER0/MAJOR0/MINOR0;
+auditoria Flyway: PUBLICAR, sem incompatibilidades comprovadas, comunicadas pelo
+Executivo. CI confirmado success no HEAD 9e4272e, execução 38428872934:
+[validation](https://github.com/amgsrosario/fac/actions/runs/38428872934).
+Executa safety tests e package, não a suite PostgreSQL nem a demo Ubuntu.
+Os 150 cenários/BUILD SUCCESS acima continuam evidência local do Codex; nenhuma
+suite repetida ou migration executada no fecho exclusivamente documental.
+Demo Ubuntu não verificada e obrigatoriamente por verificar antes de actualizar,
+incluindo histórico/checksums Flyway. Novo circuito RC permanece inactivo.
+Fecho documental preparado para revisão Claude; sem publicação destas alterações
+ou alteração funcional, de bases, demo, consumidores, fiscalidade ou governação AR2.
