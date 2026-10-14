@@ -1,6 +1,6 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-13, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-14, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
@@ -159,10 +159,11 @@ OP22-GOV integrada pelo PR #21, merge12a3aed7f35085ab0f852c48530ee21a467c490c,
 confirmado no reconhecimento Git desta missão. Base observada OP22-A; consultar
 Git para HEAD corrente, sem actualizações autorreferenciais. TaxIA não alterado.
 
-TUULI-FIN-TIME-001 APROVADA: efeito financeiro documental = data de emissão;
-timestamp técnico independente para auditoria, distinto de SystemEntryDate SAF-T.
-[ADR-002](decisions/ADR-002-financial-document-time.md). Não autoriza retrodatação
-arbitrária; estornos/anulações exigem decisão de semântica legal/funcional.
+TUULI-FIN-TIME-001 emendada pelo Product Owner em 14-10-2026: contrato-alvo
+RC com liquidação na Data Valor e reversão na Data Valor original (M1 + F2 + T1).
+FT/NC conservam emissão; timestamp técnico independente, distinto de SystemEntryDate
+SAF-T. [ADR-002](decisions/ADR-002-financial-document-time.md). Arquitectura aprovada,
+sem implementação ou activação; código continua com efeito RC pela emissão.
 
 OP22-A implementa contratos internos de posições, saldos correntes separados,
 identificação V19 e histórico auditável; FT vinculada expõe efeito derivado da
@@ -243,12 +244,35 @@ Pendente/consumidores continuam operacionais; V22 não repara dados anteriores.
 Worktrees/branches preservadas; principal desactualizado e alterações preexistentes
 mantidos. Não foi executada limpeza nesta missão.
 
+### OP22-B2.2 — arquitectura aprovada; implementação não iniciada
+
+DV-01 a DV-09, M1 + F2 + T1, anulação autónoma e substituição vinculada aprovadas
+pelo Product Owner em 14-10-2026. Data Valor própria/imutável no RC (inclusive legado),
+default emissão, checkbox só apresentação e PDF com identificação própria.
+Limites FT: máxima emissão das FT liquidadas ≤ Data Valor ≤ emissão RC.
+Correcção de montante exige motivo/auditoria; substituição 30→300 reflecte 300,
+não 330; sem excesso de dívida ou dinheiro sem afectação válida. Históricos sem
+Data Valor conhecida mantêm ausência, não recebem datas de pagamento inventadas.
+[Contrato completo e alternativas](decisions/ADR-002-financial-document-time.md).
+
+Formalização documental local em preparação para revisão/PR humano; não integrada
+por esta missão. Não é aprovação fiscal nem autorização de implementação.
+Emissão e extractos legados continuam inalterados; FinancialCore não implementa
+F2/T1, anulação RC vinculada continua bloqueada e balanceAt permanece suspenso.
+Os dois MINOR do parecer Codex independente APPROVE WITH CONDITIONS estão
+incorporados: gate fiscal explícito e CASH_OUT reversed=true/RESTORE vinculados.
+Revisão da entrega canónica ainda pendente; não declarar revisão Claude concluída.
+Demo Ubuntu por verificar; consumidores permanecem desligados até corte conjunto.
+Implementação, migrations, verificação fiscal e corte dependem de missões próprias.
+AR2-Governance não alterado; eventual sincronização central exige autorização específica.
+
 ### Próxima missão financeira — pendências e decisões reservadas
 
-- Anulação documental de RC vinculado: aprovar acto, permissões, rastreabilidade,
-  vínculo de reversão e atomicidade, preservando afectações independentes.
-- Definir efeito temporal de anulações/estornos antes de consultas financeiras
-  históricas; nem timestamp técnico nem emissão original se presumem como efeito.
+- Implementação de anulação/substituição RC depende de missão própria: contrato
+  M1 + F2 + T1 aprovado na OP22-B2.2; autorização pública e mecanismo concreto
+  de persistência por detalhar. Preservar afectações independentes.
+- Consultas históricas continuam suspensas até implementação e validação do
+  contrato temporal aprovado; restantes estornos conservam decisões reservadas.
 - Preparar consumidores correntes (dívidas, conta corrente, clientes com saldo,
   dashboard, listagens/exportações e diagnósticos) para o núcleo, mantendo contratos,
   sem os ligar à operação antes do corte autorizado.
@@ -266,14 +290,14 @@ produzir saldos incorrectos. A preparação antecipada é possível, mas os novo
 consumidores devem permanecer desligados da operação até ao corte autorizado.
 Não se presume reconciliação dos saldos existentes. A activação exige consistência
 entre emissão, liquidação, anulação e leitura financeira; a semântica de anulação
-ou estorno de RC permanece reservada às decisões do Product Owner.
+ou estorno de RC foi aprovada como contrato-alvo T1 na OP22-B2.2, não implementado.
 
 #### Sequência técnica recomendada pelo Claude
 
 **Proposta técnica sujeita às decisões do Product Owner.**
 
-1. Apresentar alternativas e obter decisão do Product Owner sobre o acto documental
-   de anulação de RC e o efeito temporal de anulações e estornos.
+1. Etapa de decisão RC cumprida documentalmente em 14-10-2026 pela OP22-B2.2
+   (M1 + F2 + T1); decisões restantes e validação fiscal continuam pendentes.
 2. Implementar a anulação de RC vinculado, mantendo o novo circuito
    operacionalmente inactivo.
 3. Verificar a demo Ubuntu, inventariar eventuais incompatibilidades e preparar
