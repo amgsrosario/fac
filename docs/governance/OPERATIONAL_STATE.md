@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-12, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-13, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD produtivo observado e reconfirmado no reconhecimento OP22-GOV: `2cbb9341dc8f6ffa70605a986eb9daeda93be23e`, merge do PR #20.
+- HEAD produtivo observado no fecho OP22-B2.1: `e8d86eae2672756b84d6178644eeaa63c691601b`, merge do PR #24, integração mais recente confirmada neste reconhecimento.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -146,7 +146,7 @@ repositório, ainda sem uso como fonte de saldo operacional. [Estado de evidênc
 
 ## OP22 — Preparação e decisão arquitectónica
 
-**OP22-A INTEGRADA PELO PR #22; OP22-B1 INTEGRADA PELO PR #23; OP22-B2.1 LOCAL, SEM ACTIVAÇÃO OPERACIONAL.**
+**OP22-A INTEGRADA PELO PR #22; OP22-B1 INTEGRADA PELO PR #23; OP22-B2.1 INTEGRADA PELO PR #24, SEM ACTIVAÇÃO OPERACIONAL.**
 
 Alternativa B aprovada pelo Product Owner como orientação futura: FinancialCore
 será fonte única e Pendente perderá saldo independente. Ainda não implementado.
@@ -189,7 +189,8 @@ apenas quando existe vínculo; timestamp técnico não usado como efeito.
 Projecção isolada PendenteDto/totais usa saldo do núcleo; não activada nos serviços.
 Diagnóstico identifica dados não reconciliados e nunca permite activação em B1.
 
-Legacy RC/Pendente e seus leitores continuam activos sem mudança funcional.
+Na entrega B1, RC legado/Pendente e seus leitores permaneceram activos;
+a protecção adicional B2.1 está agora integrada, sem activar o emissor novo.
 Transferência de clientes/dashboard/diagnósticos/listagens/extratos e restante
 fronteira adiada à B2. Nova anulação e histórico por data suspensos. V20 bloqueia
 anulação/reverse indevidos de RC internamente vinculado; RC sem vínculo mantido.
@@ -208,30 +209,86 @@ pelo PO em13-10-2026: APROVAR, BLOCKER 0 / MAJOR 0 / MINOR 2, sem executar teste
 Observações documentais tratadas; PR #23 integrado, gate humano concluído.
 Merge observado 549e902bca8e53a9e23b47afbb2ab405fe7bcc8d; circuito novo inactivo.
 CI B1 aprovado: safety e package, distinto da integração PostgreSQL local.
-Condição impeditiva B2: RC legado pode liquidar FT parcialmente liquidada pelo
-emissor novo porque usa saldo Pendente. Impedir coexistência antes da activação;
-nenhuma alteração funcional ao legado neste fecho.
+Risco identificado na B1: o RC legado podia liquidar FT parcialmente liquidada
+pelo emissor novo porque usava saldo Pendente. A exclusão bidireccional B2.1
+resolve essa mistura na linha integrada; não autoriza a activação do circuito.
 AR2-Governance consultado em ace6e54a613ce25c959f31accae3ec7b129b307e, estritamente
 leitura; GOV-TUULI-002 preservada, sem alteração ou cancelamento nesta missão.
 
-### OP22-B2.1 — protecção bidireccional, entrega local
+### OP22-B2.1 — integrada; gate humano concluído
 
-Branch codex/financial-circuit-guard-op22-b2-1, base observada do merge B1 acima.
-Guard transaccional nos dois emissores e V22 persistente, com serialização comum
-pela identidade Pendente e classificação final diferida. Origem FT não significa
-consumo. Protecção cobre consumos activos e linhas legadas activas, SQL directo,
-vínculos tardios e snapshots concorrentes. Saldo Pendente/consumidores mantidos.
-Validação local actual: 150 cenários distintos aprovados em PostgreSQL 16.3 descartável,
-schema V22 e upgrades/segundo arranque aprovados; package BUILD SUCCESS.
-[Evidência B2.1](../fiscal/op22-b2-1/VALIDATION.md), distinta do CI limitado B1.
-Sem novas regras de anulação/REVERSE, semântica temporal, corte/migração ou activação RC.
-Primeira revisão Claude sobre f716ad6: APROVAR, BLOCKER 0 / MAJOR 0 / MINOR 2,
-comunicada pelo PO. Write skew reproduzido em 8 experiências concorrentes e
-corrigido na V22 local por lock/versão MVCC da posição. Reverse genérico e anulação
-FT antecipam bloqueios do pendente, sem alterar efeitos ou desbloquear RC vinculado.
-Revalidação: 47 RC +32 núcleo/queries/safety/migrations +71 comercial/legado,
-sem falhas/skips; package BUILD SUCCESS. Segunda revisão Claude pendente.
-Nenhum push/PR/merge autorizado.
+PR #24 integrado em feature/visual-redesign, confirmado por Git e GitHub em
+13-10-2026. Merge/HEAD produtivo observado neste fecho:
+`e8d86eae2672756b84d6178644eeaa63c691601b`. Commits `f716ad6` e `9e4272e`
+preservados por merge normal. O Git continua a ser a fonte do HEAD corrente;
+esta referência não exige novos commits para acompanhar hashes transitórios.
+
+Protecção transaccional nos dois emissores e V22 persistente. Origem FT isolada
+não constitui consumo. Write skew reproduzido e corrigido por serialização/versão
+MVCC da posição; reverse genérico e anulação FT antecipam locks de Pendente,
+sem alterar efeitos ou desbloquear anulação/REVERSE de RC vinculado.
+150 cenários PostgreSQL 16.3 descartável aprovados pelo Codex, upgrades/segundo
+arranque e package BUILD SUCCESS. [Evidência](../fiscal/op22-b2-1/VALIDATION.md).
+Segunda revisão Claude: APROVAR, BLOCKER0/MAJOR0/MINOR0; auditoria Flyway
+pré-publicação: PUBLICAR, sem incompatibilidades comprovadas, comunicadas pelo
+Executivo na autorização. PR #24/CI aprovado na execução 38428872934:
+TestDatabaseSafetyValidatorTests e package; não executou a suite PostgreSQL.
+Gate humano de merge concluído. Sem correcções funcionais B2.1 pendentes conhecidas.
+
+**Novo circuito RC permanece INACTIVO. Demo Ubuntu NÃO VERIFICADA: verificar
+estado real e histórico/checksums Flyway antes de qualquer actualização.**
+A auditoria pré-publicação não confirma deployment nem compatibilidade da demo.
+Nenhuma migration, actualização da demo, reconciliação ou activação neste fecho.
+Pendente/consumidores continuam operacionais; V22 não repara dados anteriores.
+Worktrees/branches preservadas; principal desactualizado e alterações preexistentes
+mantidos. Não foi executada limpeza nesta missão.
+
+### Próxima missão financeira — pendências e decisões reservadas
+
+- Anulação documental de RC vinculado: aprovar acto, permissões, rastreabilidade,
+  vínculo de reversão e atomicidade, preservando afectações independentes.
+- Definir efeito temporal de anulações/estornos antes de consultas financeiras
+  históricas; nem timestamp técnico nem emissão original se presumem como efeito.
+- Preparar consumidores correntes (dívidas, conta corrente, clientes com saldo,
+  dashboard, listagens/exportações e diagnósticos) para o núcleo, mantendo contratos,
+  sem os ligar à operação antes do corte autorizado.
+- Definir transporte e estabilidade da chave idempotente no circuito público.
+- Verificar demo, inventariar origens/recebimentos incompatíveis e aprovar plano
+  de corte. Nenhuma migração, eliminação ou reconstrução de dados está autorizada.
+- Activação depende da consistência da fronteira FT/RC completa: emissão, liquidação,
+  anulação, leitura financeira e dados coerentes. GOV-ALT-001 aplica-se às escolhas materiais; preparar alternativas
+  para o PO antes de implementar. Nenhuma próxima missão iniciada neste fecho.
+
+O circuito RC legado não escreve no FinancialCore. Enquanto permanecer activo,
+uma posição FT pode conservar o valor original após um recebimento legado.
+Transferir operacionalmente os consumidores para o núcleo antes do corte pode
+produzir saldos incorrectos. A preparação antecipada é possível, mas os novos
+consumidores devem permanecer desligados da operação até ao corte autorizado.
+Não se presume reconciliação dos saldos existentes. A activação exige consistência
+entre emissão, liquidação, anulação e leitura financeira; a semântica de anulação
+ou estorno de RC permanece reservada às decisões do Product Owner.
+
+#### Sequência técnica recomendada pelo Claude
+
+**Proposta técnica sujeita às decisões do Product Owner.**
+
+1. Apresentar alternativas e obter decisão do Product Owner sobre o acto documental
+   de anulação de RC e o efeito temporal de anulações e estornos.
+2. Implementar a anulação de RC vinculado, mantendo o novo circuito
+   operacionalmente inactivo.
+3. Verificar a demo Ubuntu, inventariar eventuais incompatibilidades e preparar
+   o plano de corte para aprovação.
+4. Preparar os consumidores financeiros atrás da mesma fronteira de activação,
+   sem ligação operacional, definindo também a chave idempotente pública em
+   conjunto com o endpoint.
+5. Executar a activação conjunta de emissão, leitura, anulação e consumidores
+   financeiros, exclusivamente no corte autorizado.
+
+Os passos 3 e 4 podem decorrer em paralelo após o passo 2. Os consumidores não
+podem ser ligados antes do passo 5.
+
+Esta sequência é uma recomendação técnica, não uma autorização para iniciar as
+etapas, implementar contratos ou activar funcionalidades.
 
 ## Sequência estratégica vigente
 
