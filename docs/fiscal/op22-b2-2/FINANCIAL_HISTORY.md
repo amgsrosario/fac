@@ -16,7 +16,7 @@ não prova elegibilidade de dívida. NC é crédito segundo OP19, não dívida p
 existe Pendente positivo. ND e outros tipos não têm integração documental no núcleo
 demonstrada; confirmar natureza/efeito e regras antes de habilitar. Não bloquear
 RC legados elegíveis nem impor Data Valor igual à emissão (DV-10 retirada).
-Limite-alvo: máximo efeito das obrigações elegíveis ≤ Data Valor ≤ emissão RC.
+Limite-alvo: máxima data de nascimento das obrigações elegíveis ≤ Data Valor ≤ emissão RC.
 Adiantamentos, dinheiro não afectado e habilitação de novos tipos permanecem fora.
 
 ## Inventário técnico — factos de código e alvo
@@ -43,13 +43,37 @@ Não se assume que cada exportador ou listagem precisa de novo cálculo: primeir
 classificar consulta documental versus financeira. Vencimento e emissão não são
 removidos. Auditoria por instante e reprodução exacta de extracto permanecem fora.
 
+## Complemento MINOR-N1/N2 — evidência e consumidores
+
+N1: regra PO usa nascimento da obrigação, máximo entre várias, nunca data
+posterior à emissão RC. PendenteService.java:118–143 cria pendentes para tipos
+sem liquidação imediata e copia dataEmissao. Não prova equivalência semântica
+para todos os tipos aceites; FinancialFtOrigin.java:28–41 demonstra fronteira FT
+EUR. Fonte inequívoca de nascimento por tipo elegível é pendência técnica
+BLOQUEANTE da implementação universal. Não substituir nascimento por dataDocumento.
+Teste futuro: duas obrigações com datas distintas; nascimento diferente da
+emissão quando houver tipo aprovado nesse caso; pedido inválido faz rollback.
+
+| Consumidor adicional / evidência | Fonte actual | Contrato-alvo | Risco/preparação e testes futuros |
+| --- | --- | --- | --- |
+| service/DocumentoComercialService.java:242–245,400–429; repository/DocumentoComercialRepository.java:32 | liquidado persistido; podeAnular usa estado, linhas RC activas e saldo Pendente; revalidação no serviço | Estado compatível derivado de afectações/residual/dependências efectivas do núcleo, sem inventar nova semântica do booleano | Não confiar em saldo Pendente obsoleto; preparar atrás da fronteira inactiva; testar RC parcial/total, RESTORE, anulação FT bloqueada por dependência e concorrência |
+| frontend/src/DocumentosView.tsx:672,777 | DTO.liquidado apresentado como Sim/Não | Mesma apresentação alimentada por contrato backend coerente com núcleo no corte | Não trocar significado só no frontend; testar parcial/total/revertido e igualdade resumo/detalhe; decisão sobre semântica de estado por explicitar se mudar |
+| frontend/src/PendentesView.tsx:77,266,633 | ReceiptForm dataEmissao; saldo Pendente para selecção/montantes; POST documentos-financeiros legado | Interface Data Valor aprovada e dívidas/residuais coerentes do núcleo; nascimento validado server-side | Formulário não prova elegibilidade/nascimento; preparar API/projecção inactivas; testar checkbox, vários tipos elegíveis, máximo nascimento, retries e rejeição concorrente sem número |
+| demo/DemoScenarioService.java:34,67–77,103–104 | Emite comerciais e RC através de DocumentoFinanceiroService legado, lê Pendente e usa datas fixas | Dataset autorizado com obrigações/recebimentos/vínculos/datas coerentes no corte | Gerador actual não prova reconciliação; não executar nem alterar agora; futura preparação isolada e autorizada, teste de origens/RC/saldos e nenhuma coexistência incompatível |
+
+N2 cobre também estado comercial e preparação de demo, não apenas saldos exibidos.
+Nenhuma execução da demo, reconstrução, alteração de consumidor ou regra funcional.
+Revisão Claude do complemento pendente; N1/N2 têm resposta documental, não prova
+por testes. O cenário B passa a verificar nascimento de todas as obrigações,
+independentemente do tipo elegível, sem presumir elegibilidade de tipos indefinidos.
+
 ## Cenários de aceitação — NÃO EXECUTADOS
 
 A. FT emitida 01/10, 1.000; pagamento 05/10, 300; RC emitido 14/10, Data Valor
 05/10. História rectificada liquida em 05/10, residual 700 desde essa data;
 RC conserva emissão 14/10. Comparar filtros documentais e financeiros.
 
-B. Várias obrigações de débito elegíveis: Data Valor não precede nenhum efeito,
+B. Várias obrigações de débito elegíveis: Data Valor não precede nenhum nascimento de obrigação,
 não ultrapassa emissão RC; cada afectação rastreável, montantes/residuais próprios.
 Uma obrigação com data posterior invalida o pedido inteiro. Não inferir que NC
 ou tipo sem semântica confirmada é elegível. Não impor DV-10 em recibo misto.
@@ -78,7 +102,7 @@ da mesma fronteira, com datasets descartáveis em futura missão autorizada.
 | --- | --- | --- |
 | MINOR-001 OP22-A | QUERY_CONTRACTS.md remete para emenda vigente e delimita texto histórico/alvo/transição | Código não implementa F2/T1 |
 | MINOR-002 proibição residual | ADR-002 §4.1 declara Data Valor como única excepção | Nenhuma data autónoma adicional |
-| MINOR-003 não-FT | ADR §4.2 e FIN-HIST-02: efeito das obrigações elegíveis; inventário técnico; DV-10 retirada | Aceitação legada não prova elegibilidade fiscal/natureza; tipos indeterminados aguardam decisão |
+| MINOR-003 não-FT | ADR §4.2 e FIN-HIST-02 precisado por N1: nascimento das obrigações elegíveis; inventário técnico; DV-10 retirada | Aceitação legada não prova elegibilidade fiscal/natureza; tipos indeterminados aguardam decisão |
 | MINOR-004 dinheiro real | ADR §5 exige identificação/declaração/registo/validação antes de anular | Mecanismo e evidência monetária ainda inexistentes/por implementar |
 | MINOR-005 revisões | ADR rastreia Claude original 3MAJOR/5MINOR, Codex separado 2MINOR e Claude 486b999 5MINOR | Revisão Claude complementar pendente; não declarar zero findings antecipadamente |
 

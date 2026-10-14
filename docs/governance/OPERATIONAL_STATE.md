@@ -250,8 +250,8 @@ DV-01 a DV-09, M1 + F2 + T1, anulação autónoma e substituição vinculada apr
 pelo Product Owner em 14-10-2026. Data Valor própria/imutável no RC (inclusive legado),
 default emissão, checkbox só apresentação e PDF com identificação própria.
 FIN-HIST-01–03 aprovados: historial preservado, liquidação na Data Valor e
-consumidores-alvo por efeito. Limite: máximo efeito das obrigações de débito
-eligíveis ≤ Data Valor ≤ emissão RC. FT usa emissão; legado admite pendentes
+consumidores-alvo por efeito. Limite: máxima data de nascimento das obrigações de débito
+elegíveis ≤ Data Valor ≤ emissão RC. FT usa emissão; legado admite pendentes
 não-FT mas isso não prova elegibilidade. Núcleo origina FT EUR; outros tipos
 aguardam confirmação. DV-10 retirada, sem restrição nova ao legado elegível.
 Correcção de montante exige motivo/auditoria; substituição 30→300 reflecte 300,
@@ -340,3 +340,14 @@ Esta sequência é a orientação vigente do Executivo. A conclusão JWT não an
 - Logout permanece client-side; não existe revogação individual de JWT introduzida nesta missão.
 - Fundação de Permissões integrada, sem trabalho funcional pendente. Segurança formalmente encerrada; Security Gate integrado; manutenção npm futura não bloqueante.
 - A publicação documental segue o fluxo de branch/PR contra `feature/visual-redesign`; o merge é uma decisão humana de António.
+
+## OP22-B2.2 — fecho MINOR-N1/N2, exclusivamente documental
+
+Decisão PO: Data Valor ≥ nascimento de cada obrigação liquidada e ≤ emissão RC;
+para várias, usar máximo nascimento. Regra válida para qualquer tipo elegível.
+Implementação não iniciada. Equivalência universal de Pendente.dataDocumento
+(emissão copiada) com nascimento NÃO demonstrada; confirmar semântica/fonte por
+tipo é pendência técnica bloqueante dessa validação, não impedimento documental.
+N2 acrescenta consumidores comerciais, frontend e DemoScenarioService ao inventário.
+Duas grafias «eligíveis» corrigidas para «elegíveis». Nova revisão Claude limitada
+ao diff complementar pendente. Nenhuma activação, alteração demo ou corte autorizado.

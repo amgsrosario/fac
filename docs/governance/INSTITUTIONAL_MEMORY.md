@@ -183,7 +183,7 @@ são substituídas, no contrato-alvo FinancialCore, pela liquidação na Data Va
 FT/NC conservam originação pela emissão; outras regras não afectadas mantêm-se.
 Data Valor é a excepção aprovada, persistida no RC sem duplicação de autoridade.
 Não altera emissão, identidade, numeração ou sequência documental.
-FIN-HIST-02 complementa DV-04: máximo efeito das obrigações de débito elegíveis
+FIN-HIST-02 complementa DV-04: máxima data de nascimento das obrigações de débito elegíveis
 ≤ Data Valor ≤ emissão RC; para FT, efeito da obrigação = emissão.
 Legado admite pendentes não-FT sem filtro de código; isso não prova natureza
 devedora/fiscal. Núcleo origina FT EUR; outros tipos com semântica indeterminada
@@ -275,3 +275,13 @@ O merge permanece sempre reservado à decisão humana de António. PR tecnicamen
 - [Modelo fiscal histórico e baseline Flyway](../12%20-%20Modelo%20fiscal%20historico%20e%20baseline%20Flyway.md).
 - [Direção Visual V2](../ui/TUULI-VISUAL-V2-DIRECTION.md).
 - Ordens de Produção e instrução de institucionalização aprovadas pelo Executivo nesta missão; implementação JWT integrada e respetivos testes no Git.
+
+## OP22-B2.2 — precisão final nascimento da obrigação
+
+PO aprovou no fecho MINOR-N1/N2: Data Valor entre a máxima data de nascimento
+das obrigações elegíveis liquidadas e a emissão do RC. Regra independente do
+tipo, sem DV-10 nem elegibilidade fiscal presumida. Pendente.dataDocumento copia
+emissão; equivalência universal com nascimento não demonstrada. Confirmar fonte
+por tipo é pendência técnica bloqueante da implementação dessa validação.
+Inventário inclui estado comercial/anulação, frontend RC e demo. Só documentação;
+circuito novo inactivo, legado preservado, nova revisão Claude complementar pendente.

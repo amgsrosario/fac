@@ -65,7 +65,7 @@ A Data Valor nunca substitui a Data de Emissão.
 | DV-01   | Data Valor própria do RC, distinta de `dataHoraOperacao`; preservar e clarificar a informação técnica existente                                           |
 | DV-02   | Por defeito, Data Valor igual à emissão                                                                                                                   |
 | DV-03   | Checkbox desmarcada; campo inicialmente igual à emissão quando apresentado; desmarcar repõe igualdade; checkbox apenas de interface                       |
-| DV-04   | Para obrigações de débito elegíveis: máximo efeito das obrigações ≤ Data Valor ≤ emissão RC; elegibilidade confirmada, adiantamentos excluídos                                           |
+| DV-04   | Para obrigações de débito elegíveis: máxima data de nascimento das obrigações ≤ Data Valor ≤ emissão RC; elegibilidade confirmada, adiantamentos excluídos                                           |
 | DV-05   | Persistência backend e imutabilidade após emissão em todos os RC, incluindo legado                                                                        |
 | DV-06   | Emissão sempre identificada; Data Valor consultável e apresentada no PDF; sequência documental preservada                                                 |
 | DV-07   | Substituto com número e emissão próprios, Data Valor conservada quando verdadeira e rastreabilidade da substituição                                       |
@@ -132,7 +132,7 @@ Pelo seguinte contrato:
 >
 > Para documentos de débito efectivamente elegíveis, respeita:
 >
-> `máxima data de efeito das obrigações liquidadas ≤ Data Valor ≤ emissão do RC`
+> `máxima data de nascimento das obrigações liquidadas ≤ Data Valor ≤ emissão do RC`
 >
 > Para FT, a data de efeito da obrigação é a emissão. Tipos não suportados ou
 > com natureza/temporalidade indeterminada não recebem elegibilidade presumida.
@@ -151,8 +151,10 @@ A reserva anterior relativa à temporalidade de anulações de RC é substituíd
 #### 4.2. Âmbito documental
 
 A orientação FIN-HIST-02 complementa DV-04: o limite inferior é a máxima
-data de efeito das obrigações de débito efectivamente elegíveis liquidadas.
-Para FT esse efeito é a emissão. A Data Valor não é forçada à emissão em
+data de nascimento das obrigações de débito efectivamente elegíveis liquidadas.
+Para FT, a originação financeira existente usa emissão; a fonte de nascimento
+deve ser demonstrada na implementação, não inferida do nome do campo.
+A Data Valor não é forçada à emissão em
 recibos não-FT ou mistos; a proposta DV-10 foi retirada pelo Product Owner.
 
 O legado cria Pendente para documento emitido/numerado, de total positivo,
@@ -175,7 +177,7 @@ Requisitos aprovados para futura implementação, que exige missão própria:
 - Novos RC no âmbito autorizado persistem uma Data Valor efectiva.
 - Históricos sem conhecimento da data mantêm ausência persistida, sem backfill fictício.
 - Backend e base de dados protegem os limites aplicáveis.
-- Limite inferior considera todas as obrigações de débito elegíveis efectivamente liquidadas, pelas respectivas datas de efeito; validar o conjunto final de linhas e a elegibilidade, sem presumir tipos.
+- Limite inferior considera todas as obrigações de débito elegíveis efectivamente liquidadas, pelas respectivas datas de nascimento; validar o conjunto final de linhas e a elegibilidade, sem presumir tipos.
 - Data Valor não pode ser alterada após emissão, incluindo SQL directo e RC legados.
 - Sequência de criação deve permitir montar documento e linhas sem bloquear indevidamente operações ainda incompletas.
 - Payload idempotente inclui Data Valor normalizada; omissão e igualdade explícita com emissão são equivalentes.
@@ -290,8 +292,8 @@ A formalização desta emenda pode preceder a validação fiscal enquanto contra
 
 FIN-HIST-01: obrigações, liquidações, reversões e correcções conservam identidade,
 vínculos, datas e auditoria; rectificação nunca elimina movimentos originais.
-FIN-HIST-02: liquidação na Data Valor, entre efeito das obrigações de débito
-eligíveis e emissão RC; confirmar tipos suportados sem inferência fiscal.
+FIN-HIST-02: liquidação na Data Valor, entre nascimento das obrigações de débito
+elegíveis e emissão RC; confirmar tipos suportados sem inferência fiscal.
 FIN-HIST-03: extractos, conta corrente e consumidores financeiros usam no alvo
 as datas de efeito para movimentos/saldos e conservam emissão e vínculos.
 Apresentar ambas as datas quando diferentes. Não mudar consumidores actuais
@@ -312,3 +314,22 @@ nem activar cálculos isolados; corte conjunto permanece não autorizado.
 
 A entrega complementar exige nova revisão Claude antes da publicação;
 nenhum parecer anterior é aprovação desta versão nem validação jurídica.
+
+### Decisão final PO — nascimento da obrigação (MINOR-N1)
+
+Aprovado pelo Product Owner no fecho N1/N2: a Data Valor de uma liquidação
+não pode ser anterior à data de nascimento da obrigação liquidada, nem
+posterior à emissão do respectivo recibo. Para várias obrigações, o limite
+inferior é a data mais recente de nascimento. Aplica-se independentemente
+do tipo documental elegível, sem restrição artificial aos RC não-FT/mistos
+nem presunção de elegibilidade fiscal. Esta precisão prevalece sobre referências
+anteriores a «efeito da obrigação» como limite inferior.
+
+Forma técnica ainda não implementada: PendenteService.java:143 copia emissão
+para Pendente.dataDocumento; isso prova origem do campo, não nascimento para
+todos os tipos. FinancialFtOrigin limita origem documental a FT EUR, e a decisão
+FT de originação na emissão suporta esse caso. O legado admite outros tipos
+sem filtro de natureza devedora; não há prova universal de equivalência.
+Pendência técnica BLOQUEANTE da implementação da validação universal: confirmar
+por tipo elegível a data de nascimento e a fonte persistida inequívoca; não usar
+silenciosamente dataDocumento como substituto. Não bloqueia este fecho documental.
