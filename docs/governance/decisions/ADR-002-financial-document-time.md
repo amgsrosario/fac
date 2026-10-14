@@ -65,7 +65,7 @@ A Data Valor nunca substitui a Data de Emissão.
 | DV-01   | Data Valor própria do RC, distinta de `dataHoraOperacao`; preservar e clarificar a informação técnica existente                                           |
 | DV-02   | Por defeito, Data Valor igual à emissão                                                                                                                   |
 | DV-03   | Checkbox desmarcada; campo inicialmente igual à emissão quando apresentado; desmarcar repõe igualdade; checkbox apenas de interface                       |
-| DV-04   | Para RC que liquidam FT: máxima emissão das FT liquidadas ≤ Data Valor ≤ emissão do RC; adiantamentos excluídos                                           |
+| DV-04   | Para obrigações de débito elegíveis: máximo efeito das obrigações ≤ Data Valor ≤ emissão RC; elegibilidade confirmada, adiantamentos excluídos                                           |
 | DV-05   | Persistência backend e imutabilidade após emissão em todos os RC, incluindo legado                                                                        |
 | DV-06   | Emissão sempre identificada; Data Valor consultável e apresentada no PDF; sequência documental preservada                                                 |
 | DV-07   | Substituto com número e emissão próprios, Data Valor conservada quando verdadeira e rastreabilidade da substituição                                       |
@@ -130,9 +130,13 @@ Pelo seguinte contrato:
 >
 > A Data Valor do RC constitui a excepção expressamente prevista à igualdade entre efeito financeiro e emissão documental. Não é uma data de emissão nem uma data financeira adicional livremente editável depois da emissão.
 >
-> Nos RC que liquidam FT, respeita:
+> Para documentos de débito efectivamente elegíveis, respeita:
 >
-> `máxima data de emissão das FT liquidadas ≤ Data Valor ≤ emissão do RC`
+> `máxima data de efeito das obrigações liquidadas ≤ Data Valor ≤ emissão do RC`
+>
+> Para FT, a data de efeito da obrigação é a emissão. Tipos não suportados ou
+> com natureza/temporalidade indeterminada não recebem elegibilidade presumida.
+> Mantém-se a proibição de qualquer outra data de efeito financeiro autónoma ou editável; a Data Valor do RC é a única excepção.
 >
 > Nem `dataHoraOperacao` nem o timestamp técnico substituem a Data Valor ou determinam automaticamente o efeito financeiro.
 >
@@ -146,9 +150,22 @@ A reserva anterior relativa à temporalidade de anulações de RC é substituíd
 
 #### 4.2. Âmbito documental
 
-DV-04 está aprovado para FT. A arquitectura não deve pressupor que todas as posições devedoras futuras são FT.
+A orientação FIN-HIST-02 complementa DV-04: o limite inferior é a máxima
+data de efeito das obrigações de débito efectivamente elegíveis liquidadas.
+Para FT esse efeito é a emissão. A Data Valor não é forçada à emissão em
+recibos não-FT ou mistos; a proposta DV-10 foi retirada pelo Product Owner.
 
-Todavia, não se generaliza nesta emenda o limite inferior a ND ou outros documentos de débito. A sua inclusão exige definição explícita das regras e aprovação. RC sem FT e adiantamentos não são habilitados por esta emenda.
+O legado cria Pendente para documento emitido/numerado, de total positivo,
+sem liquidação imediata; o emissor valida cliente, moeda e saldo positivo,
+sem filtrar o código FT. Isso é aceitação técnica, não prova da natureza devedora
+ou de elegibilidade fiscal de cada tipo configurável. O adaptador FinancialFtOrigin
+origina apenas FT EUR na fronteira actual; RC novo exige origem vinculada válida.
+ND e demais tipos não têm integração documental demonstrada nesta fronteira.
+NC não se transforma em dívida apenas porque o legado admite um pendente positivo.
+Tipos sem efeito de obrigação inequívoco requerem decisão/validação própria.
+Não restringir operacionalmente RC legados elegíveis por esta formalização;
+adiantamentos, habilitação de novos tipos e migração não ficam autorizados.
+Ver [inventário e cenários](../../fiscal/op22-b2-2/FINANCIAL_HISTORY.md).
 
 ### 5. Persistência, limites e imutabilidade
 
@@ -158,13 +175,13 @@ Requisitos aprovados para futura implementação, que exige missão própria:
 - Novos RC no âmbito autorizado persistem uma Data Valor efectiva.
 - Históricos sem conhecimento da data mantêm ausência persistida, sem backfill fictício.
 - Backend e base de dados protegem os limites aplicáveis.
-- Limite inferior considera todas as FT efectivamente liquidadas, com validação transaccional do conjunto final de linhas.
+- Limite inferior considera todas as obrigações de débito elegíveis efectivamente liquidadas, pelas respectivas datas de efeito; validar o conjunto final de linhas e a elegibilidade, sem presumir tipos.
 - Data Valor não pode ser alterada após emissão, incluindo SQL directo e RC legados.
 - Sequência de criação deve permitir montar documento e linhas sem bloquear indevidamente operações ainda incompletas.
 - Payload idempotente inclui Data Valor normalizada; omissão e igualdade explícita com emissão são equivalentes.
 - Evolução por migration aditiva, sem editar V18/V20/V21/V22 integradas.
 
-A forma concreta de distinguir históricos de novas emissões e de representar o acto de anulação será detalhada e revista antes da implementação.
+A forma concreta de distinguir históricos de novas emissões e de representar o acto de anulação será detalhada e revista antes da implementação. A identificação, declaração/registo e validação da situação monetária real antes da anulação autónoma são requisitos de implementação pendentes: o sistema não dispõe hoje de prova suficiente dessa situação. Não autorizar reembolso automático ou saldo não afectado.
 
 ### 6. Anulação e substituição
 
@@ -268,3 +285,30 @@ Nenhuma conclusão fiscal é declarada.
 Formalização autorizada pelo Product Owner em 14-10-2026. Proposta externa revista por agente Codex independente: APPROVE WITH CONDITIONS, BLOCKER 0 / MAJOR 0 / MINOR 2; os dois esclarecimentos estão incorporados nesta emenda. Não atribuir este parecer ao Claude. A entrega canónica permanece sujeita a revisão independente e integração documental humana. Implementação exige missão própria.
 
 A formalização desta emenda pode preceder a validação fiscal enquanto contrato interno inactivo. A activação operacional depende de validação fiscal expressa dos pontos aplicáveis acima, registada com responsável e evidência, e de autorização própria do Product Owner.
+
+### FIN-HIST-01 a FIN-HIST-03 — orientação aprovada do Product Owner
+
+FIN-HIST-01: obrigações, liquidações, reversões e correcções conservam identidade,
+vínculos, datas e auditoria; rectificação nunca elimina movimentos originais.
+FIN-HIST-02: liquidação na Data Valor, entre efeito das obrigações de débito
+eligíveis e emissão RC; confirmar tipos suportados sem inferência fiscal.
+FIN-HIST-03: extractos, conta corrente e consumidores financeiros usam no alvo
+as datas de efeito para movimentos/saldos e conservam emissão e vínculos.
+Apresentar ambas as datas quando diferentes. Não mudar consumidores actuais
+nem activar cálculos isolados; corte conjunto permanece não autorizado.
+
+### Rastreabilidade das revisões e do complemento
+
+- Claude, proposta original, 14-10-2026: REQUEST CHANGES, BLOCKER 0,
+  MAJOR 3 / MINOR 5; correcções incorporadas na proposta revista.
+- Revisor Codex separado, proposta revista: APPROVE WITH CONDITIONS,
+  BLOCKER 0 / MAJOR 0 / MINOR 2; gate fiscal e contra-lançamento incorporados.
+- Claude, commit canónico 486b999: APPROVE WITH CONDITIONS,
+  BLOCKER 0 / MAJOR 0 / MINOR 5. Parecer completo consultado:
+  TUULI_OP22-B2.2_Claude_revisao_commit_486b999_2026-10-14.txt.
+- Complemento autorizado pelo PO: cinco MINOR tratados por remissão OP22-A,
+  proibição residual, FIN-HIST-02 sem DV-10, situação monetária por implementar
+  e este registo. [Matriz de resposta](../../fiscal/op22-b2-2/FINANCIAL_HISTORY.md).
+
+A entrega complementar exige nova revisão Claude antes da publicação;
+nenhum parecer anterior é aprovação desta versão nem validação jurídica.

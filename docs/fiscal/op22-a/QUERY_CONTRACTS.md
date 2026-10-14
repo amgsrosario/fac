@@ -55,9 +55,16 @@ A política de passagem RC6 → núcleo2 permanece reservada ao Product Owner.
 Histórico de componentes distingue CASH_IN/CASH_OUT/DISCOUNT; ausência de caixa
 não fabrica movimento zero. Os DTOs de página/componentes copiam as listas.
 
-## TUULI-FIN-TIME-001 — decisão aprovada e implementação parcial
+## TUULI-FIN-TIME-001 — contrato histórico OP22-A, emendado pela OP22-B2.2
 
 [ADR temporal](../../governance/decisions/ADR-002-financial-document-time.md).
+**Regra-alvo emendada em 14-10-2026 pela OP22-B2.2:** RC no FinancialCore
+liquida na Data Valor e reverte na Data Valor original (M1 + F2 + T1).
+FIN-HIST-01–03 preservam movimentos e vínculos e orientam consumidores por efeito.
+O texto abaixo conserva o estado à data OP22-A, não uma regra concorrente vigente.
+Código permanece sem F2/T1; legado conserva emissão até corte coordenado autorizado.
+Data Valor é a única excepção aprovada à proibição de datas de efeito autónomas.
+
 Data de efeito financeiro documental = data de emissão do documento. Não há
 segunda data editável. PositionView e OperationView de CREATE vinculado expõem
 financialEffectDate derivada da emissão. recordedAt permanece timestamp técnico

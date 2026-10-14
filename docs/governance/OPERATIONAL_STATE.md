@@ -249,7 +249,11 @@ mantidos. Não foi executada limpeza nesta missão.
 DV-01 a DV-09, M1 + F2 + T1, anulação autónoma e substituição vinculada aprovadas
 pelo Product Owner em 14-10-2026. Data Valor própria/imutável no RC (inclusive legado),
 default emissão, checkbox só apresentação e PDF com identificação própria.
-Limites FT: máxima emissão das FT liquidadas ≤ Data Valor ≤ emissão RC.
+FIN-HIST-01–03 aprovados: historial preservado, liquidação na Data Valor e
+consumidores-alvo por efeito. Limite: máximo efeito das obrigações de débito
+eligíveis ≤ Data Valor ≤ emissão RC. FT usa emissão; legado admite pendentes
+não-FT mas isso não prova elegibilidade. Núcleo origina FT EUR; outros tipos
+aguardam confirmação. DV-10 retirada, sem restrição nova ao legado elegível.
 Correcção de montante exige motivo/auditoria; substituição 30→300 reflecte 300,
 não 330; sem excesso de dívida ou dinheiro sem afectação válida. Históricos sem
 Data Valor conhecida mantêm ausência, não recebem datas de pagamento inventadas.
@@ -261,7 +265,11 @@ Emissão e extractos legados continuam inalterados; FinancialCore não implement
 F2/T1, anulação RC vinculada continua bloqueada e balanceAt permanece suspenso.
 Os dois MINOR do parecer Codex independente APPROVE WITH CONDITIONS estão
 incorporados: gate fiscal explícito e CASH_OUT reversed=true/RESTORE vinculados.
-Revisão da entrega canónica ainda pendente; não declarar revisão Claude concluída.
+Claude reviu 486b999: APPROVE WITH CONDITIONS, BLOCKER 0 / MAJOR 0 / MINOR 5.
+Complemento actual resolve os cinco pontos; nova revisão Claude pendente.
+Situação monetária real antes de anulação: identificação/validação por implementar,
+sem pressupor informação disponível, reembolso automático ou saldo não afectado.
+[Inventário, cenários e matriz dos MINOR](../fiscal/op22-b2-2/FINANCIAL_HISTORY.md).
 Demo Ubuntu por verificar; consumidores permanecem desligados até corte conjunto.
 Implementação, migrations, verificação fiscal e corte dependem de missões próprias.
 AR2-Governance não alterado; eventual sincronização central exige autorização específica.

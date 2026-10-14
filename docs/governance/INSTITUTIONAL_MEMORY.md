@@ -183,8 +183,14 @@ são substituídas, no contrato-alvo FinancialCore, pela liquidação na Data Va
 FT/NC conservam originação pela emissão; outras regras não afectadas mantêm-se.
 Data Valor é a excepção aprovada, persistida no RC sem duplicação de autoridade.
 Não altera emissão, identidade, numeração ou sequência documental.
-Para FT: máxima emissão das FT liquidadas ≤ Data Valor ≤ emissão RC.
-Outros débitos e adiantamentos não são habilitados por esta emenda.
+FIN-HIST-02 complementa DV-04: máximo efeito das obrigações de débito elegíveis
+≤ Data Valor ≤ emissão RC; para FT, efeito da obrigação = emissão.
+Legado admite pendentes não-FT sem filtro de código; isso não prova natureza
+devedora/fiscal. Núcleo origina FT EUR; outros tipos com semântica indeterminada
+exigem decisão. DV-10 retirada: não forçar igualdade em RC não-FT/mistos,
+nem restringir emissão legada elegível. Adiantamentos permanecem excluídos.
+FIN-HIST-01 preserva historial; FIN-HIST-03 orienta consumidores por efeito,
+com datas documentais/auditoria conservadas, sem activação parcial.
 Nem dataHoraOperacao nem timestamp técnico determinam automaticamente o efeito;
 auditoria permanece independente e distinta de SystemEntryDate SAF-T.
 
@@ -192,7 +198,9 @@ T1 aprovada: reversão integral na Data Valor original; acto de anulação conse
 sua data/auditoria. Substituição vinculada e atómica permite correcção justificada
 de montante/Data Valor (DV-09), preservando afectações independentes e dívida
 válida. Anulação autónoma não exige substituto, mas não pode ocultar dinheiro
-real sem tratamento válido. Contra-lançamento não é reembolso efectivo.
+real sem tratamento válido. Identificação e validação da situação monetária real
+são requisitos de implementação pendentes, não informação já demonstrada pelo
+sistema. Contra-lançamento não é reembolso efectivo.
 Históricos conservam Data Valor ausente; emissão só para cálculo compatível.
 
 M2 diferida: complexidade/identidade autónoma não necessárias ao âmbito sem
