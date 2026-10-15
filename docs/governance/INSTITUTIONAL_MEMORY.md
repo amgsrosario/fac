@@ -173,19 +173,44 @@ A aprovação B não aprova regras fiscais, precisão de recebimentos, evoluçã
 estornos, NC/ND/NL, descontos, adiantamentos, compensações/RC sem caixa, migração
 ou eliminação de dados, SAF-T ou conformidade/certificação AT; requerem autorização própria.
 
-## TUULI-FIN-TIME-001 — Efeito financeiro documental
+## TUULI-FIN-TIME-001 — Emenda Data Valor OP22-B2.2
 
-Decisão expressa do Product Owner na continuação OP22-A: a data de efeito
-financeiro de uma operação originada por documento é obrigatoriamente a data
-de emissão desse documento (FT, RC, NC e demais documentos, sob regras próprias).
-Não existe segunda data financeira editável independente. Timestamp técnico
-permanece imutável para auditoria, distinto de SystemEntryDate SAF-T e da data
-de efeito. Não autoriza retrodatação arbitrária nem dispensa validação legal.
-Estornos/anulações não herdam automaticamente o timestamp técnico como efeito;
-a sua semântica legal/funcional permanece por definir antes de consultas históricas.
-[ADR-002](decisions/ADR-002-financial-document-time.md). OP22-A implementa leitura
-corrente e data derivada para FT vinculada; saldos por data financeira suspensos.
-A aprovação não activa RC, não altera precisão nem promove o núcleo a saldo operacional.
+Decisão original OP22-A de 12-10-2026 preservada historicamente no
+[ADR-002](decisions/ADR-002-financial-document-time.md). Em 14-10-2026, o
+Product Owner aprovou expressamente DV-01 a DV-09 e M1 + F2 + T1.
+A regra geral de igualdade obrigatória com emissão e a regra RC na emissão
+são substituídas, no contrato-alvo FinancialCore, pela liquidação na Data Valor.
+FT/NC conservam originação pela emissão; outras regras não afectadas mantêm-se.
+Data Valor é a excepção aprovada, persistida no RC sem duplicação de autoridade.
+Não altera emissão, identidade, numeração ou sequência documental.
+FIN-HIST-02 complementa DV-04: máxima data de nascimento das obrigações de débito elegíveis
+≤ Data Valor ≤ emissão RC; para FT, efeito da obrigação = emissão.
+Legado admite pendentes não-FT sem filtro de código; isso não prova natureza
+devedora/fiscal. Núcleo origina FT EUR; outros tipos com semântica indeterminada
+exigem decisão. DV-10 retirada: não forçar igualdade em RC não-FT/mistos,
+nem restringir emissão legada elegível. Adiantamentos permanecem excluídos.
+FIN-HIST-01 preserva historial; FIN-HIST-03 orienta consumidores por efeito,
+com datas documentais/auditoria conservadas, sem activação parcial.
+Nem dataHoraOperacao nem timestamp técnico determinam automaticamente o efeito;
+auditoria permanece independente e distinta de SystemEntryDate SAF-T.
+
+T1 aprovada: reversão integral na Data Valor original; acto de anulação conserva
+sua data/auditoria. Substituição vinculada e atómica permite correcção justificada
+de montante/Data Valor (DV-09), preservando afectações independentes e dívida
+válida. Anulação autónoma não exige substituto, mas não pode ocultar dinheiro
+real sem tratamento válido. Identificação e validação da situação monetária real
+são requisitos de implementação pendentes, não informação já demonstrada pelo
+sistema. Contra-lançamento não é reembolso efectivo.
+Históricos conservam Data Valor ausente; emissão só para cálculo compatível.
+
+M2 diferida: complexidade/identidade autónoma não necessárias ao âmbito sem
+excedentes não afectados. F1 preservada no legado durante transição; F3 diferida.
+T2 não escolhida: substituto retroactivo pode duplicar efeito antes do acto.
+Alternativas, fundamentos, invariantes e exemplo 30→300 constam do ADR-002.
+Arquitectura aprovada não é implementação: núcleo continua com datas de emissão,
+REVERSE RC bloqueado, balanceAt suspenso; legado e extractos operacionais mantidos.
+Corte coordenado e validação fiscal expressa requerem autorização própria.
+Nenhuma activação, migration, dados ou demo autorizados por esta formalização.
 
 ## OP22-B1 — preparação FT/RC aprovada, ainda inactiva
 
@@ -250,3 +275,13 @@ O merge permanece sempre reservado à decisão humana de António. PR tecnicamen
 - [Modelo fiscal histórico e baseline Flyway](../12%20-%20Modelo%20fiscal%20historico%20e%20baseline%20Flyway.md).
 - [Direção Visual V2](../ui/TUULI-VISUAL-V2-DIRECTION.md).
 - Ordens de Produção e instrução de institucionalização aprovadas pelo Executivo nesta missão; implementação JWT integrada e respetivos testes no Git.
+
+## OP22-B2.2 — precisão final nascimento da obrigação
+
+PO aprovou no fecho MINOR-N1/N2: Data Valor entre a máxima data de nascimento
+das obrigações elegíveis liquidadas e a emissão do RC. Regra independente do
+tipo, sem DV-10 nem elegibilidade fiscal presumida. Pendente.dataDocumento copia
+emissão; equivalência universal com nascimento não demonstrada. Confirmar fonte
+por tipo é pendência técnica bloqueante da implementação dessa validação.
+Inventário inclui estado comercial/anulação, frontend RC e demo. Só documentação;
+circuito novo inactivo, legado preservado, nova revisão Claude complementar pendente.
