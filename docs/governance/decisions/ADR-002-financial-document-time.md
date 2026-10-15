@@ -134,9 +134,10 @@ Pelo seguinte contrato:
 >
 > `máxima data de nascimento das obrigações liquidadas ≤ Data Valor ≤ emissão do RC`
 >
-> Para FT, a originação financeira implementada usa a emissão. Isso não
-> demonstra, por si só, o nascimento da obrigação; a sua fonte correcta deve
-> ser confirmada antes de implementar a validação. Tipos não suportados ou
+> A dívida da FT nasce financeiramente na emissão (E1). Todo o documento
+> comercial que origine um pendente de débito elegível para recebimento cria
+> essa obrigação na emissão (E2). O vencimento é independente e não participa
+> na regra de Data Valor. Tipos não suportados ou
 > com natureza/temporalidade indeterminada não recebem elegibilidade presumida.
 > Mantém-se a proibição de qualquer outra data de efeito financeiro autónoma ou editável; a Data Valor do RC é a única excepção.
 >

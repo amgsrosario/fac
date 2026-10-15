@@ -159,13 +159,37 @@ public class FinancialReceiptIssuer {
     }
     static boolean samePayload(ObjectMapper json, String current, String stored) {
         try {
-            var expected=json.readTree(current);
-            var previous=json.readTree(stored);
-            if (!previous.hasNonNull("dataValor"))
+            var reader=json.reader().with(com.fasterxml.jackson.databind.DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
+            com.fasterxml.jackson.databind.JsonNode expected=reader.readTree(current);
+            com.fasterxml.jackson.databind.JsonNode previous=reader.readTree(stored);
+            if (!previous.hasNonNull("dataValor")) {
                 ((com.fasterxml.jackson.databind.node.ObjectNode)previous).set("dataValor",previous.get("dataEmissao"));
-            return expected.equals(previous);
-        } catch (JsonProcessingException invalid) {
+                return expected.get("dataValor").equals(previous.get("dataValor"))
+                    && withoutValueDate(json,current).equals(withoutValueDate(json,stored));
+            }
+            return current.equals(stored);
+        } catch (java.io.IOException invalid) {
             throw new IllegalStateException("Invalid persisted receipt request",invalid);
+        }
+    }
+    /** Remove only the new field; retain every original character of all monetary fields. */
+    private static String withoutValueDate(ObjectMapper json, String payload) throws java.io.IOException {
+        try (var parser=json.getFactory().createParser(payload)) {
+            parser.nextToken();
+            while (parser.nextToken()==com.fasterxml.jackson.core.JsonToken.FIELD_NAME) {
+                String name=parser.currentName();
+                int start=(int)parser.currentTokenLocation().getCharOffset();
+                parser.nextToken(); parser.skipChildren(); parser.finishToken();
+                int end=(int)parser.currentLocation().getCharOffset();
+                if ("dataValor".equals(name)) {
+                    int before=start-1; while(before>=0 && Character.isWhitespace(payload.charAt(before))) before--;
+                    int after=end; while(after<payload.length() && Character.isWhitespace(payload.charAt(after))) after++;
+                    if(before>=0 && payload.charAt(before)==',') start=before;
+                    else if(after<payload.length() && payload.charAt(after)==',') end=after+1;
+                    return payload.substring(0,start)+payload.substring(end);
+                }
+            }
+            return payload;
         }
     }
     private DocumentoFinanceiroDto response(long id) {

@@ -704,4 +704,23 @@ class FinancialReceiptIntegrationTests {
         db.update("update documento_financeiro set impresso=true where id=?",receipt.id());
         assertThat(db.queryForObject("select impresso from documento_financeiro where id=?",Boolean.class,receipt.id())).isTrue();
     }
+
+    @Test void nonReceiptPreservesLegacyCreditorSettlementAndSqlUpdates() {
+        var d=debt("100",false);
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('VNF','Financeiro nao RC',3,1,1,'XX') on conflict do nothing");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('VNF',?,'Teste',0,'VNFAT','2026-01-01')",serie);
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('VCR','Credor',2,1,2,'NC') on conflict do nothing");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador) values('VCR',?,'Teste',0)",serie);
+        db.update("update documento_comercial set id_tipo_documento='VCR' where id=?",d.document());
+        var req=valueRequest(LocalDate.of(2025,1,1),List.of(line(d,"10")));
+        var nonRc=new DocumentoFinanceiroCreateDto("VNF",serie,req.dataEmissao(),client,"EUR","B1P",null,"B1_EMISSOR",null,req.linhas(),req.dataValor());
+        var r=legacy.create(nonRc);
+        assertThat(r.dataValor()).isNull();
+        assertThat(db.queryForObject("select valor_pendente from pendente where id=?",BigDecimal.class,d.pending())).isEqualByComparingTo("90");
+        db.update("update documento_financeiro set data_valor='2027-01-01' where id=?",r.id());
+        db.update("update documento_financeiro set data_valor='2025-01-01',data_emissao='2025-02-01' where id=?",r.id());
+        db.update("update linha_documento_financeiro set data_documento='2025-01-01' where id_documento_financeiro=?",r.id());
+        db.update("update documento_comercial set data_emissao='2027-01-01' where id=?",d.document());
+        assertThat(db.queryForObject("select data_valor::text from documento_financeiro where id=?",String.class,r.id())).isEqualTo("2025-01-01");
+    }
 }

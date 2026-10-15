@@ -63,7 +63,7 @@ class DocumentoFinanceiroPdfServiceTests {
                 new BigDecimal("123.00"), new BigDecimal("123.00"), new BigDecimal("50.00"),
                 BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("50.00"), new BigDecimal("73.00"), "EUR");
         String qrPayload = "A:500000000*B:509999990*C:PT*D:RC*E:N*F:20260609*G:RC 2026/3*H:ABCD1234-3*I1:PT*N:0.00*O:50.00*Q:YhGV*R:9999";
-        DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", null, "2026", 3L,
+        DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", "RC", "2026", 3L,
                 "ABCD1234-3", true, qrPayload,
                 LocalDate.of(2026, 6, 9), "EUR", new BigDecimal("50.00"), BigDecimal.ZERO,
                 new BigDecimal("50.00"), "TFB", OffsetDateTime.parse("2026-06-09T10:00:00Z"), "DEMO",
@@ -96,7 +96,7 @@ class DocumentoFinanceiroPdfServiceTests {
         ClienteDto cliente = new ClienteDto(1001L, "Cliente Lda", "Rua do Cliente, 10", null, "Agueda",
                 "509999990", null, null, "cliente@example.pt", null, null, null, false, false, null,
                 "3750-001", "PT", "EUR", "TFB", "P30", "CON", "001");
-        DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", null, "2026", 4L,
+        DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", "XX", "2026", 4L,
                 "ABCD1234-4", true, "QR", LocalDate.of(2026, 6, 10), "EUR", BigDecimal.ZERO,
                 BigDecimal.ZERO, BigDecimal.ZERO, "TFB", OffsetDateTime.parse("2026-06-10T10:00:00Z"), "DEMO",
                 OffsetDateTime.parse("2026-06-10T10:00:00Z"), null, false, false, List.of());
@@ -111,6 +111,7 @@ class DocumentoFinanceiroPdfServiceTests {
         try (PDDocument pdfDocument = Loader.loadPDF(pdf)) {
             String text = new PDFTextStripper().getText(pdfDocument);
             assertThat(text).contains("Recibo", "RC 2026/4", "Versão de demonstração");
+            assertThat(text).doesNotContain("Data Valor");
         }
     }
 }

@@ -15,7 +15,7 @@ implementação pendente; entrega preparada para revisão, não autorização de
 - Checkbox só de interface, desmarcada; datas explícitas inválidas mantidas com
   mensagem. API/detalhe e PDF mostram data persistida; histórico NULL mostra
   «Não registada». dataHoraOperacao permanece independente e inalterada.
-- V23 aditiva sem backfill: novos RC exigem data, limite superior CHECK;
+- V23 aditiva sem backfill: novos RC exigem data, limite superior inicialmente por CHECK (substituído por trigger exclusivamente RC no complemento abaixo);
   guards de data/identidade, verificações diferidas de linhas contra origens,
   locks e protecção da cronologia/natureza da origem contra alterações SQL.
   Imutabilidade de Data Valor aplica-se também a RC legados e NULL históricos.
@@ -35,7 +35,7 @@ transversalmente: RC agora rejeita credor como dívida, em Java e SQL. A regra
 universal E2 vale para obrigações de débito elegíveis, não habilita tipos fiscais.
 O emissor interno conserva a fronteira FT vinculada já existente e inactiva.
 
-## Testes executados — PostgreSQL 16.3 exclusivamente descartável
+## Validação inicial de 1540714 — PostgreSQL 16.3 exclusivamente descartável
 
 Container criado para esta missão: tuuli-value-date-slice1a-test, porta local
 25439; bases tuuli_value_date_*_test e bases efémeras dos testes de upgrade.
@@ -98,3 +98,57 @@ reconciliação de dados e activação F2/T1 permanecem fora da entrega. Emissã
 RC cronologicamente inválido é deliberadamente recusada agora. Guardas adicionais
 SQL preservam origens referenciadas; rever esta fronteira na futura anulação.
 Demo Ubuntu não verificada, não actualizada e sem migrations executadas.
+
+## Correcções após revisão Claude — mesma branch, base 1540714
+
+Parecer comunicado pelo PO: REQUEST CHANGES, BLOCKER 0 / MAJOR 1 / MINOR 2.
+Não confundir com aprovação desta correcção, cuja revisão final está pendente.
+
+- MAJOR-001: ReceiptValueDate.validate e persistência só quando codigo_fiscal=RC.
+  Documentos não-RC conservam regras legadas, inclusive liquidação de pendentes
+  credores; ignoram Data Valor enviada no pedido. UI usa codigoFiscal para não
+  impor regras, checkbox ou detalhe Data Valor a não-RC; PDF não-RC conserva
+  apresentação anterior, sem rótulo Data Valor. V23 retira CHECK global e restringe
+  limite superior, inferior diferido, locks adicionais e guards de origem/natureza
+  aos RC. RC emitidos continuam imutáveis, NULL históricos preservados.
+  Teste novo cria não-RC, liquida credor, verifica INSERT/UPDATE/linhas/cronologia
+  SQL sem rejeições novas; testes RC anteriores continuam eficazes.
+- MINOR-001: samePayload remove apenas o campo Data Valor para compatibilidade
+  de payloads antigos e compara estritamente os restantes caracteres JSON.
+  Montantes nunca são reserializados por representação de precisão inferior.
+  Payload novo continua com igualdade textual estrita; parser numérico exacto
+  não altera os restantes campos. Testes incluem números de 19 dígitos e
+  representações 30.0/30.00 distintas, além do replay por omissão/default.
+- MINOR-002: browser testa mensagem abaixo da emissão de origem e captura o
+  request POST real com checkbox desmarcado (emissão) e marcado (data explícita).
+  Não é apenas teste visual: postDataJSON verifica datas e afectação enviada.
+- ADR-002 §4.1 agora enuncia E1 sem reserva: dívida FT nasce financeiramente
+  na emissão; E2 cria obrigação de débito elegível na emissão, vencimento separado.
+
+### Validação complementar executada
+
+PostgreSQL 16.3: tuuli_value_date_claude_fix_test, criada vazia no container
+exclusivamente descartável desta missão. V23 não consta da referência integrada
+local origin/feature/visual-redesign consultada; apenas V23 não publicada foi
+corrigida. Nenhuma migration integrada alterada, nenhum repair ou base persistente.
+
+- FinancialReceiptIntegrationTests: 60 aprovados (RC/não-RC, SQL, concorrência,
+  idempotência, preservação financeira e erro temporal antes de numeração).
+- FinancialReceiptMigrationTests: 4 aprovados, upgrade/validação/segundo arranque.
+- ReceiptPayloadCompatibilityTests: 4 aprovados, incluindo precisão/representação.
+- TestDatabaseSafetyValidatorTests: 4 aprovados.
+- DocumentoFinanceiroPdfServiceTests: 3 aprovados, RC histórico/Data Valor e
+  ausência do novo rótulo em documento não-RC.
+- Total dirigido complementar: 75 testes distintos, sem duplicar os 168 iniciais.
+- Playwright: 6 cenários com API simulada, incluindo os três pedidos na revisão.
+- TypeScript/build frontend e package backend: aprovados.
+
+Não se declara repetição integral de todas as suites originais. Falha inicial
+não-RC foi fixture sem código AT de série; corrigida sem enfraquecer regra AT.
+Os novos browser tiveram selector de teste corrigido para o nome acessível do
+combobox, sem alteração de produto. Logs locais:
+/tmp/tuuli-value-date-claude-fix-final.log, /tmp/tuuli-value-date-fix-ui-corrected.log,
+/tmp/tuuli-value-date-fix-build-final.log, /tmp/tuuli-value-date-fix-package-final.log,
+/tmp/tuuli-value-date-fix-precision-pdf.log e /tmp/tuuli-value-date-fix-browser-final.log.
+Guardas V20/V21/V22 preservadas; emissor novo inactivo, F2/T1 e consumidores
+operacionais intocados. Sem push/PR/merge; nova revisão independente necessária.

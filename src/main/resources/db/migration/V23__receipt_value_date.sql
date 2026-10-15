@@ -1,10 +1,17 @@
 -- No backfill: historical receipts retain an unknown payment date.
 ALTER TABLE documento_financeiro ADD COLUMN data_valor date;
-ALTER TABLE documento_financeiro ADD CONSTRAINT receipt_value_date_upper
- CHECK (data_valor IS NULL OR data_valor <= data_emissao);
+-- RC scope is checked by trigger: non-RC financial documents retain legacy rules.
 
 CREATE FUNCTION receipt_value_date_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE is_rc boolean; was_rc boolean := false;
 BEGIN
+ SELECT EXISTS(SELECT 1 FROM tipodocumento WHERE id=NEW.id_tipo_documento AND codigo_fiscal='RC') INTO is_rc;
+ IF TG_OP='UPDATE' THEN
+   SELECT EXISTS(SELECT 1 FROM tipodocumento WHERE id=OLD.id_tipo_documento AND codigo_fiscal='RC') INTO was_rc;
+ END IF;
+ IF NOT is_rc AND NOT was_rc THEN RETURN NEW; END IF;
+ IF is_rc AND NEW.data_valor>NEW.data_emissao THEN
+   RAISE EXCEPTION 'Receipt value date exceeds issue date'; END IF;
  IF TG_OP='INSERT' THEN
    IF EXISTS(SELECT 1 FROM tipodocumento WHERE id=NEW.id_tipo_documento AND codigo_fiscal='RC')
       AND NEW.data_valor IS NULL THEN
@@ -14,9 +21,9 @@ BEGIN
    IF NEW.id_tipo_documento IS DISTINCT FROM OLD.id_tipo_documento AND NEW.data_valor IS NULL
       AND EXISTS(SELECT 1 FROM tipodocumento WHERE id=NEW.id_tipo_documento AND codigo_fiscal='RC')
    THEN RAISE EXCEPTION 'Cannot convert historical document into a new receipt without value date'; END IF;
-   IF NEW.data_valor IS DISTINCT FROM OLD.data_valor
+   IF was_rc AND (NEW.data_valor IS DISTINCT FROM OLD.data_valor
       OR (OLD.data_valor IS NOT NULL AND
-          (NEW.data_emissao,NEW.id_tipo_documento) IS DISTINCT FROM (OLD.data_emissao,OLD.id_tipo_documento))
+          (NEW.data_emissao,NEW.id_tipo_documento) IS DISTINCT FROM (OLD.data_emissao,OLD.id_tipo_documento)))
    THEN RAISE EXCEPTION 'Issued receipt value date is immutable'; END IF;
  END IF;
  RETURN NEW;
@@ -35,6 +42,7 @@ BEGIN
    JOIN documento_comercial d ON d.id=p.id_documento_comercial
    JOIN tipodocumento t ON t.id=d.id_tipo_documento
    WHERE r.id=receipt_id AND r.data_valor IS NOT NULL
+     AND EXISTS(SELECT 1 FROM tipodocumento rt WHERE rt.id=r.id_tipo_documento AND rt.codigo_fiscal='RC')
      AND (r.data_valor<d.data_emissao OR t.sinal_contabilistico<>1
           OR (NOT r.anulado AND (d.estado<>'EMITIDO' OR d.anulado))))
  THEN RAISE EXCEPTION 'Receipt value date or debt eligibility is invalid'; END IF;
@@ -48,6 +56,8 @@ CREATE CONSTRAINT TRIGGER receipt_value_date_line_check AFTER INSERT OR UPDATE O
 -- Serialize source chronology with line writers, not only Java callers.
 CREATE FUNCTION receipt_value_date_source_lock() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
+ IF NOT EXISTS(SELECT 1 FROM documento_financeiro r JOIN tipodocumento rt ON rt.id=r.id_tipo_documento
+    WHERE r.id=NEW.id_documento_financeiro AND rt.codigo_fiscal='RC') THEN RETURN NEW; END IF;
  PERFORM d.id FROM pendente p JOIN documento_comercial d ON d.id=p.id_documento_comercial
  WHERE p.id=NEW.id_pendente FOR UPDATE OF d;
  PERFORM t.id FROM pendente p JOIN documento_comercial d ON d.id=p.id_documento_comercial
@@ -63,12 +73,14 @@ BEGIN
    IF (NEW.data_emissao,NEW.id_tipo_documento) IS DISTINCT FROM (OLD.data_emissao,OLD.id_tipo_documento)
       AND EXISTS(SELECT 1 FROM pendente p JOIN linha_documento_financeiro l ON l.id_pendente=p.id
        JOIN documento_financeiro r ON r.id=l.id_documento_financeiro
-       WHERE p.id_documento_comercial=OLD.id AND r.data_valor IS NOT NULL)
+       WHERE p.id_documento_comercial=OLD.id AND r.data_valor IS NOT NULL
+       AND EXISTS(SELECT 1 FROM tipodocumento rt WHERE rt.id=r.id_tipo_documento AND rt.codigo_fiscal='RC'))
    THEN RAISE EXCEPTION 'Receipt debt chronology is immutable'; END IF;
  ELSE
    IF NEW.id_documento_comercial IS DISTINCT FROM OLD.id_documento_comercial
       AND EXISTS(SELECT 1 FROM linha_documento_financeiro l JOIN documento_financeiro r ON r.id=l.id_documento_financeiro
-       WHERE l.id_pendente=OLD.id AND r.data_valor IS NOT NULL)
+       WHERE l.id_pendente=OLD.id AND r.data_valor IS NOT NULL
+       AND EXISTS(SELECT 1 FROM tipodocumento rt WHERE rt.id=r.id_tipo_documento AND rt.codigo_fiscal='RC'))
    THEN RAISE EXCEPTION 'Receipt debt origin is immutable'; END IF;
  END IF;
  RETURN NEW;
@@ -84,7 +96,8 @@ BEGIN
    SELECT 1 FROM documento_comercial d JOIN pendente p ON p.id_documento_comercial=d.id
    JOIN linha_documento_financeiro l ON l.id_pendente=p.id
    JOIN documento_financeiro r ON r.id=l.id_documento_financeiro
-   WHERE d.id_tipo_documento=OLD.id AND r.data_valor IS NOT NULL)
+   WHERE d.id_tipo_documento=OLD.id AND r.data_valor IS NOT NULL
+       AND EXISTS(SELECT 1 FROM tipodocumento rt WHERE rt.id=r.id_tipo_documento AND rt.codigo_fiscal='RC'))
  THEN RAISE EXCEPTION 'Receipt debt nature is immutable'; END IF;
  RETURN NEW;
 END $$;
