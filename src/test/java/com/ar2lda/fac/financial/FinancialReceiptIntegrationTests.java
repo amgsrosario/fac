@@ -929,4 +929,27 @@ class FinancialReceiptIntegrationTests {
         assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("70");
     }
 
+    @Test void historyRefusesCancelledInvoiceWithReversedCreation() {
+        var d=debt("100");var date=LocalDate.of(2026,2,1);
+        assertThat(queries.balanceAt(scope(),date).openDebt()).isEqualByComparingTo("100");
+        long creation=queries.position(scope(),d.position()).creationOperationId();
+        new org.springframework.transaction.support.TransactionTemplate(tx).execute(status->{
+            core.reverse(scope(),key(),creation,"Existing FT cancellation","B1_EMISSOR");
+            db.update("update documento_comercial set anulado=true,estado='ANULADO' where id=?",d.document());
+            return null;
+        });
+        assertThat(queries.position(scope(),d.position()).state()).isEqualTo(FinancialQueries.State.CANCELLED);
+        assertThatThrownBy(()->queries.balanceAt(scope(),date))
+            .isInstanceOf(UnsupportedOperationException.class).hasMessageContaining("TUULI-FIN-TIME-001");
+    }
+    @Test void historyRefusesGenericSettlementEvenWhenInvoiceOriginHasKnownDate() {
+        var d=debt("100");var date=LocalDate.of(2026,2,1);
+        assertThat(queries.balanceAt(scope(),date).openDebt()).isEqualByComparingTo("100");
+        long op=core.settle(scope(),key(),new FinancialCore.Settlement(List.of(new FinancialCore.Part(d.position(),m("10"))),m("10"),m("0"),m("0")),"B1_EMISSOR");
+        assertThat(queries.position(scope(),d.position()).financialEffectDate()).contains(LocalDate.of(2026,1,1));
+        assertThat(queries.operation(scope(),op).financialEffectDate()).isEmpty();
+        assertThatThrownBy(()->queries.balanceAt(scope(),date))
+            .isInstanceOf(UnsupportedOperationException.class).hasMessageContaining("TUULI-FIN-TIME-001");
+    }
+
 }

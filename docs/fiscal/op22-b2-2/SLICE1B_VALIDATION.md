@@ -178,3 +178,72 @@ PR futuro exclusivamente para `feature/visual-redesign`. Título proposto:
 `feat(financial): apply receipt value dates and atomic reversals (slice 1b)`.
 Não activar/deployar com esta entrega; verificar demo/Flyway e cumprir gate fiscal,
 revisão independente e autorização própria do corte conjunto.
+
+## Fecho dos MINOR Claude — base 8754ed3, 15-10-2026
+
+Parecer comunicado pelo PO sobre a Fatia 1b: APPROVE WITH CONDITIONS,
+0 BLOCKER / 0 MAJOR / 2 MINOR. Este complemento corrige apenas os dois pontos;
+não representa novo parecer independente sobre o commit complementar.
+
+### MINOR-001 — hora técnica de SETTLE
+
+V24 ainda não integrada: operation_at mantém receipt.momento_emissao quando
+existe vínculo RC; quando não existe, utiliza op.created_at. Não se utiliza
+COALESCE para substituir um momento de emissão histórico ausente de um RC.
+A expressão effect_date e o código de balanceAt não foram alterados.
+Teste novo em FinancialQueriesIntegrationTests demonstra SETTLE genérico sem RC:
+operationAt presente e igual a recordedAt; financialEffectDate permanece ausente.
+A regressão RC repete a verificação de operationAt igual ao momento da emissão.
+
+### MINOR-002 — recusas históricas explícitas
+
+- FinancialReceiptIntegrationTests: FT com origem conhecida primeiro admite
+  consulta; após anulação/reversão CREATE, a consulta é recusada, sem atribuir
+  data de efeito à anulação FT nem implementar a sua semântica temporal.
+- Mesma classe: FT com data conhecida primeiro admite consulta; SETTLE genérico
+  sem vínculo RC conserva efeito sem data e torna balanceAt explicitamente
+  indisponível para esse âmbito, sem apresentar total parcial.
+- FinancialReceiptMigrationTests: RC realmente emitido sob V22, sem data_valor,
+  é actualizado por Flyway até V24. NULL permanece NULL e a emissão é exposta
+  apenas como referência compatível. Na situação integralmente datada suportada,
+  balanceAt devolve 90 €. Uma liquidação genérica posterior sem RC/data de efeito
+  torna a história insegura e a mesma consulta é recusada. NULL não é, por si só,
+  motivo de recusa geral; as regras aprovadas foram preservadas.
+
+O fixture histórico reutiliza seed explícito e mantém a posição genérica sem
+origem num cliente distinto. Assim, a consulta inicial de 90 € prova que a recusa
+posterior deriva do efeito novo sem semântica, e não de uma posição incidental
+já fora do âmbito documental. Não se desactivaram triggers nem se fabricaram
+históricos NULL sob a V23, que já exige Data Valor nas novas emissões RC.
+
+### Validação efectiva deste complemento
+
+PostgreSQL 16.3 exclusivamente descartável; base nova
+`tuuli_slice1b_minor_final_test` no container de testes da missão. As bases
+anteriores com checksum V24 diferente não foram reutilizadas nem reparadas.
+
+| Grupo | Executados | Aprovados | Falhas | Erros | Ignorados |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FinancialReceiptIntegrationTests | 80 | 80 | 0 | 0 | 0 |
+| FinancialQueriesIntegrationTests | 8 | 8 | 0 | 0 | 0 |
+| FinancialReceiptMigrationTests | 6 | 6 | 0 | 0 | 0 |
+| **Total dirigido** | **94** | **94** | **0** | **0** | **0** |
+
+Inclui quatro testes novos e a regressão F2/T1/DV-09, replay, concorrência,
+SQL/imutabilidade, default de Data Valor e limites da Fatia 1a. Os seis testes
+Flyway abrangem V19/V20/V21/V22/V23 → V24 e o novo cenário V22 NULL, validação e
+segundo arranque sem migrations. Não somar estes 94 aos 190 da fase anterior
+como testes distintos; não se declara repetição integral da suite da aplicação.
+
+Comando executado:
+
+```bash
+FAC_TEST_DATASOURCE_URL=jdbc:postgresql://localhost:25439/tuuli_slice1b_minor_final_test mvn -o -B -Dspring.profiles.active=test -Dtest=FinancialQueriesIntegrationTests,FinancialReceiptIntegrationTests,FinancialReceiptMigrationTests package
+```
+
+Package backend: BUILD SUCCESS. Log local:
+`/tmp/tuuli-slice1b-minor-final.log`. `git diff --check` aprovado; diff limitado
+à expressão técnica V24, três classes de testes e este registo. Não foram
+alterados serviços, balanceAt, regras de recusa, saldos, extractos ou legado.
+Container descartável parado no fecho. Nenhuma base persistente, demo ou outra
+worktree alterada. Circuito RC continua inactivo. Sem push, PR ou merge.

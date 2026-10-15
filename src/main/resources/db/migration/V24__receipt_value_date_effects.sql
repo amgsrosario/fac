@@ -120,7 +120,7 @@ CREATE VIEW financial_operation_effect AS
         WHEN op.kind='SETTLE' THEN coalesce(receipt.data_valor,receipt.data_emissao)
         WHEN op.kind='REVERSE' AND act.operation_id IS NOT NULL THEN original.data_valor
    END AS effect_date,
-   CASE WHEN op.kind='SETTLE' THEN receipt.momento_emissao
+   CASE WHEN op.kind='SETTLE' AND r.document_id IS NOT NULL THEN receipt.momento_emissao
         WHEN op.kind='REVERSE' AND act.operation_id IS NOT NULL THEN act.occurred_at
         ELSE op.created_at END AS operation_at
  FROM financial_operation op
