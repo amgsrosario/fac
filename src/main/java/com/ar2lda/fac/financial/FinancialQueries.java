@@ -20,7 +20,7 @@ public interface FinancialQueries {
         public Page { items = List.copyOf(items); }
     }
     record CommercialOrigin(long documentId, String reference, LocalDate issueDate, LocalDate dueDate) {}
-    record FinancialDocument(long documentId, String reference, LocalDate issueDate) {}
+    record FinancialDocument(long documentId, String reference, LocalDate issueDate, LocalDate valueDate) {}
     record PositionView(long id, Scope scope, Nature nature, String origin, String reference,
                         BigDecimal original, BigDecimal residual, State state, long creationOperationId,
                         Optional<CommercialOrigin> commercialOrigin, Instant recordedAt) {
@@ -38,15 +38,9 @@ public interface FinancialQueries {
                          Instant recordedAt, Long reverseOfOperationId, Long reversedByOperationId,
                          Optional<CommercialOrigin> creationDocument, DocumentLinkStatus financialDocumentLink,
                          Optional<FinancialDocument> financialDocument,
-                         List<Component> components) {
+                         List<Component> components, Optional<LocalDate> financialEffectDate, Optional<Instant> operationAt) {
         public OperationView { components = List.copyOf(components); }
-        public Optional<LocalDate> financialEffectDate() {
-            return switch(kind) {
-                case CREATE -> creationDocument.map(CommercialOrigin::issueDate);
-                case SETTLE -> financialDocument.map(FinancialDocument::issueDate);
-                case REVERSE -> Optional.empty(); // Reversal effect semantics have NOT been approved.
-            };
-        }
+
     }
 
     Page<PositionView> positions(Scope scope, Selection selection, Nature nature, int offset, int limit);
@@ -56,6 +50,6 @@ public interface FinancialQueries {
     Page<Allocation> allocations(Scope scope, long positionId, int offset, int limit);
     OperationView operation(Scope scope, long id);
 
-    /** Documentary effect date, not recordedAt. Suspended until settlement links/reversal semantics exist. */
+    /** Rectified history by derived effect date; rejects scopes with unsupported/undated effects. Internal only. */
     Balance balanceAt(Scope scope, LocalDate financialDate);
 }

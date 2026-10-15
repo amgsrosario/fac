@@ -163,7 +163,8 @@ TUULI-FIN-TIME-001 emendada pelo Product Owner em 14-10-2026: contrato-alvo
 RC com liquidação na Data Valor e reversão na Data Valor original (M1 + F2 + T1).
 FT/NC conservam emissão; timestamp técnico independente, distinto de SystemEntryDate
 SAF-T. [ADR-002](decisions/ADR-002-financial-document-time.md). Arquitectura aprovada,
-sem implementação ou activação; código continua com efeito RC pela emissão.
+à data sem implementação ou activação; efeito RC então pela emissão.
+Evolução local posterior F2/T1: secção Fatia 1b, sem integração/activação.
 
 OP22-A implementa contratos internos de posições, saldos correntes separados,
 identificação V19 e histórico auditável; FT vinculada expõe efeito derivado da
@@ -178,7 +179,8 @@ PostgreSQL16.3 descartável V19, package BUILD SUCCESS, diff/links aprovados.
 Revisão independente op22_a_review: APROVAR, BLOCKER0/MAJOR0/MINOR0.
 Entrega OP22-A publicada e PR #22 merged, confirmado por Git/GitHub. CI do HEAD
 b83f418 aprovado na execução38269640856 (safety e package; não integração SQL).
-Consultas históricas suspensas conforme autorização expressa.
+À data OP22-A, consultas históricas suspensas conforme autorização expressa;
+Fatia 1b posterior prepara apenas o âmbito interno documental suportado.
 
 ### OP22-B1 — infraestrutura RC inactiva
 
@@ -193,7 +195,7 @@ Diagnóstico identifica dados não reconciliados e nunca permite activação em 
 Na entrega B1, RC legado/Pendente e seus leitores permaneceram activos;
 a protecção adicional B2.1 está agora integrada, sem activar o emissor novo.
 Transferência de clientes/dashboard/diagnósticos/listagens/extratos e restante
-fronteira adiada à B2. Nova anulação e histórico por data suspensos. V20 bloqueia
+fronteira adiada à B2. À data B1, nova anulação e histórico por data suspensos. V20 bloqueava
 anulação/reverse indevidos de RC internamente vinculado; RC sem vínculo mantido.
 Nenhuma demo/dado histórico apagado, reconstruído ou migrado. Nenhum endpoint novo.
 [Contrato/corte](../fiscal/op22-b1/RECEIPT_INTEGRATION.md) e [evidência](../fiscal/op22-b1/VALIDATION.md).
@@ -261,10 +263,10 @@ Data Valor conhecida mantêm ausência, não recebem datas de pagamento inventad
 
 Formalização documental INTEGRADA pelo PR #26, merge fc57177 confirmado em
 15-10-2026; 486b999, 31eee0e e cb872f3 ancestrais. Gate humano de merge concluído.
-Fase actual: preparação da implementação, sem autorização funcional.
-Não é aprovação fiscal nem autorização de implementação.
-Emissão e extractos legados continuam inalterados; FinancialCore não implementa
-F2/T1, anulação RC vinculada continua bloqueada e balanceAt permanece suspenso.
+À data desta formalização: preparação, sem autorização funcional ou fiscal.
+Emissão e extractos legados inalterados; FinancialCore ainda não implementava
+F2/T1, anulação RC vinculada bloqueada e balanceAt suspenso.
+Evolução posterior local: Fatia 1b abaixo, ainda sem activação operacional.
 Os dois MINOR do parecer Codex independente APPROVE WITH CONDITIONS estão
 incorporados: gate fiscal explícito e CASH_OUT reversed=true/RESTORE vinculados.
 Claude reviu 486b999: APPROVE WITH CONDITIONS, BLOCKER 0 / MAJOR 0 / MINOR 5.
@@ -279,11 +281,11 @@ AR2-Governance não alterado; eventual sincronização central exige autorizaç�
 
 ### Próxima missão financeira — pendências e decisões reservadas
 
-- Implementação de anulação/substituição RC depende de missão própria: contrato
-  M1 + F2 + T1 aprovado na OP22-B2.2; autorização pública e mecanismo concreto
-  de persistência por detalhar. Preservar afectações independentes.
-- Consultas históricas continuam suspensas até implementação e validação do
-  contrato temporal aprovado; restantes estornos conservam decisões reservadas.
+- Preparação interna de anulação/substituição RC autorizada na Fatia 1b, abaixo,
+  segundo M1 + F2 + T1. Integração pública, autorização e tratamento factual
+  monetário continuam pendentes. Preservar afectações independentes.
+- Consultas históricas operacionais continuam suspensas. Fatia 1b prepara consulta
+  interna limitada; restantes estornos conservam decisões reservadas.
 - Preparar consumidores correntes (dívidas, conta corrente, clientes com saldo,
   dashboard, listagens/exportações e diagnósticos) para o núcleo, mantendo contratos,
   sem os ligar à operação antes do corte autorizado.
@@ -301,7 +303,8 @@ produzir saldos incorrectos. A preparação antecipada é possível, mas os novo
 consumidores devem permanecer desligados da operação até ao corte autorizado.
 Não se presume reconciliação dos saldos existentes. A activação exige consistência
 entre emissão, liquidação, anulação e leitura financeira; a semântica de anulação
-ou estorno de RC foi aprovada como contrato-alvo T1 na OP22-B2.2, não implementado.
+ou estorno de RC foi aprovada como contrato-alvo T1 na OP22-B2.2; implementação
+local inactiva posterior registada na Fatia 1b, ainda não integrada.
 
 #### Sequência técnica recomendada pelo Claude
 
@@ -366,15 +369,34 @@ persistência/default/interface/PDF/imutabilidade, sem F2/T1 operacional.
 A missão posterior Fatia 1a autoriza implementação local, não corte operacional.
 Fecho documental local preparado sem push/PR; nenhuma alteração de dados/demo.
 
-## Fatia 1a — implementação local de Data Valor
+## Fatia 1a — integrada pelo PR #27
 
 PO autorizou em 15-10-2026; base documental e861c223 sobre PR #26.
 E1/E2 encerram a pendência anterior: nascimento financeiro FT e obrigações de
 débito elegíveis na emissão; limite máximo das emissões dos originadores.
 Vencimento não intervém. V23 aditiva, dados históricos NULL preservados.
-Implementação local, sem publicação/activação. Emissor interno adaptado para
+Integrada pelo PR #27, HEAD observado 7dccfb2ecc61c9b80a7059cf73ce25eab02061d0;
+CI verde e Claude APPROVE comunicados pelo PO. Emissor interno adaptado para
 campo/idempotência, continua inactivo; saldos/extractos e efeito do núcleo por
 emissão mantidos. Novo guard rejeita RC cronologicamente inválido/credor.
 Claude do plano: APPROVE WITH CONDITIONS (0 BLOCKER, 1 MAJOR, 3 MINOR),
-comunicado PO; não confundir com revisão da implementação, ainda pendente.
+comunicado PO; distinto da revisão final da implementação, aprovada pelo Claude
+com 0 BLOCKER/MAJOR/MINOR conforme confirmação do PO.
 [Testes e limites](../fiscal/op22-b2-2/SLICE1A_VALIDATION.md).
+
+## Fatia 1b — F2/T1 implementados localmente, revisão independente pendente
+
+Branch codex/receipt-value-date-slice1b, base PR #27 confirmada sem novo fetch.
+Núcleo interno consulta SETTLE na Data Valor e REVERSE RC na Data Valor original.
+V24 aditiva: acto auditável imutável, estado documental e ledger atómicos,
+substituição vinculada/idempotente, RESTORE e contra-lançamentos sem apagar história.
+Anulação autónoma interna só por declaração expressa de pagamento não ocorrido;
+validação factual monetária e permissões públicas continuam por preparar.
+Históricos NULL não alterados; reversão sem Data Valor registada recusada.
+balanceAt interno suporta história rectificada apenas em âmbitos integralmente
+datados, recusando outras semânticas. Não é fonte dos saldos operacionais.
+
+Novo circuito RC continua inactivo. Legado, consumidores, saldos/extractos,
+frontend e demo intocados; activação conjunta e gate fiscal exigem autorização.
+[Contratos, testes e riscos da entrega](../fiscal/op22-b2-2/SLICE1B_VALIDATION.md).
+Sem push/PR/merge. Próximo gate: revisão independente Claude, publicação pelo PO.

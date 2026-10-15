@@ -5,7 +5,8 @@ Complementa [ADR-001](ADR-001-financial-source.md) e GOV-ALT-001.
 
 **Regra vigente: emenda OP22-B2.2 aprovada pelo Product Owner em 14-10-2026,
 na secção final. Os blocos anteriores conservam o histórico, não regras
-concorrentes. Aprovação arquitectural; implementação e activação não autorizadas.**
+concorrentes. A aprovação arquitectural não autoriza por si implementação ou
+activação. Missões delimitadas posteriores e estado técnico constam no final.**
 
 ## Decisão original de 12-10-2026 — histórico, emendada abaixo
 
@@ -267,9 +268,11 @@ Informação conhecida num instante e reprodução exacta de extractos permanece
 
 ### 8. Estado actual e transição
 
-**Actual:** legado operacional por emissão; FinancialCore interno, RC novo inactivo; anulação de RC vinculado bloqueada; `balanceAt()` suspenso.
+**Estado à data da formalização:** legado operacional por emissão; FinancialCore interno, RC novo inactivo; anulação de RC vinculado bloqueada; `balanceAt()` suspenso.
+A preparação local posterior F2/T1 está descrita no estado Fatia 1b ao final;
+não constitui integração nem activação.
 
-**Alvo aprovado, não implementado:** M1 + F2 + T1, substituição vinculada e anulação coerente.
+**Alvo aprovado, então não implementado:** M1 + F2 + T1, substituição vinculada e anulação coerente.
 
 A aprovação institucional não muda o comportamento existente. Os extractos e consumidores legados conservam os contratos actuais até ao corte autorizado.
 
@@ -318,7 +321,7 @@ nem activar cálculos isolados; corte conjunto permanece não autorizado.
 À data da entrega complementar, era exigida nova revisão Claude antes da
 publicação. A integração documental ocorreu pelo PR #26, merge fc57177,
 confirmada em 15-10-2026. Este registo não inventa um novo parecer de revisão
-nem validação jurídica; a implementação continua não autorizada.
+nem validação jurídica; à data desse fecho a implementação não estava autorizada.
 
 ### Decisão PO — nascimento da obrigação (MINOR-N1, estado anterior a E1/E2)
 
@@ -362,3 +365,18 @@ MINOR 3, resultado comunicado pelo PO na ordem da Fatia 1a. Parecer integral
 não fornecido; não declarar leitura integral. MAJOR-001 resolvido por E1;
 MINOR-001 rejeição explícita, MINOR-002 E2 universal com elegibilidade e
 MINOR-003 autoria/evidência deste registo. Implementação sujeita a revisão Claude.
+
+### Estado de implementação — Fatia 1b, 15-10-2026
+
+Actualiza exclusivamente o estado técnico dos blocos históricos anteriores:
+Fatia 1a integrada pelo PR #27. Fatia 1b local implementa F2/T1 no núcleo
+inactivo, com V24 aditiva e efeito derivado do RC; não é nova decisão temporal.
+Anulação interna e substituição são vinculadas/atómicas, sem reembolso implícito.
+Anulação autónoma interna exige declaração auditável de que o pagamento não
+ocorreu; comprovação efectiva e permissões públicas permanecem gates futuros.
+balanceAt interno calcula história rectificada só para efeitos documentais
+suportados e recusa âmbitos com efeitos sem data/semântica aprovadas. Históricos
+NULL conservam ausência, emissão apenas como compatibilidade de leitura; T1
+sem Data Valor conhecida é recusado. Não activa consumidores, RC ou extractos
+nem dispensa o gate fiscal e o corte conjunto. Revisão Claude ainda pendente.
+[Evidência](../../fiscal/op22-b2-2/SLICE1B_VALIDATION.md).

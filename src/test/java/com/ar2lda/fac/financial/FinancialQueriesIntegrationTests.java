@@ -130,4 +130,13 @@ class FinancialQueriesIntegrationTests {
         pos(Nature.DEBT,"10");
         assertThatThrownBy(()->queries.balanceAt(scope,LocalDate.now())).isInstanceOf(UnsupportedOperationException.class).hasMessageContaining("TUULI-FIN-TIME-001");
     }
+    @Test void genericSettlementPreservesTechnicalOperationTimeWithoutInventingEffectDate() {
+        var d=pos(Nature.DEBT,"100");
+        long op=core.settle(scope,key(),new Settlement(List.of(new Part(d.id(),m("10"))),m("10"),m("0"),m("0")),"test");
+        var view=queries.operation(scope,op);
+        assertThat(view.financialDocumentLink()).isEqualTo(DocumentLinkStatus.NOT_RECORDED);
+        assertThat(view.operationAt()).contains(view.recordedAt());
+        assertThat(view.financialEffectDate()).isEmpty();
+    }
+
 }

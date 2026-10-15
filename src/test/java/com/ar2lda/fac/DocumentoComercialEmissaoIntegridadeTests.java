@@ -744,7 +744,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         com.ar2lda.fac.testinfra.TestDatabaseSafetyValidator.validate(testEnvironment.getActiveProfiles(),
                 jdbcTemplate.queryForObject("select current_database()", String.class),
                 testEnvironment.getProperty("fac.test-database.destructive-operations-enabled", Boolean.class, false));
-        jdbcTemplate.execute("truncate financial_receipt_line,financial_receipt,financial_document_origin,financial_allocation,financial_component,financial_position,financial_operation");
+        jdbcTemplate.execute("truncate financial_receipt_reversal,financial_receipt_line,financial_receipt,financial_document_origin,financial_allocation,financial_component,financial_position,financial_operation");
         reset(financialCore);
         cleanupDocumentsForType("IC1");
         cleanupDocumentsForType("IC2");
