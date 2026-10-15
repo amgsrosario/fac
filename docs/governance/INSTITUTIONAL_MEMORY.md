@@ -335,7 +335,21 @@ limites constam do documento da Fatia 1b; não somar fases como testes distintos
 
 O legado permanece a única autoridade operacional de liquidações/saldos/extractos;
 a originação FT já integrada não significa activação do circuito RC do núcleo.
-Fatia 1c ainda NÃO aprovada/iniciada. [Proposta e alternativas](../fiscal/op22-b2-2/SLICE1C_PROPOSAL.md)
-recomendam diagnóstico interno de reconciliação só leitura, sem corrigir dados.
+Na preparação pós-PR #28, Fatia 1c ainda não estava aprovada. [Proposta e alternativas](../fiscal/op22-b2-2/SLICE1C_PROPOSAL.md)
+recomendavam diagnóstico interno de reconciliação só leitura, sem corrigir dados.
 A recomendação não é decisão: PO decide âmbito, temporalidade FT, política de
 históricos, eventual migração/perímetro e corte/reversão, após análise própria.
+
+
+## Fatia 1c — diagnóstico interno autorizado, implementação local
+
+Após integração documental PR #29 (f06c09d), PO autorizou a opção 1c-B:
+diagnóstico de comparação FT/RC apenas de leitura. FinancialReconciliation
+identifica valores e vínculos, explica diferenças observadas sem declarar erro
+contabilístico e torna explícita cobertura incompleta/histórica. Não corrige dados,
+não escolhe temporalidade FT nem transfere autoridade financeira. O diagnóstico
+recusa outro contexto empresarial que não o singleton 1 do modelo documental.
+Valores ausentes não são zero; totais referem apenas subconjunto comparável.
+Implementação local sujeita à revisão independente Claude, sem publicação.
+[Contrato, evidência e solicitação de revisão](../fiscal/op22-b2-2/SLICE1C_VALIDATION.md).
+Legado, saldos/extractos, demo e circuito RC novo continuam inalterados/inactivo.

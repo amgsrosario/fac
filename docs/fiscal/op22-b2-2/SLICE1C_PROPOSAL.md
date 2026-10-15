@@ -1,6 +1,10 @@
 # Fatia 1c — proposta para decisão do Product Owner
 
-15-10-2026 · **PROPOSTA NÃO APROVADA; NÃO IMPLEMENTADA.**
+15-10-2026 · **Proposta histórica integrada pelo PR #29; opção 1c-B posteriormente
+aprovada pelo PO na OP Fatia 1c.** Comparação/critério originais conservados abaixo;
+1c-A/1c-C não autorizadas. Estado da implementação local e testes em
+[SLICE1C_VALIDATION.md](SLICE1C_VALIDATION.md). A proposta, por si só, não autorizava
+implementação; a ordem posterior é a fonte da autorização.
 Base observada: `2a0f8b08f9d79715dd4cd93a5888b9e6e79773eb`, PR #28,
 com PR #27 e V23/V24 integrados. Não autoriza activação, deployment ou dados.
 

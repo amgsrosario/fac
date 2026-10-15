@@ -145,6 +145,11 @@ class FinancialReceiptMigrationTests {
                 var queries=new JdbcFinancialQueries(jdbc);var scope=new FinancialCore.Scope(1,1,"EUR");
                 var date=java.time.LocalDate.of(2020,1,1);
                 assertThat(queries.balanceAt(scope,date).openDebt()).isEqualByComparingTo("90");
+                var diagnostic=new FinancialReconciliation(jdbc);
+                var observed=diagnostic.inspect(scope,0,500).page().items().getFirst();
+                assertThat(observed.findings()).contains(FinancialReconciliation.Finding.HISTORICAL_VALUE_DATE_MISSING);
+                assertThat(observed.nullValueDateLines()).isEqualTo(1);
+                assertThat(diagnostic.receipts(scope,1,0,500).items().getFirst().valueDate()).isNull();
                 var original=queries.operation(scope,3);
                 assertThat(original.financialDocument().orElseThrow().valueDate()).isNull();
                 assertThat(original.financialEffectDate()).contains(date);
