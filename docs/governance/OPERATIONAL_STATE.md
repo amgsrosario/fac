@@ -414,13 +414,30 @@ Legado é a única autoridade operacional de liquidações/saldos/extractos. Ori
 FT existente não equivale a activação do novo circuito RC. Sem cutover, bases/demo
 inalteradas; demo Ubuntu ainda por verificar antes de qualquer actualização.
 
-## Próxima fatia proposta — 1c, AGUARDA DECISÃO DO PO
+## Fatia 1c — diagnóstico autorizado, implementação local
 
 [Proposta técnica com alternativas e critérios](../fiscal/op22-b2-2/SLICE1C_PROPOSAL.md).
 Recomendação: diagnóstico interno paginado de reconciliação FT/RC, só leitura.
 Alternativas: temporalidade da anulação FT primeiro, ou preparação de consumidor
-inactivo. Nenhuma escolhida em nome do PO; 1c não implementada/iniciada.
+inactivo. PO aprovou posteriormente 1c-B na OP de implementação; 1c-A/1c-C
+não foram autorizadas. Base documental PR #29 integrada em f06c09d.
 Continuam reservados: efeito temporal FT, tratamento factual de dinheiro real,
 RC NULL/perímetro de dados, consumidores, chave pública/permissões, validação
 fiscal e plano explícito de activação/reversão de corte. Igualdade de saldos ou
-contadores a zero não autoriza activação. Sem push/PR/merge deste fecho documental.
+contadores a zero não autoriza activação. Publicação da Fatia 1c não autorizada.
+
+
+FinancialReconciliation implementado localmente na branch
+codex/financial-reconciliation-slice1c, worktree isolada. Leitura paginada por
+cliente/documento, resumo apenas de observações comparáveis e evidência paginada.
+Sem migration ou chamadores operacionais. Ausência de saldo não vira zero;
+comparabilidade corrente não certifica história nem autoriza activação.
+[Contrato, testes e limites](../fiscal/op22-b2-2/SLICE1C_VALIDATION.md).
+Revisão Claude solicitada para execução externa, ainda pendente; sem PR/publicação.
+Não se declara revisão do implementador como independente. Legado permanece
+única autoridade operacional; consumidores, FinancialCore RC e demo não activados.
+
+Validação final 1c: 135 testes dirigidos aprovados, zero falhas/erros/ignorados,
+com PostgreSQL 16.3 descartável e package BUILD SUCCESS. Inclui 15 testes novos do
+diagnóstico, regressão financeira/safety e upgrades até V24/segundo arranque.
+Não equivale à suite integral da aplicação ou a CI. Revisão Claude continua pendente.
