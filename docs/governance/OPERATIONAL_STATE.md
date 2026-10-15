@@ -5,7 +5,7 @@ Fonte canónica do estado corrente. Atualização: 2026-10-15, Europe/Lisbon. Su
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD produtivo observado no fecho OP22-B2.2: `fc5717763e95c40a8b1361b60984254d401f2416`, merge do PR #26, confirmado localmente após fetch manual do Product Owner; não é referência auto-actualizada.
+- HEAD produtivo observado no fecho Fatias 1a/1b: `2a0f8b08f9d79715dd4cd93a5888b9e6e79773eb`, merge do PR #28, confirmado localmente após fetch manual do Product Owner e pela API GitHub; não é referência auto-actualizada.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -164,7 +164,7 @@ RC com liquidação na Data Valor e reversão na Data Valor original (M1 + F2 + 
 FT/NC conservam emissão; timestamp técnico independente, distinto de SystemEntryDate
 SAF-T. [ADR-002](decisions/ADR-002-financial-document-time.md). Arquitectura aprovada,
 à data sem implementação ou activação; efeito RC então pela emissão.
-Evolução local posterior F2/T1: secção Fatia 1b, sem integração/activação.
+Evolução posterior F2/T1: secção Fatia 1b integrada, sem activação RC.
 
 OP22-A implementa contratos internos de posições, saldos correntes separados,
 identificação V19 e histórico auditável; FT vinculada expõe efeito derivado da
@@ -266,7 +266,7 @@ Formalização documental INTEGRADA pelo PR #26, merge fc57177 confirmado em
 À data desta formalização: preparação, sem autorização funcional ou fiscal.
 Emissão e extractos legados inalterados; FinancialCore ainda não implementava
 F2/T1, anulação RC vinculada bloqueada e balanceAt suspenso.
-Evolução posterior local: Fatia 1b abaixo, ainda sem activação operacional.
+Evolução posterior: Fatia 1b integrada abaixo, ainda sem activação RC.
 Os dois MINOR do parecer Codex independente APPROVE WITH CONDITIONS estão
 incorporados: gate fiscal explícito e CASH_OUT reversed=true/RESTORE vinculados.
 Claude reviu 486b999: APPROVE WITH CONDITIONS, BLOCKER 0 / MAJOR 0 / MINOR 5.
@@ -281,10 +281,10 @@ AR2-Governance não alterado; eventual sincronização central exige autorizaç�
 
 ### Próxima missão financeira — pendências e decisões reservadas
 
-- Preparação interna de anulação/substituição RC autorizada na Fatia 1b, abaixo,
+- Preparação interna de anulação/substituição RC integrada na Fatia 1b, abaixo,
   segundo M1 + F2 + T1. Integração pública, autorização e tratamento factual
   monetário continuam pendentes. Preservar afectações independentes.
-- Consultas históricas operacionais continuam suspensas. Fatia 1b prepara consulta
+- Consultas históricas operacionais continuam suspensas. Fatia 1b integra consulta
   interna limitada; restantes estornos conservam decisões reservadas.
 - Preparar consumidores correntes (dívidas, conta corrente, clientes com saldo,
   dashboard, listagens/exportações e diagnósticos) para o núcleo, mantendo contratos,
@@ -304,7 +304,7 @@ consumidores devem permanecer desligados da operação até ao corte autorizado.
 Não se presume reconciliação dos saldos existentes. A activação exige consistência
 entre emissão, liquidação, anulação e leitura financeira; a semântica de anulação
 ou estorno de RC foi aprovada como contrato-alvo T1 na OP22-B2.2; implementação
-local inactiva posterior registada na Fatia 1b, ainda não integrada.
+inactiva posterior integrada pelo PR #28, registada na Fatia 1b.
 
 #### Sequência técnica recomendada pelo Claude
 
@@ -384,9 +384,11 @@ comunicado PO; distinto da revisão final da implementação, aprovada pelo Clau
 com 0 BLOCKER/MAJOR/MINOR conforme confirmação do PO.
 [Testes e limites](../fiscal/op22-b2-2/SLICE1A_VALIDATION.md).
 
-## Fatia 1b — F2/T1 implementados localmente, revisão independente pendente
+## Fatia 1b — integrada pelo PR #28, sem activação RC
 
-Branch codex/receipt-value-date-slice1b, base PR #27 confirmada sem novo fetch.
+PR #28 merged contra feature/visual-redesign, merge
+2a0f8b08f9d79715dd4cd93a5888b9e6e79773eb. Commits 8754ed3/d2c5a7d
+integrados; V24 presente, PR #27 ancestral confirmado.
 Núcleo interno consulta SETTLE na Data Valor e REVERSE RC na Data Valor original.
 V24 aditiva: acto auditável imutável, estado documental e ledger atómicos,
 substituição vinculada/idempotente, RESTORE e contra-lançamentos sem apagar história.
@@ -399,4 +401,26 @@ datados, recusando outras semânticas. Não é fonte dos saldos operacionais.
 Novo circuito RC continua inactivo. Legado, consumidores, saldos/extractos,
 frontend e demo intocados; activação conjunta e gate fiscal exigem autorização.
 [Contratos, testes e riscos da entrega](../fiscal/op22-b2-2/SLICE1B_VALIDATION.md).
-Sem push/PR/merge. Próximo gate: revisão independente Claude, publicação pelo PO.
+Revisão independente final Claude: APPROVE, zero findings pendentes, conforme
+comunicação PO nesta ordem. Resultado não reconstruído a partir dos testes.
+CI confirmado directamente pela API GitHub no HEAD d2c5a7d, job validation success:
+[Testes de protecção da base e package](https://github.com/amgsrosario/fac/actions/runs/38769991780/job/116542973704).
+CI não executa integração PostgreSQL. Evidência local anterior: fase inicial
+190 testes aprovados; complemento final 94 aprovados, zero falhas/erros/ignorados
+em cada fase, com package e upgrades até V24/segundo arranque. Fases sobrepostas,
+não somar como testes distintos. Não repetidas neste fecho documental.
+
+Legado é a única autoridade operacional de liquidações/saldos/extractos. Originação
+FT existente não equivale a activação do novo circuito RC. Sem cutover, bases/demo
+inalteradas; demo Ubuntu ainda por verificar antes de qualquer actualização.
+
+## Próxima fatia proposta — 1c, AGUARDA DECISÃO DO PO
+
+[Proposta técnica com alternativas e critérios](../fiscal/op22-b2-2/SLICE1C_PROPOSAL.md).
+Recomendação: diagnóstico interno paginado de reconciliação FT/RC, só leitura.
+Alternativas: temporalidade da anulação FT primeiro, ou preparação de consumidor
+inactivo. Nenhuma escolhida em nome do PO; 1c não implementada/iniciada.
+Continuam reservados: efeito temporal FT, tratamento factual de dinheiro real,
+RC NULL/perímetro de dados, consumidores, chave pública/permissões, validação
+fiscal e plano explícito de activação/reversão de corte. Igualdade de saldos ou
+contadores a zero não autoriza activação. Sem push/PR/merge deste fecho documental.

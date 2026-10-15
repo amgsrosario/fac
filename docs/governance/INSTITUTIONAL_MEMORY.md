@@ -310,9 +310,11 @@ Fatia 1a integrada pelo PR #27: campo/default/imutabilidade/validações/UI/PDF;
 sem backfill. Nova rejeição cronológica antes de numeração; nenhuma alteração
 financeira operacional, F2/T1 ou corte. [Evidência](../fiscal/op22-b2-2/SLICE1A_VALIDATION.md).
 
-## Fatia 1b — implementação interna F2/T1, ainda não integrada
+## Fatia 1b — F2/T1 integrados pelo PR #28, circuito RC inactivo
 
-Na base PR #27, a missão autorizada prepara F2/T1 sem activar RC. Data Valor
+PR #28 integrado em feature/visual-redesign, merge observado
+2a0f8b08f9d79715dd4cd93a5888b9e6e79773eb, incluindo 8754ed3 e d2c5a7d,
+confirmado no Git e API GitHub em 15-10-2026. PR #27 também integrado. Data Valor
 permanece no RC (M1); efeito SETTLE e REVERSE deriva desse valor, separando
 emissão e instante técnico. V24 aditiva vincula acto de anulação, REVERSE e
 substituto, exige atomicidade e preserva RESTORE/CASH_OUT reversed=true com
@@ -322,5 +324,18 @@ pública não estão implementadas. Substituição atómica cobre DV-09 sem dupl
 liquidação. Históricos NULL preservados, T1 sem data conhecida recusado.
 Consulta balanceAt interna limitada a âmbitos com datas documentais suportadas;
 não usa timestamp para inventar efeitos. Legado, saldos/extractos e consumidores
-permanecem inalterados. Nenhum corte, demo ou publicação autorizado nesta entrega.
+permanecem inalterados. Integração não autoriza corte ou actualização da demo.
 [Evidência e limites](../fiscal/op22-b2-2/SLICE1B_VALIDATION.md).
+
+Revisão final Claude APPROVE, sem findings pendentes, comunicada pelo PO na
+ordem de fecho; não se declara nova leitura do parecer integral pelo Executor.
+CI PR #28 confirmado directamente como success no HEAD d2c5a7d: safety validator
+e package sem testes, sem suite PostgreSQL. Evidência local PostgreSQL e respectivos
+limites constam do documento da Fatia 1b; não somar fases como testes distintos.
+
+O legado permanece a única autoridade operacional de liquidações/saldos/extractos;
+a originação FT já integrada não significa activação do circuito RC do núcleo.
+Fatia 1c ainda NÃO aprovada/iniciada. [Proposta e alternativas](../fiscal/op22-b2-2/SLICE1C_PROPOSAL.md)
+recomendam diagnóstico interno de reconciliação só leitura, sem corrigir dados.
+A recomendação não é decisão: PO decide âmbito, temporalidade FT, política de
+históricos, eventual migração/perímetro e corte/reversão, após análise própria.
