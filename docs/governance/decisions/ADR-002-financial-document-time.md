@@ -366,10 +366,10 @@ não fornecido; não declarar leitura integral. MAJOR-001 resolvido por E1;
 MINOR-001 rejeição explícita, MINOR-002 E2 universal com elegibilidade e
 MINOR-003 autoria/evidência deste registo. Implementação sujeita a revisão Claude.
 
-### Estado de implementação — Fatia 1b, 15-10-2026
+### Estado de implementação — Fatia 1b integrada, 15-10-2026
 
 Actualiza exclusivamente o estado técnico dos blocos históricos anteriores:
-Fatia 1a integrada pelo PR #27. Fatia 1b local implementa F2/T1 no núcleo
+Fatia 1a integrada pelo PR #27. Fatia 1b integrada pelo PR #28 implementa F2/T1 no núcleo
 inactivo, com V24 aditiva e efeito derivado do RC; não é nova decisão temporal.
 Anulação interna e substituição são vinculadas/atómicas, sem reembolso implícito.
 Anulação autónoma interna exige declaração auditável de que o pagamento não
@@ -378,5 +378,6 @@ balanceAt interno calcula história rectificada só para efeitos documentais
 suportados e recusa âmbitos com efeitos sem data/semântica aprovadas. Históricos
 NULL conservam ausência, emissão apenas como compatibilidade de leitura; T1
 sem Data Valor conhecida é recusado. Não activa consumidores, RC ou extractos
-nem dispensa o gate fiscal e o corte conjunto. Revisão Claude ainda pendente.
+nem dispensa o gate fiscal e o corte conjunto. Revisão final Claude APPROVE sem
+findings comunicada pelo PO; CI limitado confirmado, conforme evidência do fecho.
 [Evidência](../../fiscal/op22-b2-2/SLICE1B_VALIDATION.md).

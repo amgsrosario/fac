@@ -160,9 +160,9 @@ Nenhuma migration integrada foi editada. SQL executado apenas em bases novas de
 teste; nenhuma alteração em bases persistentes/demo. Container de teste parado
 no fecho, bases descartáveis preservadas para eventual revisão local.
 
-## Revisão independente e publicação manual
+## Revisão independente e publicação manual — estado histórico da entrega
 
-Revisão Claude desta fatia pendente; os resultados anteriores da Fatia 1a não
+Na entrega inicial, revisão Claude desta fatia pendente; resultados anteriores da Fatia 1a não
 constituem aprovação deste diff. Rever especialmente V24 e sequências SQL,
 atomicidade JPA/JDBC, tratamento declarado de dinheiro, idempotência, bloqueios,
 T1, substituição DV-09, fronteira inactiva e leitura histórica suportada.
@@ -187,7 +187,7 @@ não representa novo parecer independente sobre o commit complementar.
 
 ### MINOR-001 — hora técnica de SETTLE
 
-V24 ainda não integrada: operation_at mantém receipt.momento_emissao quando
+Na entrega deste complemento, V24 ainda não integrada: operation_at mantém receipt.momento_emissao quando
 existe vínculo RC; quando não existe, utiliza op.created_at. Não se utiliza
 COALESCE para substituir um momento de emissão histórico ausente de um RC.
 A expressão effect_date e o código de balanceAt não foram alterados.
@@ -247,3 +247,44 @@ Package backend: BUILD SUCCESS. Log local:
 alterados serviços, balanceAt, regras de recusa, saldos, extractos ou legado.
 Container descartável parado no fecho. Nenhuma base persistente, demo ou outra
 worktree alterada. Circuito RC continua inactivo. Sem push, PR ou merge.
+
+
+## Encerramento institucional pós-PR #28 — 15-10-2026
+
+- [PR #27](https://github.com/amgsrosario/fac/pull/27) integrado por 7dccfb2,
+  contendo a Fatia 1a/V23. [PR #28](https://github.com/amgsrosario/fac/pull/28)
+  confirmado merged pela API GitHub e pelo histórico local actualizado manualmente
+  pelo PO, contra feature/visual-redesign. Merge efectivo e HEAD observado neste
+  fecho: `2a0f8b08f9d79715dd4cd93a5888b9e6e79773eb`.
+- Commits 8754ed3 e d2c5a7d integrados, V24 presente. O HEAD observado é evidência
+  desta confirmação, não campo autorreferencial a perseguir em novos commits.
+- Revisão independente final Claude: APPROVE, sem findings pendentes, conforme
+  comunicação do PO na ordem de encerramento. Parecer integral não fornecido
+  nesta retoma; não se declara nova revisão nem execução de testes pelo Claude.
+- CI do HEAD `d2c5a7d5f5328e9b1be6568e62dd5ba9ae25452f` consultado directamente:
+  [validation — success](https://github.com/amgsrosario/fac/actions/runs/38769991780/job/116542973704).
+  API confirmou passos Testes unitários de protecção da base e Build sem executar
+  testes como success. Workflow usa TestDatabaseSafetyValidatorTests e
+  mvn -B -DskipTests package; não executa a suite de integração PostgreSQL.
+- Evidência PostgreSQL anterior preservada: 190 aprovados na fase inicial e 94
+  no complemento, sem somar fases sobrepostas nem apresentar CI como prova SQL.
+  Package/upgrades e limites permanecem nos registos acima; testes não repetidos
+  neste fecho exclusivamente documental.
+- FinancialCore contém F2/T1 internos; circuito RC novo continua inactivo. Legado
+  permanece autoridade operacional de liquidações/saldos/extractos. Originação FT
+  já activa é distinta da activação do circuito RC e dos consumidores do núcleo.
+- Nenhum cutover, backfill histórico, acesso a bases persistentes ou alteração
+  da demo. Ubuntu ainda por verificar antes de qualquer actualização.
+- FT anulada/CREATE revertido, efeitos genéricos sem data e históricos sem
+  semântica segura continuam recusados por balanceAt. Históricos NULL preservados;
+  T1 sem data conhecida recusado. Dinheiro real e autorização pública não resolvidos.
+- [Proposta 1c](SLICE1C_PROPOSAL.md): diagnóstico interno de reconciliação, apenas
+  recomendado; alternativas, riscos e decisões PO explícitos. Implementação não
+  autorizada nem iniciada. Este fecho não efectuou push, PR ou merge.
+
+Verificações desta missão de fecho: ancestralidade de PR #27/d2c5a7d na base,
+metadados PR #28 e job CI em leitura; diff exclusivamente em cinco documentos
+Markdown, 43 referências locais válidas e git diff --check aprovado. Código e
+migrations apenas consultados, sem testes de aplicação repetidos, execução SQL,
+serviços ou bases de dados. Preparado commit documental local em worktree isolada;
+checkout principal e alterações preexistentes preservados.
