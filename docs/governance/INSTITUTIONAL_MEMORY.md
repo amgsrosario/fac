@@ -285,3 +285,13 @@ emissão; equivalência universal com nascimento não demonstrada. Confirmar fon
 por tipo é pendência técnica bloqueante da implementação dessa validação.
 Inventário inclui estado comercial/anulação, frontend RC e demo. Só documentação;
 circuito novo inactivo, legado preservado, nova revisão Claude complementar pendente.
+
+## Integração documental OP22-B2.2 — PR #26
+
+Confirmada em 15-10-2026 na referência local actualizada manualmente pelo PO:
+merge fc5717763e95c40a8b1361b60984254d401f2416, contendo 486b999, 31eee0e,
+cb872f3. Arquitectura e contratos integrados; implementação Data Valor não iniciada.
+Uniformização ADR distingue originação FT pela emissão da confirmação da data
+de nascimento da obrigação. Não cria regra funcional nem elimina a pendência.
+[Plano técnico](../fiscal/op22-b2-2/SLICE1_PLAN.md) separa Fatia 1, evolução
+financeira e corte autorizado. Não altera a autoridade operacional legada.

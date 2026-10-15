@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-14, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-15, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD produtivo observado no fecho OP22-B2.1: `e8d86eae2672756b84d6178644eeaa63c691601b`, merge do PR #24, integração mais recente confirmada neste reconhecimento.
+- HEAD produtivo observado no fecho OP22-B2.2: `fc5717763e95c40a8b1361b60984254d401f2416`, merge do PR #26, confirmado localmente após fetch manual do Product Owner; não é referência auto-actualizada.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -259,14 +259,17 @@ não 330; sem excesso de dívida ou dinheiro sem afectação válida. Histórico
 Data Valor conhecida mantêm ausência, não recebem datas de pagamento inventadas.
 [Contrato completo e alternativas](decisions/ADR-002-financial-document-time.md).
 
-Formalização documental local em preparação para revisão/PR humano; não integrada
-por esta missão. Não é aprovação fiscal nem autorização de implementação.
+Formalização documental INTEGRADA pelo PR #26, merge fc57177 confirmado em
+15-10-2026; 486b999, 31eee0e e cb872f3 ancestrais. Gate humano de merge concluído.
+Fase actual: preparação da implementação, sem autorização funcional.
+Não é aprovação fiscal nem autorização de implementação.
 Emissão e extractos legados continuam inalterados; FinancialCore não implementa
 F2/T1, anulação RC vinculada continua bloqueada e balanceAt permanece suspenso.
 Os dois MINOR do parecer Codex independente APPROVE WITH CONDITIONS estão
 incorporados: gate fiscal explícito e CASH_OUT reversed=true/RESTORE vinculados.
 Claude reviu 486b999: APPROVE WITH CONDITIONS, BLOCKER 0 / MAJOR 0 / MINOR 5.
-Complemento actual resolve os cinco pontos; nova revisão Claude pendente.
+Complemento dos cinco pontos e fecho N1/N2 integrados pelo PR #26. Não se
+inventa resultado adicional da revisão; parecer final não consultado neste fecho.
 Situação monetária real antes de anulação: identificação/validação por implementar,
 sem pressupor informação disponível, reembolso automático ou saldo não afectado.
 [Inventário, cenários e matriz dos MINOR](../fiscal/op22-b2-2/FINANCIAL_HISTORY.md).
@@ -350,4 +353,14 @@ Implementação não iniciada. Equivalência universal de Pendente.dataDocumento
 tipo é pendência técnica bloqueante dessa validação, não impedimento documental.
 N2 acrescenta consumidores comerciais, frontend e DemoScenarioService ao inventário.
 Duas grafias «eligíveis» corrigidas para «elegíveis». Nova revisão Claude limitada
-ao diff complementar pendente. Nenhuma activação, alteração demo ou corte autorizado.
+ao diff complementar era pendente na entrega; PR #26 posteriormente integrado.
+Nenhuma activação, alteração demo ou corte autorizado.
+
+## Preparação Data Valor pós-PR #26 — 15-10-2026
+
+[Reconhecimento e plano da Fatia 1](../fiscal/op22-b2-2/SLICE1_PLAN.md).
+Nascimento universal não demonstrado por Pendente.dataDocumento; confirmação
+por tipo/fonte permanece bloqueante da validação inferior. Fatia 1 proposta:
+persistência/default/interface/PDF/imutabilidade, sem F2/T1 operacional.
+Não iniciar sem missão própria; decisão sobre a fonte/semântica precede validação.
+Fecho documental local preparado sem push/PR; nenhuma alteração de dados/demo.

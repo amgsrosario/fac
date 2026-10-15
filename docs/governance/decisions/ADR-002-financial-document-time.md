@@ -134,7 +134,9 @@ Pelo seguinte contrato:
 >
 > `máxima data de nascimento das obrigações liquidadas ≤ Data Valor ≤ emissão do RC`
 >
-> Para FT, a data de efeito da obrigação é a emissão. Tipos não suportados ou
+> Para FT, a originação financeira implementada usa a emissão. Isso não
+> demonstra, por si só, o nascimento da obrigação; a sua fonte correcta deve
+> ser confirmada antes de implementar a validação. Tipos não suportados ou
 > com natureza/temporalidade indeterminada não recebem elegibilidade presumida.
 > Mantém-se a proibição de qualquer outra data de efeito financeiro autónoma ou editável; a Data Valor do RC é a única excepção.
 >
@@ -312,8 +314,10 @@ nem activar cálculos isolados; corte conjunto permanece não autorizado.
   proibição residual, FIN-HIST-02 sem DV-10, situação monetária por implementar
   e este registo. [Matriz de resposta](../../fiscal/op22-b2-2/FINANCIAL_HISTORY.md).
 
-A entrega complementar exige nova revisão Claude antes da publicação;
-nenhum parecer anterior é aprovação desta versão nem validação jurídica.
+À data da entrega complementar, era exigida nova revisão Claude antes da
+publicação. A integração documental ocorreu pelo PR #26, merge fc57177,
+confirmada em 15-10-2026. Este registo não inventa um novo parecer de revisão
+nem validação jurídica; a implementação continua não autorizada.
 
 ### Decisão final PO — nascimento da obrigação (MINOR-N1)
 
