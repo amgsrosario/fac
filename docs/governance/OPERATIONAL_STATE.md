@@ -348,7 +348,7 @@ Esta sequência é a orientação vigente do Executivo. A conclusão JWT não an
 
 Decisão PO: Data Valor ≥ nascimento de cada obrigação liquidada e ≤ emissão RC;
 para várias, usar máximo nascimento. Regra válida para qualquer tipo elegível.
-Implementação não iniciada. Equivalência universal de Pendente.dataDocumento
+Estado histórico N1/N2, antes de E1/E2: equivalência universal de Pendente.dataDocumento
 (emissão copiada) com nascimento NÃO demonstrada; confirmar semântica/fonte por
 tipo é pendência técnica bloqueante dessa validação, não impedimento documental.
 N2 acrescenta consumidores comerciais, frontend e DemoScenarioService ao inventário.
@@ -359,8 +359,22 @@ Nenhuma activação, alteração demo ou corte autorizado.
 ## Preparação Data Valor pós-PR #26 — 15-10-2026
 
 [Reconhecimento e plano da Fatia 1](../fiscal/op22-b2-2/SLICE1_PLAN.md).
-Nascimento universal não demonstrado por Pendente.dataDocumento; confirmação
-por tipo/fonte permanece bloqueante da validação inferior. Fatia 1 proposta:
+Na preparação anterior, nascimento universal não estava demonstrado. E1/E2
+resolveram a semântica em 15-10-2026: emissão das origens é o limite inferior.
+Plano histórico da Fatia 1:
 persistência/default/interface/PDF/imutabilidade, sem F2/T1 operacional.
-Não iniciar sem missão própria; decisão sobre a fonte/semântica precede validação.
+A missão posterior Fatia 1a autoriza implementação local, não corte operacional.
 Fecho documental local preparado sem push/PR; nenhuma alteração de dados/demo.
+
+## Fatia 1a — implementação local de Data Valor
+
+PO autorizou em 15-10-2026; base documental e861c223 sobre PR #26.
+E1/E2 encerram a pendência anterior: nascimento financeiro FT e obrigações de
+débito elegíveis na emissão; limite máximo das emissões dos originadores.
+Vencimento não intervém. V23 aditiva, dados históricos NULL preservados.
+Implementação local, sem publicação/activação. Emissor interno adaptado para
+campo/idempotência, continua inactivo; saldos/extractos e efeito do núcleo por
+emissão mantidos. Novo guard rejeita RC cronologicamente inválido/credor.
+Claude do plano: APPROVE WITH CONDITIONS (0 BLOCKER, 1 MAJOR, 3 MINOR),
+comunicado PO; não confundir com revisão da implementação, ainda pendente.
+[Testes e limites](../fiscal/op22-b2-2/SLICE1A_VALIDATION.md).

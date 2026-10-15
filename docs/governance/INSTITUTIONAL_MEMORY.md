@@ -281,8 +281,9 @@ O merge permanece sempre reservado à decisão humana de António. PR tecnicamen
 PO aprovou no fecho MINOR-N1/N2: Data Valor entre a máxima data de nascimento
 das obrigações elegíveis liquidadas e a emissão do RC. Regra independente do
 tipo, sem DV-10 nem elegibilidade fiscal presumida. Pendente.dataDocumento copia
-emissão; equivalência universal com nascimento não demonstrada. Confirmar fonte
-por tipo é pendência técnica bloqueante da implementação dessa validação.
+emissão; à data N1/N2, equivalência universal com nascimento não demonstrada.
+A pendência semântica então bloqueante foi posteriormente resolvida por E1/E2,
+registadas abaixo; não foi resolvida por inferência sobre o nome do campo.
 Inventário inclui estado comercial/anulação, frontend RC e demo. Só documentação;
 circuito novo inactivo, legado preservado, nova revisão Claude complementar pendente.
 
@@ -295,3 +296,15 @@ Uniformização ADR distingue originação FT pela emissão da confirmação da 
 de nascimento da obrigação. Não cria regra funcional nem elimina a pendência.
 [Plano técnico](../fiscal/op22-b2-2/SLICE1_PLAN.md) separa Fatia 1, evolução
 financeira e corte autorizado. Não altera a autoridade operacional legada.
+
+## Data Valor — decisões E1/E2 e Fatia 1a
+
+15-10-2026: PO confirmou nascimento financeiro FT na emissão; todos os documentos
+que originam obrigação de débito elegível criam Pendente nessa emissão. Receber
+apenas em pendente existente; máximo emissão das origens ≤ Data Valor ≤ emissão
+RC. Vencimento independente. E1/E2 encerram a pendência semântica anterior;
+elegibilidade técnica permanece sem whitelist transitória por tipo. Credores
+não elegíveis; não alterar transversalmente criação legada de pendentes agora.
+Fatia 1a local: campo/default/imutabilidade/validações/UI/PDF; históricos NULL,
+sem backfill. Nova rejeição cronológica antes de numeração; nenhuma alteração
+financeira operacional, F2/T1 ou corte. [Evidência](../fiscal/op22-b2-2/SLICE1A_VALIDATION.md).

@@ -1,5 +1,6 @@
 # Data Valor — reconhecimento pós-merge e plano Fatia 1
 
+**Plano histórico, revisto por decisões E1/E2 e execução Fatia 1a abaixo.**
 15-10-2026. Base fc5717763e95c40a8b1361b60984254d401f2416, PR #26;
 486b999, 31eee0e e cb872f3 integrados por ancestralidade Git. Fetch manual
 confirmado pelo PO, sem fetch/reparação SSH nesta missão. Nenhuma implementação.
@@ -127,3 +128,18 @@ saldo legado como autoridade operacional, sem segundo livro concorrente.
 - Fiscal: emissão tardia, Payments, IVA de caixa, representação e substituição
   permanecem por validar; esta análise não estabelece conclusões jurídicas.
 - Implementação e corte: ambas exigem autorização posterior; nada iniciado aqui.
+
+## Execução Fatia 1a — decisões E1/E2 aprovadas
+
+O PO resolveu nascimento financeiro FT=emissão e regra universal de originação
+de pendentes de débito elegível na emissão. A lacuna semântica descrita neste
+plano deixa de bloquear esta fatia; validar no código todos os documentos origem,
+sem restrição transitória FT e sem confundir vencimento. Regra inferior usa
+máxima emissão das origens, por E2, não por inferência sobre dataDocumento.
+RC inválidos cronologicamente passam a ser rejeitados antes da numeração.
+Emissão cria pendentes genericamente e aceita predicados de credor positivos;
+violação preexistente identificada, sem refactor transversal: RC rejeita credores.
+Plano Claude: APPROVE WITH CONDITIONS, 0 BLOCKER / 1 MAJOR / 3 MINOR,
+comunicado pelo PO na ordem. E1 resolve MAJOR; rejeição explícita e E2 resolvem
+MINOR-001/002; registo de autoria/resultado resolve MINOR-003. Não afirmar leitura
+de parecer integral que não foi anexado. [Execução](SLICE1A_VALIDATION.md).

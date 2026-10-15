@@ -27,6 +27,10 @@ public record DocumentoFinanceiroDto(
         String observacoes,
         boolean anulado,
         boolean impresso,
-        List<LinhaDocumentoFinanceiroDto> linhas
+        List<LinhaDocumentoFinanceiroDto> linhas,
+        LocalDate dataValor
 ) {
+    public DocumentoFinanceiroDto(Long id, Long clienteId, String tipoDocumentoId, String tipoDocumentoCodigoFiscal, String serie, Long numeroDocumento, String atcud, boolean temQrFiscal, String qrPayload, LocalDate dataEmissao, String moedaId, BigDecimal valorPagamentoBruto, BigDecimal valorDescontoFinanceiro, BigDecimal valorPagamentoLiquido, String mPagamentoId, OffsetDateTime dataHoraOperacao, String emissorId, OffsetDateTime momentoEmissao, String observacoes, boolean anulado, boolean impresso, List<LinhaDocumentoFinanceiroDto> linhas) {
+        this(id, clienteId, tipoDocumentoId, tipoDocumentoCodigoFiscal, serie, numeroDocumento, atcud, temQrFiscal, qrPayload, dataEmissao, moedaId, valorPagamentoBruto, valorDescontoFinanceiro, valorPagamentoLiquido, mPagamentoId, dataHoraOperacao, emissorId, momentoEmissao, observacoes, anulado, impresso, linhas, null);
+    }
 }

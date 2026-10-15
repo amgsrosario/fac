@@ -71,14 +71,14 @@ public class FinancialReceiptIssuer {
             normalised.add(new LinhaDocumentoFinanceiroCreateDto(line.pendenteId(),amount,BigDecimal.ZERO,BigDecimal.ZERO));
         }
         var canonical=new DocumentoFinanceiroCreateDto(dto.tipoDocumentoId(),dto.serie(),dto.dataEmissao(),dto.clienteId(),
-                dto.moedaId(),dto.mPagamentoId(),dto.dataHoraOperacao(),actor.getCodigo(),dto.observacoes(),normalised);
+                dto.moedaId(),dto.mPagamentoId(),dto.dataHoraOperacao(),actor.getCodigo(),dto.observacoes(),normalised,ReceiptValueDate.effective(dto));
         String payload;
         try { payload=json.writeValueAsString(canonical); } catch(JsonProcessingException e) { throw new IllegalStateException(e); }
         // Serialize missing keys too. Do this BEFORE series reservation or any documentary write.
         db.queryForList("select pg_advisory_xact_lock(hashtextextended(?,0))","RC_REQUEST:1:"+requestKey);
         var replay=db.queryForList("select document_id,request_payload from financial_receipt where empresa_id=1 and request_key=?",requestKey);
         if(!replay.isEmpty()) {
-            require(payload.equals(replay.getFirst().get("request_payload")),"Receipt request identity reused with different content/context");
+            require(samePayload(json,payload,(String)replay.getFirst().get("request_payload")),"Receipt request identity reused with different content/context");
             return response(((Number)replay.getFirst().get("document_id")).longValue());
         }
         var client=clients.findById(dto.clienteId()).orElseThrow(()->new BadRequestException("Unknown customer"));
@@ -92,6 +92,7 @@ public class FinancialReceiptIssuer {
         var ordered=normalised.stream().sorted(Comparator.comparing(LinhaDocumentoFinanceiroCreateDto::pendenteId)).toList();
         for(var line:ordered) {
             var pending=pendings.findByIdForUpdate(line.pendenteId()).orElseThrow(()->new BadRequestException("Unknown debt identity"));
+            ReceiptValueDate.validate(dto,pending);
             var doc=pending.getDocumentoComercial();
             require(doc.getCliente().getId().equals(client.getId()) && "EUR".equals(doc.getMoeda().getId()),"Debt outside receipt scope");
             require(doc.getEstado()==EstadoDocumentoComercial.EMITIDO && !doc.isAnulado(),"Invoice is not eligible");
@@ -119,7 +120,7 @@ public class FinancialReceiptIssuer {
         require(last==null || !dto.dataEmissao().isBefore(last),"Receipt predates last issued document of series");
         var document=new DocumentoFinanceiro(); document.setCliente(client); document.setTipoDocumento(type); document.setSerie(dto.serie());
         document.setNumeroDocumento(number.numeroSequencial()); document.atribuirAtcud(number.codigoValidacaoAt(),atcud.gerar(number.codigoValidacaoAt(),number.numeroSequencial()));
-        document.setDataEmissao(dto.dataEmissao()); document.setMoeda(currency); document.setMPagamento(payment);
+        document.setDataEmissao(dto.dataEmissao()); document.setDataValor(ReceiptValueDate.effective(dto)); document.setMoeda(currency); document.setMPagamento(payment);
         document.setDataHoraOperacao(dto.dataHoraOperacao()!=null?dto.dataHoraOperacao():OffsetDateTime.now());
         document.setMomentoEmissao(OffsetDateTime.now()); document.setEmissor(actor); document.setObservacoes(dto.observacoes());
         var total=checked.stream().map(Checked::amount).reduce(BigDecimal.ZERO,BigDecimal::add);
@@ -155,6 +156,17 @@ public class FinancialReceiptIssuer {
         audit.registarComo(TipoAuditoriaEvento.RECEBIMENTO_REGISTADO,"DOCUMENTO_FINANCEIRO",document.getId(),actor,ResultadoAuditoria.SUCESSO,
                 type.getId()+" "+document.getSerie()+"/"+document.getNumeroDocumento(),"Recebimento registado","{\"versao\":1,\"valor\":"+total.toPlainString()+"}");
         return mapper.toDTO(document,savedLines);
+    }
+    static boolean samePayload(ObjectMapper json, String current, String stored) {
+        try {
+            var expected=json.readTree(current);
+            var previous=json.readTree(stored);
+            if (!previous.hasNonNull("dataValor"))
+                ((com.fasterxml.jackson.databind.node.ObjectNode)previous).set("dataValor",previous.get("dataEmissao"));
+            return expected.equals(previous);
+        } catch (JsonProcessingException invalid) {
+            throw new IllegalStateException("Invalid persisted receipt request",invalid);
+        }
     }
     private DocumentoFinanceiroDto response(long id) {
         return mapper.toDTO(documents.findById(id).orElseThrow(),lines.findByDocumentoFinanceiroIdOrderByNumeroLinha(id));

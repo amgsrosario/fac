@@ -47,8 +47,10 @@ class DocumentoFinanceiroPdfServiceTests {
         pdfService = new DocumentoFinanceiroPdfService(documentoService, new QrCodeImageService(), fiscalQrService);
     }
 
-    @Test
-    void geraPdfDoReciboComAtcudEQrCodeEMarcaDocumentoComoImpresso() throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullSource
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"2026-06-08"})
+    void geraPdfDoReciboComAtcudEQrCodeEMarcaDocumentoComoImpresso(String valueDate) throws Exception {
         Long documentoId = 29L;
         EmpresaDto empresa = new EmpresaDto(1L, "FAC Lda", "500000000", "Rua da Empresa, 1", null,
                 "3750-001", "Agueda", "PT", null, null, null, null, null,
@@ -65,7 +67,7 @@ class DocumentoFinanceiroPdfServiceTests {
                 "ABCD1234-3", true, qrPayload,
                 LocalDate.of(2026, 6, 9), "EUR", new BigDecimal("50.00"), BigDecimal.ZERO,
                 new BigDecimal("50.00"), "TFB", OffsetDateTime.parse("2026-06-09T10:00:00Z"), "DEMO",
-                OffsetDateTime.parse("2026-06-09T10:00:00Z"), "Recebimento parcial", false, false, List.of(linha));
+                OffsetDateTime.parse("2026-06-09T10:00:00Z"), "Recebimento parcial", false, false, List.of(linha), valueDate == null ? null : LocalDate.parse(valueDate));
         when(documentoService.getImpressao(documentoId))
                 .thenReturn(new DocumentoFinanceiroImpressaoDto(empresa, cliente, documento));
 
@@ -77,7 +79,8 @@ class DocumentoFinanceiroPdfServiceTests {
         try (PDDocument pdfDocument = Loader.loadPDF(pdf.content())) {
             String text = new PDFTextStripper().getText(pdfDocument);
             assertThat(text).contains("Recibo", "RC 2026/3", "ATCUD");
-            assertThat(text).contains("ABCD1234-3");
+            assertThat(text).contains("ABCD1234-3", "Data Valor");
+            assertThat(text).contains(valueDate == null ? "Não registada" : "08/06/2026");
             assertThat(text).doesNotContain("Versão de demonstração");
         }
         verify(documentoService).marcarComoImpresso(documentoId);

@@ -37,6 +37,7 @@ type DocumentoFinanceiro = {
   temQrFiscal?: boolean;
   qrPayload?: string | null;
   dataEmissao: string;
+  dataValor?: string | null;
   valorPagamentoBruto?: number;
   valorDescontoFinanceiro?: number;
   valorPagamentoLiquido: number;
@@ -75,6 +76,8 @@ type LinhaFinanceira = {
 };
 type DiagnosticoFinanceiro = { referencia: string; podeAnular: boolean; bloqueios: string[] };
 type ReceiptForm = {
+  differentValueDate: boolean;
+  dataValor: string;
   clienteId: string;
   moedaId: string;
   tipoDocumentoId: string;
@@ -634,6 +637,7 @@ export default function PendentesView() {
         tipoDocumentoId: form.tipoDocumentoId,
         serie: form.serie,
         dataEmissao: form.dataEmissao,
+        dataValor: form.differentValueDate ? form.dataValor : form.dataEmissao,
         clienteId: Number(form.clienteId),
         moedaId: form.moedaId,
         mPagamentoId: form.mPagamentoId,
@@ -820,7 +824,8 @@ export default function PendentesView() {
             {selectedCliente?.nif && <div><dt>NIF</dt><dd>{selectedCliente.nif}</dd></div>}
             <div><dt>Tipo</dt><dd>{selectedFinanceiro.tipoDocumentoId}</dd></div>
             <div><dt>Série</dt><dd>{selectedFinanceiro.serie}</dd></div>
-            <div><dt>Data</dt><dd>{datePt(selectedFinanceiro.dataEmissao)}</dd></div>
+            <div><dt>Data de emissão</dt><dd>{datePt(selectedFinanceiro.dataEmissao)}</dd></div>
+            <div><dt>Data Valor</dt><dd>{selectedFinanceiro.dataValor ? datePt(selectedFinanceiro.dataValor) : "Não registada"}</dd></div>
             <div><dt>Moeda</dt><dd>{selectedFinanceiro.moedaId}</dd></div>
             <div><dt>Modo de pagamento</dt><dd>{selectedModo?.nome ?? selectedFinanceiro.mPagamentoId}</dd></div>
             <div><dt>Emissor</dt><dd>{selectedFinanceiro.emissorId}</dd></div>
@@ -879,6 +884,9 @@ export default function PendentesView() {
         <Field label="Tipo de documento"><select onChange={(event) => { const tipoDocumentoId = event.target.value; setForm((current) => ({ ...current, tipoDocumentoId, serie: series.find((item) => item.tipoDocumentoId === tipoDocumentoId)?.serie ?? "" })); }} value={form.tipoDocumentoId}><option value="">Selecionar</option>{tipos.map((tipo) => <option key={tipo.id} value={tipo.id}>{tipo.id} - {tipo.descricao}</option>)}</select></Field>
         <Field label="Série"><select onChange={(event) => setForm((current) => ({ ...current, serie: event.target.value }))} value={form.serie}><option value="">Selecionar</option>{availableSeries.map((serie) => <option key={`${serie.tipoDocumentoId}-${serie.serie}`} value={serie.serie}>{serie.serie} - {serie.nome}</option>)}</select></Field>
         <Field label="Data de emissão"><input onChange={(event) => setForm((current) => ({ ...current, dataEmissao: event.target.value }))} type="date" value={form.dataEmissao}/></Field>
+        <label><input type="checkbox" checked={form.differentValueDate} onChange={(event) => setForm((current) => ({ ...current, differentValueDate: event.target.checked, dataValor: current.dataEmissao }))}/> Data valor diferente da data de emissão</label>
+        {form.differentValueDate && <Field label="Data Valor"><input type="date" max={form.dataEmissao} value={form.dataValor} onChange={(event) => setForm((current) => ({ ...current, dataValor: event.target.value }))}/></Field>}
+        {receiptValueDateError(form, receiptPendentes, allocations) && <p role="alert">{receiptValueDateError(form, receiptPendentes, allocations)}</p>}
         <Field label="Emissor"><input disabled value={getAuthSession()?.nome ?? "Utilizador autenticado"}/></Field>
       </div>
 
@@ -901,13 +909,19 @@ export default function PendentesView() {
   </>;
 }
 
-function emptyReceiptForm(): ReceiptForm { return { clienteId: "", moedaId: "", tipoDocumentoId: "", serie: "", dataEmissao: todayIso(), valorRecebido: "", mPagamentoId: "", emissorId: getAuthSession()?.codigo ?? "", observacoes: "" }; }
-function receiptFormKey(form: ReceiptForm) { return JSON.stringify({ clienteId: form.clienteId, moedaId: form.moedaId, tipoDocumentoId: form.tipoDocumentoId, serie: form.serie, dataEmissao: form.dataEmissao, valorRecebido: form.valorRecebido, mPagamentoId: form.mPagamentoId, observacoes: form.observacoes.trim() }); }
+function emptyReceiptForm(): ReceiptForm { return { clienteId: "", moedaId: "", tipoDocumentoId: "", serie: "", dataEmissao: todayIso(), differentValueDate: false, dataValor: todayIso(), valorRecebido: "", mPagamentoId: "", emissorId: getAuthSession()?.codigo ?? "", observacoes: "" }; }
+function receiptFormKey(form: ReceiptForm) { return JSON.stringify({ clienteId: form.clienteId, moedaId: form.moedaId, tipoDocumentoId: form.tipoDocumentoId, serie: form.serie, dataEmissao: form.dataEmissao, dataValor: form.differentValueDate ? form.dataValor : form.dataEmissao, valorRecebido: form.valorRecebido, mPagamentoId: form.mPagamentoId, observacoes: form.observacoes.trim() }); }
 function openPendentesForClient(pendentes: Pendente[], clienteId: number) { return clienteId ? pendentes.filter((item) => item.clienteId === clienteId && Number(item.valorPendente) > 0) : []; }
 function summarizePendentes(items: Pendente[]) { const byCurrency = new Map<string, { count: number; original: number; pending: number }>(); items.forEach((item) => { const current = byCurrency.get(item.moedaId) ?? { count: 0, original: 0, pending: 0 }; current.count += 1; current.original += Number(item.valorDocumento); current.pending += Number(item.valorPendente); byCurrency.set(item.moedaId, current); }); return Array.from(byCurrency.entries()); }
 function PendingSummary({ label, values }: { label: string; values: Array<[string, { count: number; original: number; pending: number }]> }) { return <section><h3>{label}</h3>{values.map(([currency, totals]) => <div className="tuuli-receipts-summary-row" key={currency}><span>{totals.count} {totals.count === 1 ? "registo" : "registos"} · {currency}</span><dl><div><dt>Original</dt><dd>{formatMoney(totals.original)} {currency}</dd></div><div><dt>Pendente</dt><dd>{formatMoney(totals.pending)} {currency}</dd></div></dl></div>)}</section>; }
 function validPaymentMode(modos: MPagamento[], mPagamentoId?: string | null) { return mPagamentoId && modos.some((modo) => modo.id === mPagamentoId) ? mPagamentoId : ""; }
-function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations) { if (!form.clienteId) return "Seleciona o cliente."; if (!form.moedaId) return "Seleciona a moeda."; if (!form.tipoDocumentoId) return "Seleciona o tipo de documento financeiro."; if (!form.serie) return "Seleciona a série."; if (!form.dataEmissao) return "A data de emissão é obrigatória."; if (!form.mPagamentoId) return "Confirma o modo de pagamento."; const target = round6(Number(form.valorRecebido)); if (!Number.isFinite(target) || target <= 0) return "O valor recebido deve ser positivo."; const total = round6(sum(pendentes.map((item) => Number(allocations[item.id] || 0)))); if (total <= 0) return "Distribui o recebimento por pelo menos um pendente."; if (round6(target - total) !== 0) return "O valor recebido e a distribuição pelos pendentes não coincidem."; return null; }
+function receiptValueDateError(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations): string | null {
+  const valueDate = form.differentValueDate ? form.dataValor : form.dataEmissao;
+  if (!valueDate || valueDate > form.dataEmissao) return "Data Valor não pode ser posterior à emissão do recibo.";
+  if (pendentes.some((p) => Number(allocations[p.id] || 0) > 0 && valueDate < p.dataDocumento)) return "Data Valor não pode ser anterior à emissão de qualquer documento liquidado.";
+  return null;
+}
+function validateReceipt(form: ReceiptForm, pendentes: Pendente[], allocations: Allocations) { if (!form.clienteId) return "Seleciona o cliente."; if (!form.moedaId) return "Seleciona a moeda."; if (!form.tipoDocumentoId) return "Seleciona o tipo de documento financeiro."; if (!form.serie) return "Seleciona a série."; if (!form.dataEmissao) return "A data de emissão é obrigatória."; const dateError = receiptValueDateError(form, pendentes, allocations); if (dateError) return dateError; if (!form.mPagamentoId) return "Confirma o modo de pagamento."; const target = round6(Number(form.valorRecebido)); if (!Number.isFinite(target) || target <= 0) return "O valor recebido deve ser positivo."; const total = round6(sum(pendentes.map((item) => Number(allocations[item.id] || 0)))); if (total <= 0) return "Distribui o recebimento por pelo menos um pendente."; if (round6(target - total) !== 0) return "O valor recebido e a distribuição pelos pendentes não coincidem."; return null; }
 function estado(item: Pendente) { if (Number(item.valorPendente) <= 0) return "LIQUIDADO"; if (item.dataVencimento < todayIso()) return "VENCIDO"; if (Number(item.valorPendente) < Number(item.valorDocumento)) return "PARCIAL"; return "ABERTO"; }
 function referencia(item: Pendente) { return `${item.tipoDocumentoId} ${item.serieDocumento}/${item.numeroDocumento}`; }
 function pendenteColumnValue(item: Pendente, key: string) { switch (key) { case "documento": return referencia(item); case "cliente": return item.clienteId; case "emissao": return datePt(item.dataDocumento); case "vencimento": return datePt(item.dataVencimento); case "moeda": return item.moedaId; case "original": return `${formatMoney(item.valorDocumento)} ${item.moedaId}`; case "pendente": return `${formatMoney(item.valorPendente)} ${item.moedaId}`; case "estado": return <span className={`fac-status tuuli-status-${estado(item).toLowerCase()}`}>{estado(item)}</span>; default: return "-"; } }

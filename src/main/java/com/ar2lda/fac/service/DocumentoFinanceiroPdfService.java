@@ -118,7 +118,7 @@ public class DocumentoFinanceiroPdfService {
 
                 <div class="box"><div class="section-title">Cliente</div><table class="info"><tr>
                   <td><strong>%s</strong><br />NIF %s<br />%s<br />%s</td>
-                  <td><strong>Recebimento</strong><br />Moeda: %s<br />Modo de pagamento: %s<br />Data/hora da operacao: %s</td>
+                  <td><strong>Recebimento</strong><br />Data Valor: %s<br />Moeda: %s<br />Modo de pagamento: %s<br />Data/hora da operacao: %s</td>
                 </tr></table></div>
 
                 <table class="lines"><thead><tr><th>#</th><th>Documento liquidado</th><th>Emissao</th><th>Vencimento</th><th class="number">Documento</th><th class="number">Pendente</th><th class="number">Liquidado</th><th class="number">Desconto</th><th class="number">Recebido</th><th class="number">Novo pend.</th></tr></thead><tbody>%s</tbody></table>
@@ -133,7 +133,7 @@ public class DocumentoFinanceiroPdfService {
                 companyHeader(empresa),
                 "Recibo", esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
                 esc(cliente.nome()), esc(cliente.nif()), address(cliente.morada(), cliente.morada1()), esc(joinPostal(cliente.codPostalId(), cliente.localidade())),
-                esc(documento.moedaId()), value(documento.mPagamentoId()), documento.dataHoraOperacao() == null ? "-" : esc(documento.dataHoraOperacao().toString()),
+                documento.dataValor() == null ? "Não registada" : date(documento.dataValor()), esc(documento.moedaId()), value(documento.mPagamentoId()), documento.dataHoraOperacao() == null ? "-" : esc(documento.dataHoraOperacao().toString()),
                 linhas,
                 money(documento.valorPagamentoBruto()), esc(documento.moedaId()), money(documento.valorDescontoFinanceiro()), esc(documento.moedaId()), money(documento.valorPagamentoLiquido()), esc(documento.moedaId()),
                 observacoes,

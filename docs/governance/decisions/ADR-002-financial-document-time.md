@@ -319,7 +319,7 @@ publicação. A integração documental ocorreu pelo PR #26, merge fc57177,
 confirmada em 15-10-2026. Este registo não inventa um novo parecer de revisão
 nem validação jurídica; a implementação continua não autorizada.
 
-### Decisão final PO — nascimento da obrigação (MINOR-N1)
+### Decisão PO — nascimento da obrigação (MINOR-N1, estado anterior a E1/E2)
 
 Aprovado pelo Product Owner no fecho N1/N2: a Data Valor de uma liquidação
 não pode ser anterior à data de nascimento da obrigação liquidada, nem
@@ -337,3 +337,27 @@ sem filtro de natureza devedora; não há prova universal de equivalência.
 Pendência técnica BLOQUEANTE da implementação da validação universal: confirmar
 por tipo elegível a data de nascimento e a fonte persistida inequívoca; não usar
 silenciosamente dataDocumento como substituto. Não bloqueia este fecho documental.
+
+### E1/E2 — decisões finais PO, Fatia 1a (15-10-2026)
+
+E1: para FT, nascimento financeiro da dívida coincide com emissão.
+E2: documentos comerciais que originem obrigação de débito elegível criam Pendente
+na emissão; recebimentos apenas sobre pendentes existentes. Vencimento é distinto.
+Fonte aprovada para limite: emissão do documento originador, máximo entre todos
+os pendentes liquidados ≤ Data Valor RC ≤ emissão RC. Não restringir a FT.
+Credores não se tornam dívidas por aceitação técnica do legado.
+Estas decisões substituem a pendência semântica universal descrita nos blocos
+históricos N1/fecho acima; não se reabre E1/E2. Verificação técnica de elegibilidade
+permanece obrigatória. Emissão actual chama criarDeDocumento; predicado legado
+aceita tipos credores positivos: detectado e documentado, sem reestruturação
+transversal da criação de pendentes nesta fatia. Emissão RC rejeita esses casos.
+
+Fatia 1a implementa campo, default, validação/persistência/interface/PDF e
+imutabilidade; RC cronologicamente inválidos antes aceites são agora rejeitados,
+mesmo com Data Valor omitida, sem reservar número definitivo. V23 aditiva.
+Não activa F2/T1, balanceAt ou novo emissor, nem muda saldos/extractos operacionais.
+Claude reviu o plano e861c223: APPROVE WITH CONDITIONS, BLOCKER 0 / MAJOR 1 /
+MINOR 3, resultado comunicado pelo PO na ordem da Fatia 1a. Parecer integral
+não fornecido; não declarar leitura integral. MAJOR-001 resolvido por E1;
+MINOR-001 rejeição explícita, MINOR-002 E2 universal com elegibilidade e
+MINOR-003 autoria/evidência deste registo. Implementação sujeita a revisão Claude.
