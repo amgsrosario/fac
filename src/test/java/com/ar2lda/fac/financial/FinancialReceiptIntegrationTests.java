@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.*;
 @SpringBootTest
 class FinancialReceiptIntegrationTests {
     @Autowired FinancialReceiptIssuer issuer;
+    @Autowired FinancialReceiptReversal reverser;
     @Autowired FinancialReceiptProjections projections;
     @Autowired FinancialQueries queries;
     @Autowired DocumentoFinanceiroService legacy;
@@ -259,7 +260,7 @@ class FinancialReceiptIntegrationTests {
             var receipt=issuer.issue(key(),request(d,"10"));
             long op=db.queryForObject("select operation_id from financial_receipt where document_id=?",Long.class,receipt.id());
             verifyConstraintTiming(mode);append.accept(op);return null;
-        })).isInstanceOf(RuntimeException.class).hasRootCauseMessage("ERROR: Cannot append to a receipt-bound financial operation\n  Where: PL/pgSQL function financial_receipt_entry_guard() line 4 at RAISE");
+        })).isInstanceOf(RuntimeException.class).rootCause().hasMessageContaining("Cannot append to a receipt-bound financial operation").hasMessageContaining("financial_receipt_entry_guard()");
         for(int i=0;i<tables.length;i++) assertThat(count(tables[i])).as(tables[i]).isEqualTo(before[i]);
         assertThat(numerator()).isEqualTo(number);
         assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo(residual);
@@ -661,7 +662,7 @@ class FinancialReceiptIntegrationTests {
         var d=debt("100");var k=key();var req=valueRequest(LocalDate.of(2026,1,10),List.of(line(d,"20")));
         var r=issuer.issue(k,req);assertThat(issuer.issue(k,req).id()).isEqualTo(r.id());
         long op=db.queryForObject("select operation_id from financial_receipt where document_id=?",Long.class,r.id());
-        assertThat(queries.operation(scope(),op).financialEffectDate()).contains(r.dataEmissao());
+        assertThat(queries.operation(scope(),op).financialEffectDate()).contains(r.dataValor());
         assertThatThrownBy(()->issuer.issue(k,valueRequest(LocalDate.of(2026,1,11),List.of(line(d,"20"))))).isInstanceOf(RuntimeException.class);
         assertThat(projections.inspectCutover().operationalActivationPermitted()).isFalse();
     }
@@ -753,6 +754,179 @@ class FinancialReceiptIntegrationTests {
         db.update("update tipodocumento set codigo_fiscal='RC' where id='N1U'");
         db.update("update tipodocumento set codigo_fiscal='XX' where id='N1U'");
         assertThat(db.queryForObject("select codigo_fiscal from tipodocumento where id='N1U'",String.class)).isEqualTo("XX");
+    }
+
+    long receiptOperation(long document) {
+        return db.queryForObject("select operation_id from financial_receipt where document_id=?",Long.class,document);
+    }
+    FinancialReceiptReversal.Result cancelUnreceived(String k,long document) {
+        return reverser.cancelUnreceived(scope(),k,document,"Incorrect receipt","Verified: payment did not occur","B1_EMISSOR");
+    }
+    @Test void f2EffectUsesValueDateAndTechnicalOperationRemainsSeparate() {
+        var d=debt("100");var value=LocalDate.of(2026,1,10);
+        var r=issuer.issue(key(),valueRequest(value,List.of(line(d,"30"))));
+        var op=queries.operation(scope(),receiptOperation(r.id()));
+        assertThat(op.financialEffectDate()).contains(value);
+        assertThat(op.operationAt()).contains(db.queryForObject("select momento_emissao from documento_financeiro where id=?",java.sql.Timestamp.class,r.id()).toInstant());
+        assertThat(op.financialDocument().orElseThrow().issueDate()).isEqualTo(LocalDate.of(2026,2,1));
+        assertThat(op.financialDocument().orElseThrow().valueDate()).isEqualTo(value);
+        assertThat(op.recordedAt().atOffset(java.time.ZoneOffset.UTC).toLocalDate()).isAfter(value);
+        assertThat(queries.balanceAt(scope(),LocalDate.of(2025,12,31)).openDebt()).isZero();
+        assertThat(queries.balanceAt(scope(),value.minusDays(1)).openDebt()).isEqualByComparingTo("100");
+        assertThat(queries.balanceAt(scope(),value).openDebt()).isEqualByComparingTo("70");
+        assertThat(queries.balanceAt(scope(),r.dataEmissao()).openDebt()).isEqualByComparingTo("70");
+        assertThat(db.queryForObject("select valor_pendente from pendente where id=?",BigDecimal.class,d.pending())).isEqualByComparingTo("100");
+        assertThat(projections.inspectCutover().operationalActivationPermitted()).isFalse();
+    }
+    @Test void t1ReversalRestoresOnlyOriginalAllocationsAndHasOriginalValueDate() {
+        var a=debt("100");var b=debt("50");var date=LocalDate.of(2026,1,10);
+        var r=issuer.issue(key(),valueRequest(date,List.of(line(a,"30"),line(b,"20"))));
+        issuer.issue(key(),valueRequest(date.plusDays(1),List.of(line(a,"10"))));
+        var result=cancelUnreceived(key(),r.id());
+        var reverse=queries.operation(scope(),result.reversalOperationId());
+        assertThat(reverse.financialEffectDate()).contains(date);
+        assertThat(reverse.operationAt()).contains(db.queryForObject("select occurred_at from financial_receipt_reversal where document_id=?",java.sql.Timestamp.class,r.id()).toInstant());
+        assertThat(reverse.financialDocument().orElseThrow().documentId()).isEqualTo(r.id());
+        assertThat(reverse.recordedAt().atOffset(java.time.ZoneOffset.UTC).toLocalDate()).isAfter(date);
+        assertThat(reverse.reverseOfOperationId()).isEqualTo(receiptOperation(r.id()));
+        assertThat(reverse.components()).singleElement().satisfies(c->{
+            assertThat(c.kind()).isEqualTo(FinancialQueries.ComponentKind.CASH_OUT);
+            assertThat(c.reversal()).isTrue();assertThat(c.reverseOfComponentId()).isNotNull();
+            assertThat(c.amount()).isEqualByComparingTo("50");
+        });
+        assertThat(queries.position(scope(),a.position()).residual()).isEqualByComparingTo("90");
+        assertThat(queries.position(scope(),b.position()).residual()).isEqualByComparingTo("50");
+        assertThat(queries.balanceAt(scope(),date).openDebt()).isEqualByComparingTo("150");
+        assertThat(queries.balanceAt(scope(),date.plusDays(1)).openDebt()).isEqualByComparingTo("140");
+        assertThat(db.queryForObject("select anulado from documento_financeiro where id=?",Boolean.class,r.id())).isTrue();
+        assertThat(db.queryForObject("select count(*) from financial_allocation where operation_id=? and effect='RESTORE' and reverse_of is not null",Long.class,result.reversalOperationId())).isEqualTo(2);
+        assertThatThrownBy(()->legacy.anular(r.id())).isInstanceOf(RuntimeException.class);
+    }
+    @Test void cancellationReplayAndDifferentRequestCannotDuplicateReversal() throws Exception {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));String k=key();
+        var outcomes=concurrent(()->cancelUnreceived(k,r.id()),()->cancelUnreceived(k,r.id()));
+        assertThat(outcomes).allMatch(FinancialReceiptReversal.Result.class::isInstance);
+        assertThat(outcomes.get(0)).isEqualTo(outcomes.get(1));
+        assertThat(cancelUnreceived(k,r.id())).isEqualTo(outcomes.get(0));
+        assertThatThrownBy(()->cancelUnreceived(key(),r.id())).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(()->reverser.cancelUnreceived(scope(),k,r.id(),"Changed","Different evidence","B1_EMISSOR")).isInstanceOf(RuntimeException.class);
+        assertThat(db.queryForObject("select count(*) from financial_operation where reverse_of=?",Long.class,receiptOperation(r.id()))).isEqualTo(1);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("100");
+    }
+    @Test void competingCancellationKeysAllowExactlyOneAct() throws Exception {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));
+        var outcomes=concurrent(()->cancelUnreceived(key(),r.id()),()->cancelUnreceived(key(),r.id()));
+        assertThat(outcomes.stream().filter(FinancialReceiptReversal.Result.class::isInstance).count()).isEqualTo(1);
+        assertThat(db.queryForObject("select count(*) from financial_receipt_reversal where document_id=?",Long.class,r.id())).isEqualTo(1);
+    }
+    @Test void dv09AtomicReplacementCorrectsAmountWithoutDoubleCashOrSettlement() {
+        var d=debt("1000");var date=LocalDate.of(2026,1,10);
+        var r=issuer.issue(key(),valueRequest(date,List.of(line(d,"30"))));String k=key();
+        var replacement=valueRequest(date,List.of(line(d,"300")));
+        var result=reverser.replace(scope(),k,r.id(),"Correct amount 30 to 300","Actual payment 300 verified","B1_EMISSOR",replacement);
+        assertThat(reverser.replace(scope(),k,r.id(),"Correct amount 30 to 300","Actual payment 300 verified","B1_EMISSOR",replacement)).isEqualTo(result);
+        assertThat(numerator()).isEqualTo(2);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("700");
+        assertThat(queries.balanceAt(scope(),date).openDebt()).isEqualByComparingTo("700");
+        assertThat(db.queryForObject("select sum(case c.kind when 'CASH_IN' then c.amount else -c.amount end) from financial_component c join financial_operation op on op.id=c.operation_id where op.cliente_id=?",BigDecimal.class,client)).isEqualByComparingTo("300");
+        assertThat(db.queryForObject("select data_valor from documento_financeiro where id=?",LocalDate.class,result.replacementDocumentId())).isEqualTo(date);
+    }
+    @Test void failedReplacementRollsBackActReversalAndNumbering() {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));
+        assertThatThrownBy(()->reverser.replace(scope(),key(),r.id(),"Correction","Verified amount","B1_EMISSOR",request(d,"101"))).isInstanceOf(RuntimeException.class);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("70");
+        assertThat(numerator()).isEqualTo(1);
+        assertThat(db.queryForObject("select anulado from documento_financeiro where id=?",Boolean.class,r.id())).isFalse();
+        assertThat(db.queryForObject("select count(*) from financial_operation where reverse_of=?",Long.class,receiptOperation(r.id()))).isZero();
+        assertThat(db.queryForObject("select count(*) from financial_receipt_reversal where document_id=?",Long.class,r.id())).isZero();
+    }
+    @Test void replacementLaterValueDateChangesOnlyRectifiedHistory() {
+        var d=debt("100");var date=LocalDate.of(2026,1,10);
+        var r=issuer.issue(key(),valueRequest(date,List.of(line(d,"30"))));
+        reverser.replace(scope(),key(),r.id(),"Date correction","Payment verified on 12 January","B1_EMISSOR",valueRequest(date.plusDays(2),List.of(line(d,"30"))));
+        assertThat(queries.balanceAt(scope(),date).openDebt()).isEqualByComparingTo("100");
+        assertThat(queries.balanceAt(scope(),date.plusDays(2)).openDebt()).isEqualByComparingTo("70");
+    }
+    @Test void directSqlCannotCommitOrphanReversalInEitherConstraintMode() {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));
+        for(boolean immediate:List.of(false,true)) {
+            var transaction=new org.springframework.transaction.support.TransactionTemplate(tx);
+            assertThatThrownBy(()->transaction.execute(status->{
+                long op=db.queryForObject("insert into financial_operation(empresa_id,cliente_id,moeda_id,kind,request_key,request_payload,actor,reason,reverse_of) values(1,?,'EUR','REVERSE',?,'SQL','B1_EMISSOR','SQL',?) returning id",Long.class,client,key(),receiptOperation(r.id()));
+                db.update("insert into financial_allocation(operation_id,position_id,empresa_id,cliente_id,moeda_id,amount,effect,reverse_of) select ?,position_id,empresa_id,cliente_id,moeda_id,amount,'RESTORE',id from financial_allocation where operation_id=?",op,receiptOperation(r.id()));
+                db.update("update financial_position set available=available+30 where id=?",d.position());
+                db.update("insert into financial_component(operation_id,kind,amount,reversed,reverse_of) select ?,'CASH_OUT',amount,true,id from financial_component where operation_id=?",op,receiptOperation(r.id()));
+                if(immediate) { db.execute("SET CONSTRAINTS ALL IMMEDIATE");db.execute("SET CONSTRAINTS ALL DEFERRED"); }
+                return null;
+            })).isInstanceOf(RuntimeException.class);
+        }
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("70");
+        assertThat(db.queryForObject("select count(*) from financial_operation where reverse_of=?",Long.class,receiptOperation(r.id()))).isZero();
+    }
+    @Test void reversalActAndReferencesCannotBeForgedOrEditedBySql() {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));
+        assertThatThrownBy(()->db.update("insert into financial_receipt_reversal(document_id,operation_id,money_treatment,request_payload,evidence,actor) values(?,?,'NOT_RECEIVED','fake','fake','B1_EMISSOR')",r.id(),receiptOperation(r.id()))).isInstanceOf(RuntimeException.class);
+        var result=cancelUnreceived(key(),r.id());
+        assertThatThrownBy(()->db.update("update financial_receipt_reversal set evidence='changed' where document_id=?",r.id())).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(()->db.update("delete from financial_receipt_reversal where document_id=?",r.id())).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(()->db.update("update documento_financeiro set anulado=false where id=?",r.id())).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(()->db.update("update documento_financeiro set data_valor='2026-01-15' where id=?",r.id())).isInstanceOf(RuntimeException.class);
+        assertThat(queries.operation(scope(),result.reversalOperationId()).financialEffectDate()).contains(r.dataValor());
+    }
+    @Test void cancellationRejectsMissingMoneyEvidenceAndWrongScope() {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));
+        assertThatThrownBy(()->reverser.cancelUnreceived(scope(),key(),r.id(),"Reason"," ","B1_EMISSOR")).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(()->reverser.cancelUnreceived(new FinancialCore.Scope(1,client+10000,"EUR"),key(),r.id(),"Reason","Evidence","B1_EMISSOR")).isInstanceOf(RuntimeException.class);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("70");
+    }
+
+    @Test void reversalCannotBeExtendedAfterEarlyConstraintChecksAndRollbackIsIntegral() {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));
+        assertThatThrownBy(()->new org.springframework.transaction.support.TransactionTemplate(tx).execute(status->{
+            var result=cancelUnreceived(key(),r.id());
+            db.execute("SET CONSTRAINTS ALL IMMEDIATE");db.execute("SET CONSTRAINTS ALL DEFERRED");
+            db.update("insert into financial_component(operation_id,kind,amount) values(?,'DISCOUNT',1)",result.reversalOperationId());
+            return null;
+        })).rootCause().hasMessageContaining("Cannot append to a receipt-bound financial operation");
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("70");
+        assertThat(db.queryForObject("select anulado from documento_financeiro where id=?",Boolean.class,r.id())).isFalse();
+    }
+    @Test void concurrentCancellationAndIssuePreserveIndependentConsumption() throws Exception {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));
+        var outcomes=concurrent(()->cancelUnreceived(key(),r.id()),()->issuer.issue(key(),request(d,"20")));
+        assertThat(outcomes).noneMatch(Exception.class::isInstance);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("80");
+        assertThat(queries.balanceAt(scope(),r.dataValor()).openDebt()).isEqualByComparingTo("80");
+    }
+    @Test void concurrentReplacementsWithOppositeLineOrderUseSameLockOrder() throws Exception {
+        var a=debt("100");var b=debt("100");
+        var first=issuer.issue(key(),request(LocalDate.of(2026,2,1),List.of(line(a,"10"),line(b,"10"))));
+        var second=issuer.issue(key(),request(LocalDate.of(2026,2,1),List.of(line(b,"10"),line(a,"10"))));
+        var outcomes=concurrent(
+            ()->reverser.replace(scope(),key(),first.id(),"Correction","Verified 40","B1_EMISSOR",request(LocalDate.of(2026,2,1),List.of(line(a,"20"),line(b,"20")))),
+            ()->reverser.replace(scope(),key(),second.id(),"Correction","Verified 40","B1_EMISSOR",request(LocalDate.of(2026,2,1),List.of(line(b,"20"),line(a,"20")))));
+        assertThat(outcomes).allMatch(FinancialReceiptReversal.Result.class::isInstance);
+        assertThat(queries.balance(scope()).openDebt()).isEqualByComparingTo("120");
+        assertThat(numerator()).isEqualTo(4);
+    }
+
+    @Test void replacementOmittedValueDatePreservesOriginalAndReplaysExplicitEquivalent() {
+        var d=debt("100");var date=LocalDate.of(2026,1,10);var k=key();
+        var r=issuer.issue(key(),valueRequest(date,List.of(line(d,"30"))));
+        var result=reverser.replace(scope(),k,r.id(),"Correction","Payment verified","B1_EMISSOR",request(d,"30"));
+        assertThat(db.queryForObject("select data_valor from documento_financeiro where id=?",LocalDate.class,result.replacementDocumentId())).isEqualTo(date);
+        assertThat(reverser.replace(scope(),k,r.id(),"Correction","Payment verified","B1_EMISSOR",valueRequest(date,List.of(line(d,"30"))))).isEqualTo(result);
+        assertThat(numerator()).isEqualTo(2);
+    }
+    @Test void replacementCannotBeCancelledBeforeItsAtomicTransactionCommits() {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));
+        assertThatThrownBy(()->new org.springframework.transaction.support.TransactionTemplate(tx).execute(status->{
+            var result=reverser.replace(scope(),key(),r.id(),"Correction","Payment verified","B1_EMISSOR",request(d,"30"));
+            db.execute("SET CONSTRAINTS ALL IMMEDIATE");db.execute("SET CONSTRAINTS ALL DEFERRED");
+            cancelUnreceived(key(),result.replacementDocumentId());return null;
+        })).rootCause().hasMessageContaining("Atomic replacement must leave an active substitute");
+        assertThat(numerator()).isEqualTo(1);
+        assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("70");
     }
 
 }

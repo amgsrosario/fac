@@ -112,7 +112,7 @@ public class JdbcFinancialQueries implements FinancialQueries {
         scope(s); require(id>0,"Invalid operation");
         return db.query("""
             select op.*, r.id as reversed_by, o.document_id, p.reference, d.data_emissao, d.data_vencimento,
-                   f.id as financial_document_id,f.data_emissao as receipt_date,
+                   f.id as financial_document_id,f.data_emissao as receipt_date,f.data_valor as value_date, temporal.effect_date,temporal.operation_at,
                    concat(f.id_tipo_documento,' ',f.serie,'/',f.numero_documento) as receipt_reference,
                    c.id as component_id,c.kind as component_kind,c.amount,c.reversed,c.reverse_of as reverse_component
             from financial_operation op
@@ -120,7 +120,9 @@ public class JdbcFinancialQueries implements FinancialQueries {
             left join financial_position p on p.creation_id=op.id
             left join financial_document_origin o on o.position_id=p.id
             left join documento_comercial d on d.id=o.document_id
-            left join financial_receipt receipt on receipt.operation_id=op.id
+            left join financial_operation_effect temporal on temporal.id=op.id
+            left join financial_receipt_reversal act on act.operation_id=op.id
+            left join financial_receipt receipt on receipt.operation_id=coalesce(op.reverse_of,op.id) AND (op.kind='SETTLE' OR act.operation_id IS NOT NULL)
             left join documento_financeiro f on f.id=receipt.document_id
             left join financial_component c on c.operation_id=op.id
             where op.empresa_id=? and op.cliente_id=? and op.moeda_id=? and op.id=? order by c.id
@@ -130,18 +132,48 @@ public class JdbcFinancialQueries implements FinancialQueries {
                 String actor=rs.getString("actor"),reason=rs.getString("reason"); var at=rs.getTimestamp("created_at").toInstant();
                 Long reverse=rs.getObject("reverse_of",Long.class), reversedBy=rs.getObject("reversed_by",Long.class);
                 var origin=document(rs); var components=new ArrayList<Component>();
+                var effectDate=Optional.ofNullable(rs.getObject("effect_date",LocalDate.class));
+                var operationAt=Optional.ofNullable(rs.getTimestamp("operation_at")).map(java.sql.Timestamp::toInstant);
                 Long financialId=rs.getObject("financial_document_id",Long.class);
                 var financialDoc=financialId==null ? Optional.<FinancialDocument>empty() : Optional.of(new FinancialDocument(
-                        financialId,rs.getString("receipt_reference"),rs.getObject("receipt_date",LocalDate.class)));
+                        financialId,rs.getString("receipt_reference"),rs.getObject("receipt_date",LocalDate.class),rs.getObject("value_date",LocalDate.class)));
                 do { if(rs.getObject("component_id")!=null) components.add(new Component(rs.getLong("component_id"),
                         ComponentKind.valueOf(rs.getString("component_kind")),rs.getBigDecimal("amount"),
                         rs.getBoolean("reversed"),rs.getObject("reverse_component",Long.class))); } while(rs.next());
                 return new OperationView(opId,s,kind,actor,reason,at,reverse,reversedBy,origin,
-                        financialDoc.isPresent()?DocumentLinkStatus.LINKED:DocumentLinkStatus.NOT_RECORDED,financialDoc,components);
+                        financialDoc.isPresent()?DocumentLinkStatus.LINKED:DocumentLinkStatus.NOT_RECORDED,financialDoc,components,effectDate,operationAt);
             },s.empresa(),s.cliente(),s.moeda(),id);
     }
     @Override public Balance balanceAt(Scope s, LocalDate financialDate) {
         scope(s); require(financialDate!=null,"Financial date required");
-        throw new UnsupportedOperationException("Financial-date balances suspended: reversal effect semantics and complete operational scope are not defined (TUULI-FIN-TIME-001)");
+        return db.queryForObject("""
+            with scoped as (
+              select p.*, e.effect_date from financial_position p
+              join financial_operation_effect e on e.id=p.creation_id
+              where p.empresa_id=? and p.cliente_id=? and p.moeda_id=?
+            ), effects as (
+              select a.*,e.effect_date from financial_allocation a
+              join financial_operation_effect e on e.id=a.operation_id
+              join scoped p on p.id=a.position_id
+            ), history as (
+              select p.id,p.nature,p.original,p.original-coalesce((select sum(case a.effect when 'CONSUME' then a.amount
+                when 'RESTORE' then -a.amount else 0 end) from effects a
+                where a.position_id=p.id and a.effect_date<=?),0) as residual
+              from scoped p where p.effect_date<=?
+            )
+            select exists(select 1 from scoped where effect_date is null)
+              or exists(select 1 from effects where effect_date is null)
+              or exists(select 1 from history where residual<0 or residual>original)
+              or exists(select 1 from scoped p join financial_operation op on op.reverse_of=p.creation_id) as unsupported,
+              coalesce(sum(residual) filter(where nature='DEBT'),0) as debt,
+              coalesce(sum(residual) filter(where nature='CREDIT'),0) as credit,
+              count(*) filter(where residual>0) as opened,count(*) filter(where residual=0) as closed
+            from history
+            """,(rs,n)-> {
+                if(rs.getBoolean("unsupported")) throw new UnsupportedOperationException(
+                    "TUULI-FIN-TIME-001: scope contains effects without approved documentary dates");
+                var debt=rs.getBigDecimal("debt");var credit=rs.getBigDecimal("credit");
+                return new Balance(s,debt,credit,debt.subtract(credit),rs.getLong("opened"),rs.getLong("closed"));
+            },s.empresa(),s.cliente(),s.moeda(),financialDate,financialDate);
     }
 }

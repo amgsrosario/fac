@@ -207,8 +207,9 @@ M2 diferida: complexidade/identidade autónoma não necessárias ao âmbito sem
 excedentes não afectados. F1 preservada no legado durante transição; F3 diferida.
 T2 não escolhida: substituto retroactivo pode duplicar efeito antes do acto.
 Alternativas, fundamentos, invariantes e exemplo 30→300 constam do ADR-002.
-Arquitectura aprovada não é implementação: núcleo continua com datas de emissão,
-REVERSE RC bloqueado, balanceAt suspenso; legado e extractos operacionais mantidos.
+À data da formalização, o núcleo continuava com datas de emissão, REVERSE RC
+bloqueado e balanceAt suspenso. Evolução interna posterior: Fatia 1b abaixo;
+legado e extractos operacionais mantidos.
 Corte coordenado e validação fiscal expressa requerem autorização própria.
 Nenhuma activação, migration, dados ou demo autorizados por esta formalização.
 
@@ -224,7 +225,7 @@ selar componentes/afectações após o vínculo RC; projecções
 isoladas e diagnóstico de dados, sem chamadas nos endpoints operacionais.
 Timestamp técnico separado; efeito de SETTLE vinculado deriva da emissão RC.
 
-Anulação nova/histórico continuam suspensos por semântica temporal pendente;
+À data B1, anulação nova/histórico suspensos por semântica temporal pendente;
 ninguém repõe snapshots antigos para desfazer afectações independentes. Nenhuma
 activação antes de emissão/leitura/anulação/dados coerentes. B2 tem de completar
 consumidores e decisões temporais; Pendente permanece autoridade operacional
@@ -305,6 +306,21 @@ apenas em pendente existente; máximo emissão das origens ≤ Data Valor ≤ em
 RC. Vencimento independente. E1/E2 encerram a pendência semântica anterior;
 elegibilidade técnica permanece sem whitelist transitória por tipo. Credores
 não elegíveis; não alterar transversalmente criação legada de pendentes agora.
-Fatia 1a local: campo/default/imutabilidade/validações/UI/PDF; históricos NULL,
+Fatia 1a integrada pelo PR #27: campo/default/imutabilidade/validações/UI/PDF; históricos NULL,
 sem backfill. Nova rejeição cronológica antes de numeração; nenhuma alteração
 financeira operacional, F2/T1 ou corte. [Evidência](../fiscal/op22-b2-2/SLICE1A_VALIDATION.md).
+
+## Fatia 1b — implementação interna F2/T1, ainda não integrada
+
+Na base PR #27, a missão autorizada prepara F2/T1 sem activar RC. Data Valor
+permanece no RC (M1); efeito SETTLE e REVERSE deriva desse valor, separando
+emissão e instante técnico. V24 aditiva vincula acto de anulação, REVERSE e
+substituto, exige atomicidade e preserva RESTORE/CASH_OUT reversed=true com
+vínculos aos originais. Não é reembolso. Anulação interna sem substituto exige
+declaração auditável de pagamento não ocorrido; comprovação real e autorização
+pública não estão implementadas. Substituição atómica cobre DV-09 sem dupla
+liquidação. Históricos NULL preservados, T1 sem data conhecida recusado.
+Consulta balanceAt interna limitada a âmbitos com datas documentais suportadas;
+não usa timestamp para inventar efeitos. Legado, saldos/extractos e consumidores
+permanecem inalterados. Nenhum corte, demo ou publicação autorizado nesta entrega.
+[Evidência e limites](../fiscal/op22-b2-2/SLICE1B_VALIDATION.md).
