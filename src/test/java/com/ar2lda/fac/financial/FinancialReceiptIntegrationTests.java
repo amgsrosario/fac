@@ -723,4 +723,36 @@ class FinancialReceiptIntegrationTests {
         db.update("update documento_comercial set data_emissao='2027-01-01' where id=?",d.document());
         assertThat(db.queryForObject("select data_valor::text from documento_financeiro where id=?",String.class,r.id())).isEqualTo("2025-01-01");
     }
+    @Test void valuedReceiptPreventsFiscalReclassificationAndRetainsDateGuards() {
+        var d=debt("100",false);var r=legacy.create(request(d,"10"));
+        assertThatThrownBy(()->db.update("update tipodocumento set codigo_fiscal='XX' where id='BRC'"))
+            .hasMessageContaining("Receipt fiscal classification is immutable");
+        assertThat(db.queryForObject("select codigo_fiscal from tipodocumento where id='BRC'",String.class)).isEqualTo("RC");
+        assertThatThrownBy(()->db.update("update documento_financeiro set data_valor=null where id=?",r.id())).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(()->db.update("update documento_comercial set data_emissao='2026-03-01' where id=?",d.document())).isInstanceOf(RuntimeException.class);
+        assertThat(legacy.getById(r.id()).dataValor()).isEqualTo(r.dataEmissao());
+    }
+
+    @Test void valuedNonReceiptCannotBecomeReceiptButUnrelatedReclassificationRemainsAllowed() {
+        var d=debt("100",false);
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('N1F','Nao RC',3,1,2,'XX') on conflict do nothing");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('N1F',?,'Teste',0,'N1FAT','2026-01-01')",serie);
+        var req=request(d,"10");
+        var r=legacy.create(new DocumentoFinanceiroCreateDto("N1F",serie,req.dataEmissao(),client,"EUR","B1P",null,"B1_EMISSOR",null,req.linhas()));
+        assertThat(r.dataValor()).isNull();
+        // Non-RC SQL writes of this field remain legal: this is not an impossible RC fixture.
+        db.update("update documento_financeiro set data_valor='2026-01-15' where id=?",r.id());
+        assertThatThrownBy(()->db.update("update tipodocumento set codigo_fiscal='RC' where id='N1F'"))
+            .hasMessageContaining("Receipt fiscal classification is immutable");
+        db.update("update tipodocumento set codigo_fiscal='YY' where id='N1F'");
+        assertThat(db.queryForObject("select codigo_fiscal from tipodocumento where id='N1F'",String.class)).isEqualTo("YY");
+    }
+
+    @Test void fiscalReclassificationWithoutValuedDocumentsRemainsAllowed() {
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('N1U','Sem documentos',3,1,2,'XX') on conflict do nothing");
+        db.update("update tipodocumento set codigo_fiscal='RC' where id='N1U'");
+        db.update("update tipodocumento set codigo_fiscal='XX' where id='N1U'");
+        assertThat(db.queryForObject("select codigo_fiscal from tipodocumento where id='N1U'",String.class)).isEqualTo("XX");
+    }
+
 }

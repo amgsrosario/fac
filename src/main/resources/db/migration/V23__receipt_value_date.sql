@@ -92,6 +92,11 @@ CREATE TRIGGER receipt_value_date_pending_guard BEFORE UPDATE ON pendente
 
 CREATE FUNCTION receipt_value_date_type_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
+ IF NEW.codigo_fiscal IS DISTINCT FROM OLD.codigo_fiscal
+    AND (OLD.codigo_fiscal='RC' OR NEW.codigo_fiscal='RC')
+    AND EXISTS(SELECT 1 FROM documento_financeiro r
+      WHERE r.id_tipo_documento=OLD.id AND r.data_valor IS NOT NULL)
+ THEN RAISE EXCEPTION 'Receipt fiscal classification is immutable'; END IF;
  IF NEW.sinal_contabilistico IS DISTINCT FROM OLD.sinal_contabilistico AND EXISTS(
    SELECT 1 FROM documento_comercial d JOIN pendente p ON p.id_documento_comercial=d.id
    JOIN linha_documento_financeiro l ON l.id_pendente=p.id

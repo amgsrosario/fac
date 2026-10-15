@@ -152,3 +152,64 @@ combobox, sem alteração de produto. Logs locais:
 /tmp/tuuli-value-date-fix-precision-pdf.log e /tmp/tuuli-value-date-fix-browser-final.log.
 Guardas V20/V21/V22 preservadas; emissor novo inactivo, F2/T1 e consumidores
 operacionais intocados. Sem push/PR/merge; nova revisão independente necessária.
+
+## Fecho técnico MINOR-N1 — base a00e0a9, 2026-10-15
+
+Parecer Claude comunicado pelo PO: APPROVE WITH CONDITIONS, BLOCKER 0 / MAJOR 0 /
+MINOR 1. Esta correcção fica preparada para verificação independente final;
+não se declara essa revisão realizada pelo implementador.
+
+V23, ainda não integrada, estende receipt_value_date_type_guard: uma mudança
+real de codigo_fiscal de ou para RC é rejeitada por SQL quando existe documento
+financeiro desse tipo com data_valor não NULL. Mantém o guard anterior da natureza
+da dívida e não modifica V18/V20/V21/V22 nem os serviços operacionais.
+
+Três testes adicionais demonstram:
+
+- RC emitido impede RC → XX; a classificação permanece RC, a Data Valor não
+  pode ser apagada e a cronologia da origem continua protegida.
+- Não-RC com Data Valor persistida impede XX → RC; XX → YY continua permitido.
+  O fixture usa emissão não-RC legítima, que grava NULL, seguida de escrita SQL
+  de Data Valor permitida para não-RC pela V23. Não inventa um RC inválido nem
+  contorna constraints para produzir o estado testado.
+- Tipo sem documentos com Data Valor pode mudar XX → RC → XX.
+
+### Evidência desta execução com V23 final
+
+PostgreSQL 16.3, container exclusivamente descartável
+`tuuli-value-date-slice1a-test`. Bases novas, sem repair ou utilização das bases
+anteriores com outro checksum V23:
+
+- `tuuli_value_date_final_n1_test`: FinancialReceiptIntegrationTests,
+  63 executados/aprovados, 0 falhas, 0 erros, 0 ignorados. Inclui os três novos
+  testes SQL, compatibilidade RC/não-RC, imutabilidade, limites temporais,
+  constraints antecipadas/diferidas e regressão financeira dirigida.
+- FinancialReceiptMigrationTests: 4 executados/aprovados, 0 falhas/erros/ignorados.
+  Upgrade V19/V20/V21/V22 → V23, validação e segundo arranque sem migrations;
+  preserva valores históricos, precisão e ledger, sem backfill de Data Valor.
+- TestDatabaseSafetyValidatorTests: 4 executados/aprovados, 0 falhas/erros/ignorados.
+- Total dirigido desta execução: 71 testes, BUILD SUCCESS.
+
+Log: `/tmp/tuuli-value-date-n1-directed.log`.
+
+Regressão comercial na base separada e vazia
+`tuuli_value_date_final_n1_commercial_test`, também migrada até V23 final:
+
+| Grupo | Executados | Aprovados | Falhas | Erros | Ignorados |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| DocumentoComercialControllerTests | 46 | 46 | 0 | 0 | 0 |
+| DocumentoComercialEmissaoIntegridadeTests | 25 | 25 | 0 | 0 | 0 |
+| Total comercial | 71 | 71 | 0 | 0 | 0 |
+
+BUILD SUCCESS; log `/tmp/tuuli-value-date-n1-commercial.log`. Separação de bases
+impede interferência entre fixtures comerciais de limpeza e ledger imutável.
+Total desta validação final: 142 testes distintos aprovados, sem somar novamente
+execuções anteriores. Não se apresenta este conjunto como suite integral.
+
+Diff final limitado a V23, testes de integração RC e este documento;
+`git diff --check` aprovado. Sem alterações a saldos, extractos, serviços,
+FinancialCore, frontend ou migrations integradas. Não foi necessário repetir
+browser/build frontend nesta correcção exclusivamente SQL/testes/documentação.
+Não houve migrations em bases persistentes, alteração da demo ou activação
+F2/T1. Publicação e revisão independente final permanecem gates posteriores;
+nenhum push, PR ou merge foi executado nesta missão.
