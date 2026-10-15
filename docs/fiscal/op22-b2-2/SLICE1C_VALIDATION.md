@@ -58,11 +58,11 @@ Não são novos estados documentais, naturezas ou regras financeiras.
 
 | Sinalizador | Evidência/predicado e limite |
 | --- | --- |
-| MISSING_PENDING | Não existe identidade Pendente utilizável no cliente/moeda da origem; saldo ausente não é zero |
-| MISSING_ORIGIN | Não existe posição vinculada no âmbito; não cria origem nem infere histórico |
+| MISSING_PENDING | Registo Pendente verdadeiramente ausente para a origem; identidade existente incoerente é IDENTITY_MISMATCH |
+| MISSING_ORIGIN | Não existe posição associada à origem; associação existente fora do âmbito é IDENTITY_MISMATCH |
 | UNSUPPORTED_DOCUMENT_TYPE | Tipo diferente de FT, liquidação imediata ou linhas financeiras não-RC; não presume elegibilidade |
 | UNSUPPORTED_CURRENCY | Moeda diferente de EUR; valor não convertido |
-| IDENTITY_MISMATCH | Metadados, original, cancelamento ou referências de linhas incoerentes; comparação recusada e sem fuga de contexto |
+| IDENTITY_MISMATCH | Registo existente com empresa/cliente/moeda ou metadados incoerentes; comparação recusada, IDs/valores fora do âmbito ocultos |
 | ACTIVE_LEGACY_DOCUMENT | Linhas de documentos financeiros não anulados sem financial_receipt; contexto da diferença, não prova isolada de erro |
 | CORE_RECEIPT | Linhas com vínculo FinancialCore, incluindo documentos anulados; não afirma consumo activo |
 | HISTORICAL_VALUE_DATE_MISSING | RC com data_valor NULL; limita conhecimento, sem inventar data de pagamento |
@@ -165,3 +165,103 @@ Pedido ao Claude: auditar o diff completo base f06c09d..HEAD desta branch e emit
 APPROVE / APPROVE WITH CONDITIONS / REQUEST CHANGES, com BLOCKER/MAJOR/MINOR,
 evidências e limitações. Não executar correcções ou operações em bases persistentes.
 A implementação fica local, pronta para esse parecer; não está autorizada publicação.
+
+
+## Fecho dos findings Claude — base 279b702, 15-10-2026
+
+Parecer comunicado pelo PO: APPROVE WITH CONDITIONS, 0 BLOCKER / 0 MAJOR /
+2 MINOR. Este complemento corrige apenas esses findings; não constitui um novo
+parecer independente sobre o commit complementar.
+
+### MINOR-001 — indicadores independentes no resumo
+
+Summary acrescenta três DifferenceGroup(count,amount): legacyAssociated,
+coreAssociated e unexplained. Cada linha de documento comparável com diferença
+não nula contribui uma vez para cada indicador aplicável, em toda a selecção,
+nunca apenas na página. amount soma a diferença assinada Pendente − FinancialCore,
+com precisão original; não é soma de recebimentos nem parcela causal atribuída.
+
+- legacyAssociated: existe sinalizador ACTIVE_LEGACY_DOCUMENT.
+- coreAssociated: existe CORE_RECEIPT, incluindo RC anulados já presentes no histórico.
+- unexplained: nenhum desses dois sinalizadores; causa não demonstrada por estes
+  vínculos, sem afirmar ausência de outra causa real.
+
+Os dois primeiros indicadores são **independentes e potencialmente sobrepostos**;
+um documento pode ser contado em ambos. Não somar contagens/montantes dos grupos
+como partição do total. unexplained não se sobrepõe aos outros dois. Não foi criada
+prioridade financeira nem classificação causal exclusiva. O contrato expõe
+explicitamente differenceGroupsMayOverlap=true. different/comparableDifference
+continuam a contar cada documento uma única vez e preservam os totais globais.
+
+Grupo sem observações tem count=0 e amount=NULL. Nenhuma comparação disponível
+mantém NULL nos totais monetários. Soma zero com contagem positiva é resultado
+observado de diferenças assinadas, não ausência de dados nem reconciliação provada.
+
+### MINOR-002 — existência distinta de validade no âmbito
+
+Joins de identidade detectam somente a existência de Pendente/posição associados.
+Joins separados e filtrados por âmbito continuam a fornecer os IDs/montantes
+permitidos. Apenas os booleanos de existência/incoerência da associação externa
+entram na classificação; IDs, criação, residuais, CONSUME/RESTORE de outra empresa,
+cliente ou moeda não são expostos. Não se altera qualquer registo financeiro.
+
+IDENTITY_MISMATCH substitui MISSING_PENDING/MISSING_ORIGIN quando o registo existe
+mas tem identidade incoerente. Ausência verdadeira mantém os findings de ausência.
+A observação continua não comparável, diferença NULL, sem contribuir para totais.
+Metadados incoerentes no próprio âmbito também continuam a ser diagnosticados.
+receipts filtra igualmente a identidade Pendente por cliente/moeda antes de
+apresentar evidência. Unicidade PK/associação preserva uma linha por documento.
+
+Testes SQL reais mudam apenas fixtures descartáveis de cliente/moeda em Pendente
+ou documento, mantendo posição e associação imutáveis. V19 normalmente impede
+criar associação com posição de empresa diferente; o teste defensivo desse caso
+usa uma tabela PostgreSQL **temporária, local à ligação**, que espelha apenas a
+posição alvo com empresa incoerente. Nenhum trigger/FK de produção é desactivado;
+nenhuma linha da tabela persistente financial_position é alterada. A transacção
+é revertida e confirma-se novamente a identidade real válida após o rollback.
+Esta é evidência defensiva perante dados corrompidos, não demonstração de um
+caminho de escrita permitido pelas guardas normais da aplicação.
+
+### Cobertura complementar
+
+Sete testes novos cobrem: três grupos no resumo global com página limitada;
+sobreposição sem dupla contagem no total; inexistência de comparáveis com NULL;
+diferenças assinadas que se cancelam; Pendente incoerente em cliente/moeda;
+posição associada incoerente em cliente/moeda; e posição com empresa incoerente
+no fixture temporário. A suite existente repete ausência verdadeira, identidade
+válida, isolamento, precisão, concorrência, paginação 500/501 e leitura READ ONLY.
+
+### Resultado executado do complemento
+
+PostgreSQL 16.3 descartável; base nova `tuuli_slice1c_minor_test` no container
+local de testes da missão, sem acesso a bases persistentes ou demo.
+
+| Grupo | Executados | Aprovados | Falhas | Erros | Ignorados |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FinancialReconciliationIntegrationTests | 22 | 22 | 0 | 0 | 0 |
+| FinancialReceiptIntegrationTests | 80 | 80 | 0 | 0 | 0 |
+| FinancialQueriesIntegrationTests | 8 | 8 | 0 | 0 | 0 |
+| FinancialCoreIntegrationTests | 15 | 15 | 0 | 0 | 0 |
+| FinancialCoreMoneyTests | 2 | 2 | 0 | 0 | 0 |
+| ReceiptPayloadCompatibilityTests | 4 | 4 | 0 | 0 | 0 |
+| FinancialReceiptMigrationTests | 6 | 6 | 0 | 0 | 0 |
+| FinancialCoreMigrationTests | 1 | 1 | 0 | 0 | 0 |
+| TestDatabaseSafetyValidatorTests | 4 | 4 | 0 | 0 | 0 |
+| **Total dirigido deste complemento** | **142** | **142** | **0** | **0** | **0** |
+
+Execuções separadas: 22 do diagnóstico primeiro, seguidos de 120 da regressão
+financeira com package, sem repetir os 22. Não somar aos 135 da entrega anterior
+como testes únicos e não apresentar este conjunto como suite integral da aplicação.
+Package backend: BUILD SUCCESS. Migrations existentes V17/V19–V23 → V24, validação
+Flyway e segundo arranque sem migrations aprovados; nenhuma migration criada ou
+alterada. Logs locais:
+`/tmp/tuuli-slice1c-minor-directed.log` e
+`/tmp/tuuli-slice1c-minor-regression-package.log`.
+
+Diff completo revisto e git diff --check aprovado; referências locais conferidas.
+Apenas FinancialReconciliation.java, FinancialReconciliationIntegrationTests.java
+e este documento alterados. Emissores, reversores, saldos/extractos, serviços
+legados, endpoints, frontend, Docker e CI intocados. Container descartável parado
+no fecho. Branch original, sem nova worktree, sem push, PR ou merge. Limites
+residuais da Fatia 1c mantidos; novo circuito RC inactivo e revisão final do
+complemento continua reservada ao revisor independente.

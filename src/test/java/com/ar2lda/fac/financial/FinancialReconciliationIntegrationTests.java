@@ -247,4 +247,87 @@ class FinancialReconciliationIntegrationTests {
         assertThat(row.legacyResidual()).isEqualByComparingTo("70");assertThat(row.coreResidual()).isEqualByComparingTo("100");
     }
 
+    @Test void summarySeparatesIndependentContextsAcrossTheWholeScope() {
+        var a=debt("100");var b=debt("100");var c=debt("100");
+        legacy.create(request(a,"30"));issuer.issue(key(),request(b,"10"));
+        db.update("update pendente set valor_pendente=99.999999 where id=?",c.pending());
+        var summary=diagnosis.inspect(scope(),0,1).summary();
+        assertThat(summary.documents()).isEqualTo(3);assertThat(summary.different()).isEqualTo(3);
+        assertThat(summary.comparableDifference()).isEqualByComparingTo("-20.000001");
+        assertThat(summary.legacyAssociated().count()).isEqualTo(1);assertThat(summary.legacyAssociated().amount()).isEqualByComparingTo("-30");
+        assertThat(summary.coreAssociated().count()).isEqualTo(1);assertThat(summary.coreAssociated().amount()).isEqualByComparingTo("10");
+        assertThat(summary.unexplained().count()).isEqualTo(1);assertThat(summary.unexplained().amount()).isEqualByComparingTo("-0.000001");
+        assertThat(summary.differenceGroupsMayOverlap()).isTrue();
+    }
+    @Test void overlappingSummaryIndicatorsDoNotPartitionTheUniqueDifferenceTotal() {
+        var d=debt("100");var r=issuer.issue(key(),request(d,"30"));
+        reverser.cancelUnreceived(scope(),key(),r.id(),"No actual payment","Verified","B1_EMISSOR");
+        legacy.create(request(d,"30"));var summary=diagnosis.inspect(scope(),0,10).summary();
+        assertThat(summary.different()).isEqualTo(1);assertThat(summary.comparableDifference()).isEqualByComparingTo("-30");
+        assertThat(summary.legacyAssociated().count()).isEqualTo(1);assertThat(summary.coreAssociated().count()).isEqualTo(1);
+        assertThat(summary.legacyAssociated().amount()).isEqualByComparingTo("-30");assertThat(summary.coreAssociated().amount()).isEqualByComparingTo("-30");
+        assertThat(summary.unexplained().count()).isZero();assertThat(summary.unexplained().amount()).isNull();
+    }
+    @Test void noComparableObservationsKeepAllGroupAmountsAbsent() {
+        debt("100",false);var summary=diagnosis.inspect(scope(),0,10).summary();
+        assertThat(summary.comparable()).isZero();assertThat(summary.different()).isZero();
+        assertThat(summary.comparableDifference()).isNull();
+        for(var group:List.of(summary.legacyAssociated(),summary.coreAssociated(),summary.unexplained())) {
+            assertThat(group.count()).isZero();assertThat(group.amount()).isNull();
+        }
+    }
+    @Test void cancellingSignedDifferencesDoNotEraseTheirGroups() {
+        var a=debt("100");var b=debt("100");legacy.create(request(a,"30"));issuer.issue(key(),request(b,"30"));
+        var summary=diagnosis.inspect(scope(),0,10).summary();
+        assertThat(summary.different()).isEqualTo(2);assertThat(summary.comparableDifference()).isZero();
+        assertThat(summary.legacyAssociated().amount()).isEqualByComparingTo("-30");assertThat(summary.coreAssociated().amount()).isEqualByComparingTo("30");
+    }
+    static void assertMaskedMismatch(Entry row,boolean pendingHidden,boolean positionHidden) {
+        assertThat(row.findings()).contains(Finding.IDENTITY_MISMATCH).doesNotContain(Finding.MISSING_PENDING,Finding.MISSING_ORIGIN);
+        assertThat(row.comparable()).isFalse();assertThat(row.difference()).isNull();
+        if(pendingHidden) { assertThat(row.pendingId()).isNull();assertThat(row.legacyResidual()).isNull(); }
+        if(positionHidden) {
+            assertThat(row.positionId()).isNull();assertThat(row.coreResidual()).isNull();
+            assertThat(row.consumed()).isNull();assertThat(row.restored()).isNull();
+        }
+    }
+    @Test void existingPendingWithWrongClientOrCurrencyIsMismatchNotMissing() {
+        var a=debt("100");var b=debt("50");var owner=scope();
+        fixture();long foreignClient=client;
+        db.update("insert into moeda(id,nome,simbolo,ndecimais) values('USD','Dollar','$',2) on conflict do nothing");
+        db.update("update pendente set id_cliente=? where id=?",foreignClient,a.pending());
+        db.update("update pendente set id_moeda='USD' where id=?",b.pending());
+        var report=diagnosis.inspect(owner,0,500);
+        assertThat(report.page().items()).hasSize(2);
+        for(var row:report.page().items()) assertMaskedMismatch(row,true,false);
+        assertThat(report.summary().comparable()).isZero();assertThat(report.summary().comparableLegacy()).isNull();
+        assertThat(diagnosis.receipts(owner,a.document(),0,10).items()).isEmpty();
+    }
+    @Test void associatedPositionWithWrongClientOrCurrencyIsMaskedMismatch() {
+        var a=debt("100");var b=debt("50");long ownerClient=client;
+        fixture();long newClient=client;
+        // Change documentary metadata by SQL; immutable positions and origins remain intact.
+        db.update("update documento_comercial set id_cliente=? where id=?",newClient,a.document());
+        var moved=diagnosis.inspect(scope(),0,10).page().items().getFirst();
+        assertMaskedMismatch(moved,true,true);assertThat(moved.clientId()).isEqualTo(newClient);
+        db.update("insert into moeda(id,nome,simbolo,ndecimais) values('USD','Dollar','$',2) on conflict do nothing");
+        db.update("update documento_comercial set id_moeda='USD' where id=?",b.document());
+        var currency=diagnosis.inspect(new FinancialCore.Scope(1,ownerClient,"USD"),0,10).page().items().getFirst();
+        assertMaskedMismatch(currency,true,true);assertThat(currency.findings()).contains(Finding.UNSUPPORTED_CURRENCY);
+    }
+    @Test void wrongCompanyPositionIsDetectedWithoutExposingItsIdentityOrDisablingGuards() {
+        var d=debt("100");
+        new TransactionTemplate(tx).execute(status->{
+            // V19 forbids this corruption in the persistent relation. Model it in a
+            // connection-local PG table, not by disabling production triggers/FKs.
+            db.execute("create temporary table financial_position on commit drop as select * from public.financial_position where false");
+            db.update("insert into pg_temp.financial_position select * from public.financial_position where id=?",d.position());
+            db.update("update pg_temp.financial_position set empresa_id=2 where id=?",d.position());
+            var row=only();assertMaskedMismatch(row,false,true);
+            assertThat(row.pendingId()).isEqualTo(d.pending());
+            status.setRollbackOnly();return null;
+        });
+        assertThat(only().comparable()).isTrue();assertThat(only().positionId()).isEqualTo(d.position());
+    }
+
 }

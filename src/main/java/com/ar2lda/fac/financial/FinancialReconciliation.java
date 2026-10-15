@@ -41,10 +41,14 @@ public class FinancialReconciliation {
             return "Diferença quantificada, mas a sua causa não está demonstrada pelos vínculos documentais disponíveis.";
         }
     }
+    /** Independent indicators: legacy/core may overlap; never add their counts/amounts as a partition. */
+    public record DifferenceGroup(long count,BigDecimal amount) {}
     /** Totals cover ONLY comparable documents; null totals mean no comparable observations. */
     public record Summary(long documents,long comparable,long different,long historicallyLimited,
                           long unmappedCorePositions,BigDecimal comparableLegacy,BigDecimal comparableCore,
-                          BigDecimal comparableDifference) {
+                          BigDecimal comparableDifference,DifferenceGroup legacyAssociated,DifferenceGroup coreAssociated,
+                          DifferenceGroup unexplained) {
+        public boolean differenceGroupsMayOverlap() { return true; }
         public long nonComparable() { return documents-comparable; }
         public boolean fullComparisonCoverage() { return comparable==documents && unmappedCorePositions==0; }
     }
@@ -67,6 +71,13 @@ public class FinancialReconciliation {
           select d.id,d.id_cliente,c.nome as client_name,d.id_moeda,d.data_emissao,d.anulado,d.valor_total,
             concat(d.id_tipo_documento,' ',d.serie,'/',d.numero_documento) as reference,
             coalesce(d.tipo_documento_codigo_fiscal,t.codigo_fiscal) as fiscal_type,t.liquidacao_imediata,
+            pending_identity.id is not null as pending_exists,position_identity.id is not null as position_exists,
+            ((pending_identity.id is not null and (pending.id is null
+               or (pending.id_tipo_documento,pending.serie_documento,pending.numero_documento,pending.valor_documento)
+                 is distinct from (d.id_tipo_documento,d.serie,d.numero_documento,d.valor_total)
+               or pending.valor_pendente not between 0 and pending.valor_documento))
+             or (position_identity.id is not null and (p.id is null or p.nature is distinct from 'DEBT'
+               or p.original is distinct from d.valor_total or p.cancelled is distinct from d.anulado))) as identity_mismatch,
             pending.id as pending_id,pending.valor_pendente as legacy_residual,
             p.id as position_id,p.available as core_residual,p.creation_id,
             (pending.id_cliente=d.id_cliente and pending.id_moeda=d.id_moeda
@@ -76,10 +87,12 @@ public class FinancialReconciliation {
              and p.nature='DEBT' and p.original=d.valor_total and p.cancelled=d.anulado) as identity_valid
           from documento_comercial d join cliente c on c.id=d.id_cliente
           join tipodocumento t on t.id=d.id_tipo_documento
-          left join pendente pending on pending.id_documento_comercial=d.id
+          left join pendente pending_identity on pending_identity.id_documento_comercial=d.id
+          left join pendente pending on pending.id=pending_identity.id
             and pending.id_cliente=d.id_cliente and pending.id_moeda=d.id_moeda
           left join financial_document_origin origin on origin.document_id=d.id
-          left join financial_position p on p.id=origin.position_id and p.empresa_id=?
+          left join financial_position position_identity on position_identity.id=origin.position_id
+          left join financial_position p on p.id=position_identity.id and p.empresa_id=?
             and p.cliente_id=d.id_cliente and p.moeda_id=d.id_moeda
           where d.id_cliente=? and d.id_moeda=? and d.estado in ('EMITIDO','ANULADO')
         ), line_stats as (
@@ -125,7 +138,14 @@ public class FinancialReconciliation {
                 count(*) filter(where historical_limit) as limited_count,
                 sum(legacy_residual) filter(where comparable) as legacy_total,
                 sum(core_residual) filter(where comparable) as core_total,
-                sum(difference) filter(where comparable) as difference_total from selected
+                sum(difference) filter(where comparable) as difference_total,
+                count(*) filter(where difference<>0 and legacy_lines>0) as legacy_difference_count,
+                sum(difference) filter(where difference<>0 and legacy_lines>0) as legacy_difference_amount,
+                count(*) filter(where difference<>0 and core_lines>0) as core_difference_count,
+                sum(difference) filter(where difference<>0 and core_lines>0) as core_difference_amount,
+                count(*) filter(where difference<>0 and legacy_lines=0 and core_lines=0) as unexplained_count,
+                sum(difference) filter(where difference<>0 and legacy_lines=0 and core_lines=0) as unexplained_amount
+              from selected
             ), unmapped as (
               select count(*) as unmapped_count from financial_position p
               where p.empresa_id=? and p.cliente_id=? and p.moeda_id=?
@@ -138,7 +158,10 @@ public class FinancialReconciliation {
                 while(rs.next()) {
                     if(summary==null) summary=new Summary(rs.getLong("document_count"),rs.getLong("comparable_count"),
                         rs.getLong("different_count"),rs.getLong("limited_count"),rs.getLong("unmapped_count"),
-                        rs.getBigDecimal("legacy_total"),rs.getBigDecimal("core_total"),rs.getBigDecimal("difference_total"));
+                        rs.getBigDecimal("legacy_total"),rs.getBigDecimal("core_total"),rs.getBigDecimal("difference_total"),
+                        new DifferenceGroup(rs.getLong("legacy_difference_count"),rs.getBigDecimal("legacy_difference_amount")),
+                        new DifferenceGroup(rs.getLong("core_difference_count"),rs.getBigDecimal("core_difference_amount")),
+                        new DifferenceGroup(rs.getLong("unexplained_count"),rs.getBigDecimal("unexplained_amount")));
                     if(rs.getObject("id")!=null) entries.add(entry(rs));
                 }
                 return new Report(s,new Page<>(entries,summary.documents(),offset,limit),summary);
@@ -147,12 +170,12 @@ public class FinancialReconciliation {
     private static Entry entry(ResultSet rs) throws SQLException {
         var flags=EnumSet.noneOf(Finding.class);
         Long pending=rs.getObject("pending_id",Long.class),position=rs.getObject("position_id",Long.class);
-        if(pending==null) flags.add(Finding.MISSING_PENDING);
-        if(position==null) flags.add(Finding.MISSING_ORIGIN);
+        if(!rs.getBoolean("pending_exists")) flags.add(Finding.MISSING_PENDING);
+        if(!rs.getBoolean("position_exists")) flags.add(Finding.MISSING_ORIGIN);
         if(!"FT".equals(rs.getString("fiscal_type")) || rs.getBoolean("liquidacao_imediata") || rs.getLong("non_rc_lines")>0)
             flags.add(Finding.UNSUPPORTED_DOCUMENT_TYPE);
         if(!"EUR".equals(rs.getString("id_moeda"))) flags.add(Finding.UNSUPPORTED_CURRENCY);
-        if((pending!=null && position!=null && !rs.getBoolean("identity_valid")) || rs.getLong("invalid_lines")>0) flags.add(Finding.IDENTITY_MISMATCH);
+        if(rs.getBoolean("identity_mismatch") || rs.getLong("invalid_lines")>0) flags.add(Finding.IDENTITY_MISMATCH);
         if(rs.getLong("legacy_lines")>0) flags.add(Finding.ACTIVE_LEGACY_DOCUMENT);
         if(rs.getLong("core_lines")>0) flags.add(Finding.CORE_RECEIPT);
         if(rs.getLong("null_dates")>0) flags.add(Finding.HISTORICAL_VALUE_DATE_MISSING);
@@ -175,7 +198,7 @@ public class FinancialReconciliation {
               select l.id,f.id as receipt_id,concat(f.id_tipo_documento,' ',f.serie,'/',f.numero_documento) as reference,
                 t.codigo_fiscal,f.data_emissao,f.data_valor,f.anulado,r.operation_id,link.allocation_id,
                 l.valor_pagamento_bruto,l.valor_desconto_financeiro,l.valor_pagamento_liquido
-              from documento_comercial d join pendente p on p.id_documento_comercial=d.id
+              from documento_comercial d join pendente p on p.id_documento_comercial=d.id and p.id_cliente=d.id_cliente and p.id_moeda=d.id_moeda
               join linha_documento_financeiro l on l.id_pendente=p.id
               join documento_financeiro f on f.id=l.id_documento_financeiro
               join tipodocumento t on t.id=f.id_tipo_documento
