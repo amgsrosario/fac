@@ -13,7 +13,7 @@ class FinancialReceiptMigrationTests {
         try(var s=c.createStatement();var r=s.executeQuery(sql)) { assertThat(r.next()).isTrue();return r.getString(1); }
     }
     @ParameterizedTest
-    @ValueSource(strings={"19","20","21"})
+    @ValueSource(strings={"19","20","21","22"})
     void upgradePreservesLegacyPrecisionAndLedgerAndSecondStart(String version) throws Exception {
         String url=System.getenv("FAC_TEST_DATASOURCE_URL");assertThat(url).isNotBlank();
         URI u=URI.create(url.substring(5));assertThat(u.getPath()).endsWith("_test");
@@ -53,13 +53,14 @@ class FinancialReceiptMigrationTests {
                     c.commit();before=scalar(c,"select concat_ws('|',valor_pagamento_bruto,valor_desconto_financeiro,atcud,qr_payload) from documento_financeiro where id=1");
                 }
                 var current=Flyway.configure().dataSource(fixture,user,password).cleanDisabled(true).load();
-                assertThat(current.migrate().migrationsExecuted).isEqualTo(22-Integer.parseInt(version));current.validate();
-                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("22");assertThat(current.migrate().migrationsExecuted).isZero();
+                assertThat(current.migrate().migrationsExecuted).isEqualTo(23-Integer.parseInt(version));current.validate();
+                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("23");assertThat(current.migrate().migrationsExecuted).isZero();
                 try(var c=DriverManager.getConnection(fixture,user,password);var s=c.createStatement()) {
                     assertThat(scalar(c,"select concat_ws('|',valor_pagamento_bruto,valor_desconto_financeiro,atcud,qr_payload) from documento_financeiro where id=1")).isEqualTo(before);
                     assertThat(scalar(c,"select available::text from financial_position where id=1")).isEqualTo("100.00");
                     assertThat(scalar(c,"select count(*) from financial_receipt")).isEqualTo("0");
                     assertThat(scalar(c,"select count(*) from pg_trigger where tgname in ('financial_receipt_allocation_sealed','financial_receipt_component_sealed') and not tgdeferrable")).isEqualTo("2");
+                    assertThat(scalar(c,"select data_valor is null from documento_financeiro where id=1")).isEqualTo("t");
                     s.execute("update documento_financeiro set anulado=true where id=1");
                     assertThat(scalar(c,"select anulado::text from documento_financeiro where id=1")).isEqualTo("true");
                 }

@@ -37,7 +37,8 @@ public interface DocumentoFinanceiroMapper {
                 entity.getObservacoes(),
                 entity.isAnulado(),
                 entity.isImpresso(),
-                linhas == null ? List.of() : linhas.stream().map(this::toLinhaDTO).toList()
+                linhas == null ? List.of() : linhas.stream().map(this::toLinhaDTO).toList(),
+                entity.getDataValor()
         );
     }
 

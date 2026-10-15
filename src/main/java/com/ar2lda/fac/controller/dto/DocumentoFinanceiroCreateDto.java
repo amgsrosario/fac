@@ -42,6 +42,10 @@ public record DocumentoFinanceiroCreateDto(
         String observacoes,
 
         @NotEmpty(message = "Documento financeiro deve ter pelo menos uma linha")
-        List<@Valid LinhaDocumentoFinanceiroCreateDto> linhas
+        List<@Valid LinhaDocumentoFinanceiroCreateDto> linhas,
+        LocalDate dataValor
 ) {
+    public DocumentoFinanceiroCreateDto(String tipoDocumentoId, String serie, LocalDate dataEmissao, Long clienteId, String moedaId, String mPagamentoId, OffsetDateTime dataHoraOperacao, String emissorId, String observacoes, List<@Valid LinhaDocumentoFinanceiroCreateDto> linhas) {
+        this(tipoDocumentoId, serie, dataEmissao, clienteId, moedaId, mPagamentoId, dataHoraOperacao, emissorId, observacoes, linhas, null);
+    }
 }

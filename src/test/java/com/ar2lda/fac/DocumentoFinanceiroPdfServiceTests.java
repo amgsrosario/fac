@@ -47,8 +47,10 @@ class DocumentoFinanceiroPdfServiceTests {
         pdfService = new DocumentoFinanceiroPdfService(documentoService, new QrCodeImageService(), fiscalQrService);
     }
 
-    @Test
-    void geraPdfDoReciboComAtcudEQrCodeEMarcaDocumentoComoImpresso() throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullSource
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"2026-06-08"})
+    void geraPdfDoReciboComAtcudEQrCodeEMarcaDocumentoComoImpresso(String valueDate) throws Exception {
         Long documentoId = 29L;
         EmpresaDto empresa = new EmpresaDto(1L, "FAC Lda", "500000000", "Rua da Empresa, 1", null,
                 "3750-001", "Agueda", "PT", null, null, null, null, null,
@@ -61,11 +63,11 @@ class DocumentoFinanceiroPdfServiceTests {
                 new BigDecimal("123.00"), new BigDecimal("123.00"), new BigDecimal("50.00"),
                 BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("50.00"), new BigDecimal("73.00"), "EUR");
         String qrPayload = "A:500000000*B:509999990*C:PT*D:RC*E:N*F:20260609*G:RC 2026/3*H:ABCD1234-3*I1:PT*N:0.00*O:50.00*Q:YhGV*R:9999";
-        DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", null, "2026", 3L,
+        DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", "RC", "2026", 3L,
                 "ABCD1234-3", true, qrPayload,
                 LocalDate.of(2026, 6, 9), "EUR", new BigDecimal("50.00"), BigDecimal.ZERO,
                 new BigDecimal("50.00"), "TFB", OffsetDateTime.parse("2026-06-09T10:00:00Z"), "DEMO",
-                OffsetDateTime.parse("2026-06-09T10:00:00Z"), "Recebimento parcial", false, false, List.of(linha));
+                OffsetDateTime.parse("2026-06-09T10:00:00Z"), "Recebimento parcial", false, false, List.of(linha), valueDate == null ? null : LocalDate.parse(valueDate));
         when(documentoService.getImpressao(documentoId))
                 .thenReturn(new DocumentoFinanceiroImpressaoDto(empresa, cliente, documento));
 
@@ -77,7 +79,8 @@ class DocumentoFinanceiroPdfServiceTests {
         try (PDDocument pdfDocument = Loader.loadPDF(pdf.content())) {
             String text = new PDFTextStripper().getText(pdfDocument);
             assertThat(text).contains("Recibo", "RC 2026/3", "ATCUD");
-            assertThat(text).contains("ABCD1234-3");
+            assertThat(text).contains("ABCD1234-3", "Data Valor");
+            assertThat(text).contains(valueDate == null ? "Não registada" : "08/06/2026");
             assertThat(text).doesNotContain("Versão de demonstração");
         }
         verify(documentoService).marcarComoImpresso(documentoId);
@@ -93,7 +96,7 @@ class DocumentoFinanceiroPdfServiceTests {
         ClienteDto cliente = new ClienteDto(1001L, "Cliente Lda", "Rua do Cliente, 10", null, "Agueda",
                 "509999990", null, null, "cliente@example.pt", null, null, null, false, false, null,
                 "3750-001", "PT", "EUR", "TFB", "P30", "CON", "001");
-        DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", null, "2026", 4L,
+        DocumentoFinanceiroDto documento = new DocumentoFinanceiroDto(documentoId, 1001L, "RC", "XX", "2026", 4L,
                 "ABCD1234-4", true, "QR", LocalDate.of(2026, 6, 10), "EUR", BigDecimal.ZERO,
                 BigDecimal.ZERO, BigDecimal.ZERO, "TFB", OffsetDateTime.parse("2026-06-10T10:00:00Z"), "DEMO",
                 OffsetDateTime.parse("2026-06-10T10:00:00Z"), null, false, false, List.of());
@@ -108,6 +111,7 @@ class DocumentoFinanceiroPdfServiceTests {
         try (PDDocument pdfDocument = Loader.loadPDF(pdf)) {
             String text = new PDFTextStripper().getText(pdfDocument);
             assertThat(text).contains("Recibo", "RC 2026/4", "Versão de demonstração");
+            assertThat(text).doesNotContain("Data Valor");
         }
     }
 }

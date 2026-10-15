@@ -605,4 +605,154 @@ class FinancialReceiptIntegrationTests {
         assertThat(db.queryForObject("select cancelled from financial_position where id=?",Boolean.class,d.position())).isTrue();
     }
 
+
+    DocumentoFinanceiroCreateDto valueRequest(java.time.LocalDate value, List<LinhaDocumentoFinanceiroCreateDto> lines) {
+        var original=request(LocalDate.of(2026,2,1),lines);
+        return new DocumentoFinanceiroCreateDto(original.tipoDocumentoId(),original.serie(),original.dataEmissao(),
+            original.clienteId(),original.moedaId(),original.mPagamentoId(),original.dataHoraOperacao(),
+            original.emissorId(),original.observacoes(),original.linhas(),value);
+    }
+    @Test void valueDateDefaultsAndDoesNotChangeCoreEffectOrLegacyBalance() {
+        var d=debt("100"); var receipt=legacy.create(request(d,"30"));
+        assertThat(receipt.dataValor()).isEqualTo(receipt.dataEmissao());
+        assertThat(core.position(scope(),d.position()).available()).isEqualByComparingTo("100");
+        assertThat(db.queryForObject("select valor_pendente from pendente where id=?",BigDecimal.class,d.pending())).isEqualByComparingTo("70");
+    }
+    @Test void earlierValueDatePersistsAndDueDateIsIndependent() {
+        var d=debt("100");var receipt=legacy.create(valueRequest(LocalDate.of(2026,1,10),List.of(line(d,"30"))));
+        assertThat(receipt.dataValor()).isEqualTo(LocalDate.of(2026,1,10));
+        assertThat(legacy.getById(receipt.id()).dataValor()).isEqualTo(receipt.dataValor());
+    }
+    @Test void multipleDebtsUseLatestOriginAndRejectBeforeNumber() {
+        var a=debt("100");var b=debt("100");
+        db.update("update documento_comercial set data_emissao='2026-01-15' where id=?",b.document());
+        assertThatThrownBy(()->legacy.create(valueRequest(LocalDate.of(2026,1,14),List.of(line(a,"10"),line(b,"10"))))).isInstanceOf(RuntimeException.class);
+        assertThat(numerator()).isZero();
+        assertThat(legacy.create(valueRequest(LocalDate.of(2026,1,15),List.of(line(a,"10"),line(b,"10")))).linhas()).hasSize(2);
+    }
+    @Test void valueDateBeforeDebtOrAfterReceiptIsRejectedWithoutNumber() {
+        var d=debt("100");
+        for(var date:List.of(LocalDate.of(2025,12,31),LocalDate.of(2026,2,2)))
+            assertThatThrownBy(()->legacy.create(valueRequest(date,List.of(line(d,"10"))))).isInstanceOf(RuntimeException.class);
+        assertThat(numerator()).isZero();
+    }
+    @Test void creditorDebtIsRejectedWithoutNumber() {
+        var d=debt("100",false);
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('VCN','Credor',2,1,2,'NC') on conflict do nothing");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador) values('VCN',?,'Teste',0)",serie);
+        db.update("update documento_comercial set id_tipo_documento='VCN' where id=?",d.document());
+        assertThatThrownBy(()->legacy.create(request(d,"10"))).isInstanceOf(RuntimeException.class);
+        assertThat(numerator()).isZero();
+    }
+    @Test void nonFtDebitUsesSameValueDateRule() {
+        var d=debt("100",false);
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('VDN','Debito',2,1,1,'ND') on conflict do nothing");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador) values('VDN',?,'Teste',0)",serie);
+        db.update("update documento_comercial set id_tipo_documento='VDN' where id=?",d.document());
+        assertThat(legacy.create(valueRequest(LocalDate.of(2026,1,10),List.of(line(d,"10")))).dataValor()).isEqualTo(LocalDate.of(2026,1,10));
+    }
+    @Test void emittedValueDateCannotBeEditedBySqlIncludingNull() {
+        var d=debt("100");var r=legacy.create(request(d,"10"));
+        assertThatThrownBy(()->db.update("update documento_financeiro set data_valor=null where id=?",r.id())).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(()->db.update("update documento_financeiro set data_valor='2026-01-15' where id=?",r.id())).isInstanceOf(RuntimeException.class);
+        assertThat(legacy.getById(r.id()).dataValor()).isEqualTo(r.dataEmissao());
+    }
+    @Test void internalValueDateReplayAndOperationalEffectRemainSeparate() {
+        var d=debt("100");var k=key();var req=valueRequest(LocalDate.of(2026,1,10),List.of(line(d,"20")));
+        var r=issuer.issue(k,req);assertThat(issuer.issue(k,req).id()).isEqualTo(r.id());
+        long op=db.queryForObject("select operation_id from financial_receipt where document_id=?",Long.class,r.id());
+        assertThat(queries.operation(scope(),op).financialEffectDate()).contains(r.dataEmissao());
+        assertThatThrownBy(()->issuer.issue(k,valueRequest(LocalDate.of(2026,1,11),List.of(line(d,"20"))))).isInstanceOf(RuntimeException.class);
+        assertThat(projections.inspectCutover().operationalActivationPermitted()).isFalse();
+    }
+
+    @Test void sqlLineWriterCannotBypassValueDateInEitherConstraintMode() {
+        var a=debt("100",false);var b=debt("100",false);
+        db.update("update documento_comercial set data_emissao='2026-01-20' where id=?",b.document());
+        var r=legacy.create(valueRequest(LocalDate.of(2026,1,10),List.of(line(a,"10"))));
+        for(boolean immediate:List.of(false,true)) {
+            var transaction=new org.springframework.transaction.support.TransactionTemplate(tx);
+            assertThatThrownBy(()->transaction.execute(status->{
+                if(immediate) db.execute("SET CONSTRAINTS ALL IMMEDIATE");
+                db.update("update linha_documento_financeiro set id_pendente=? where id_documento_financeiro=?",b.pending(),r.id());
+                db.execute("SET CONSTRAINTS ALL IMMEDIATE");db.execute("SET CONSTRAINTS ALL DEFERRED");
+                return null;
+            })).isInstanceOf(RuntimeException.class);
+        }
+        assertThat(db.queryForObject("select id_pendente from linha_documento_financeiro where id_documento_financeiro=?",Long.class,r.id())).isEqualTo(a.pending());
+    }
+    @Test void sqlHeaderWriterRequiresValueDateAndUpperLimit() {
+        var d=debt("100",false);var r=legacy.create(request(d,"10"));
+        for(String value:List.of("NULL","'2026-02-02'::date"))
+            assertThatThrownBy(()->db.update("""
+                insert into documento_financeiro(id_cliente,id_tipo_documento,serie,numero_documento,data_emissao,id_moeda,
+                  id_mpagamento,id_emissor,valor_pagamento_bruto,valor_pagamento_liquido,data_valor)
+                select id_cliente,id_tipo_documento,serie,numero_documento+100,data_emissao,id_moeda,
+                  id_mpagamento,id_emissor,valor_pagamento_bruto,valor_pagamento_liquido,
+                """+value+" from documento_financeiro where id=?",r.id())).isInstanceOf(RuntimeException.class);
+    }
+    @Test void receiptPreventsChangingOriginChronologyOrNature() {
+        var d=debt("100",false);legacy.create(request(d,"10"));
+        assertThatThrownBy(()->db.update("update documento_comercial set data_emissao='2026-03-01' where id=?",d.document())).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(()->db.update("update tipodocumento set sinal_contabilistico=2 where id='BFT'")).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test void cancelledReceiptRemainsPrintableAfterSourceInvoiceCancellation() {
+        var d=debt("100",false);var receipt=legacy.create(request(d,"10"));
+        legacy.anular(receipt.id());
+        db.update("update documento_comercial set anulado=true,estado='ANULADO' where id=?",d.document());
+        db.update("update documento_financeiro set impresso=true where id=?",receipt.id());
+        assertThat(db.queryForObject("select impresso from documento_financeiro where id=?",Boolean.class,receipt.id())).isTrue();
+    }
+
+    @Test void nonReceiptPreservesLegacyCreditorSettlementAndSqlUpdates() {
+        var d=debt("100",false);
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('VNF','Financeiro nao RC',3,1,1,'XX') on conflict do nothing");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('VNF',?,'Teste',0,'VNFAT','2026-01-01')",serie);
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('VCR','Credor',2,1,2,'NC') on conflict do nothing");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador) values('VCR',?,'Teste',0)",serie);
+        db.update("update documento_comercial set id_tipo_documento='VCR' where id=?",d.document());
+        var req=valueRequest(LocalDate.of(2025,1,1),List.of(line(d,"10")));
+        var nonRc=new DocumentoFinanceiroCreateDto("VNF",serie,req.dataEmissao(),client,"EUR","B1P",null,"B1_EMISSOR",null,req.linhas(),req.dataValor());
+        var r=legacy.create(nonRc);
+        assertThat(r.dataValor()).isNull();
+        assertThat(db.queryForObject("select valor_pendente from pendente where id=?",BigDecimal.class,d.pending())).isEqualByComparingTo("90");
+        db.update("update documento_financeiro set data_valor='2027-01-01' where id=?",r.id());
+        db.update("update documento_financeiro set data_valor='2025-01-01',data_emissao='2025-02-01' where id=?",r.id());
+        db.update("update linha_documento_financeiro set data_documento='2025-01-01' where id_documento_financeiro=?",r.id());
+        db.update("update documento_comercial set data_emissao='2027-01-01' where id=?",d.document());
+        assertThat(db.queryForObject("select data_valor::text from documento_financeiro where id=?",String.class,r.id())).isEqualTo("2025-01-01");
+    }
+    @Test void valuedReceiptPreventsFiscalReclassificationAndRetainsDateGuards() {
+        var d=debt("100",false);var r=legacy.create(request(d,"10"));
+        assertThatThrownBy(()->db.update("update tipodocumento set codigo_fiscal='XX' where id='BRC'"))
+            .hasMessageContaining("Receipt fiscal classification is immutable");
+        assertThat(db.queryForObject("select codigo_fiscal from tipodocumento where id='BRC'",String.class)).isEqualTo("RC");
+        assertThatThrownBy(()->db.update("update documento_financeiro set data_valor=null where id=?",r.id())).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(()->db.update("update documento_comercial set data_emissao='2026-03-01' where id=?",d.document())).isInstanceOf(RuntimeException.class);
+        assertThat(legacy.getById(r.id()).dataValor()).isEqualTo(r.dataEmissao());
+    }
+
+    @Test void valuedNonReceiptCannotBecomeReceiptButUnrelatedReclassificationRemainsAllowed() {
+        var d=debt("100",false);
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('N1F','Nao RC',3,1,2,'XX') on conflict do nothing");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('N1F',?,'Teste',0,'N1FAT','2026-01-01')",serie);
+        var req=request(d,"10");
+        var r=legacy.create(new DocumentoFinanceiroCreateDto("N1F",serie,req.dataEmissao(),client,"EUR","B1P",null,"B1_EMISSOR",null,req.linhas()));
+        assertThat(r.dataValor()).isNull();
+        // Non-RC SQL writes of this field remain legal: this is not an impossible RC fixture.
+        db.update("update documento_financeiro set data_valor='2026-01-15' where id=?",r.id());
+        assertThatThrownBy(()->db.update("update tipodocumento set codigo_fiscal='RC' where id='N1F'"))
+            .hasMessageContaining("Receipt fiscal classification is immutable");
+        db.update("update tipodocumento set codigo_fiscal='YY' where id='N1F'");
+        assertThat(db.queryForObject("select codigo_fiscal from tipodocumento where id='N1F'",String.class)).isEqualTo("YY");
+    }
+
+    @Test void fiscalReclassificationWithoutValuedDocumentsRemainsAllowed() {
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('N1U','Sem documentos',3,1,2,'XX') on conflict do nothing");
+        db.update("update tipodocumento set codigo_fiscal='RC' where id='N1U'");
+        db.update("update tipodocumento set codigo_fiscal='XX' where id='N1U'");
+        assertThat(db.queryForObject("select codigo_fiscal from tipodocumento where id='N1U'",String.class)).isEqualTo("XX");
+    }
+
 }

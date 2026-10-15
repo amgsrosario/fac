@@ -2400,6 +2400,7 @@ class DocumentoComercialControllerTests {
                                 """.formatted(dataEmissao, cliente.getId(), mPagamento.getId(), dataEmissao, pendente.getId())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.tipoDocumentoId").value("RCB"))
+                .andExpect(jsonPath("$.dataValor").value(dataEmissao.toString()))
                 .andExpect(jsonPath("$.numeroDocumento").value(1))
                 .andExpect(jsonPath("$.atcud").value(atcudDocumentoFinanceiro))
                 .andExpect(jsonPath("$.valorPagamentoBruto").value(10.000000))
@@ -2782,6 +2783,7 @@ class DocumentoComercialControllerTests {
         documento.setSerie("A");
         documento.setNumeroDocumento(numero);
         documento.setDataEmissao(dataEmissao);
+        documento.setDataValor(dataEmissao);
         documento.setMoeda(moedaRepository.findById("EUR").orElseThrow());
         documento.setValorPagamentoBruto(BigDecimal.valueOf(numero));
         documento.setValorDescontoFinanceiro(BigDecimal.ZERO);
@@ -2876,6 +2878,7 @@ class DocumentoComercialControllerTests {
             documento.setSerie("A");
             documento.setNumeroDocumento(10_000L + index);
             documento.setDataEmissao(data);
+            documento.setDataValor(data);
             documento.setMoeda(moeda);
             documento.setValorPagamentoBruto(BigDecimal.valueOf(index));
             documento.setValorDescontoFinanceiro(BigDecimal.ZERO);

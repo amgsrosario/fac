@@ -93,6 +93,7 @@ public class DocumentoFinanceiroService {
                     Pendente pending = findPendente(id);
                     validatePendente(cliente, moeda, pending);
                     circuitGuard.requireLegacyEligible(id);
+                    if ("RC".equals(tipoDocumento.getCodigoFiscal())) ReceiptValueDate.validate(dto, pending);
                 });
 
         DocumentoFinanceiro documento = new DocumentoFinanceiro();
@@ -106,6 +107,7 @@ public class DocumentoFinanceiroService {
                 atcudService.gerar(numeracao.codigoValidacaoAt(), numeracao.numeroSequencial())
         );
         documento.setDataEmissao(dto.dataEmissao());
+        documento.setDataValor("RC".equals(tipoDocumento.getCodigoFiscal()) ? ReceiptValueDate.effective(dto) : null);
         documento.setMoeda(moeda);
         documento.setMPagamento(mPagamento);
         documento.setDataHoraOperacao(dto.dataHoraOperacao() != null ? dto.dataHoraOperacao() : OffsetDateTime.now());
@@ -168,6 +170,7 @@ public class DocumentoFinanceiroService {
         return sort;
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public DocumentoFinanceiroDto getById(Long id) {
         return toDTO(findDocumento(id));
     }

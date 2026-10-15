@@ -65,6 +65,9 @@ public class DocumentoFinanceiro {
     @Column(nullable = false)
     private LocalDate dataEmissao;
 
+    @Column(name = "data_valor")
+    private LocalDate dataValor;
+
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_moeda", nullable = false)
     private Moeda moeda;
