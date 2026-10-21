@@ -341,7 +341,7 @@ A recomendação não é decisão: PO decide âmbito, temporalidade FT, polític
 históricos, eventual migração/perímetro e corte/reversão, após análise própria.
 
 
-## Fatia 1c — diagnóstico interno autorizado, implementação local
+## Fatia 1c — diagnóstico interno integrado pelo PR #30
 
 Após integração documental PR #29 (f06c09d), PO autorizou a opção 1c-B:
 diagnóstico de comparação FT/RC apenas de leitura. FinancialReconciliation
@@ -350,6 +350,46 @@ contabilístico e torna explícita cobertura incompleta/histórica. Não corrige
 não escolhe temporalidade FT nem transfere autoridade financeira. O diagnóstico
 recusa outro contexto empresarial que não o singleton 1 do modelo documental.
 Valores ausentes não são zero; totais referem apenas subconjunto comparável.
-Implementação local sujeita à revisão independente Claude, sem publicação.
-[Contrato, evidência e solicitação de revisão](../fiscal/op22-b2-2/SLICE1C_VALIDATION.md).
+Integrada pelo PR #30, merge cf0561562d74ddd3e84786c66ab2a78409811229,
+incluindo 279b702 e e9bc4a943008a1652dd822656070abde61bd7096; ancestralidade
+confirmada no Git local. Pareceres Claude arquivados e lidos, de 15-10-2026:
+revisão inicial com dois MINOR e verificação final de e9bc4a9 APPROVE, 0/0/0,
+ambos resolvidos; análise estática, sem execução própria de testes pelo revisor.
+[Referências e hashes](OPERATIONAL_STATE.md#fatia-1c--diagnóstico-interno-integrado-pelo-pr-30).
+Não se declara nova consulta de CI. [Contrato e evidência histórica](../fiscal/op22-b2-2/SLICE1C_VALIDATION.md)
+conservam o contexto das entregas anteriores à integração.
 Legado, saldos/extractos, demo e circuito RC novo continuam inalterados/inactivo.
+
+## Fatia 1d — aceitação institucional do diagnóstico, 21-10-2026
+
+O Product Owner aceitou formalmente a Fatia 1d como diagnóstico de prontidão
+concluído em 21-10-2026, por decisão expressa comunicada na ordem do Executivo II
+«OP22 — Fatia 1d | Registo institucional da aceitação».
+[Texto da decisão disponibilizada, transcrito literalmente](records/2026-10-21-slice1d-po-acceptance.md).
+Resultado mantido:
+**FinancialCore não pronto para transição operacional**. Esta aceitação não
+aprova cutover, deployment ou desenvolvimento seguinte. **Fatia 1e suspensa**.
+Este registo está preparado localmente para revisão, ainda sem publicação/integração.
+
+Evidência da base cf05615/PR #30: 142 testes financeiros + 2 comerciais = 144,
+11 cenários e package aprovados na execução anterior, em PostgreSQL descartável.
+Não é suite integral nem novo CI; não houve repetição dos testes neste registo.
+Os 16 artefactos foram preservados, sem alterar originais, em arquivo externo
+reservado Relatorios-AR2/TUULI/Arquivo-Reservado/OP22-Fatia1d, com manifesto de
+nomes/tamanhos/SHA-256. O parecer Claude de 21-10-2026 foi **GO COM RESERVAS**
+para fecho institucional, por leitura das evidências, sem executar testes.
+[Estado, fontes exactas e gates](OPERATIONAL_STATE.md#fatia-1d--diagnóstico-concluído-e-aceite-pelo-po-em-21-10-2026).
+A referência documental autónoma à autorização original 1d permanece pendente;
+não inventar fonte nem confundir a aceitação actual com essa autorização original.
+
+Lição institucional: igualdade de saldos correntes não prova reconciliação histórica
+ou prontidão; NULL não significa zero e indicadores sobrepostos não são parcelas
+aditivas. Diferenças esperadas entre circuitos não sincronizados não demonstram
+por si sós erro contabilístico. O legado mantém autoridade operacional e o RC
+novo permanece inactivo até decisão e corte coordenado próprios.
+
+Permanecem os três BLOCKER de transição (autoridade/leitores, perímetro de dados,
+fiscalidade/contrato público) e três MAJOR (cobertura histórica, cobertura funcional,
+reversibilidade operacional). Aceitar o diagnóstico não resolve esses gates,
+a temporalidade FT ou decisões arquitectónicas/fiscais pendentes; não autoriza
+alterar dados, demo, emissores, consumidores ou extractos.

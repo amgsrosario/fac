@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-15, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-21, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD produtivo observado no fecho Fatias 1a/1b: `2a0f8b08f9d79715dd4cd93a5888b9e6e79773eb`, merge do PR #28, confirmado localmente após fetch manual do Product Owner e pela API GitHub; não é referência auto-actualizada.
+- HEAD produtivo observado neste registo: `cf0561562d74ddd3e84786c66ab2a78409811229`, merge do PR #30, confirmado na referência local `origin/feature/visual-redesign`. Sem fetch ou consulta nova ao GitHub neste registo; não é referência auto-actualizada.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -414,7 +414,7 @@ Legado é a única autoridade operacional de liquidações/saldos/extractos. Ori
 FT existente não equivale a activação do novo circuito RC. Sem cutover, bases/demo
 inalteradas; demo Ubuntu ainda por verificar antes de qualquer actualização.
 
-## Fatia 1c — diagnóstico autorizado, implementação local
+## Fatia 1c — diagnóstico interno integrado pelo PR #30
 
 [Proposta técnica com alternativas e critérios](../fiscal/op22-b2-2/SLICE1C_PROPOSAL.md).
 Recomendação: diagnóstico interno paginado de reconciliação FT/RC, só leitura.
@@ -424,20 +424,105 @@ não foram autorizadas. Base documental PR #29 integrada em f06c09d.
 Continuam reservados: efeito temporal FT, tratamento factual de dinheiro real,
 RC NULL/perímetro de dados, consumidores, chave pública/permissões, validação
 fiscal e plano explícito de activação/reversão de corte. Igualdade de saldos ou
-contadores a zero não autoriza activação. Publicação da Fatia 1c não autorizada.
+contadores a zero não autoriza activação. A integração posterior está confirmada abaixo.
 
 
-FinancialReconciliation implementado localmente na branch
-codex/financial-reconciliation-slice1c, worktree isolada. Leitura paginada por
-cliente/documento, resumo apenas de observações comparáveis e evidência paginada.
+FinancialReconciliation integrado pelo PR #30 em feature/visual-redesign, merge
+cf0561562d74ddd3e84786c66ab2a78409811229, incluindo 279b702 e
+e9bc4a943008a1652dd822656070abde61bd7096; ancestralidade confirmada no Git local.
+Leitura paginada por cliente/documento, resumo apenas de observações comparáveis e evidência paginada.
 Sem migration ou chamadores operacionais. Ausência de saldo não vira zero;
 comparabilidade corrente não certifica história nem autoriza activação.
 [Contrato, testes e limites](../fiscal/op22-b2-2/SLICE1C_VALIDATION.md).
-Revisão Claude solicitada para execução externa, ainda pendente; sem PR/publicação.
-Não se declara revisão do implementador como independente. Legado permanece
-única autoridade operacional; consumidores, FinancialCore RC e demo não activados.
+A solicitação de revisão e o estado local descritos na evidência histórica
+referem-se à entrega anterior à integração. Os pareceres Claude arquivados de
+15-10-2026 foram agora lidos: revisão de 279b702, APPROVE WITH CONDITIONS
+(0 BLOCKER / 0 MAJOR / 2 MINOR); verificação final de e9bc4a9, APPROVE
+(0 BLOCKER / 0 MAJOR / 0 MINOR), com ambos os findings resolvidos. Revisões
+estáticas, sem execução própria de testes pelo revisor; não é nova revisão Codex
+nem consulta de CI. Referências externas textuais, relativas ao arquivo
+`Relatorios-AR2/TUULI/` (não distribuído no repositório):
 
-Validação final 1c: 135 testes dirigidos aprovados, zero falhas/erros/ignorados,
+| Parecer arquivado | SHA-256 |
+| --- | --- |
+| `2026-10-15_OP22-B2.2_revisao-Fatia1c.txt` | `36194f0fb71f9cd90714b5aee3aa5c9f344b6c90bddc8c7421a8ba4fa361e844` |
+| `2026-10-15_OP22-B2.2_verificacao-final-Fatia1c.txt` | `ca237f05fa878a15042653202ce70784828c42e074d8cf48e6391896372dee76` |
+
+Legado permanece única autoridade operacional; consumidores, FinancialCore RC e
+demo não activados.
+
+Validação da fase original 1c: 135 testes dirigidos aprovados, zero falhas/erros/ignorados,
 com PostgreSQL 16.3 descartável e package BUILD SUCCESS. Inclui 15 testes novos do
 diagnóstico, regressão financeira/safety e upgrades até V24/segundo arranque.
-Não equivale à suite integral da aplicação ou a CI. Revisão Claude continua pendente.
+Complemento e9bc4a9: 142 testes aprovados, incluindo 22 do diagnóstico. Fases
+sobrepostas, não somar como testes distintos. Não equivale à suite integral
+da aplicação ou a novo CI. O estado de revisão pendente dos relatos originais
+não descreve o estado de publicação/inclusão Git actual.
+
+
+## Fatia 1d — diagnóstico concluído e aceite pelo PO em 21-10-2026
+
+**ACEITE como diagnóstico de prontidão; resultado: NÃO PRONTO PARA TRANSIÇÃO.**
+A aceitação formal foi comunicada pelo Executivo II, por decisão expressa da
+Administração AR2/PO, na ordem «OP22 — Fatia 1d | Registo institucional da aceitação»
+de 21-10-2026. [Transcrição literal da decisão efectivamente disponibilizada](records/2026-10-21-slice1d-po-acceptance.md),
+SHA-256 `5ab32f4de2708019f62b4836438b90fc4685b95020a61c4980b39d31b1433708`; este registo
+preserva a proveniência da mensagem e distingue aceitação da autorização inicial.
+Este registo documental está preparado localmente para revisão
+independente; a sua publicação e integração ainda não foram efectuadas.
+A aceitação do diagnóstico não constitui autorização de desenvolvimento ou corte.
+
+Base da evidência: cf05615, PR #30. Validação anterior em PostgreSQL 16.3 descartável:
+**142 testes financeiros + 2 comerciais = 144**, zero falhas/erros/ignorados,
+**11 cenários de diagnóstico** e package BUILD SUCCESS. O TSV original conta
+apenas os 142 financeiros; os 2 comerciais constam do respectivo XML/log.
+Fixtures sintéticos distinguem-se dos emissores reais, conforme o relatório.
+Não é suite integral da aplicação nem novo CI; nenhum teste foi repetido neste registo.
+
+### Fontes preservadas e reservas documentais
+
+Arquivo externo reservado: `Relatorios-AR2/TUULI/`. Os caminhos abaixo são
+referências textuais relativas a esse arquivo, não ligações do repositório nem
+caminhos pessoais de uma máquina. Os ficheiros não são distribuídos com o checkout;
+a localização física do arquivo é gerida pelo Product Owner.
+
+| Referência no arquivo | SHA-256 |
+| --- | --- |
+| `Arquivo-Reservado/OP22-Fatia1d/REPORT.md` | `1ba82ee5668f482956cf22be7d8038de4a469a418493b3f5652b6d90b71fa590` |
+| `Arquivo-Reservado/OP22-Fatia1d/MANIFEST_SHA256.tsv` | `0881ff79bea7f9f08c280fb250d4fc945067e26a0a45cb8df8c3908258601d97` |
+| `2026-10-21_OP22_Fatia1d_revisao-independente_Claude.md` | `acdb549cb69ec6d6671be6c3e235edd8e4ac0cda0cad2a21c916ebf426bbfbb1` |
+| `2026-10-21_OP22_Fatia1d_preparacao-fecho_Codex.md` | `9f340f378dfaf22d82199e458a55ca862f4c2a25c57400ef2347ac5431c7ae83` |
+
+O manifesto identifica 16 artefactos, 708.855 bytes, nomes/tamanhos/SHA-256 e
+identidade origem/cópia; é adicional aos 16 ficheiros, originais preservados.
+O parecer Claude de 21-10-2026 é **GO COM RESERVAS para fecho institucional**,
+sem executar testes nem autorizar activação. A preparação do fecho é uma fotografia
+anterior à aceitação; a indicação «aceitação pendente» nesse documento é superada
+pela decisão PO transcrita, sem alterar o artefacto de preparação.
+
+RES-1: evidência preservada fora de target, com SHA-256. RES-3: total 142 + 2
+explicitado, sem alterar o TSV original. RES-2: âmbito e resultado registados aqui,
+mas permanece **pendência documental da referência autónoma à autorização original
+1d**. Não foi identificada fonte arquivada verificável; não reconstruir a ordem
+por inferência nem confundi-la com a actual ordem de aceitação. Não declarar
+eliminadas todas as reservas enquanto essa referência não for regularizada.
+Os hashes demonstram identidade na preservação/verificação, não prova retrospectiva
+integral de imutabilidade desde a execução de 15-10-2026.
+
+### Bloqueios de transição que permanecem abertos
+
+| Gravidade | Gate remanescente |
+| --- | --- |
+| BLOCKER | Autoridade e leitores: preparar corte coordenado de escrita, leitura e anulação |
+| BLOCKER | Perímetro de dados/históricos e verificação da demo Ubuntu/Flyway antes de actualizar |
+| BLOCKER | Validação fiscal/documental e contrato público, incluindo permissões/chave idempotente |
+| MAJOR | Cobertura histórica: temporalidade da FT anulada e limitações RC com Data Valor NULL |
+| MAJOR | Cobertura funcional: dinheiro recebido na anulação, descontos, não-EUR e outros tipos |
+| MAJOR | Reversibilidade operacional após novas escritas do núcleo; retorno ao legado não ensaiado |
+
+São gates de transição, não testes falhados nem impedimentos à aceitação do diagnóstico.
+O novo circuito RC permanece inactivo. O legado permanece a única autoridade operacional de liquidações/saldos/extractos;
+originação FT integrada não equivale a activação do novo circuito RC. Sem cutover,
+actualização de demo, migração ou alteração de bases. **Fatia 1e SUSPENSA**, sem
+início autorizado. Recomendações anteriores para a próxima implementação não são
+decisões de produto nem autorização de execução; novas etapas exigem ordem própria.
