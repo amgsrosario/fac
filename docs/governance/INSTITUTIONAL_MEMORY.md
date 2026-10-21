@@ -352,8 +352,11 @@ recusa outro contexto empresarial que não o singleton 1 do modelo documental.
 Valores ausentes não são zero; totais referem apenas subconjunto comparável.
 Integrada pelo PR #30, merge cf0561562d74ddd3e84786c66ab2a78409811229,
 incluindo 279b702 e e9bc4a943008a1652dd822656070abde61bd7096; ancestralidade
-confirmada no Git local. Não se declara consulta nova de CI nem revisão da
-implementação neste registo. [Contrato e evidência histórica](../fiscal/op22-b2-2/SLICE1C_VALIDATION.md)
+confirmada no Git local. Pareceres Claude arquivados e lidos, de 15-10-2026:
+revisão inicial com dois MINOR e verificação final de e9bc4a9 APPROVE, 0/0/0,
+ambos resolvidos; análise estática, sem execução própria de testes pelo revisor.
+[Referências e hashes](OPERATIONAL_STATE.md#fatia-1c--diagnóstico-interno-integrado-pelo-pr-30).
+Não se declara nova consulta de CI. [Contrato e evidência histórica](../fiscal/op22-b2-2/SLICE1C_VALIDATION.md)
 conservam o contexto das entregas anteriores à integração.
 Legado, saldos/extractos, demo e circuito RC novo continuam inalterados/inactivo.
 
@@ -361,7 +364,9 @@ Legado, saldos/extractos, demo e circuito RC novo continuam inalterados/inactivo
 
 O Product Owner aceitou formalmente a Fatia 1d como diagnóstico de prontidão
 concluído em 21-10-2026, por decisão expressa comunicada na ordem do Executivo II
-«OP22 — Fatia 1d | Registo institucional da aceitação». Resultado mantido:
+«OP22 — Fatia 1d | Registo institucional da aceitação».
+[Texto da decisão disponibilizada, transcrito literalmente](records/2026-10-21-slice1d-po-acceptance.md).
+Resultado mantido:
 **FinancialCore não pronto para transição operacional**. Esta aceitação não
 aprova cutover, deployment ou desenvolvimento seguinte. **Fatia 1e suspensa**.
 Este registo está preparado localmente para revisão, ainda sem publicação/integração.

@@ -435,9 +435,21 @@ Sem migration ou chamadores operacionais. Ausência de saldo não vira zero;
 comparabilidade corrente não certifica história nem autoriza activação.
 [Contrato, testes e limites](../fiscal/op22-b2-2/SLICE1C_VALIDATION.md).
 A solicitação de revisão e o estado local descritos na evidência histórica
-referem-se à entrega anterior à integração. Não se declara nova consulta de CI
-ou revisão da implementação neste registo. Legado permanece
-única autoridade operacional; consumidores, FinancialCore RC e demo não activados.
+referem-se à entrega anterior à integração. Os pareceres Claude arquivados de
+15-10-2026 foram agora lidos: revisão de 279b702, APPROVE WITH CONDITIONS
+(0 BLOCKER / 0 MAJOR / 2 MINOR); verificação final de e9bc4a9, APPROVE
+(0 BLOCKER / 0 MAJOR / 0 MINOR), com ambos os findings resolvidos. Revisões
+estáticas, sem execução própria de testes pelo revisor; não é nova revisão Codex
+nem consulta de CI. Referências externas textuais, relativas ao arquivo
+`Relatorios-AR2/TUULI/` (não distribuído no repositório):
+
+| Parecer arquivado | SHA-256 |
+| --- | --- |
+| `2026-10-15_OP22-B2.2_revisao-Fatia1c.txt` | `36194f0fb71f9cd90714b5aee3aa5c9f344b6c90bddc8c7421a8ba4fa361e844` |
+| `2026-10-15_OP22-B2.2_verificacao-final-Fatia1c.txt` | `ca237f05fa878a15042653202ce70784828c42e074d8cf48e6391896372dee76` |
+
+Legado permanece única autoridade operacional; consumidores, FinancialCore RC e
+demo não activados.
 
 Validação da fase original 1c: 135 testes dirigidos aprovados, zero falhas/erros/ignorados,
 com PostgreSQL 16.3 descartável e package BUILD SUCCESS. Inclui 15 testes novos do
@@ -453,7 +465,10 @@ não descreve o estado de publicação/inclusão Git actual.
 **ACEITE como diagnóstico de prontidão; resultado: NÃO PRONTO PARA TRANSIÇÃO.**
 A aceitação formal foi comunicada pelo Executivo II, por decisão expressa da
 Administração AR2/PO, na ordem «OP22 — Fatia 1d | Registo institucional da aceitação»
-de 21-10-2026. Este registo documental está preparado localmente para revisão
+de 21-10-2026. [Transcrição literal da decisão efectivamente disponibilizada](records/2026-10-21-slice1d-po-acceptance.md),
+SHA-256 `5ab32f4de2708019f62b4836438b90fc4685b95020a61c4980b39d31b1433708`; este registo
+preserva a proveniência da mensagem e distingue aceitação da autorização inicial.
+Este registo documental está preparado localmente para revisão
 independente; a sua publicação e integração ainda não foram efectuadas.
 A aceitação do diagnóstico não constitui autorização de desenvolvimento ou corte.
 
@@ -466,18 +481,24 @@ Não é suite integral da aplicação nem novo CI; nenhum teste foi repetido nes
 
 ### Fontes preservadas e reservas documentais
 
-Arquivo externo reservado, não distribuído com o checkout:
-`/mnt/c/Users/arosario/Documents/Relatorios-AR2/TUULI/Arquivo-Reservado/OP22-Fatia1d/`.
+Arquivo externo reservado: `Relatorios-AR2/TUULI/`. Os caminhos abaixo são
+referências textuais relativas a esse arquivo, não ligações do repositório nem
+caminhos pessoais de uma máquina. Os ficheiros não são distribuídos com o checkout;
+a localização física do arquivo é gerida pelo Product Owner.
 
-- [Relatório técnico arquivado](/mnt/c/Users/arosario/Documents/Relatorios-AR2/TUULI/Arquivo-Reservado/OP22-Fatia1d/REPORT.md).
-- [Manifesto de preservação](/mnt/c/Users/arosario/Documents/Relatorios-AR2/TUULI/Arquivo-Reservado/OP22-Fatia1d/MANIFEST_SHA256.tsv):
-  16 artefactos, 708.855 bytes, nomes/tamanhos/SHA-256 e identidade origem/cópia;
-  manifesto adicional aos 16 ficheiros, originais preservados.
-- [Parecer independente Claude, 21-10-2026](/mnt/c/Users/arosario/Documents/Relatorios-AR2/TUULI/2026-10-21_OP22_Fatia1d_revisao-independente_Claude.md):
-  **GO COM RESERVAS para fecho institucional**, sem executar testes nem autorizar activação.
-- [Preparação do fecho](/mnt/c/Users/arosario/Documents/Relatorios-AR2/TUULI/2026-10-21_OP22_Fatia1d_preparacao-fecho_Codex.md):
-  fotografia anterior à aceitação; a indicação «aceitação pendente» nesse documento
-  é superada pela decisão PO acima, sem alterar o artefacto de preparação.
+| Referência no arquivo | SHA-256 |
+| --- | --- |
+| `Arquivo-Reservado/OP22-Fatia1d/REPORT.md` | `1ba82ee5668f482956cf22be7d8038de4a469a418493b3f5652b6d90b71fa590` |
+| `Arquivo-Reservado/OP22-Fatia1d/MANIFEST_SHA256.tsv` | `0881ff79bea7f9f08c280fb250d4fc945067e26a0a45cb8df8c3908258601d97` |
+| `2026-10-21_OP22_Fatia1d_revisao-independente_Claude.md` | `acdb549cb69ec6d6671be6c3e235edd8e4ac0cda0cad2a21c916ebf426bbfbb1` |
+| `2026-10-21_OP22_Fatia1d_preparacao-fecho_Codex.md` | `9f340f378dfaf22d82199e458a55ca862f4c2a25c57400ef2347ac5431c7ae83` |
+
+O manifesto identifica 16 artefactos, 708.855 bytes, nomes/tamanhos/SHA-256 e
+identidade origem/cópia; é adicional aos 16 ficheiros, originais preservados.
+O parecer Claude de 21-10-2026 é **GO COM RESERVAS para fecho institucional**,
+sem executar testes nem autorizar activação. A preparação do fecho é uma fotografia
+anterior à aceitação; a indicação «aceitação pendente» nesse documento é superada
+pela decisão PO transcrita, sem alterar o artefacto de preparação.
 
 RES-1: evidência preservada fora de target, com SHA-256. RES-3: total 142 + 2
 explicitado, sem alterar o TSV original. RES-2: âmbito e resultado registados aqui,
