@@ -32,11 +32,12 @@ class FinancialReceiptMigrationTests {
                     c.commit();before=scalar(c,"select concat_ws('|',valor_pagamento_bruto,valor_desconto_financeiro,atcud,qr_payload) from documento_financeiro where id=1");
                 }
                 var current=Flyway.configure().dataSource(fixture,user,password).cleanDisabled(true).load();
-                assertThat(current.migrate().migrationsExecuted).isEqualTo(24-Integer.parseInt(version));current.validate();
-                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("24");assertThat(current.migrate().migrationsExecuted).isZero();
+                assertThat(current.migrate().migrationsExecuted).isEqualTo(25-Integer.parseInt(version));current.validate();
+                assertThat(current.info().current().getVersion().getVersion()).isEqualTo("25");assertThat(current.migrate().migrationsExecuted).isZero();
                 try(var c=DriverManager.getConnection(fixture,user,password);var s=c.createStatement()) {
                     assertThat(scalar(c,"select concat_ws('|',valor_pagamento_bruto,valor_desconto_financeiro,atcud,qr_payload) from documento_financeiro where id=1")).isEqualTo(before);
                     assertThat(scalar(c,"select available::text from financial_position where id=1")).isEqualTo("100.00");
+                    assertThat(scalar(c,"select configuracao_bloqueada::text from tipodocumento where id='HRC'")).isEqualTo("true");
                     assertThat(scalar(c,"select count(*) from financial_receipt")).isEqualTo(Integer.parseInt(version)>=20?"1":"0");
                     assertThat(scalar(c,"select count(*) from pg_trigger where tgname in ('financial_receipt_allocation_sealed','financial_receipt_component_sealed') and not tgdeferrable")).isEqualTo("2");
                     assertThat(scalar(c,"select data_valor is null from documento_financeiro where id=1")).isEqualTo(version.equals("23")?"f":"t");
@@ -139,7 +140,7 @@ class FinancialReceiptMigrationTests {
                     c.setAutoCommit(false);seed(c,"22");linkedReceipt(c,"22");c.commit();
                 }
                 var flyway=Flyway.configure().dataSource(fixture,user,password).cleanDisabled(true).load();
-                assertThat(flyway.migrate().migrationsExecuted).isEqualTo(2);flyway.validate();
+                assertThat(flyway.migrate().migrationsExecuted).isEqualTo(3);flyway.validate();
                 assertThat(flyway.migrate().migrationsExecuted).isZero();
                 var jdbc=new org.springframework.jdbc.core.JdbcTemplate(new org.springframework.jdbc.datasource.DriverManagerDataSource(fixture,user,password));
                 var queries=new JdbcFinancialQueries(jdbc);var scope=new FinancialCore.Scope(1,1,"EUR");

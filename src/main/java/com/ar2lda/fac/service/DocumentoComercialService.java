@@ -77,6 +77,7 @@ public class DocumentoComercialService {
 
     private final DocumentoComercialRepository documentoRepository;
     private final TipoDocumentoRepository tipoDocumentoRepository;
+    private final TipoDocumentoService tipoDocumentoService;
     private final SerieRepository serieRepository;
     private final ClienteRepository clienteRepository;
     private final EmpresaRepository empresaRepository;
@@ -350,6 +351,7 @@ public class DocumentoComercialService {
     public DocumentoComercialDto emitir(Long id, DocumentoComercialEmitirDto dto) {
         DocumentoComercial documento = findDocumentoForUpdate(id);
         validateRascunho(documento);
+        documento.setTipoDocumento(tipoDocumentoService.lockConfiguration(documento.getTipoDocumento().getId()));
         validateNaoAnulado(documento);
         validateTemLinhas(documento);
         validateDataEmissao(documento);

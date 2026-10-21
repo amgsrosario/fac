@@ -25,7 +25,8 @@ public interface TipoDocumentoMapper {
                 entity.getAreaGestao(),
                 entity.getEntidade(),
                 entity.getSinalContabilistico(),
-                entity.isLiquidacaoImediata()
+                entity.isLiquidacaoImediata(),
+                entity.isConfiguracaoBloqueada()
         );
     }
 
