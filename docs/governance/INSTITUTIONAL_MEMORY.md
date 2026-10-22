@@ -531,5 +531,7 @@ código fiscal, matriz de efeitos ou correspondência RL foi criado em produçã
 A infraestrutura não altera CRUD, leitores ou emissão operacionais. V25/V26 e
 históricos preservados sem backfill. Testes sintéticos demonstram mecanismo,
 não aprovação fiscal. Parecer inicial Claude APROVADO COM RESERVAS recebido;
-observações tratadas localmente, com confirmação dirigida ainda pendente por
-indisponibilidade do revisor neste executor. [Evidência local e pedido de revisão](../fiscal/catalog/VALIDATION.md).
+observações tratadas localmente e confirmação final Claude APROVADO,
+0 BLOCKER / 0 MAJOR / 0 MINOR, sobre e54a967..cb76001. Parecer arquivado lido
+na preparação de integração; revisão estática, sem nova execução de testes
+pelo Revisor. A aprovação não activa o catálogo nem homologa D-CAT-2. [Evidência local e pedido de revisão](../fiscal/catalog/VALIDATION.md).

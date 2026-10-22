@@ -102,13 +102,12 @@ MANIFEST_SHA256.tsv SHA-256:
 6d6574bb3f6307a9278f7b1818878ce200627e55744da81d8e0e2da4dca4a6fc.
 Conserva a falha inicial e as execuções finais, sem reconstruir evidência.
 
-## Revisão cruzada — parecer inicial e confirmação pendente
+## Revisão cruzada — parecer inicial e confirmação final recebida
 
 Parecer inicial Claude sobre e54a967: APROVADO COM RESERVAS, lido no arquivo
 2026-10-22_OP22_V27-catalogo-fiscal_revisao-Claude.md (ver complemento abaixo).
-A confirmação do diff complementar ainda não foi realizada: command -v claude
-e claude.exe não encontram executável, nem há ferramenta Claude exposta.
-Não se declara confirmação independente inexistente.
+A confirmação foi realizada externamente pelo Claude e posteriormente recebida
+e lida; o Executor não a executou no seu ambiente. Ver registo final abaixo.
 Pedido para Claude, exclusivamente leitura:
 
 1. Ler AGENTS, canónicos, ADR-003, FIRST_SLICE e matriz D-CAT-2.
@@ -123,8 +122,8 @@ Pedido para Claude, exclusivamente leitura:
 5. Emitir APPROVE / APPROVE WITH CONDITIONS / REQUEST CHANGES e contagem
    BLOCKER/MAJOR/MINOR. Não corrigir ficheiros nem migrar bases persistentes.
 
-Impedimentos à integração: revisão cruzada e verificações de publicação ainda
-pendentes; não existe CI novo nesta missão. D-CAT-2 bloqueia uma futura validação
+A revisão cruzada foi posteriormente concluída conforme abaixo; verificações
+de publicação permanecem necessárias; não existe CI novo nesta missão. D-CAT-2 bloqueia uma futura validação
 operacional de tipologias, não é falsamente declarada aprovada para esta fundação.
 Sem push, PR, merge ou activação. RC/RL, FinancialCore operacional e 1e inactivos;
 legado única autoridade operacional.
@@ -208,7 +207,27 @@ por gravidade. Não é necessária nova auditoria arquitectónica.
 
 Não foi possível executar/submeter a revisão nesta sessão: Claude/claude.exe
 não encontrados no PATH nem /home/arosario/.local/bin/claude; sem ferramenta Claude.
-Pedido preparado, não enviado a agente de outro modelo. Aguardar confirmação
-independente efectiva antes de push/PR/integração. Não se invocou GitHub nem se
+Pedido preparado, não enviado a agente de outro modelo. À data desse pedido, aguardava-se confirmação
+independente efectiva antes de push/PR/integração; a condição foi posteriormente
+cumprida pelo parecer final abaixo. Não se invocou GitHub nem se
 alterou autenticação para contornar esta condição. Nenhuma nova aprovação
 independente, CI verde ou integração declarada pelo Executor.
+
+
+## Confirmação independente final — aprovação recebida
+
+Parecer Claude de 22-10-2026, lido integralmente:
+2026-10-22_OP22_V27-catalogo-fiscal_confirmacao-final_Claude.md, arquivo externo
+Relatorios-AR2/TUULI, SHA-256
+aab406b66e9ab40a015489860ca0717165db87f392aef75ad7af56ceb95ee431.
+Objecto: e54a967..cb7600194003fbefee4a19849a7b37015fd84035.
+**APROVADO — 0 BLOCKER / 0 MAJOR / 0 MINOR.** RES-1 e SUG-1/SUG-2 resolvidas,
+sem novos bloqueios. Revisão estática; confirmou XML/logs do Executor, sem
+executar testes próprios. Não se substitui o parecer por auto-aprovação Codex.
+
+Commit subsequente apenas documental regista esta aprovação; implementação
+cb76001 preservada. Testes/package não repetidos por ausência de alteração de
+código desde o commit aprovado. Publicação autorizada para feature/visual-redesign;
+CI e protecções devem ser consultados no PR. Nenhum merge ou CI verde presumido.
+Norma central consultada: AI_DEVELOPMENT_SYSTEM.md, AR2-Governance commit local
+6452a11099113de577ee34de4a5e19d9ffff5dbd, reserva a decisão de merge a António.

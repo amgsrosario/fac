@@ -681,7 +681,20 @@ Não somar aos 184 anteriores por sobreposição. V27/V25/V26 inalteradas, ausê
 de backfill e catálogo vazio confirmados; contentor de teste removido.
 [Evidência e pedido de confirmação dirigida](../fiscal/catalog/VALIDATION.md).
 
-A confirmação independente do novo diff ainda não está concluída: Claude
-indisponível neste executor, sem substituição por auto-aprovação. Push/PR/integração
-não iniciados por dependerem dessa confirmação. Nenhum CI novo, deployment,
-activação RC/RL/FinancialCore/1e, alteração de matriz, histórico ou demo.
+Confirmação final Claude recebida e lida: APROVADO, 0 BLOCKER / 0 MAJOR / 0 MINOR,
+para e54a967..cb7600194003fbefee4a19849a7b37015fd84035. Revisão estática com
+confronto da evidência do Executor, sem testes próprios do Revisor.
+A restrição anterior de revisão pendente foi ultrapassada. Publicação autorizada
+na ordem de integração; estado de push/PR/CI deve ser confirmado no GitHub,
+não presumido deste registo pré-publicação. Sem deployment, activação
+RC/RL/FinancialCore/1e, alteração de matriz, histórico ou demo.
+
+
+Parecer final no arquivo Relatorios-AR2/TUULI:
+2026-10-22_OP22_V27-catalogo-fiscal_confirmacao-final_Claude.md, SHA-256
+aab406b66e9ab40a015489860ca0717165db87f392aef75ad7af56ceb95ee431.
+Base remota confirmada pelo conector GitHub na preparação: PR #34,
+3bc2f70c473b0cd6bb5011ba46eb4b0dc382bc7f. Norma central consultada em
+AR2-Governance/AI_DEVELOPMENT_SYSTEM.md, commit local
+6452a11099113de577ee34de4a5e19d9ffff5dbd: decisão de merge reservada a António.
+Nenhuma aprovação CI ou integração é declarada antes de ser comprovada.

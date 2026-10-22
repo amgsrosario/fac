@@ -1,6 +1,6 @@
 # Primeira fatia técnica — fundação inactiva do catálogo
 
-Estado: infraestrutura implementada localmente e testada, pendente de revisão Claude. D-CAT-1/D-CAT-2A/D-CAT-3
+Estado: infraestrutura implementada localmente e testada, com revisão final Claude APROVADO (e54a967..cb76001). D-CAT-1/D-CAT-2A/D-CAT-3
 aprovadas; D-CAT-2 não homologada. Base documental PR #34 + d2ebd0b.
 
 ## Objectivo e perímetro
@@ -66,3 +66,8 @@ e MINOR. Não corrigir ficheiros nem executar migrations em bases persistentes.
 Claude não disponível no executor desta preparação: comando ausente do PATH e
 nenhuma ferramenta Claude exposta. Pedido pronto para envio/execução humana;
 não foi efectivamente entregue a um revisor externo nesta sessão.
+
+
+Confirmação posterior: parecer final Claude recebido e lido em 22-10-2026,
+APROVADO, 0 BLOCKER / 0 MAJOR / 0 MINOR. O pedido acima documenta a preparação
+histórica, não uma revisão ainda pendente. [Registo e proveniência](VALIDATION.md).
