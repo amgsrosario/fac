@@ -428,7 +428,8 @@ A condição demo-base.sql/V25 continua aplicável antes de qualquer actualizaç
 
 O próximo objectivo do plano OB §10 é introduzir o catálogo canónico, depois da
 preservação histórica. O princípio já aprovado não equivale à escolha de modelo:
-OB §11 reserva arquitectura, matriz completa e política ao PO; D-CAT-2A abaixo
+OB §11 reservava arquitectura, matriz completa e política ao PO; D-CAT-1 abaixo
+resolve a escolha de arquitectura. D-CAT-2A abaixo
 aprova parte do modelo conceptual da matriz, sem resolver as restantes reservas. Mantêm-se GOV-ALT-001,
 gate fiscal antecipado para valorização cambial e suspensão 1e; não transformar
 esta sequência de referência numa autorização de desenvolvimento.
@@ -483,5 +484,21 @@ Mantêm-se V25 (imutabilidade da configuração após primeira emissão), V26
 inferida e todos os limites de activação vigentes. A decisão aprova o modelo
 funcional conceptual acima, não a correspondência fiscal RL, valores ainda não
 demonstrados da matriz completa, activação RC/RL, migração/reclassificação histórica
-ou implementação técnica do catálogo. D-CAT-1 (arquitectura) e D-CAT-3
-(versionamento/transição) continuam pendentes de ratificação expressa.
+ou implementação técnica do catálogo. D-CAT-1 foi posteriormente aprovada,
+conforme o registo abaixo; D-CAT-3 (versionamento/transição) permanece pendente.
+
+
+## D-CAT-1 — Arquitectura híbrida governada aprovada
+
+22-10-2026: Administração AR2/PO aprovou expressamente uma definição semântica
+única, versionada e governada do catálogo canónico, materializada em PostgreSQL
+por migrations controladas e utilizada pela aplicação Java, com verificações de
+coerência entre ambas. Não haverá edição livre da semântica fiscal pelos
+utilizadores nem autoridades classificativas independentes.
+
+[ADR-003](decisions/ADR-003-fiscal-catalog.md) conserva fundamento, alternativas
+e limites. Implementa como contrato-alvo a D-CAT-2A, incluindo FT/FR com Código
+Fiscal FT e liquidação posterior/imediata, e RC/RL sem especialização adicional
+de liquidação imediata. RL mantém a correspondência fiscal por confirmar.
+A aprovação da arquitectura não aprova a matriz completa, D-CAT-3, implementação
+ou activação. V25/V26, históricos e autoridade operacional legada preservados.

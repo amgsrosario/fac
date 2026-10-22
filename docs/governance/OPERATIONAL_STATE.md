@@ -568,8 +568,8 @@ decisões de produto nem autorização de execução; novas etapas exigem ordem 
 A sequência de referência OB §10 coloca a introdução do catálogo canónico após
 a preservação histórica, agora protegida para novas emissões por V25/V26.
 O princípio de autoridade do Código Fiscal já foi aprovado em OA §3.A e OB §4;
-a arquitectura concreta (código/persistido/híbrido), a matriz completa de efeitos e a
-política de alterações continuam reservadas ao PO por OB §11, com aprovação
+a matriz completa de efeitos e a política de alterações continuam reservadas
+ao PO por OB §11; a arquitectura foi decidida posteriormente pela D-CAT-1. Há aprovação
 conceptual parcial posterior D-CAT-2A descrita abaixo. O plano não é
 autorização de execução. Não foi demonstrado um incremento seguinte totalmente
 decidido e desbloqueado: o próximo objectivo funcional do plano é o catálogo,
@@ -601,10 +601,29 @@ não presumir equivalência fiscal ou inventar Código Fiscal para RL.
 Próxima preparação D-CAT-2 deve incorporar esta aprovação, sem reapresentar
 o modelo conceptual como indeciso. Permanecem pendentes: confirmação documental
 e validação da correspondência fiscal RL, valores não demonstrados da matriz
-completa (área, Entidade, sinal e efeitos), D-CAT-1 e D-CAT-3. As recomendações
-do relatório anterior sobre arquitectura/versionamento não foram ratificadas.
+completa (área, Entidade, sinal e efeitos) e D-CAT-3. D-CAT-1 foi posteriormente
+ratificada conforme abaixo; a recomendação de versionamento não foi ratificada.
 
 Registo exclusivamente documental. Não altera configurações existentes ou
 comportamentos operacionais, não migra/reclassifica históricos, não enfraquece
 V25/V26 nem autoriza implementação do catálogo. Novo RC e RL não activados;
 FinancialCore RC inactivo, legado autoridade operacional, Fatia 1e suspensa.
+
+
+### D-CAT-1 aprovada — preparação D-CAT-2, sem implementação
+
+Base confirmada neste trabalho: 3bc2f70c473b0cd6bb5011ba46eb4b0dc382bc7f,
+merge PR #34; contém o fecho OP22/OP22-B e D-CAT-2A. Sem novo fetch nesta retoma.
+Arquitectura híbrida governada aprovada em 22-10-2026 pela Administração/PO;
+[decisão e alternativas](decisions/ADR-003-fiscal-catalog.md).
+[Matriz concreta de evidências D-CAT-2](../fiscal/catalog/D-CAT-2_MATRIX.md)
+preparada para decisão; combinações implementadas não são aprovação fiscal.
+O seed demo omite codigo_fiscal e configura RC com liquidacao_imediata=true;
+a UI oferece FR como código fiscal separado. A D-CAT-2A não autoriza corrigir
+retroactivamente estas configurações nem dispensar V25/V26. Não foi inspeccionada
+qualquer base persistente nem alterada a demo.
+
+Pendentes: valores finais da matriz, correspondência fiscal RL e D-CAT-3
+(revisões/transição). Recomendação D-CAT-3 consta da matriz, sem aprovação implícita.
+Não existe código ou migration do catálogo nesta entrega. Legado mantém autoridade
+operacional; novo RC/FinancialCore e RL não activados, Fatia 1e suspensa.
