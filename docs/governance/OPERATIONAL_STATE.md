@@ -568,8 +568,8 @@ decisões de produto nem autorização de execução; novas etapas exigem ordem 
 A sequência de referência OB §10 coloca a introdução do catálogo canónico após
 a preservação histórica, agora protegida para novas emissões por V25/V26.
 O princípio de autoridade do Código Fiscal já foi aprovado em OA §3.A e OB §4;
-a arquitectura concreta (código/persistido/híbrido), a matriz completa de efeitos e a
-política de alterações continuam reservadas ao PO por OB §11, com aprovação
+a matriz completa de efeitos e a política de alterações continuam reservadas
+ao PO por OB §11; a arquitectura foi decidida posteriormente pela D-CAT-1. Há aprovação
 conceptual parcial posterior D-CAT-2A descrita abaixo. O plano não é
 autorização de execução. Não foi demonstrado um incremento seguinte totalmente
 decidido e desbloqueado: o próximo objectivo funcional do plano é o catálogo,
@@ -601,10 +601,100 @@ não presumir equivalência fiscal ou inventar Código Fiscal para RL.
 Próxima preparação D-CAT-2 deve incorporar esta aprovação, sem reapresentar
 o modelo conceptual como indeciso. Permanecem pendentes: confirmação documental
 e validação da correspondência fiscal RL, valores não demonstrados da matriz
-completa (área, Entidade, sinal e efeitos), D-CAT-1 e D-CAT-3. As recomendações
-do relatório anterior sobre arquitectura/versionamento não foram ratificadas.
+completa (área, Entidade, sinal e efeitos). D-CAT-1 e os princípios D-CAT-3
+foram posteriormente aprovados conforme os registos abaixo.
 
 Registo exclusivamente documental. Não altera configurações existentes ou
 comportamentos operacionais, não migra/reclassifica históricos, não enfraquece
 V25/V26 nem autoriza implementação do catálogo. Novo RC e RL não activados;
 FinancialCore RC inactivo, legado autoridade operacional, Fatia 1e suspensa.
+
+
+### D-CAT-1 aprovada — preparação D-CAT-2, sem implementação
+
+Base confirmada neste trabalho: 3bc2f70c473b0cd6bb5011ba46eb4b0dc382bc7f,
+merge PR #34; contém o fecho OP22/OP22-B e D-CAT-2A. Sem novo fetch nesta retoma.
+Arquitectura híbrida governada aprovada em 22-10-2026 pela Administração/PO;
+[decisão e alternativas](decisions/ADR-003-fiscal-catalog.md).
+[Matriz concreta de evidências D-CAT-2](../fiscal/catalog/D-CAT-2_MATRIX.md)
+preparada para decisão; combinações implementadas não são aprovação fiscal.
+O seed demo omite codigo_fiscal e configura RC com liquidacao_imediata=true;
+a UI oferece FR como código fiscal separado. A D-CAT-2A não autoriza corrigir
+retroactivamente estas configurações nem dispensar V25/V26. Não foi inspeccionada
+qualquer base persistente nem alterada a demo.
+
+Pendentes: valores finais da matriz e correspondência fiscal RL. D-CAT-3
+(revisões imutáveis/vínculo estável/transição sem reclassificação automática)
+foi aprovada posteriormente; não permanece uma recomendação por ratificar.
+À data da preparação D-CAT-1 não existia código ou migration do catálogo;
+a execução posterior da fundação inactiva encontra-se abaixo. Legado mantém autoridade
+operacional; novo RC/FinancialCore e RL não activados, Fatia 1e suspensa.
+
+
+### Continuidade D-CAT-2 / D-CAT-3
+
+D-CAT-3 aprovada pela Administração na ordem de continuidade de 22-10-2026;
+[registo canónico](INSTITUTIONAL_MEMORY.md#d-cat-3--revisões-imutáveis-e-transição-histórica-aprovadas).
+Matriz D-CAT-2 preparada com quatro estados separados: decisão funcional, código
+existente, correspondência fiscal demonstrada e reserva material. Não homologada.
+[Especificação da primeira fatia](../fiscal/catalog/FIRST_SLICE.md) delimita
+infraestrutura de revisões sem activação e sem regras materiais não homologadas.
+O catálogo operacional e a validação completa por tipologia dependem da matriz.
+
+Revisão cruzada Claude não realizada: comando claude ausente do PATH e nenhuma
+ferramenta/revisor Claude exposto nesta sessão. Não substituída por revisão Codex.
+Pedido de revisão preparado na especificação para execução externa. A ordem
+invoca AR2-GOV-03; não foi fornecido o seu texto integral nesta missão e este
+registo não inventa cláusulas nem formaliza AR2-GOV-02.
+Legado, V25/V26, históricos e fronteira de activação inalterados; Fatia 1e suspensa.
+
+
+### Primeira fatia do catálogo — implementada localmente, sem activação
+
+Branch codex/fiscal-catalog-dcat1, sequência d2ebd0b → 79766bc preservada.
+V27 e leitor FiscalCatalog acrescentados; revisões e vínculos protegidos em SQL.
+Manifesto vazio, nenhum backfill, nenhum chamador operacional ou endpoint novo.
+Na base descartável de regressão, após testes: schema 27, zero definições e
+zero tipos vinculados. Fixtures sintéticos de outra base de teste foram removidos
+com essa base. Não equivale a catálogo fiscal operacional homologado.
+
+Validação: 184 testes distintos, zero falhas/erros/ignorados, PostgreSQL 16.3
+descartável e package BUILD SUCCESS; detalhes/fases em [VALIDATION](../fiscal/catalog/VALIDATION.md).
+Evidência arquivada fora de target. Parecer inicial Claude APROVADO COM RESERVAS
+recebido e lido; resolução complementar e confirmação pendente abaixo. Nenhum CI consultado. Sem publicação
+ou merge. V25/V26, legado, saldos, extractos e demo inalterados; RC/RL e
+FinancialCore operacional não activados, Fatia 1e suspensa. D-CAT-2 continua
+pendente de homologação para validação material por tipologia.
+
+
+### V27 — resolução local das reservas de revisão
+
+Parecer Claude de 22-10-2026 sobre e54a967, APROVADO COM RESERVAS, lido no
+arquivo TUULI. RES-1: 74 testes comerciais/CRUD adicionais aprovados. SUG-1:
+manifesto deixa de ser lido no construtor; validação integral na utilização
+explícita dos três métodos, falhando em fechado sem fallback. SUG-2: comentário
+jsonb corrigido e igualdade numérica com escalas distintas testada.
+
+Validação complementar: 147 testes distintos (31 dirigidos + 116 regressão/upgrade),
+zero falhas/erros/ignorados e package BUILD SUCCESS, em PostgreSQL 16.3 descartável.
+Não somar aos 184 anteriores por sobreposição. V27/V25/V26 inalteradas, ausência
+de backfill e catálogo vazio confirmados; contentor de teste removido.
+[Evidência e pedido de confirmação dirigida](../fiscal/catalog/VALIDATION.md).
+
+Confirmação final Claude recebida e lida: APROVADO, 0 BLOCKER / 0 MAJOR / 0 MINOR,
+para e54a967..cb7600194003fbefee4a19849a7b37015fd84035. Revisão estática com
+confronto da evidência do Executor, sem testes próprios do Revisor.
+A restrição anterior de revisão pendente foi ultrapassada. Publicação autorizada
+na ordem de integração; estado de push/PR/CI deve ser confirmado no GitHub,
+não presumido deste registo pré-publicação. Sem deployment, activação
+RC/RL/FinancialCore/1e, alteração de matriz, histórico ou demo.
+
+
+Parecer final no arquivo Relatorios-AR2/TUULI:
+2026-10-22_OP22_V27-catalogo-fiscal_confirmacao-final_Claude.md, SHA-256
+aab406b66e9ab40a015489860ca0717165db87f392aef75ad7af56ceb95ee431.
+Base remota confirmada pelo conector GitHub na preparação: PR #34,
+3bc2f70c473b0cd6bb5011ba46eb4b0dc382bc7f. Norma central consultada em
+AR2-Governance/AI_DEVELOPMENT_SYSTEM.md, commit local
+6452a11099113de577ee34de4a5e19d9ffff5dbd: decisão de merge reservada a António.
+Nenhuma aprovação CI ou integração é declarada antes de ser comprovada.
