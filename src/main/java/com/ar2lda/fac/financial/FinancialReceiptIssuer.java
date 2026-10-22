@@ -32,7 +32,7 @@ public class FinancialReceiptIssuer {
     private final LinhaDocumentoFinanceiroRepository lines;
     private final PendenteRepository pendings;
     private final ClienteRepository clients;
-    private final TipoDocumentoRepository types;
+    private final TipoDocumentoService typeConfiguration;
     private final MoedaRepository currencies;
     private final MPagamentoRepository payments;
     private final EmpresaRepository companies;
@@ -82,7 +82,7 @@ public class FinancialReceiptIssuer {
             return response(((Number)replay.getFirst().get("document_id")).longValue());
         }
         var client=clients.findById(dto.clienteId()).orElseThrow(()->new BadRequestException("Unknown customer"));
-        var type=types.findById(dto.tipoDocumentoId()).orElseThrow(()->new BadRequestException("Unknown document type"));
+        var type=typeConfiguration.lockConfiguration(dto.tipoDocumentoId());
         require("RC".equals(type.getCodigoFiscal()),"Only fiscal RC supported by receipt adapter");
         var currency=currencies.findById("EUR").orElseThrow();
         var payment=payments.findById(dto.mPagamentoId().toUpperCase(Locale.ROOT)).orElseThrow(()->new BadRequestException("Unknown payment method"));

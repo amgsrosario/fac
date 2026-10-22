@@ -32,7 +32,6 @@ import com.ar2lda.fac.repository.MPagamentoRepository;
 import com.ar2lda.fac.repository.MoedaRepository;
 import com.ar2lda.fac.repository.PendenteRepository;
 import com.ar2lda.fac.repository.SerieRepository;
-import com.ar2lda.fac.repository.TipoDocumentoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -62,7 +61,7 @@ public class DocumentoFinanceiroService {
     private final LinhaDocumentoFinanceiroRepository linhaRepository;
     private final PendenteRepository pendenteRepository;
     private final ClienteRepository clienteRepository;
-    private final TipoDocumentoRepository tipoDocumentoRepository;
+    private final TipoDocumentoService tipoDocumentoService;
     private final SerieRepository serieRepository;
     private final MoedaRepository moedaRepository;
     private final MPagamentoRepository mPagamentoRepository;
@@ -79,7 +78,7 @@ public class DocumentoFinanceiroService {
     @Transactional
     public DocumentoFinanceiroDto create(DocumentoFinanceiroCreateDto dto) {
         Cliente cliente = findCliente(dto.clienteId());
-        TipoDocumento tipoDocumento = findTipoDocumento(dto.tipoDocumentoId());
+        TipoDocumento tipoDocumento = tipoDocumentoService.lockConfiguration(dto.tipoDocumentoId());
         validateSerie(dto.tipoDocumentoId(), dto.serie());
         validateDataEmissao(dto.tipoDocumentoId(), dto.serie(), dto.dataEmissao());
         Moeda moeda = findMoeda(dto.moedaId());
@@ -430,11 +429,6 @@ public class DocumentoFinanceiroService {
     private Cliente findCliente(Long id) {
         return clienteRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Cliente nao encontrado: " + id));
-    }
-
-    private TipoDocumento findTipoDocumento(String id) {
-        return tipoDocumentoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Tipo de documento nao encontrado: " + id));
     }
 
     private void validateSerie(String tipoDocumentoId, String serie) {

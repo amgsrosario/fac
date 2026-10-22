@@ -11,6 +11,7 @@ public record TipoDocumentoDto(
         Integer areaGestao,
         Integer entidade,
         Integer sinalContabilistico,
-        boolean liquidacaoImediata
+        boolean liquidacaoImediata,
+        boolean configuracaoBloqueada
 ) {
 }

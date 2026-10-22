@@ -68,12 +68,24 @@ class DocumentoComercialEmissaoIntegridadeTests {
     @SpyBean private FinancialCore financialCore;
     @Autowired private org.springframework.core.env.Environment testEnvironment;
 
+    private String primaryType;
+    private String secondaryType;
+    private final List<String> fixtureTypes = new ArrayList<>();
+
+    private String unusedType() {
+        String code;
+        do { code=java.util.UUID.randomUUID().toString().substring(0,3).toUpperCase(); } while(tipoDocumentoRepository.existsById(code) || fixtureTypes.contains(code));
+        fixtureTypes.add(code);
+        return code;
+    }
+
     private Cliente cliente;
     private Armazem armazem;
 
     @BeforeEach
     void setup() {
         cleanupFixture();
+        primaryType=unusedType(); secondaryType=unusedType();
 
         CodPostal codPostal = codPostalRepository.findById("3750-004")
                 .orElseGet(() -> codPostalRepository.save(new CodPostal("3750-004", "Águeda")));
@@ -99,7 +111,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         Transporte transporte = transporteRepository.save(new Transporte("INT", "Transporte integridade"));
 
         TipoDocumento tipo = new TipoDocumento(
-                "IC1", "Integridade emissão", null, null, null, null, 1, 1, 1, false);
+                primaryType, "Integridade emissão", null, null, null, null, 1, 1, 1, false);
         tipo.setCodigoFiscal("FT");
         tipoDocumentoRepository.save(tipo);
         serieRepository.save(new Serie(tipo, "LOCK", "Série concorrente", "IC12026", LocalDate.of(2026, 1, 1)));
@@ -177,7 +189,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         moeda.setSimbolo("€");
         moeda.setNdecimais(3);
         moedaRepository.saveAndFlush(moeda);
-        Serie serie = serieRepository.findById(new SerieId("IC1", "LOCK")).orElseThrow();
+        Serie serie = serieRepository.findById(new SerieId(primaryType, "LOCK")).orElseThrow();
         serie.setNome("Série alterada");
         serieRepository.saveAndFlush(serie);
 
@@ -251,7 +263,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("EMITIDO"))
                 .andExpect(jsonPath("$.numeroDocumento").value(1))
-                .andExpect(jsonPath("$.numeroDocumentoCompleto").value("IC1 LOCK/1"))
+                .andExpect(jsonPath("$.numeroDocumentoCompleto").value(primaryType+" LOCK/1"))
                 .andExpect(jsonPath("$.atcud").value("IC12026-1"))
                 .andExpect(jsonPath("$.fiscalmenteConsolidado").value(true))
                 .andExpect(jsonPath("$.temQrFiscal").value(true))
@@ -270,7 +282,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
 
     @Test
     void falhaNoAtcudReverteDocumentoENumerador() throws Exception {
-        TipoDocumento tipo = tipoDocumentoRepository.findById("IC1").orElseThrow();
+        TipoDocumento tipo = tipoDocumentoRepository.findById(primaryType).orElseThrow();
         serieRepository.save(new Serie(tipo, "BADAT", "Série ATCUD inválido", "ATCUD:INVALID", LocalDate.of(2026, 1, 1)));
         Long id = criarRascunho("BADAT");
 
@@ -284,7 +296,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
 
     @Test
     void falhaNoPayloadQrReverteDocumentoENumerador() throws Exception {
-        TipoDocumento tipo = tipoDocumentoRepository.findById("IC1").orElseThrow();
+        TipoDocumento tipo = tipoDocumentoRepository.findById(primaryType).orElseThrow();
         serieRepository.save(new Serie(tipo, "BADQR", "Série QR inválido", "IC1QR", LocalDate.of(2026, 1, 1)));
         Long id = criarRascunho("BADQR");
         Object originalHash = ReflectionTestUtils.getField(fiscalQrService, "hashCharacters");
@@ -325,7 +337,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         DocumentoComercial documento = documentoRepository.findById(id).orElseThrow();
         assertThat(serie("LOCK").getNumerador()).isEqualTo(1L);
         assertThat(documento.getNumeroDocumento()).isEqualTo(1L);
-        assertThat(documento.getNumeroDocumentoCompleto()).isEqualTo("IC1 LOCK/1");
+        assertThat(documento.getNumeroDocumentoCompleto()).isEqualTo(primaryType+" LOCK/1");
         assertThat(documento.getAtcud()).isEqualTo("IC12026-1");
         assertThat(documento.getQrPayload()).isNotBlank();
         assertThat(originCount(id)).isEqualTo(1L);
@@ -386,7 +398,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         Long id = criarRascunho("LOCK");
         DocumentoComercial inconsistente = documentoRepository.findById(id).orElseThrow();
         inconsistente.setNumeroDocumento(88L);
-        inconsistente.atribuirNumeroDocumentoCompleto("IC1 LOCK/88");
+        inconsistente.atribuirNumeroDocumentoCompleto(primaryType+" LOCK/88");
         inconsistente.atribuirAtcud("IC12026", "IC12026-88");
         inconsistente.setEstado(EstadoDocumentoComercial.EMITIDO);
         documentoRepository.saveAndFlush(inconsistente);
@@ -405,14 +417,14 @@ class DocumentoComercialEmissaoIntegridadeTests {
     @Test
     void limpezaDaFixtureConcorrentePreservaDocumentoDeOutroTipo() throws Exception {
         TipoDocumento outroTipo = new TipoDocumento(
-                "IC2", "Documento alheio à fixture", null, null, null, null, 1, 1, 1, false);
+                secondaryType, "Documento alheio à fixture", null, null, null, null, 1, 1, 1, false);
         outroTipo.setCodigoFiscal("FT");
         tipoDocumentoRepository.save(outroTipo);
         serieRepository.save(new Serie(
                 outroTipo, "SAFE", "Série alheia", "IC22026", LocalDate.of(2026, 1, 1)));
-        Long documentoAlheio = criarRascunho("IC2", "SAFE");
+        Long documentoAlheio = criarRascunho(secondaryType, "SAFE");
 
-        cleanupDocumentsForType("IC1");
+        cleanupDocumentsForType(primaryType);
 
         assertThat(documentoRepository.existsById(documentoAlheio)).isTrue();
     }
@@ -591,9 +603,11 @@ class DocumentoComercialEmissaoIntegridadeTests {
     @Test
     void excludedDocumentTypesDoNotOriginateAndDraftRemainsUnlinked() throws Exception {
         for(String code:List.of("FR","NC","ND")) {
-            var type=tipoDocumentoRepository.findById("IC1").orElseThrow();type.setCodigoFiscal(code);
-            type.setLiquidacaoImediata(code.equals("FR"));tipoDocumentoRepository.saveAndFlush(type);
-            Long id=criarRascunho("LOCK");assertThat(originCount(id)).isZero();
+            String idType=unusedType();
+            var type=new TipoDocumento(idType,"Tipo excluído",code,null,null,null,null,1,1,1,code.equals("FR"));
+            tipoDocumentoRepository.saveAndFlush(type);
+            serieRepository.save(new Serie(type,"LOCK","Série excluída","EXC2026",LocalDate.of(2026,1,1)));
+            Long id=criarRascunho(idType,"LOCK");assertThat(originCount(id)).isZero();
             assertThat(emitir(id).call()).isEqualTo(200);assertThat(originCount(id)).isZero();
         }
     }
@@ -615,7 +629,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
     void historicalEmissionWithoutOriginCanBeCancelledWithoutBackfill() throws Exception {
         Long id=criarRascunho("LOCK");
         var legacy=documentoRepository.findById(id).orElseThrow();
-        legacy.setNumeroDocumento(91L);legacy.atribuirNumeroDocumentoCompleto("IC1 LOCK/91");
+        legacy.setNumeroDocumento(91L);legacy.atribuirNumeroDocumentoCompleto(primaryType+" LOCK/91");
         legacy.setEmissor(utilizadorRepository.findById("EMITINT").orElseThrow());
         legacy.setEstado(EstadoDocumentoComercial.EMITIDO);documentoRepository.saveAndFlush(legacy);
         assertThat(originCount(id)).isZero();
@@ -637,7 +651,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
     }
 
     private Long criarRascunho(String serie) throws Exception {
-        return criarRascunho("IC1", serie);
+        return criarRascunho(primaryType, serie);
     }
 
     private Long criarRascunho(String tipoDocumentoId, String serie) throws Exception {
@@ -709,7 +723,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
     }
 
     private Serie serie(String codigo) {
-        return serieRepository.findById(new SerieId("IC1", codigo)).orElseThrow();
+        return serieRepository.findById(new SerieId(primaryType, codigo)).orElseThrow();
     }
 
     private void prepararEmpresa(CodPostal codPostal, Pais pais) {
@@ -746,8 +760,8 @@ class DocumentoComercialEmissaoIntegridadeTests {
                 testEnvironment.getProperty("fac.test-database.destructive-operations-enabled", Boolean.class, false));
         jdbcTemplate.execute("truncate financial_receipt_reversal,financial_receipt_line,financial_receipt,financial_document_origin,financial_allocation,financial_component,financial_position,financial_operation");
         reset(financialCore);
-        cleanupDocumentsForType("IC1");
-        cleanupDocumentsForType("IC2");
+        for (String type : fixtureTypes) cleanupDocumentsForType(type);
+        fixtureTypes.clear();
         jdbcTemplate.update("delete from artigo where codigo = 'ARTINT'");
         jdbcTemplate.update("delete from cliente where email = 'cliente.integridade@fac.test'");
         jdbcTemplate.update("delete from armazem where nome = 'Armazém Integridade'");
@@ -772,6 +786,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
                 """, tipoDocumentoId);
         jdbcTemplate.update("delete from documento_comercial where id_tipo_documento = ?", tipoDocumentoId);
         jdbcTemplate.update("delete from serie where id_tipo_documento = ?", tipoDocumentoId);
-        jdbcTemplate.update("delete from tipodocumento where id = ?", tipoDocumentoId);
+        // Emission evidence is permanent: retain used masters, even in fixture cleanup.
+        jdbcTemplate.update("delete from tipodocumento where id = ? and not configuracao_bloqueada", tipoDocumentoId);
     }
 }

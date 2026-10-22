@@ -65,6 +65,10 @@ public class TipoDocumento {
     @ToString.Include
     private boolean liquidacaoImediata;
 
+    // Monotonic database-owned evidence of a historical emission.
+    @Column(name = "configuracao_bloqueada", nullable = false, insertable = false, updatable = false)
+    private boolean configuracaoBloqueada;
+
     public TipoDocumento() {
     }
 

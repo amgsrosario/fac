@@ -28,6 +28,8 @@ type Config = {
   itemUrl: (row: Row) => string;
 };
 
+const protectedTypeFields = new Set(["codigoFiscal", "areaGestao", "entidade", "sinalContabilistico", "liquidacaoImediata"]);
+
 const field = (key: string, label: string, options: Partial<Field> = {}): Field => ({ key, label, ...options });
 
 const configs: Record<TableKey, Config> = {
@@ -358,11 +360,12 @@ export default function TabelasEspecificasView({ tableKey, onBack, startNew = fa
   return <section className="fac-panel">
     <div className="fac-panel-header"><div><p className="fac-eyebrow">Tabela</p><h2>{config.label}</h2></div><div className="fac-inline-actions"><button className="fac-ghost-button" onClick={onBack} type="button">Voltar</button><button className="fac-primary-button" onClick={reset} type="button">Novo registo</button></div></div>
     {feedback && <p className={`fac-editor-message fac-editor-message-${feedback.kind}`} role={feedback.kind === "error" ? "alert" : "status"}>{feedback.text}</p>}
-    <div className="fac-table-editor"><div className="fac-form-grid">{config.fields.map((item) => tableKey === "armazens" && item.key === "codPostalId"
+    <div className="fac-table-editor">{tableKey === "tipos-documento" && Boolean(editing?.configuracaoBloqueada) && <p role="status">Configuração fiscal e financeira bloqueada por já existir emissão documental deste tipo.</p>}
+    <div className="fac-form-grid">{config.fields.map((item) => tableKey === "armazens" && item.key === "codPostalId"
       ? <PostalCodeLookup key={item.key} required={item.required} value={String(values[item.key] ?? "")} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />
       : tableKey === "armazens" && item.key === "freguesiaId"
       ? <ReferenceLookup field={item} key={item.key} value={String(values[item.key] ?? "")} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />
-      : <EditorField field={item} key={item.key} options={options[item.options ?? ""] ?? []} editing={Boolean(editing)} value={values[item.key]} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />)}</div>
+      : <EditorField locked={tableKey === "tipos-documento" && Boolean(editing?.configuracaoBloqueada) && protectedTypeFields.has(item.key)} field={item} key={item.key} options={options[item.options ?? ""] ?? []} editing={Boolean(editing)} value={values[item.key]} onChange={(value) => setValues((current) => ({ ...current, [item.key]: value }))} />)}</div>
       {isRiva && <div className="fac-rate-grid"><p className="fac-muted">Taxas aplicáveis por categoria (a não liquidação não altera estas taxas)</p>{rateOptions.map((option) => <label className="fac-field" key={option.value}><span>{option.label}</span><input min="0" onChange={(event) => setRates((current) => ({ ...current, [option.value]: event.target.value }))} step="0.01" type="number" value={rates[option.value] ?? ""}/></label>)}</div>}
       <div className="fac-form-footer"><span className="fac-muted">{editing ? `A editar ${config.rowId(editing)}` : "Novo registo"}</span><button className="fac-primary-button" disabled={loading} onClick={save} type="button">{loading ? "A guardar..." : "Guardar"}</button></div>
     </div>
@@ -384,9 +387,11 @@ export default function TabelasEspecificasView({ tableKey, onBack, startNew = fa
   </section>;
 }
 
-function EditorField({ field: item, value, editing, options, onChange }: { field: Field; value: string | boolean; editing: boolean; options: Option[]; onChange: (value: string | boolean) => void }) {
-  if (item.type === "checkbox") return <label className="fac-check-field"><input checked={Boolean(value)} onChange={(event) => onChange(event.target.checked)} type="checkbox"/><span>{item.label}</span></label>;
-  return <label className="fac-field"><span>{item.label}{item.optionalOnUpdate && editing ? " (deixar vazio para manter)" : ""}</span>{item.type === "select" ? <select disabled={editing && item.createOnly} onChange={(event) => onChange(event.target.value)} value={String(value ?? "")}><option value="">Selecionar</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : <input disabled={editing && item.createOnly} maxLength={item.maxLength} min={item.type === "number" ? 0 : undefined} onChange={(event) => onChange(event.target.value)} step={item.type === "number" ? "1" : undefined} type={item.type ?? "text"} value={String(value ?? "")}/>}</label>;
+function EditorField({ field: item, value, editing, options, onChange, locked = false }: { locked?: boolean; field: Field; value: string | boolean; editing: boolean; options: Option[]; onChange: (value: string | boolean) => void }) {
+  const visibleOptions = locked && value && !options.some((option) => option.value === String(value))
+    ? [...options, { value: String(value), label: String(value) }] : options;
+  if (item.type === "checkbox") return <label className="fac-check-field"><input checked={Boolean(value)} disabled={locked} onChange={(event) => onChange(event.target.checked)} type="checkbox"/><span>{item.label}</span></label>;
+  return <label className="fac-field"><span>{item.label}{item.optionalOnUpdate && editing ? " (deixar vazio para manter)" : ""}</span>{item.type === "select" ? <select disabled={locked || (editing && item.createOnly)} onChange={(event) => onChange(event.target.value)} value={String(value ?? "")}><option value="">Selecionar</option>{visibleOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : <input disabled={locked || (editing && item.createOnly)} maxLength={item.maxLength} min={item.type === "number" ? 0 : undefined} onChange={(event) => onChange(event.target.value)} step={item.type === "number" ? "1" : undefined} type={item.type ?? "text"} value={String(value ?? "")}/>}</label>;
 }
 
 function ReferenceLookup({ field, value, onChange }: { field: Field; value: string; onChange: (value: string) => void }) {
