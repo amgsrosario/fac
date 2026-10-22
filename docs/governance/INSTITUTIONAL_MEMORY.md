@@ -369,7 +369,8 @@ concluído em 21-10-2026, por decisão expressa comunicada na ordem do Executivo
 Resultado mantido:
 **FinancialCore não pronto para transição operacional**. Esta aceitação não
 aprova cutover, deployment ou desenvolvimento seguinte. **Fatia 1e suspensa**.
-Este registo está preparado localmente para revisão, ainda sem publicação/integração.
+Este registo foi integrado pelo PR #31 (merge 1a53ddc); a aceitação não
+permanece pendente de publicação.
 
 Evidência da base cf05615/PR #30: 142 testes financeiros + 2 comerciais = 144,
 11 cenários e package aprovados na execução anterior, em PostgreSQL descartável.
@@ -395,7 +396,7 @@ a temporalidade FT ou decisões arquitectónicas/fiscais pendentes; não autoriz
 alterar dados, demo, emissores, consumidores ou extractos.
 
 
-## OP22-B — vínculo da classificação financeira, preparação local (22-10-2026)
+## OP22 / OP22-B — protecção classificativa integrada (22-10-2026)
 
 PR #32 integrado em feature/visual-redesign, merge observado
 6abf4ceda62528ed6fef91dc35383599b248ea79, incluindo e6aa3d6 e V25.
@@ -404,7 +405,8 @@ não reconstrói classificações anteriores à sua instalação.
 
 A verificação delimitada OP22-B reproduziu em PostgreSQL descartável uma lacuna:
 um financeiro não-RC podia trocar id_tipo_documento, passando a outro mestre
-mesmo sem alterar os atributos protegidos pela V25. Preparação local V26 impede
+mesmo sem alterar os atributos protegidos pela V25. V26 integrada pelo PR #33 (merge 3cd75225d615ea27d90ad603e430d258f777cbe2,
+commit 41253ae7a26e05b9824143635d15cab0b721866d) impede
 essa troca do vínculo após persistência; não cria snapshot ou autoridade paralela.
 Não existe estado de rascunho no modelo DocumentoFinanceiro. A protecção preserva
 o vínculo existente, sem atribuir retrospectivamente a classificação de emissão.
@@ -413,5 +415,19 @@ Não altera leitores, extractos, agregações, saldos ou o circuito legado. Desc
 continua metadado editável, não uma classificação fiscal congelada. A semântica
 de históricos anteriores sem prova permanece reservada: qualquer mudança de
 fallback, classificação desconhecida ou recusa de leitura exige decisão do PO.
-RC novo inactivo, Fatia 1e suspensa. Incremento local não integrado, sujeito a
-revisão independente Claude; sem autorização de publicação nesta missão.
+RC novo inactivo, Fatia 1e suspensa. Incremento integrado; parecer Claude APPROVE, 0 BLOCKER / 0 MAJOR / 0 MINOR,
+confirmado por leitura do parecer arquivado de 22-10-2026.
+
+
+Fecho institucional de OP22 (PR #32/V25, imutabilidade do mestre) e OP22-B
+(PR #33/V26, imutabilidade do vínculo): concluídos estes incrementos, não a
+transição financeira global. V25/V26 não reconstroem classificações anteriores
+sem prova, não escolhem catálogo fiscal nem activam consumidores. Evidência
+local arquivada e CI são distintos; nenhum teste foi repetido neste fecho.
+A condição demo-base.sql/V25 continua aplicável antes de qualquer actualização.
+
+O próximo objectivo do plano OB §10 é introduzir o catálogo canónico, depois da
+preservação histórica. O princípio já aprovado não equivale à escolha de modelo:
+OB §11 reserva arquitectura, matriz e política ao PO. Mantêm-se GOV-ALT-001,
+gate fiscal antecipado para valorização cambial e suspensão 1e; não transformar
+esta sequência de referência numa autorização de desenvolvimento.
