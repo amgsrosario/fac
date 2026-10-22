@@ -601,8 +601,8 @@ não presumir equivalência fiscal ou inventar Código Fiscal para RL.
 Próxima preparação D-CAT-2 deve incorporar esta aprovação, sem reapresentar
 o modelo conceptual como indeciso. Permanecem pendentes: confirmação documental
 e validação da correspondência fiscal RL, valores não demonstrados da matriz
-completa (área, Entidade, sinal e efeitos) e D-CAT-3. D-CAT-1 foi posteriormente
-ratificada conforme abaixo; a recomendação de versionamento não foi ratificada.
+completa (área, Entidade, sinal e efeitos). D-CAT-1 e os princípios D-CAT-3
+foram posteriormente aprovados conforme os registos abaixo.
 
 Registo exclusivamente documental. Não altera configurações existentes ou
 comportamentos operacionais, não migra/reclassifica históricos, não enfraquece
@@ -623,7 +623,26 @@ a UI oferece FR como código fiscal separado. A D-CAT-2A não autoriza corrigir
 retroactivamente estas configurações nem dispensar V25/V26. Não foi inspeccionada
 qualquer base persistente nem alterada a demo.
 
-Pendentes: valores finais da matriz, correspondência fiscal RL e D-CAT-3
-(revisões/transição). Recomendação D-CAT-3 consta da matriz, sem aprovação implícita.
+Pendentes: valores finais da matriz e correspondência fiscal RL. D-CAT-3
+(revisões imutáveis/vínculo estável/transição sem reclassificação automática)
+foi aprovada posteriormente; não permanece uma recomendação por ratificar.
 Não existe código ou migration do catálogo nesta entrega. Legado mantém autoridade
 operacional; novo RC/FinancialCore e RL não activados, Fatia 1e suspensa.
+
+
+### Continuidade D-CAT-2 / D-CAT-3
+
+D-CAT-3 aprovada pela Administração na ordem de continuidade de 22-10-2026;
+[registo canónico](INSTITUTIONAL_MEMORY.md#d-cat-3--revisões-imutáveis-e-transição-histórica-aprovadas).
+Matriz D-CAT-2 preparada com quatro estados separados: decisão funcional, código
+existente, correspondência fiscal demonstrada e reserva material. Não homologada.
+[Especificação da primeira fatia](../fiscal/catalog/FIRST_SLICE.md) delimita
+infraestrutura de revisões sem activação e sem regras materiais não homologadas.
+O catálogo operacional e a validação completa por tipologia dependem da matriz.
+
+Revisão cruzada Claude não realizada: comando claude ausente do PATH e nenhuma
+ferramenta/revisor Claude exposto nesta sessão. Não substituída por revisão Codex.
+Pedido de revisão preparado na especificação para execução externa. A ordem
+invoca AR2-GOV-03; não foi fornecido o seu texto integral nesta missão e este
+registo não inventa cláusulas nem formaliza AR2-GOV-02.
+Legado, V25/V26, históricos e fronteira de activação inalterados; Fatia 1e suspensa.

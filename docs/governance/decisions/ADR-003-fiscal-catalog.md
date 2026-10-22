@@ -36,7 +36,9 @@ cliente, incluindo crédito NC; correspondência fiscal exacta não confirmada.
 
 [Matriz de evidências](../../fiscal/catalog/D-CAT-2_MATRIX.md) distingue contrato
 aprovado e implementação actual. Não homologa valores encontrados no seed/UI.
-D-CAT-3 permanece recomendação por decidir. Não reclassificar históricos, enfraquecer
+D-CAT-3 foi aprovada posteriormente: revisões fiscais imutáveis, vínculo estável
+e transição sem reclassificação histórica automática, conforme ordem de
+continuidade da Administração de 22-10-2026. A matriz D-CAT-2 permanece pendente. Não reclassificar históricos, enfraquecer
 V25/V26, implementar catálogo ou activar circuitos nesta missão. O catálogo não
 equivale a certificação nem habilitação operacional. Legado conserva autoridade
 operacional; RC novo inactivo e Fatia 1e suspensa.

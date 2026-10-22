@@ -485,7 +485,7 @@ inferida e todos os limites de activação vigentes. A decisão aprova o modelo
 funcional conceptual acima, não a correspondência fiscal RL, valores ainda não
 demonstrados da matriz completa, activação RC/RL, migração/reclassificação histórica
 ou implementação técnica do catálogo. D-CAT-1 foi posteriormente aprovada,
-conforme o registo abaixo; D-CAT-3 (versionamento/transição) permanece pendente.
+conforme o registo abaixo; D-CAT-3 (versionamento/transição) foi posteriormente aprovada, conforme abaixo.
 
 
 ## D-CAT-1 — Arquitectura híbrida governada aprovada
@@ -500,5 +500,21 @@ utilizadores nem autoridades classificativas independentes.
 e limites. Implementa como contrato-alvo a D-CAT-2A, incluindo FT/FR com Código
 Fiscal FT e liquidação posterior/imediata, e RC/RL sem especialização adicional
 de liquidação imediata. RL mantém a correspondência fiscal por confirmar.
-A aprovação da arquitectura não aprova a matriz completa, D-CAT-3, implementação
-ou activação. V25/V26, históricos e autoridade operacional legada preservados.
+A aprovação da arquitectura não aprovou por si a matriz completa, implementação
+ou activação; D-CAT-3 recebeu aprovação posterior própria. V25/V26, históricos e autoridade operacional legada preservados.
+
+
+## D-CAT-3 — Revisões imutáveis e transição histórica aprovadas
+
+22-10-2026: Administração AR2, na ordem «Continuidade D-CAT-2 / D-CAT-3»,
+confirmou aprovação posterior ao relatório das 15h10: revisões fiscais imutáveis,
+vínculo estável e transição sem reclassificação histórica automática. Esta é a
+fonte expressa disponibilizada; não se reconstrói um acto anterior indisponível.
+
+A aprovação resolve estes princípios de versionamento, não a matriz D-CAT-2 nem
+a correspondência fiscal RL. A forma física das revisões e a representação de
+campos sem especialização são escolhas técnicas dentro do contrato, desde que
+não alterem efeitos nem históricos. Nenhum vínculo antigo recebe versão inferida
+e nenhuma leitura passa a reinterpretar emitidos através da revisão mais recente.
+V25/V26 preservadas; sem activação, migração histórica automática ou execução
+funcional nesta entrega. [Preparação da primeira fatia](../fiscal/catalog/FIRST_SLICE.md).

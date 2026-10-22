@@ -52,35 +52,44 @@ false automaticamente aos RC históricos por confundir ausência de especializa�
 com valor do campo legado. NC/ND e restantes opções UI não recebem combinações
 inventadas; OP19 aprova conceitos mas não substitui esta matriz completa.
 
-## 3. D-CAT-3 — recomendação sujeita ao PO
+## 3. D-CAT-3 — princípios aprovados, sem reabrir decisão
 
-Recomendar revisões semânticas imutáveis, com vínculo estável de novos tipos à
-revisão aprovada. Alterações futuras de efeito criam nova revisão; tipo já utilizado
-não troca revisão/atributos protegidos. V25/V26 não bastam para congelar uma
-tabela de semântica futura: a nova implementação terá de impedir deriva indirecta.
-Alternativa relevante: revisões por vigência com resolução temporal na leitura;
-mais flexível, mas exige regras de datas/retroactividade e pode reinterpretar
-originais. Preferir vínculo explícito, sem escolher já esquema físico.
+A ordem de continuidade de 22-10-2026 confirma revisões fiscais imutáveis,
+vínculo estável e transição sem reclassificação histórica automática. Esta
+aprovação posterior supera o estado «recomendação» do relatório anterior.
+V25/V26 não bastam para congelar uma tabela semântica futura: o vínculo não pode
+passar a resolver a revisão mais recente nas leituras de emitidos. Não atribuir
+retrospectivamente versões sem prova. Nenhuma alteração histórica executada.
 
-Transição recomendada: nenhum backfill inferido nem normalização silenciosa;
-primeiro novas configurações dentro da matriz aprovada, leitores antigos
-preservados até equivalência demonstrada e política autorizada. Alternativa:
-associar tipos existentes por equivalência actual demonstrada; maior cobertura,
-mas não prova classificação original e exige aprovação de política histórica.
-Não alterar V25, V26 ou emitidos para acomodar a nova semântica.
+## 4. Matriz funcional — quatro dimensões distintas
 
-## 4. Decisões efectivas e aceitação proposta
+| Tipo | Aprovado pela Administração (D-CAT-2A) | Existente demonstrado no código/configuração | Correspondência fiscal demonstrada | Reserva material efectiva |
+| --- | --- | --- | --- | --- |
+| FT | Tipologia FT; constitui dívida; liquidação posterior | Seed 2/1/1,false; adaptador origina FT EUR não imediata | Relação FT→FT aprovada; código FT usado no adaptador, não é parecer normativo | Homologar semântica/combinação de área/Entidade/sinal, não escolher algarismos sem contexto |
+| FR | Tipologia FT; liquidação imediata na emissão | UI lista código FR separado; PendenteService omite pendente imediato; não prova circuito FR completo | FR→FT é decisão funcional aprovada; lista UI não demonstra correspondência alternativa | Aprovar combinação concreta e limites de implementação; não alterar FR histórico por inferência |
+| RC | Recebimento/liquidação de dívida existente; sem especialização adicional | Seed 3/1/2,true; emissor interno exige RC e FT, inactivo | Código RC é predicado implementado; não valida fiscalmente toda combinação | Homologar efeitos-base/área/Entidade/sinal e perímetro elegível; representação técnica do campo não é nova decisão de negócio |
+| RL | Pagamento/devolução ao cliente, incluindo crédito NC; sem especialização adicional | Nenhuma configuração completa demonstrada no âmbito delimitado | Correspondência exacta NÃO demonstrada; nenhum código atribuído | Confirmação documental/fiscal e matriz específica antes de implementar RL |
 
-Administração: homologar combinações numéricas por tipologia, resolver a
-representação da ausência de especialização RC/RL, confirmar correspondência RL
-antes de a implementar e decidir D-CAT-3/transição dos tipos existentes. Não é
-necessária nova escolha entre híbrido/código/persistido: D-CAT-1 já resolveu.
+Os valores 2/1/1 e 3/1/2 são representações técnicas demonstradas. A Administração
+decide a semântica e combinações permitidas; a tradução em IDs deve manter a
+compatibilidade existente. Não pedir ao PO que escolha números como negócio.
+Ausência de especialização RC/RL já foi decidida: cabe à implementação escolher
+representação sem activar funcionalidade ou normalizar o true legado. Só escalar
+se não for possível preservar simultaneamente o contrato e os históricos.
 
-Primeiro incremento proposto, após aprovação: catálogo governado e validação
-de novas configurações, sem cutover. Critérios propostos: materialização/Java
-coerentes; recusa de combinações não aprovadas por serviço e SQL; emissão e
-configuração concorrentes seguras; revisão nova não reclassifica emitidos;
-upgrade aditivo/segundo arranque; regressão RC/não-RC e Data Valor/DTO/PDF/saldos
-sem alterações; testes PostgreSQL descartável e revisão Claude. Não são testes
-executados nem autorização de implementação. Fiscalidade completa, multimoeda,
-RC operacional e 1e continuam fora do âmbito.
+## 5. Decisões materiais remanescentes
+
+1. Homologar por tipologia natureza/efeito financeiro-base, áreas e Entidades
+   permitidas, sinal e especializações; não generalizar a UI Cliente a todas
+   as Entidades nem usar intervalos DTO como aprovação. O modelo FT/FR e RC/RL
+   já aprovado não volta a votação.
+2. Confirmar a correspondência fiscal RL e os efeitos específicos que ainda
+   carecem de prova. Enquanto não existir confirmação, RL não entra em regras
+   executáveis, não recebe código fiscal e não é equiparado a RC.
+3. Delimitar os tipos/circuitos abrangidos pela primeira validação operacional
+   futura. Presença no catálogo não habilita emissão nem muda limites actuais.
+
+D-CAT-1 e D-CAT-3 não estão pendentes. Nenhum obstáculo relativo a multimoeda,
+temporalidade FT ou corte é inventado como pré-condição de uma fundação inactiva.
+[Primeiro incremento técnico](FIRST_SLICE.md): especificação pronta; execução
+ainda não iniciada. Nenhum teste funcional executado nesta preparação documental.
