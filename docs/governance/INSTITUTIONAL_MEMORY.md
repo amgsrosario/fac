@@ -518,3 +518,17 @@ não alterem efeitos nem históricos. Nenhum vínculo antigo recebe versão infe
 e nenhuma leitura passa a reinterpretar emitidos através da revisão mais recente.
 V25/V26 preservadas; sem activação, migração histórica automática ou execução
 funcional nesta entrega. [Preparação da primeira fatia](../fiscal/catalog/FIRST_SLICE.md).
+
+
+### Catálogo fiscal — execução local da fundação inactiva
+
+Por ordem posterior «Implementação da primeira fatia do catálogo fiscal», foram
+implementadas revisões imutáveis, materialização verificada pelo leitor Java e
+vínculos opcionais estáveis apenas na criação de novas configurações. V27 aditiva;
+manifesto governado sem definições enquanto D-CAT-2 não está homologada. Nenhum
+código fiscal, matriz de efeitos ou correspondência RL foi criado em produção.
+
+A infraestrutura não altera CRUD, leitores ou emissão operacionais. V25/V26 e
+históricos preservados sem backfill. Testes sintéticos demonstram mecanismo,
+não aprovação fiscal. Revisão cruzada Claude ainda não realizada, indisponível
+no executor. [Evidência local e pedido de revisão](../fiscal/catalog/VALIDATION.md).

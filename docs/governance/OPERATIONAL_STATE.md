@@ -626,7 +626,8 @@ qualquer base persistente nem alterada a demo.
 Pendentes: valores finais da matriz e correspondência fiscal RL. D-CAT-3
 (revisões imutáveis/vínculo estável/transição sem reclassificação automática)
 foi aprovada posteriormente; não permanece uma recomendação por ratificar.
-Não existe código ou migration do catálogo nesta entrega. Legado mantém autoridade
+À data da preparação D-CAT-1 não existia código ou migration do catálogo;
+a execução posterior da fundação inactiva encontra-se abaixo. Legado mantém autoridade
 operacional; novo RC/FinancialCore e RL não activados, Fatia 1e suspensa.
 
 
@@ -646,3 +647,21 @@ Pedido de revisão preparado na especificação para execução externa. A ordem
 invoca AR2-GOV-03; não foi fornecido o seu texto integral nesta missão e este
 registo não inventa cláusulas nem formaliza AR2-GOV-02.
 Legado, V25/V26, históricos e fronteira de activação inalterados; Fatia 1e suspensa.
+
+
+### Primeira fatia do catálogo — implementada localmente, sem activação
+
+Branch codex/fiscal-catalog-dcat1, sequência d2ebd0b → 79766bc preservada.
+V27 e leitor FiscalCatalog acrescentados; revisões e vínculos protegidos em SQL.
+Manifesto vazio, nenhum backfill, nenhum chamador operacional ou endpoint novo.
+Na base descartável de regressão, após testes: schema 27, zero definições e
+zero tipos vinculados. Fixtures sintéticos de outra base de teste foram removidos
+com essa base. Não equivale a catálogo fiscal operacional homologado.
+
+Validação: 184 testes distintos, zero falhas/erros/ignorados, PostgreSQL 16.3
+descartável e package BUILD SUCCESS; detalhes/fases em [VALIDATION](../fiscal/catalog/VALIDATION.md).
+Evidência arquivada fora de target. Nenhum CI consultado, revisão cruzada Claude
+ainda indisponível; pedido preparado para revisão posterior. Sem publicação
+ou merge. V25/V26, legado, saldos, extractos e demo inalterados; RC/RL e
+FinancialCore operacional não activados, Fatia 1e suspensa. D-CAT-2 continua
+pendente de homologação para validação material por tipologia.

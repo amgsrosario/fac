@@ -1,6 +1,6 @@
 # Primeira fatia técnica — fundação inactiva do catálogo
 
-Estado: especificação preparada, sem implementação. D-CAT-1/D-CAT-2A/D-CAT-3
+Estado: infraestrutura implementada localmente e testada, pendente de revisão Claude. D-CAT-1/D-CAT-2A/D-CAT-3
 aprovadas; D-CAT-2 não homologada. Base documental PR #34 + d2ebd0b.
 
 ## Objectivo e perímetro
@@ -14,8 +14,9 @@ contrato-alvo. RC/RL não ganham opção funcional de liquidação imediata.
 Superfície prevista: schema/repositório de revisões governadas, carregamento
 Java a partir da definição única e validação de coerência; não criar editor
 fiscal, endpoint, adaptação de leitores históricos ou alterações de emissores.
-Número de migration e nomes físicos só serão fixados na implementação após
-confirmar o schema real. Nada é criado nesta missão.
+Concretização local: V27__inactive_fiscal_catalog.sql, fiscal_catalog_revision,
+vínculo opcional em tipodocumento e serviço interno FiscalCatalog.
+[Evidência, execução e limites](VALIDATION.md).
 
 Sem matriz homologada, o incremento implementável é a infraestrutura inactiva:
 nenhuma regra fiscal concreta não aprovada, nenhuma atribuição de revisão a
@@ -23,7 +24,9 @@ tipos já existentes e nenhum catálogo operacional apresentado como completo.
 Fixtures sintéticos de testes só provam mecanismo de versões/coerência; não
 se tornam definições fiscais de produção nem inventam Código Fiscal RL.
 A ligação a novos tipos e validação material por tipologia só entram após
-homologação D-CAT-2; até lá não há mudança no CRUD ou na emissão existentes.
+homologação D-CAT-2; até lá não há mudança no CRUD ou na emissão existentes. A estrutura
+SQL já suporta vínculo fornecido no INSERT de uma configuração nova, sem
+atribuição retroactiva; não é validação material da matriz ainda não homologada.
 
 ## Invariantes e aceitação técnica proposta
 
@@ -52,7 +55,8 @@ identidade governada; validação de configurações depende da matriz.
 
 ## Pedido de revisão cruzada Claude
 
-Rever o diff complementar a d2ebd0b nesta branch, exclusivamente por leitura.
+Rever o diff de implementação complementar a 79766bc nesta branch, exclusivamente
+por leitura, com contexto dos contratos d2ebd0b/79766bc.
 Confirmar que D-CAT-3 está aprovada apenas nos termos comunicados, D-CAT-2 não
 foi homologada por inferência e códigos/Entidades/sinais novos não foram criados.
 Confrontar a matriz com as fontes já ligadas; verificar fronteira desta fundação

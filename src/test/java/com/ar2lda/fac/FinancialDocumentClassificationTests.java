@@ -164,8 +164,8 @@ class FinancialDocumentClassificationTests {
             System.out.println("OP22-B V25 reproduction: original ND; master changed pre-V25 to XX; document reassigned under V25 to NC, sign=2.");
             String before=db.queryForObject("select to_jsonb(d)::text from documento_financeiro d where id=?",String.class,document);
             var flyway=Flyway.configure().dataSource(fixtureUrl,user,password).load();
-            assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
-            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("26");
+            assertThat(flyway.migrate().migrationsExecuted).isEqualTo(2);
+            assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("27");
             assertThat(db.queryForObject("select to_jsonb(d)::text from documento_financeiro d where id=?",String.class,document)).isEqualTo(before);
             assertThat(codeBySql()).isEqualTo("NC"); // No reinterpretation or invented restoration of ND/XX.
             assertThatThrownBy(()->db.update("update documento_financeiro set id_tipo_documento=? where id=?",originalType,document))
