@@ -526,3 +526,25 @@ originação FT integrada não equivale a activação do novo circuito RC. Sem c
 actualização de demo, migração ou alteração de bases. **Fatia 1e SUSPENSA**, sem
 início autorizado. Recomendações anteriores para a próxima implementação não são
 decisões de produto nem autorização de execução; novas etapas exigem ordem própria.
+
+
+## OP22-B — preservação do vínculo classificativo financeiro (local, não integrado)
+
+- Base integrada confirmada: PR #32, 6abf4ceda62528ed6fef91dc35383599b248ea79,
+  contendo a V25; referência observada na retoma de 22-10-2026 após fetch manual do PO.
+- V25 estabiliza os cinco atributos protegidos do mestre. DTO e extractos mantêm
+  as consultas existentes; a classificação não passa a depender de um novo snapshot.
+- Lacuna reproduzida: reatribuição do tipo de um financeiro não-RC por SQL altera
+  Código Fiscal e sinal lidos. V26 local bloqueia apenas a troca de id_tipo_documento
+  de cabeçalhos financeiros persistidos, incluindo anulados, por SQL/JPA/upsert.
+- Sem backfill, restauro inferido de classificações ou alteração de contratos de
+  leitura. Históricos sem classificação original demonstrável não foram resolvidos
+  por uma nova política; qualquer mudança dessa semântica continua a exigir o PO.
+- Validação local: 229 testes backend distintos aprovados, zero falhas/erros/ignorados,
+  PostgreSQL 16.3 descartável e package BUILD SUCCESS. Inclui 14 novos testes de
+  classificação, 17 de V25, seis de upgrades e regressão comercial/financeira.
+  Não é suite integral nem CI; relatório externo 2026-10-22_OP22-B_classificacao-historica_Codex.md,
+  no arquivo Relatorios-AR2/TUULI. Revisão independente Claude ainda pendente.
+- Branch codex/financial-classification-op22-b; implementação local para revisão
+  independente Claude. Sem push, PR ou merge. Legado continua autoridade operacional;
+  RC FinancialCore inactivo, demo inalterada e Fatia 1e suspensa.

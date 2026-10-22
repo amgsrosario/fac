@@ -393,3 +393,25 @@ fiscalidade/contrato público) e três MAJOR (cobertura histórica, cobertura fu
 reversibilidade operacional). Aceitar o diagnóstico não resolve esses gates,
 a temporalidade FT ou decisões arquitectónicas/fiscais pendentes; não autoriza
 alterar dados, demo, emissores, consumidores ou extractos.
+
+
+## OP22-B — vínculo da classificação financeira, preparação local (22-10-2026)
+
+PR #32 integrado em feature/visual-redesign, merge observado
+6abf4ceda62528ed6fef91dc35383599b248ea79, incluindo e6aa3d6 e V25.
+A V25 torna permanentes os atributos fiscais/financeiros do tipo já utilizado;
+não reconstrói classificações anteriores à sua instalação.
+
+A verificação delimitada OP22-B reproduziu em PostgreSQL descartável uma lacuna:
+um financeiro não-RC podia trocar id_tipo_documento, passando a outro mestre
+mesmo sem alterar os atributos protegidos pela V25. Preparação local V26 impede
+essa troca do vínculo após persistência; não cria snapshot ou autoridade paralela.
+Não existe estado de rascunho no modelo DocumentoFinanceiro. A protecção preserva
+o vínculo existente, sem atribuir retrospectivamente a classificação de emissão.
+
+Não altera leitores, extractos, agregações, saldos ou o circuito legado. Descrição
+continua metadado editável, não uma classificação fiscal congelada. A semântica
+de históricos anteriores sem prova permanece reservada: qualquer mudança de
+fallback, classificação desconhecida ou recusa de leitura exige decisão do PO.
+RC novo inactivo, Fatia 1e suspensa. Incremento local não integrado, sujeito a
+revisão independente Claude; sem autorização de publicação nesta missão.
