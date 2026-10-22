@@ -369,7 +369,8 @@ concluído em 21-10-2026, por decisão expressa comunicada na ordem do Executivo
 Resultado mantido:
 **FinancialCore não pronto para transição operacional**. Esta aceitação não
 aprova cutover, deployment ou desenvolvimento seguinte. **Fatia 1e suspensa**.
-Este registo está preparado localmente para revisão, ainda sem publicação/integração.
+Este registo foi integrado pelo PR #31 (merge 1a53ddc); a aceitação não
+permanece pendente de publicação.
 
 Evidência da base cf05615/PR #30: 142 testes financeiros + 2 comerciais = 144,
 11 cenários e package aprovados na execução anterior, em PostgreSQL descartável.
@@ -395,7 +396,7 @@ a temporalidade FT ou decisões arquitectónicas/fiscais pendentes; não autoriz
 alterar dados, demo, emissores, consumidores ou extractos.
 
 
-## OP22-B — vínculo da classificação financeira, preparação local (22-10-2026)
+## OP22 / OP22-B — protecção classificativa integrada (22-10-2026)
 
 PR #32 integrado em feature/visual-redesign, merge observado
 6abf4ceda62528ed6fef91dc35383599b248ea79, incluindo e6aa3d6 e V25.
@@ -404,7 +405,8 @@ não reconstrói classificações anteriores à sua instalação.
 
 A verificação delimitada OP22-B reproduziu em PostgreSQL descartável uma lacuna:
 um financeiro não-RC podia trocar id_tipo_documento, passando a outro mestre
-mesmo sem alterar os atributos protegidos pela V25. Preparação local V26 impede
+mesmo sem alterar os atributos protegidos pela V25. V26 integrada pelo PR #33 (merge 3cd75225d615ea27d90ad603e430d258f777cbe2,
+commit 41253ae7a26e05b9824143635d15cab0b721866d) impede
 essa troca do vínculo após persistência; não cria snapshot ou autoridade paralela.
 Não existe estado de rascunho no modelo DocumentoFinanceiro. A protecção preserva
 o vínculo existente, sem atribuir retrospectivamente a classificação de emissão.
@@ -413,5 +415,73 @@ Não altera leitores, extractos, agregações, saldos ou o circuito legado. Desc
 continua metadado editável, não uma classificação fiscal congelada. A semântica
 de históricos anteriores sem prova permanece reservada: qualquer mudança de
 fallback, classificação desconhecida ou recusa de leitura exige decisão do PO.
-RC novo inactivo, Fatia 1e suspensa. Incremento local não integrado, sujeito a
-revisão independente Claude; sem autorização de publicação nesta missão.
+RC novo inactivo, Fatia 1e suspensa. Incremento integrado; parecer Claude APPROVE, 0 BLOCKER / 0 MAJOR / 0 MINOR,
+confirmado por leitura do parecer arquivado de 22-10-2026.
+
+
+Fecho institucional de OP22 (PR #32/V25, imutabilidade do mestre) e OP22-B
+(PR #33/V26, imutabilidade do vínculo): concluídos estes incrementos, não a
+transição financeira global. V25/V26 não reconstroem classificações anteriores
+sem prova, não escolhem catálogo fiscal nem activam consumidores. Evidência
+local arquivada e CI são distintos; nenhum teste foi repetido neste fecho.
+A condição demo-base.sql/V25 continua aplicável antes de qualquer actualização.
+
+O próximo objectivo do plano OB §10 é introduzir o catálogo canónico, depois da
+preservação histórica. O princípio já aprovado não equivale à escolha de modelo:
+OB §11 reserva arquitectura, matriz completa e política ao PO; D-CAT-2A abaixo
+aprova parte do modelo conceptual da matriz, sem resolver as restantes reservas. Mantêm-se GOV-ALT-001,
+gate fiscal antecipado para valorização cambial e suspensão 1e; não transformar
+esta sequência de referência numa autorização de desenvolvimento.
+
+
+## D-CAT-2A — Tipologias fiscais e especializações
+
+**Decisão funcional aprovada em 22-10-2026 pela Administração AR2 / Product Owner**,
+comunicada directamente na ordem de registo institucional D-CAT-2A. Este registo
+preserva a decisão; não constitui validação normativa independente nem implementação.
+
+O comportamento fiscal e financeiro-base de cada Tipo de Documento TUULI é
+determinado pela respectiva tipologia fiscal. Não são permitidas configurações
+independentes que contrariem a natureza ou efeitos-base dessa tipologia. Só são
+admitidas especializações expressamente previstas no modelo fiscal correspondente.
+
+### Facturação — FT e FR
+
+| Tipo TUULI | Código Fiscal | Liquidação imediata | Efeito funcional aprovado |
+| --- | --- | --- | --- |
+| FT | FT | Não | Factura que constitui dívida do cliente |
+| FR | FT | Sim | Factura liquidada no momento da emissão |
+
+FT e FR partilham o Código Fiscal FT; a distinção funcional é a especialização
+de liquidação imediata. Os restantes atributos classificativos e efeitos-base
+são determinados pela tipologia fiscal FT. Não inferir desta decisão uma alteração
+automática dos tipos/configurações ou documentos já existentes.
+
+### Liquidações — RC e RL
+
+RC e RL seguem exclusivamente o modelo da respectiva tipologia fiscal, sem
+especialização adicional de liquidação imediata. RC é documento de recebimento
+de cliente para registar a liquidação de dívida existente. RL é documento interno
+TUULI que regista pagamento ou devolução da empresa ao cliente, nomeadamente
+para liquidar crédito resultante de nota de crédito.
+
+São movimentos financeiros distintos; não presumir equivalência fiscal entre
+RC e RL. A correspondência fiscal exacta de RL e a matriz de efeitos de cada
+tipologia permanecem sujeitas a confirmação documental e validação antes da
+implementação. O nome interno RL não estabelece o seu Código Fiscal.
+
+### Consequências para D-CAT-2 e limites
+
+A futura matriz deverá representar explicitamente tipologia e efeitos-base,
+especializações permitidas (incluindo liquidação imediata para FT), comportamentos
+próprios RC/RL sem opções redundantes de liquidação imediata, e combinações válidas
+de área de gestão, Entidade e sinal fundamentadas no modelo aprovado. Classificação
+fiscal, validade da configuração e habilitação operacional são dimensões distintas.
+
+Mantêm-se V25 (imutabilidade da configuração após primeira emissão), V26
+(protecção da associação financeira ao tipo), históricos sem reclassificação
+inferida e todos os limites de activação vigentes. A decisão aprova o modelo
+funcional conceptual acima, não a correspondência fiscal RL, valores ainda não
+demonstrados da matriz completa, activação RC/RL, migração/reclassificação histórica
+ou implementação técnica do catálogo. D-CAT-1 (arquitectura) e D-CAT-3
+(versionamento/transição) continuam pendentes de ratificação expressa.

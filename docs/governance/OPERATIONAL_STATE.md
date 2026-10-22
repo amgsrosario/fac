@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-21, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-22, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD produtivo observado neste registo: `cf0561562d74ddd3e84786c66ab2a78409811229`, merge do PR #30, confirmado na referência local `origin/feature/visual-redesign`. Sem fetch ou consulta nova ao GitHub neste registo; não é referência auto-actualizada.
+- HEAD produtivo observado neste registo: `3cd75225d615ea27d90ad603e430d258f777cbe2`, merge do PR #33, confirmado na referência local `origin/feature/visual-redesign`. Sem fetch ou consulta nova ao GitHub neste registo; não é referência auto-actualizada.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -468,8 +468,8 @@ Administração AR2/PO, na ordem «OP22 — Fatia 1d | Registo institucional da 
 de 21-10-2026. [Transcrição literal da decisão efectivamente disponibilizada](records/2026-10-21-slice1d-po-acceptance.md),
 SHA-256 `5ab32f4de2708019f62b4836438b90fc4685b95020a61c4980b39d31b1433708`; este registo
 preserva a proveniência da mensagem e distingue aceitação da autorização inicial.
-Este registo documental está preparado localmente para revisão
-independente; a sua publicação e integração ainda não foram efectuadas.
+Este registo documental foi integrado pelo PR #31, merge 1a53ddc,
+incluindo d883aba e ab2e4ef; não permanece pendente de publicação.
 A aceitação do diagnóstico não constitui autorização de desenvolvimento ou corte.
 
 Base da evidência: cf05615, PR #30. Validação anterior em PostgreSQL 16.3 descartável:
@@ -528,14 +528,17 @@ início autorizado. Recomendações anteriores para a próxima implementação n
 decisões de produto nem autorização de execução; novas etapas exigem ordem própria.
 
 
-## OP22-B — preservação do vínculo classificativo financeiro (local, não integrado)
+## OP22 / OP22-B — classificação protegida, PR #32 e PR #33 integrados
 
 - Base integrada confirmada: PR #32, 6abf4ceda62528ed6fef91dc35383599b248ea79,
   contendo a V25; referência observada na retoma de 22-10-2026 após fetch manual do PO.
 - V25 estabiliza os cinco atributos protegidos do mestre. DTO e extractos mantêm
   as consultas existentes; a classificação não passa a depender de um novo snapshot.
+- PR #33 integrado, merge 3cd75225d615ea27d90ad603e430d258f777cbe2,
+  incluindo 41253ae7a26e05b9824143635d15cab0b721866d e V26; ancestralidade
+  confirmada na referência local actualizada pelo PO, sem novo fetch neste fecho.
 - Lacuna reproduzida: reatribuição do tipo de um financeiro não-RC por SQL altera
-  Código Fiscal e sinal lidos. V26 local bloqueia apenas a troca de id_tipo_documento
+  Código Fiscal e sinal lidos. V26 integrada bloqueia apenas a troca de id_tipo_documento
   de cabeçalhos financeiros persistidos, incluindo anulados, por SQL/JPA/upsert.
 - Sem backfill, restauro inferido de classificações ou alteração de contratos de
   leitura. Históricos sem classificação original demonstrável não foram resolvidos
@@ -544,7 +547,64 @@ decisões de produto nem autorização de execução; novas etapas exigem ordem 
   PostgreSQL 16.3 descartável e package BUILD SUCCESS. Inclui 14 novos testes de
   classificação, 17 de V25, seis de upgrades e regressão comercial/financeira.
   Não é suite integral nem CI; relatório externo 2026-10-22_OP22-B_classificacao-historica_Codex.md,
-  no arquivo Relatorios-AR2/TUULI. Revisão independente Claude ainda pendente.
-- Branch codex/financial-classification-op22-b; implementação local para revisão
-  independente Claude. Sem push, PR ou merge. Legado continua autoridade operacional;
+  no arquivo Relatorios-AR2/TUULI. Parecer Claude de 22-10-2026 lido neste fecho:
+  APPROVE, BLOCKER 0 / MAJOR 0 / MINOR 0, revisão estática sem executar testes.
+  O parecer confirma 27/27 artefactos preservados, 903.104 bytes; manifesto
+  SHA-256 98bdb304b4b631ca41924ab810fce7e566b40ad36d0370f24ed0f8b0243abae2.
+  Referência externa: 2026-10-22_OP22-B_classificacao-historica_revisao-Claude.md.
+  Não foi consultado CI novo nem repetida a suite neste fecho documental.
+- OP22 (imutabilidade de tipos, PR #32/V25) e OP22-B (vínculo financeiro, PR #33/V26)
+  concluídas e integradas nos respectivos âmbitos. O parecer V25 foi APPROVE com
+  três MINOR não impeditivos; não confundir com o parecer V26 sem findings.
+  Evidência V25 preservada no arquivo OP22-Imutabilidade-Tipos; V26 em
+  OP22-B-Classificacao-Historica. A V25 pode impedir o upsert demo-base.sql se
+  houver configurações protegidas divergentes; verificar antes de actualizar a demo.
+  Branches/worktrees das implementações preservadas. Legado continua autoridade operacional;
   RC FinancialCore inactivo, demo inalterada e Fatia 1e suspensa.
+
+
+### Continuidade após OP22-B — plano existente, sem autorização de implementação
+
+A sequência de referência OB §10 coloca a introdução do catálogo canónico após
+a preservação histórica, agora protegida para novas emissões por V25/V26.
+O princípio de autoridade do Código Fiscal já foi aprovado em OA §3.A e OB §4;
+a arquitectura concreta (código/persistido/híbrido), a matriz completa de efeitos e a
+política de alterações continuam reservadas ao PO por OB §11, com aprovação
+conceptual parcial posterior D-CAT-2A descrita abaixo. O plano não é
+autorização de execução. Não foi demonstrado um incremento seguinte totalmente
+decidido e desbloqueado: o próximo objectivo funcional do plano é o catálogo,
+condicionado àquelas escolhas; não iniciar nova auditoria para o reconhecer.
+
+Aceitação existente OB §4/§5: autoridade única, especializações apenas permitidas,
+preservação histórica antes/junto do catálogo e ausência de classificação
+paralela pelos consumidores. A matriz completa de efeitos ainda não é critério
+executável aprovado. Moeda base/valorização vêm depois (OB §10.5), com validação
+fiscal de entrada obrigatória (§7) e decisões cambiais reservadas. Não antecipar
+multimoeda nem inventar critérios de aceitação funcionais ainda não definidos.
+Fonte original externa: Relatorios-AR2/TUULI/2026-10-19_OP22_OB_ordem-original_PO.txt;
+matriz de recuperação: 2026-10-21_OP22_matriz-final-decisoes-PO_Codex.md, §§6–8.
+Fatia 1e suspensa; seis gates de transição preservados. Este fecho não encerra
+a OP22 financeira global nem autoriza catálogo, cutover, deployment ou RC novo.
+
+
+### D-CAT-2A — decisão aprovada, registada; implementação não iniciada
+
+22-10-2026: Administração AR2/PO aprovou o modelo conceptual de tipologias e
+especializações. [Decisão canónica e limites](INSTITUTIONAL_MEMORY.md#d-cat-2a--tipologias-fiscais-e-especializações).
+FT e FR partilham Código Fiscal FT, distinguindo-se por liquidação imediata
+não/sim: constituição de dívida versus liquidação na emissão. RC regista
+recebimento/liquidação de dívida existente; RL regista pagamento/devolução da
+empresa ao cliente, incluindo liquidação de crédito de NC. RC/RL seguem as suas
+respectivas tipologias sem especialização adicional de liquidação imediata;
+não presumir equivalência fiscal ou inventar Código Fiscal para RL.
+
+Próxima preparação D-CAT-2 deve incorporar esta aprovação, sem reapresentar
+o modelo conceptual como indeciso. Permanecem pendentes: confirmação documental
+e validação da correspondência fiscal RL, valores não demonstrados da matriz
+completa (área, Entidade, sinal e efeitos), D-CAT-1 e D-CAT-3. As recomendações
+do relatório anterior sobre arquitectura/versionamento não foram ratificadas.
+
+Registo exclusivamente documental. Não altera configurações existentes ou
+comportamentos operacionais, não migra/reclassifica históricos, não enfraquece
+V25/V26 nem autoriza implementação do catálogo. Novo RC e RL não activados;
+FinancialCore RC inactivo, legado autoridade operacional, Fatia 1e suspensa.
