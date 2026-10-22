@@ -17,7 +17,7 @@ public final class FiscalCatalog {
     private final ObjectMapper json = new ObjectMapper()
             .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
             .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
-    private final Map<Key, JsonNode> expected;
+    private final Resource source;
 
     public record Key(String fiscalCode, long revision) { }
     public record Revision(Key key, JsonNode definition) {
@@ -32,9 +32,14 @@ public final class FiscalCatalog {
 
     FiscalCatalog(JdbcTemplate db, Resource source) {
         this.db = db;
+        this.source = source;
+    }
+
+    /** Parse only on use: an inactive catalog cannot prevent legacy bean initialization. */
+    private Map<Key, JsonNode> loadExpected() {
         try (var input = source.getInputStream()) {
             var manifest = json.readTree(input);
-            if (!manifest.path("schemaVersion").isIntegralNumber()
+            if (manifest == null || !manifest.path("schemaVersion").isIntegralNumber()
                     || !manifest.path("schemaVersion").canConvertToInt()
                     || manifest.path("schemaVersion").intValue() != 1
                     || !manifest.path("revisions").isArray()) {
@@ -55,7 +60,7 @@ public final class FiscalCatalog {
                     throw new IllegalStateException("Duplicate fiscal catalog revision");
                 }
             }
-            expected = Map.copyOf(definitions);
+            return Map.copyOf(definitions);
         } catch (IOException e) {
             throw new IllegalStateException("Cannot read fiscal catalog manifest", e);
         }
@@ -72,16 +77,19 @@ public final class FiscalCatalog {
 
     /** No fallback to current masters/latest revision for unbound historical types. */
     public Optional<Revision> forType(String typeId) {
+        var revisions = verifiedRevisions();
         return db.query("select fiscal_catalog_code,fiscal_catalog_revision from tipodocumento where id=?",
                 (rs, index) -> {
                     String code = rs.getString(1);
                     return code == null ? Optional.<Revision>empty()
-                            : Optional.of(revision(code, rs.getLong(2)));
+                            : Optional.ofNullable(revisions.get(new Key(code, rs.getLong(2))))
+                                .or(() -> { throw new IllegalStateException("Fiscal catalog binding has no governed revision"); });
                 }, typeId).stream().findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown document type"));
     }
 
     private Map<Key, Revision> verifiedRevisions() {
+        var expected = loadExpected();
         Map<Key, Revision> actual = new HashMap<>();
         db.query("select fiscal_code,revision,definition::text from fiscal_catalog_revision", rs -> {
             Key key = new Key(rs.getString(1), rs.getLong(2));
@@ -89,7 +97,8 @@ public final class FiscalCatalog {
             try { definition = json.readTree(rs.getString(3)); }
             catch (IOException e) { throw new IllegalStateException("Invalid persisted catalog definition", e); }
             var source = expected.get(key);
-            // PostgreSQL jsonb ignores decimal scale; compare exact decimal values, never doubles.
+            // jsonb numeric equality compares values independently of decimal scale;
+            // its text rendering may retain trailing zeros. Never compare through doubles.
             if (source == null || !source.equals((a, b) -> a.isNumber() && b.isNumber()
                     ? a.decimalValue().compareTo(b.decimalValue()) : a.equals(b) ? 0 : 1, definition)) {
                 throw new IllegalStateException("Fiscal catalog materialization differs from governed manifest");

@@ -20,7 +20,7 @@ Ordem de implementação posterior autorizou apenas esta fundação inactiva.
 - FiscalCatalog, serviço interno: verifica conjunto completo e conteúdo materializado
   em uma query, comparação JSON com decimais exactos; rejeita materialização
   diferente/incompleta antes de devolver revisão. Identidades duplicadas ou manifesto
-  inválido recusados; definições devolvidas são cópias defensivas. Não há procura
+  inválido recusados na utilização; definições devolvidas são cópias defensivas. Não há procura
   da revisão mais recente, reinterpretação de mestres ou classificação de fallback.
 - forType devolve ausência explícita para tipo sem vínculo, sem alterar o DTO
   operacional. Não é nova política de «classificação desconhecida» dos leitores
@@ -102,14 +102,18 @@ MANIFEST_SHA256.tsv SHA-256:
 6d6574bb3f6307a9278f7b1818878ce200627e55744da81d8e0e2da4dca4a6fc.
 Conserva a falha inicial e as execuções finais, sem reconstruir evidência.
 
-## Revisão cruzada — pendente
+## Revisão cruzada — parecer inicial e confirmação pendente
 
-Claude não disponível: command -v claude não encontra executável e não existe
-ferramenta Claude exposta. Nenhuma revisão independente ou aprovação declarada.
+Parecer inicial Claude sobre e54a967: APROVADO COM RESERVAS, lido no arquivo
+2026-10-22_OP22_V27-catalogo-fiscal_revisao-Claude.md (ver complemento abaixo).
+A confirmação do diff complementar ainda não foi realizada: command -v claude
+e claude.exe não encontram executável, nem há ferramenta Claude exposta.
+Não se declara confirmação independente inexistente.
 Pedido para Claude, exclusivamente leitura:
 
 1. Ler AGENTS, canónicos, ADR-003, FIRST_SLICE e matriz D-CAT-2.
-2. Rever git diff 79766bc..codex/fiscal-catalog-dcat1; contexto documental desde
+2. Rever git diff e54a967..codex/fiscal-catalog-dcat1 para confirmação das reservas; contexto completo desde
+   79766bc e documental desde
    d2ebd0b disponível, sem reabrir decisões do PO.
 3. Verificar CHECK/FK/triggers V27, vínculo apenas na criação, imutabilidade de
    revisão, semântica do manifesto e precisão, concorrência/rollback e ausência
@@ -124,3 +128,87 @@ pendentes; não existe CI novo nesta missão. D-CAT-2 bloqueia uma futura valida
 operacional de tipologias, não é falsamente declarada aprovada para esta fundação.
 Sem push, PR, merge ou activação. RC/RL, FinancialCore operacional e 1e inactivos;
 legado única autoridade operacional.
+
+
+## Complemento — reservas da revisão Claude sobre e54a967
+
+Parecer estático lido integralmente no arquivo externo:
+2026-10-22_OP22_V27-catalogo-fiscal_revisao-Claude.md, SHA-256
+0761874b997065355adf212bc6815f8a5a73ed640130d5752d3734420fa1fa9c.
+Resultado original APROVADO COM RESERVAS, sem defeitos bloqueantes; uma reserva
+de cobertura RES-1 e sugestões SUG-1/SUG-2. Não executou testes ou migrations.
+
+| Observação | Resolução executada pelo Codex |
+| --- | --- |
+| RES-1 | Regressão adicional das três classes pedidas: 3 + 46 + 25 = 74 aprovados |
+| SUG-1 | Leitura/validação do manifesto adiada para utilização explícita; construtor só guarda dependências. Sem fallback ou cache de revisão alternativa |
+| SUG-2 | Comentário distingue igualdade numérica jsonb de representação textual, que pode conservar zeros; teste 123.4500 vs 123.45 confirma igualdade sem perda de precisão |
+
+Todos os métodos de utilização (verifyCoherence, revision, forType) validam
+manifesto/materialização antes de usar o catálogo. forType valida também antes
+de consultar tipos sem vínculo; não converte erro do manifesto em ausência.
+Revisões continuam explicitamente identificadas, sem procura da mais recente.
+A leitura é feita por invocação, sem erro guardado silenciosamente nem fallback.
+
+FiscalCatalogInitializationTests: cinco contextos Spring dirigidos, com manifesto
+ausente, vazio, JSON malformado, estrutura inválida e null. A inicialização eager
+do bean e consumidor legado dirigido tem sucesso; os três métodos de utilização
+lançam IllegalStateException, sem consulta JDBC. É contexto mínimo de regressão
+do isolamento do bean, não prova de um servidor HTTP completo com recurso ausente.
+As classes comerciais abaixo exercitam o contexto completo com o manifesto normal.
+
+### Execução adicional efectivamente realizada
+
+| Classe | Testes aprovados |
+| --- | --- |
+| FiscalCatalogTests | 26 |
+| FiscalCatalogInitializationTests | 5 |
+| TipoDocumentoControllerTests | 3 |
+| DocumentoComercialControllerTests | 46 |
+| DocumentoComercialEmissaoIntegridadeTests | 25 |
+| DocumentTypeImmutabilityTests | 17 |
+| FinancialDocumentClassificationTests | 14 |
+| FinancialReceiptMigrationTests | 6 |
+| FinancialCoreMigrationTests | 1 |
+| TestDatabaseSafetyValidatorTests | 4 |
+| **Total distinto desta execução complementar** | **147** |
+
+Zero falhas, erros ou ignorados. Fase dirigida 31 + regressão/package 116 = 147;
+não somar aos 184 anteriores, porque há sobreposição. Base PostgreSQL 16.3
+exclusivamente descartável fac_catalog_reserves_test em 127.0.0.1:25438, contentor
+tuuli-dcat1-reserves-test com tmpfs, removido após validação. Migrations até V27,
+validate e segundo arranque aprovados. Antes da remoção, base principal de
+regressão: schema 27, zero definições e zero tipos vinculados. V27 e V1–V26 não
+foram alteradas por esta correcção; manifesto de produção continua vazio.
+
+Comandos adicionais:
+
+```bash
+export FAC_TEST_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:25438/fac_catalog_reserves_test
+export FAC_TEST_DATASOURCE_USERNAME=postgres
+export FAC_TEST_DATASOURCE_PASSWORD=postgres
+mvn -o -B -Dtest=FiscalCatalogInitializationTests,FiscalCatalogTests test
+mvn -o -B -Dtest=TipoDocumentoControllerTests,DocumentoComercialControllerTests,DocumentoComercialEmissaoIntegridadeTests,DocumentTypeImmutabilityTests,FinancialDocumentClassificationTests,FinancialReceiptMigrationTests,FinancialCoreMigrationTests,TestDatabaseSafetyValidatorTests package
+```
+
+Package BUILD SUCCESS. git diff --check e referências documentais verificados.
+Evidência complementar: Relatorios-AR2/TUULI/Arquivo-Reservado/OP22-Catalogo-V27-Reservas,
+23 artefactos, 782.410 bytes: dois logs, dez XML, dez TXT e cópia do parecer inicial.
+Identidade origem/cópia verificada; manifesto adicional SHA-256
+a5970ae6fcb25fe8f3765e9ba721f469f9bafed8fa6a9783242a2b909d3222b1.
+Arquivo anterior preservado sem substituição.
+
+### Confirmação dirigida a solicitar ao Claude
+
+Rever diff e54a967..HEAD desta branch: confirmar RES-1 nos XML/logs, SUG-1 no
+construtor e nos três métodos de uso, SUG-2 no comentário/teste numérico. Verificar
+ausência de fallback, alterações de migrations, catálogo activo ou mudanças de
+produto. Emitir confirmação explícita das três observações, veredicto e findings
+por gravidade. Não é necessária nova auditoria arquitectónica.
+
+Não foi possível executar/submeter a revisão nesta sessão: Claude/claude.exe
+não encontrados no PATH nem /home/arosario/.local/bin/claude; sem ferramenta Claude.
+Pedido preparado, não enviado a agente de outro modelo. Aguardar confirmação
+independente efectiva antes de push/PR/integração. Não se invocou GitHub nem se
+alterou autenticação para contornar esta condição. Nenhuma nova aprovação
+independente, CI verde ou integração declarada pelo Executor.

@@ -143,10 +143,17 @@ class FiscalCatalogTests {
         String changed=entries.replace("12345678901234567890.12345678901234567891","12345678901234567890.12345678901234567892");
         assertThatThrownBy(()->reader("{\"schemaVersion\":1,\"revisions\":["+changed+"]}").verifyCoherence()).hasMessageContaining("differs");
     }
+    @Test void jsonbScaleDifferencesCompareEqualWithoutLosingPrecision() {
+        long rev=sequence.incrementAndGet();
+        String original=definition(rev).replace("true","123.4500");
+        db.update("insert into fiscal_catalog_revision values('Z9',?,?::jsonb)",rev,original);
+        String entries=String.join(",",db.queryForList("select definition::text from fiscal_catalog_revision",String.class));
+        reader("{\"schemaVersion\":1,\"revisions\":["+entries.replace("123.4500","123.45")+"]}").verifyCoherence();
+    }
     @Test void duplicateGovernedIdentitiesAndMalformedManifestAreRejected() {
-        assertThatThrownBy(()->reader("{}")).hasMessageContaining("Invalid fiscal catalog manifest");
+        assertThatThrownBy(()->reader("{}").verifyCoherence()).hasMessageContaining("Invalid fiscal catalog manifest");
         String entry=definition(1);
-        assertThatThrownBy(()->reader("{\"schemaVersion\":1,\"revisions\":["+entry+","+entry+"]}")).hasMessageContaining("Duplicate");
+        assertThatThrownBy(()->reader("{\"schemaVersion\":1,\"revisions\":["+entry+","+entry+"]}").verifyCoherence()).hasMessageContaining("Duplicate");
     }
     @Test void failedBindingRollsBackPublicationAndOtherWrites() throws Exception {
         long rev=sequence.incrementAndGet();String before=queryType("OLD");

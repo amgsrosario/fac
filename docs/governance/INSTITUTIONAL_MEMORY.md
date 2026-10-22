@@ -530,5 +530,6 @@ código fiscal, matriz de efeitos ou correspondência RL foi criado em produçã
 
 A infraestrutura não altera CRUD, leitores ou emissão operacionais. V25/V26 e
 históricos preservados sem backfill. Testes sintéticos demonstram mecanismo,
-não aprovação fiscal. Revisão cruzada Claude ainda não realizada, indisponível
-no executor. [Evidência local e pedido de revisão](../fiscal/catalog/VALIDATION.md).
+não aprovação fiscal. Parecer inicial Claude APROVADO COM RESERVAS recebido;
+observações tratadas localmente, com confirmação dirigida ainda pendente por
+indisponibilidade do revisor neste executor. [Evidência local e pedido de revisão](../fiscal/catalog/VALIDATION.md).

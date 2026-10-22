@@ -660,8 +660,28 @@ com essa base. Não equivale a catálogo fiscal operacional homologado.
 
 Validação: 184 testes distintos, zero falhas/erros/ignorados, PostgreSQL 16.3
 descartável e package BUILD SUCCESS; detalhes/fases em [VALIDATION](../fiscal/catalog/VALIDATION.md).
-Evidência arquivada fora de target. Nenhum CI consultado, revisão cruzada Claude
-ainda indisponível; pedido preparado para revisão posterior. Sem publicação
+Evidência arquivada fora de target. Parecer inicial Claude APROVADO COM RESERVAS
+recebido e lido; resolução complementar e confirmação pendente abaixo. Nenhum CI consultado. Sem publicação
 ou merge. V25/V26, legado, saldos, extractos e demo inalterados; RC/RL e
 FinancialCore operacional não activados, Fatia 1e suspensa. D-CAT-2 continua
 pendente de homologação para validação material por tipologia.
+
+
+### V27 — resolução local das reservas de revisão
+
+Parecer Claude de 22-10-2026 sobre e54a967, APROVADO COM RESERVAS, lido no
+arquivo TUULI. RES-1: 74 testes comerciais/CRUD adicionais aprovados. SUG-1:
+manifesto deixa de ser lido no construtor; validação integral na utilização
+explícita dos três métodos, falhando em fechado sem fallback. SUG-2: comentário
+jsonb corrigido e igualdade numérica com escalas distintas testada.
+
+Validação complementar: 147 testes distintos (31 dirigidos + 116 regressão/upgrade),
+zero falhas/erros/ignorados e package BUILD SUCCESS, em PostgreSQL 16.3 descartável.
+Não somar aos 184 anteriores por sobreposição. V27/V25/V26 inalteradas, ausência
+de backfill e catálogo vazio confirmados; contentor de teste removido.
+[Evidência e pedido de confirmação dirigida](../fiscal/catalog/VALIDATION.md).
+
+A confirmação independente do novo diff ainda não está concluída: Claude
+indisponível neste executor, sem substituição por auto-aprovação. Push/PR/integração
+não iniciados por dependerem dessa confirmação. Nenhum CI novo, deployment,
+activação RC/RL/FinancialCore/1e, alteração de matriz, histórico ou demo.
