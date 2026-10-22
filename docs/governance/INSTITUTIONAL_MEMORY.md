@@ -428,6 +428,60 @@ A condição demo-base.sql/V25 continua aplicável antes de qualquer actualizaç
 
 O próximo objectivo do plano OB §10 é introduzir o catálogo canónico, depois da
 preservação histórica. O princípio já aprovado não equivale à escolha de modelo:
-OB §11 reserva arquitectura, matriz e política ao PO. Mantêm-se GOV-ALT-001,
+OB §11 reserva arquitectura, matriz completa e política ao PO; D-CAT-2A abaixo
+aprova parte do modelo conceptual da matriz, sem resolver as restantes reservas. Mantêm-se GOV-ALT-001,
 gate fiscal antecipado para valorização cambial e suspensão 1e; não transformar
 esta sequência de referência numa autorização de desenvolvimento.
+
+
+## D-CAT-2A — Tipologias fiscais e especializações
+
+**Decisão funcional aprovada em 22-10-2026 pela Administração AR2 / Product Owner**,
+comunicada directamente na ordem de registo institucional D-CAT-2A. Este registo
+preserva a decisão; não constitui validação normativa independente nem implementação.
+
+O comportamento fiscal e financeiro-base de cada Tipo de Documento TUULI é
+determinado pela respectiva tipologia fiscal. Não são permitidas configurações
+independentes que contrariem a natureza ou efeitos-base dessa tipologia. Só são
+admitidas especializações expressamente previstas no modelo fiscal correspondente.
+
+### Facturação — FT e FR
+
+| Tipo TUULI | Código Fiscal | Liquidação imediata | Efeito funcional aprovado |
+| --- | --- | --- | --- |
+| FT | FT | Não | Factura que constitui dívida do cliente |
+| FR | FT | Sim | Factura liquidada no momento da emissão |
+
+FT e FR partilham o Código Fiscal FT; a distinção funcional é a especialização
+de liquidação imediata. Os restantes atributos classificativos e efeitos-base
+são determinados pela tipologia fiscal FT. Não inferir desta decisão uma alteração
+automática dos tipos/configurações ou documentos já existentes.
+
+### Liquidações — RC e RL
+
+RC e RL seguem exclusivamente o modelo da respectiva tipologia fiscal, sem
+especialização adicional de liquidação imediata. RC é documento de recebimento
+de cliente para registar a liquidação de dívida existente. RL é documento interno
+TUULI que regista pagamento ou devolução da empresa ao cliente, nomeadamente
+para liquidar crédito resultante de nota de crédito.
+
+São movimentos financeiros distintos; não presumir equivalência fiscal entre
+RC e RL. A correspondência fiscal exacta de RL e a matriz de efeitos de cada
+tipologia permanecem sujeitas a confirmação documental e validação antes da
+implementação. O nome interno RL não estabelece o seu Código Fiscal.
+
+### Consequências para D-CAT-2 e limites
+
+A futura matriz deverá representar explicitamente tipologia e efeitos-base,
+especializações permitidas (incluindo liquidação imediata para FT), comportamentos
+próprios RC/RL sem opções redundantes de liquidação imediata, e combinações válidas
+de área de gestão, Entidade e sinal fundamentadas no modelo aprovado. Classificação
+fiscal, validade da configuração e habilitação operacional são dimensões distintas.
+
+Mantêm-se V25 (imutabilidade da configuração após primeira emissão), V26
+(protecção da associação financeira ao tipo), históricos sem reclassificação
+inferida e todos os limites de activação vigentes. A decisão aprova o modelo
+funcional conceptual acima, não a correspondência fiscal RL, valores ainda não
+demonstrados da matriz completa, activação RC/RL, migração/reclassificação histórica
+ou implementação técnica do catálogo. D-CAT-1 (arquitectura) e D-CAT-3
+(versionamento/transição) continuam pendentes de ratificação expressa.

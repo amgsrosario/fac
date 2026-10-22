@@ -568,8 +568,9 @@ decisões de produto nem autorização de execução; novas etapas exigem ordem 
 A sequência de referência OB §10 coloca a introdução do catálogo canónico após
 a preservação histórica, agora protegida para novas emissões por V25/V26.
 O princípio de autoridade do Código Fiscal já foi aprovado em OA §3.A e OB §4;
-a arquitectura concreta (código/persistido/híbrido), a matriz de efeitos e a
-política de alterações continuam reservadas ao PO por OB §11. O plano não é
+a arquitectura concreta (código/persistido/híbrido), a matriz completa de efeitos e a
+política de alterações continuam reservadas ao PO por OB §11, com aprovação
+conceptual parcial posterior D-CAT-2A descrita abaixo. O plano não é
 autorização de execução. Não foi demonstrado um incremento seguinte totalmente
 decidido e desbloqueado: o próximo objectivo funcional do plano é o catálogo,
 condicionado àquelas escolhas; não iniciar nova auditoria para o reconhecer.
@@ -584,3 +585,26 @@ Fonte original externa: Relatorios-AR2/TUULI/2026-10-19_OP22_OB_ordem-original_P
 matriz de recuperação: 2026-10-21_OP22_matriz-final-decisoes-PO_Codex.md, §§6–8.
 Fatia 1e suspensa; seis gates de transição preservados. Este fecho não encerra
 a OP22 financeira global nem autoriza catálogo, cutover, deployment ou RC novo.
+
+
+### D-CAT-2A — decisão aprovada, registada; implementação não iniciada
+
+22-10-2026: Administração AR2/PO aprovou o modelo conceptual de tipologias e
+especializações. [Decisão canónica e limites](INSTITUTIONAL_MEMORY.md#d-cat-2a--tipologias-fiscais-e-especializações).
+FT e FR partilham Código Fiscal FT, distinguindo-se por liquidação imediata
+não/sim: constituição de dívida versus liquidação na emissão. RC regista
+recebimento/liquidação de dívida existente; RL regista pagamento/devolução da
+empresa ao cliente, incluindo liquidação de crédito de NC. RC/RL seguem as suas
+respectivas tipologias sem especialização adicional de liquidação imediata;
+não presumir equivalência fiscal ou inventar Código Fiscal para RL.
+
+Próxima preparação D-CAT-2 deve incorporar esta aprovação, sem reapresentar
+o modelo conceptual como indeciso. Permanecem pendentes: confirmação documental
+e validação da correspondência fiscal RL, valores não demonstrados da matriz
+completa (área, Entidade, sinal e efeitos), D-CAT-1 e D-CAT-3. As recomendações
+do relatório anterior sobre arquitectura/versionamento não foram ratificadas.
+
+Registo exclusivamente documental. Não altera configurações existentes ou
+comportamentos operacionais, não migra/reclassifica históricos, não enfraquece
+V25/V26 nem autoriza implementação do catálogo. Novo RC e RL não activados;
+FinancialCore RC inactivo, legado autoridade operacional, Fatia 1e suspensa.
