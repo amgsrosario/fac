@@ -1,3 +1,13 @@
+<!-- Metadados de proveniência acrescentados em H2-03/R1; não integram o corpo da deliberação.
+Autoridade: Administração AR2.
+Data do acto: 23/10/2026.
+Origem: mensagem integral da Administração no chat executivo TUULI AIR.
+Arquivo técnico: Executivo ChatGPT.
+Commit original: 8ba4a56d9d0d083e8f0e19750b1ab58d9cea1f76 (8ba4a56d).
+SHA-256 do corpo original: 2fbe5ab1f83d4c15f9787fd82542826ce1a1a20c9977c208553a0e3971f53a63.
+Metadados registados pelo Codex conforme ordem H2-03/R1; sem alteração do texto administrativo.
+-->
+
 # AR2 | DELIBERAÇÃO DEFINITIVA DA ADMINISTRAÇÃO
 
 ## TUULI AIR | H2-02 | Política de entrada no catálogo fiscal governado
