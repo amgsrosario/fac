@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-22, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-23, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD produtivo observado neste registo: `3cd75225d615ea27d90ad603e430d258f777cbe2`, merge do PR #33, confirmado na referência local `origin/feature/visual-redesign`. Sem fetch ou consulta nova ao GitHub neste registo; não é referência auto-actualizada.
+- HEAD produtivo observado no reconhecimento H1.1: `089b18165f793ae3059ee6f7da5d1d92e4de9ec6`, merge PR #35 (V27). Confirmado por GitHub e referência remota reconciliada em 23-10-2026; checkout principal preservado.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -698,3 +698,50 @@ Base remota confirmada pelo conector GitHub na preparação: PR #34,
 AR2-Governance/AI_DEVELOPMENT_SYSTEM.md, commit local
 6452a11099113de577ee34de4a5e19d9ffff5dbd: decisão de merge reservada a António.
 Nenhuma aprovação CI ou integração é declarada antes de ser comprovada.
+
+
+## D-CAT-2/H1.1 — Homologação semântica FT/FR/RC
+
+23-10-2026. Fonte: ordem executiva D-CAT-2/H1.1 expressamente disponibilizada
+pela Administração AR2. FT é factura de liquidação posterior e constitui dívida
+do cliente; FR é factura-recibo de liquidação imediata, liquidada na emissão;
+RC liquida dívida existente, reduzindo-a ou extinguindo-a. FT/FR partilham a
+tipologia interna FT, diferenciadas pela liquidação imediata; RC não possui
+especialização adicional. Esta homologação é semântica: não homologa todas as
+combinações técnicas, códigos SAF-T ou projecções QR/PDF.
+
+D-CAT-2/02 e parecer incremental Claude de 22-10-2026 foram lidos integralmente
+no arquivo Relatorios-AR2/TUULI. Relatório:
+2026-10-22_TUULI_D-CAT-2-02_matriz-homologacao-corrigida_Codex.md,
+SHA-256 1b5cacaac93d9c4ea1259099f72a02a037e538da226a2078a082fad6f0ff1447.
+Parecer: 2026-10-22_TUULI_D-CAT-2-02_verificacao-incremental_Claude.md,
+APROVADO, zero achados. Não é revisão da presente especificação.
+
+A [especificação H1.1](../fiscal/catalog/H1_1_FT_SPEC.md) prepara apenas FT
+não imediata; não implementada nesta missão. FR/FT imediata, RC (até prova do
+enquadramento fiscal), RL/NC/ND e restantes tipos excluídos. RL sem
+correspondência homologada. V25/V26/V27 preservadas, sem backfill, alteração
+histórica ou activação. Legado mantém autoridade; RC novo inactivo e 1e suspensa.
+As reservas de combinações e projecções dos registos anteriores mantêm-se;
+a pendência anterior de homologação da semântica FT/FR/RC foi superada por esta
+ordem, não a matriz integral. Revisão Claude desta alteração ainda pendente.
+
+
+### H1.1-R1 — rastreabilidade e reservas da especificação
+
+Fonte primária disponibilizada nesta conversa: [ordem H1.1 e homologação H1
+nela declarada](sources/2026-10-23_D-CAT-2-H1.1_ordem-recebida.md).
+SHA-256 do arquivo: `8eed0d8bfae8d06420712d6ae54fc65a3214040fccdad66830b4d472d3545051`.
+Transcrição documental da mensagem do utilizador em 23-10-2026, com proveniência
+no próprio arquivo; nenhum acto H1 autónomo ou assinatura foi fornecido.
+Não atribuir aprovação integral da matriz, projecções ou política de entrada.
+
+R1 especifica compatibilidade material de configurações vinculadas em Java e
+SQL para INSERT/UPDATE durante todo o ciclo de vida, inclusive antes da primeira
+emissão; tipos legados sem vínculo inalterados. A política de entrada continua
+pendente: A, obrigatória para todas as novas FT não imediatas, ou B, adesão
+explícita com criação legada preservada. Recomendação técnica A, não decisão
+aprovada. [Comparação e testes futuros](../fiscal/catalog/H1_1_FT_SPEC.md).
+Parecer inicial comunicado na ordem R1: 1 MAJOR e 2 MINOR; correcções documentais
+preparadas para revisão incremental Claude, ainda não aprovada. Sem implementação,
+activação ou alteração histórica. Mantêm-se todas as restantes reservas H1.1.

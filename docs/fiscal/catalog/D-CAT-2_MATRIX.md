@@ -1,7 +1,7 @@
 # D-CAT-2 — Matriz concreta de evidências para decisão
 
 22-10-2026. Base 3bc2f70c473b0cd6bb5011ba46eb4b0dc382bc7f.
-**Proposta de matriz, não matriz fiscal homologada.** Sem acesso a bases/demo.
+**Matriz técnica ainda não integralmente homologada; semântica FT/FR/RC homologada em H1.1.** Sem acesso a bases/demo.
 [Arquitectura aprovada](../../governance/decisions/ADR-003-fiscal-catalog.md).
 
 ## 1. Combinações efectivamente demonstradas
@@ -93,3 +93,15 @@ D-CAT-1 e D-CAT-3 não estão pendentes. Nenhum obstáculo relativo a multimoeda
 temporalidade FT ou corte é inventado como pré-condição de uma fundação inactiva.
 [Primeiro incremento técnico](FIRST_SLICE.md): especificação pronta; execução
 ainda não iniciada. Nenhum teste funcional executado nesta preparação documental.
+
+
+## 6. Homologação semântica H1.1 — estado posterior
+
+23-10-2026: FT constitui dívida com liquidação posterior; FR é liquidada na
+emissão; RC reduz/extingue dívida existente. FT/FR têm tipologia interna FT,
+diferenciada pela liquidação imediata; RC sem especialização adicional.
+As referências anteriores a homologação semântica pendente foram superadas
+pela ordem H1.1; candidatos técnicos e correspondências fiscais não o foram.
+Área/Entidade/sinal concretos continuam a exigir prova/homologação suficiente.
+Não usar 2/1/1 como decisão nova nem resolver RC/RG sem enquadramento demonstrado.
+RL permanece sem correspondência homologada. [Primeiro perímetro FT](H1_1_FT_SPEC.md).
