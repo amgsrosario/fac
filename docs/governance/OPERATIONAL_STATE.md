@@ -725,3 +725,23 @@ histórica ou activação. Legado mantém autoridade; RC novo inactivo e 1e susp
 As reservas de combinações e projecções dos registos anteriores mantêm-se;
 a pendência anterior de homologação da semântica FT/FR/RC foi superada por esta
 ordem, não a matriz integral. Revisão Claude desta alteração ainda pendente.
+
+
+### H1.1-R1 — rastreabilidade e reservas da especificação
+
+Fonte primária disponibilizada nesta conversa: [ordem H1.1 e homologação H1
+nela declarada](sources/2026-10-23_D-CAT-2-H1.1_ordem-recebida.md).
+SHA-256 do arquivo: `8eed0d8bfae8d06420712d6ae54fc65a3214040fccdad66830b4d472d3545051`.
+Transcrição documental da mensagem do utilizador em 23-10-2026, com proveniência
+no próprio arquivo; nenhum acto H1 autónomo ou assinatura foi fornecido.
+Não atribuir aprovação integral da matriz, projecções ou política de entrada.
+
+R1 especifica compatibilidade material de configurações vinculadas em Java e
+SQL para INSERT/UPDATE durante todo o ciclo de vida, inclusive antes da primeira
+emissão; tipos legados sem vínculo inalterados. A política de entrada continua
+pendente: A, obrigatória para todas as novas FT não imediatas, ou B, adesão
+explícita com criação legada preservada. Recomendação técnica A, não decisão
+aprovada. [Comparação e testes futuros](../fiscal/catalog/H1_1_FT_SPEC.md).
+Parecer inicial comunicado na ordem R1: 1 MAJOR e 2 MINOR; correcções documentais
+preparadas para revisão incremental Claude, ainda não aprovada. Sem implementação,
+activação ou alteração histórica. Mantêm-se todas as restantes reservas H1.1.
