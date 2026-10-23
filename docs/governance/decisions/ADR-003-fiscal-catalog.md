@@ -42,3 +42,16 @@ continuidade da Administração de 22-10-2026. A matriz D-CAT-2 permanece penden
 V25/V26, implementar catálogo ou activar circuitos nesta missão. O catálogo não
 equivale a certificação nem habilitação operacional. Legado conserva autoridade
 operacional; RC novo inactivo e Fatia 1e suspensa.
+
+
+## Actualização H1.1 — 23-10-2026
+
+A Administração homologou a semântica FT/FR/RC, não a matriz técnica integral
+nem as projecções fiscais. FT constitui dívida; FR liquida na emissão; ambas
+partilham tipologia interna FT, diferenciada pela liquidação imediata. RC reduz
+ou extingue dívida existente, sem especialização adicional.
+[Registo institucional](../INSTITUTIONAL_MEMORY.md#d-cat-2h11--homologação-semântica-ftfrrc).
+[Especificação limitada a FT não imediata](../../fiscal/catalog/H1_1_FT_SPEC.md).
+A V27 foi integrada pelo PR #35, sem activação. Os estados anteriores deste ADR
+representam o contexto das decisões originais; D-CAT-2 só está homologada no
+perímetro semântico acima, com reservas técnicas/fiscais mantidas.

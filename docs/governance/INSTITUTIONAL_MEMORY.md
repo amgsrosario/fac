@@ -535,3 +535,30 @@ observações tratadas localmente e confirmação final Claude APROVADO,
 0 BLOCKER / 0 MAJOR / 0 MINOR, sobre e54a967..cb76001. Parecer arquivado lido
 na preparação de integração; revisão estática, sem nova execução de testes
 pelo Revisor. A aprovação não activa o catálogo nem homologa D-CAT-2. [Evidência local e pedido de revisão](../fiscal/catalog/VALIDATION.md).
+
+
+## D-CAT-2/H1.1 — Homologação semântica FT/FR/RC
+
+23-10-2026. Fonte: ordem executiva D-CAT-2/H1.1 expressamente disponibilizada
+pela Administração AR2. FT é factura de liquidação posterior e constitui dívida
+do cliente; FR é factura-recibo de liquidação imediata, liquidada na emissão;
+RC liquida dívida existente, reduzindo-a ou extinguindo-a. FT/FR partilham a
+tipologia interna FT, diferenciadas pela liquidação imediata; RC não possui
+especialização adicional. Esta homologação é semântica: não homologa todas as
+combinações técnicas, códigos SAF-T ou projecções QR/PDF.
+
+D-CAT-2/02 e parecer incremental Claude de 22-10-2026 foram lidos integralmente
+no arquivo Relatorios-AR2/TUULI. Relatório:
+2026-10-22_TUULI_D-CAT-2-02_matriz-homologacao-corrigida_Codex.md,
+SHA-256 1b5cacaac93d9c4ea1259099f72a02a037e538da226a2078a082fad6f0ff1447.
+Parecer: 2026-10-22_TUULI_D-CAT-2-02_verificacao-incremental_Claude.md,
+APROVADO, zero achados. Não é revisão da presente especificação.
+
+A [especificação H1.1](../fiscal/catalog/H1_1_FT_SPEC.md) prepara apenas FT
+não imediata; não implementada nesta missão. FR/FT imediata, RC (até prova do
+enquadramento fiscal), RL/NC/ND e restantes tipos excluídos. RL sem
+correspondência homologada. V25/V26/V27 preservadas, sem backfill, alteração
+histórica ou activação. Legado mantém autoridade; RC novo inactivo e 1e suspensa.
+As reservas de combinações e projecções dos registos anteriores mantêm-se;
+a pendência anterior de homologação da semântica FT/FR/RC foi superada por esta
+ordem, não a matriz integral. Revisão Claude desta alteração ainda pendente.
