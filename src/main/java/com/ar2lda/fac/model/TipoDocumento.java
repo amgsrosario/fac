@@ -69,6 +69,24 @@ public class TipoDocumento {
     @Column(name = "configuracao_bloqueada", nullable = false, insertable = false, updatable = false)
     private boolean configuracaoBloqueada;
 
+    @Column(name = "fiscal_catalog_code", length = 2, updatable = false)
+    private String fiscalCatalogCode;
+
+    @Column(name = "fiscal_catalog_revision", updatable = false)
+    private Long fiscalCatalogRevision;
+
+    /** New object only; no setters or reassociation of an existing binding. SQL is the final authority. */
+    public static TipoDocumento governed(TipoDocumento source, String code, long revision) {
+        if (source.fiscalCatalogCode != null || source.fiscalCatalogRevision != null)
+            throw new IllegalStateException("Fiscal catalog binding already assigned");
+        TipoDocumento bound = new TipoDocumento(source.id, source.descricao, source.codigoFiscal,
+                source.modeloEmissao1, source.modeloEmissao2, source.modeloEmissao3, source.modeloEmissao4,
+                source.areaGestao, source.entidade, source.sinalContabilistico, source.liquidacaoImediata);
+        bound.fiscalCatalogCode = code;
+        bound.fiscalCatalogRevision = revision;
+        return bound;
+    }
+
     public TipoDocumento() {
     }
 

@@ -35,6 +35,6 @@ public record TipoDocumentoCreateDto(
         @Min(value = 1, message = "Sinal contabilístico deve ser 1 ou 2")
         @Max(value = 2, message = "Sinal contabilístico deve ser 1 ou 2")
         Integer sinalContabilistico,
-        boolean liquidacaoImediata
+        Boolean liquidacaoImediata
 ) {
 }

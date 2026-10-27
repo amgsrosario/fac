@@ -44,7 +44,8 @@ class FinancialReceiptIntegrationTests {
         db.update("insert into armazem(id,nome,morada,id_codpostal,localidade,id_pais) values('B1A','Teste','Rua','1000-020','Lisboa','PT') on conflict do nothing");
         db.update("insert into mpagamento(id,nome) values('B1P','Teste') on conflict do nothing");
         db.update("insert into empresa(id,nome,nif,morada,id_codpostal,localidade,id_pais,capital_social,matricula_registo_comercial,cae,descricao_cae,email) values(1,'Teste','500000000','Rua','1000-020','Lisboa','PT',0,'Registo','00000','Teste','b1@fac.test') on conflict do nothing");
-        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal) values('BFT','FT Teste',2,1,1,'FT'),('BRC','RC Teste',3,1,2,'RC') on conflict do nothing");
+        com.ar2lda.fac.testinfra.GovernedTypeFixtures.publishSynthetic(db);
+        db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,codigo_fiscal,fiscal_catalog_code,fiscal_catalog_revision) values('BFT','FT Teste',2,1,1,'FT','FT',9000001),('BRC','RC Teste',3,1,2,'RC',null,null) on conflict do nothing");
         if(users.findById("B1_EMISSOR").isEmpty()) users.save(new Utilizador("B1_EMISSOR","Teste","b1@fac.test","$2a$10$123456789012345678901uZVXKMcIlbsK8PL5kN1l4I2zxIlW85ee",false));
         client=db.queryForObject("select nextval('cliente_id_seq')",Long.class);
         db.update("insert into cliente(id,nome,morada,id_codpostal,nif,id_moeda,id_riva,id_transporte,id_pais) values(?,'Teste','Rua','1000-020',?,'EUR','CON','B1T','PT')",client,Long.toString(900000000+client));

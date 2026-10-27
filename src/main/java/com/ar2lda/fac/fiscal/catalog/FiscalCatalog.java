@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.*;
 
-/** Internal, inactive catalog reader. No startup hook, editor or operational callers. */
+/** Governed catalog reader. Lazy validation; no startup activation or fiscal definitions supplied. */
 @Service
 public final class FiscalCatalog {
     private final JdbcTemplate db;
@@ -36,7 +36,9 @@ public final class FiscalCatalog {
     }
 
     /** Parse only on use: an inactive catalog cannot prevent legacy bean initialization. */
-    private Map<Key, JsonNode> loadExpected() {
+    private record Manifest(Map<Key, JsonNode> revisions, Optional<Key> ftDeferred) { }
+
+    private Manifest loadManifest() {
         try (var input = source.getInputStream()) {
             var manifest = json.readTree(input);
             if (manifest == null || !manifest.path("schemaVersion").isIntegralNumber()
@@ -45,6 +47,10 @@ public final class FiscalCatalog {
                     || !manifest.path("revisions").isArray()) {
                 throw new IllegalStateException("Invalid fiscal catalog manifest");
             }
+            Set<String> rootFields = new HashSet<>();
+            manifest.fieldNames().forEachRemaining(rootFields::add);
+            if (!Set.of("schemaVersion", "revisions", "creationBindings").containsAll(rootFields))
+                throw new IllegalStateException("Invalid fiscal catalog manifest fields");
             Map<Key, JsonNode> definitions = new HashMap<>();
             for (JsonNode entry : manifest.path("revisions")) {
                 if (!entry.path("fiscalCode").isTextual() || entry.path("fiscalCode").asText().length() != 2
@@ -55,12 +61,27 @@ public final class FiscalCatalog {
                         || entry.path("schemaVersion").intValue() != 1) {
                     throw new IllegalStateException("Invalid fiscal catalog revision");
                 }
+                if ("FT".equals(entry.path("fiscalCode").textValue())) FtDeferredSemantics.configurations(entry);
                 Key key = new Key(entry.path("fiscalCode").textValue(), entry.path("revision").longValue());
                 if (definitions.putIfAbsent(key, entry.deepCopy()) != null) {
                     throw new IllegalStateException("Duplicate fiscal catalog revision");
                 }
             }
-            return Map.copyOf(definitions);
+            Optional<Key> creation = Optional.empty();
+            if (manifest.has("creationBindings")) {
+                var bindings = manifest.get("creationBindings");
+                FtDeferredSemantics.fields(bindings, Set.of("ftDeferred"));
+                var key = bindings.get("ftDeferred");
+                FtDeferredSemantics.fields(key, Set.of("fiscalCode", "revision"));
+                if (!key.path("fiscalCode").isTextual() || !"FT".equals(key.path("fiscalCode").textValue())
+                        || !key.path("revision").isIntegralNumber() || !key.path("revision").canConvertToLong()
+                        || key.path("revision").longValue() <= 0)
+                    throw new IllegalStateException("Invalid governed FT creation binding");
+                var selected = new Key("FT", key.path("revision").longValue());
+                if (!definitions.containsKey(selected)) throw new IllegalStateException("FT creation binding is absent from manifest revisions");
+                creation = Optional.of(selected);
+            }
+            return new Manifest(Map.copyOf(definitions), creation);
         } catch (IOException e) {
             throw new IllegalStateException("Cannot read fiscal catalog manifest", e);
         }
@@ -68,6 +89,14 @@ public final class FiscalCatalog {
 
     /** Checks the whole materialization in one query. Empty is valid while inactive. */
     public void verifyCoherence() { verifiedRevisions(); }
+
+    /** A reviewed release pointer, never latest/max and never chosen by an API client. */
+    public Revision ftDeferredCreation() {
+        var manifest = loadManifest();
+        var actual = verifiedRevisions(manifest);
+        return actual.get(manifest.ftDeferred().orElseThrow(() ->
+                new IllegalStateException("Governed FT creation is blocked: approved creation binding unavailable")));
+    }
 
     public Revision revision(String code, long revision) {
         var found = verifiedRevisions().get(new Key(code, revision));
@@ -88,8 +117,14 @@ public final class FiscalCatalog {
                 .orElseThrow(() -> new IllegalArgumentException("Unknown document type"));
     }
 
+    Map<Key, Revision> verifiedSnapshot() { return Map.copyOf(verifiedRevisions()); }
+
     private Map<Key, Revision> verifiedRevisions() {
-        var expected = loadExpected();
+        return verifiedRevisions(loadManifest());
+    }
+
+    private Map<Key, Revision> verifiedRevisions(Manifest manifest) {
+        var expected = manifest.revisions();
         Map<Key, Revision> actual = new HashMap<>();
         db.query("select fiscal_code,revision,definition::text from fiscal_catalog_revision", rs -> {
             Key key = new Key(rs.getString(1), rs.getLong(2));

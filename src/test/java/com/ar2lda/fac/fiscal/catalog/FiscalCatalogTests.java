@@ -43,7 +43,7 @@ class FiscalCatalogTests {
         Flyway.configure().dataSource(url,user,password).target("26").load().migrate();
         db.update("insert into tipodocumento(id,descricao,codigo_fiscal,area_gestao,entidade,sinal_contabilistico) values('OLD','Historical','ND',3,1,1)");
         String before = db.queryForObject("select to_jsonb(t)::text from tipodocumento t where id='OLD'",String.class);
-        var flyway = Flyway.configure().dataSource(url,user,password).load();
+        var flyway = Flyway.configure().dataSource(url,user,password).target("27").load();
         assertThat(flyway.migrate().migrationsExecuted).isOne();
         flyway.validate();
         assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("27");

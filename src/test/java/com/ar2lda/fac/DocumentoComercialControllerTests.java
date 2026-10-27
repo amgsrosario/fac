@@ -228,6 +228,7 @@ class DocumentoComercialControllerTests {
 
         TipoDocumento tipoDocumento = new TipoDocumento("DCT", "Documento teste", null, null, null, null, 1, 1, 1, false);
         tipoDocumento.setCodigoFiscal("FT");
+        tipoDocumento = com.ar2lda.fac.testinfra.GovernedTypeFixtures.bind(financialIsolationDb, tipoDocumento);
         tipoDocumentoRepository.save(tipoDocumento);
         TipoDocumento tipoDocumentoFinanceiro = new TipoDocumento("RCB", "Recibo teste", null, null, null, null, 3, 1, 2, true);
         tipoDocumentoFinanceiro.setCodigoFiscal("RC");

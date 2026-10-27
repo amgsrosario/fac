@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-23, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-27, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD produtivo observado no reconhecimento H1.1: `089b18165f793ae3059ee6f7da5d1d92e4de9ec6`, merge PR #35 (V27). Confirmado por GitHub e referência remota reconciliada em 23-10-2026; checkout principal preservado.
+- HEAD integrado observado na issue #39: `c17a9d8af9cf2d197c8c8c21f1f780a38efee0d9`, PR #37. Confirmado por GitHub e objecto Git local em 27-10-2026; checkout principal preservado. A implementação H2-03 descrita abaixo é local e ainda não está integrada.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -736,12 +736,38 @@ Transcrição documental da mensagem do utilizador em 23-10-2026, com proveniên
 no próprio arquivo; nenhum acto H1 autónomo ou assinatura foi fornecido.
 Não atribuir aprovação integral da matriz, projecções ou política de entrada.
 
-R1 especifica compatibilidade material de configurações vinculadas em Java e
-SQL para INSERT/UPDATE durante todo o ciclo de vida, inclusive antes da primeira
-emissão; tipos legados sem vínculo inalterados. A política de entrada continua
-pendente: A, obrigatória para todas as novas FT não imediatas, ou B, adesão
-explícita com criação legada preservada. Recomendação técnica A, não decisão
-aprovada. [Comparação e testes futuros](../fiscal/catalog/H1_1_FT_SPEC.md).
-Parecer inicial comunicado na ordem R1: 1 MAJOR e 2 MINOR; correcções documentais
-preparadas para revisão incremental Claude, ainda não aprovada. Sem implementação,
-activação ou alteração histórica. Mantêm-se todas as restantes reservas H1.1.
+R1 especificou compatibilidade material de configurações vinculadas em Java e
+SQL durante todo o ciclo de vida, inclusive antes da primeira emissão.
+A posterior [H2-02](sources/2026-10-23_H2-02_deliberacao-administracao-AR2.md)
+aprovou a política A no perímetro FT não imediato e rejeitou o guard de transição
+como compatibilidade histórica. A antiga pendência A/B encontra-se superada;
+as combinações materiais e projecções fiscais mantêm os respectivos gates.
+H2-03/R1 recebeu aprovação documental incremental Claude; essa aprovação não
+substitui a revisão da implementação da issue #39.
+
+## H2-03 / issue #39 — implementação local do contrato FT
+
+27-10-2026. Ordem/handoff AR2-Executive-Reports no commit
+`4032d5742ac4a59cd3075f9d2dad85949a5a70ef`. Branch isolada
+`codex/h2-03-document-type-contract`, baseada no PR #37 acima identificado.
+
+- Implementados Java/JPA/DTO e V28 aditiva para vínculo governado das novas FT
+  explicitamente identificadas e não imediatas; integridade em INSERT, UPDATE,
+  UPSERT/COPY e leituras do vínculo persistido. Sem inferência por ID/nome.
+- Configurações vinculadas são validadas durante todo o ciclo de vida; V25/V26/V27
+  permanecem intactas. Nenhum backfill ou reclassificação histórica.
+- Fora desse perímetro conservam-se as regras existentes, incluindo RC/RL/guias
+  sem código fiscal; isto não homologa a sua correspondência fiscal.
+- Inventário interno de prontidão, exclusivamente de leitura e sem novo endpoint,
+  sinaliza configurações sem identidade e incompatibilidades antes do uso comercial.
+- Manifesto operacional vazio: não há revisão/chave FT publicada. Criação
+  governada bloqueada até homologação e publicação controlada. Gates 2/1/1,
+  QR/PDF e AT não são resolvidos por esta implementação.
+- Validação apenas em PostgreSQL 16.3 descartável; [resultados e limites](../fiscal/catalog/H2_03_VALIDATION.md).
+  CI não executado nesta branch local; não confundir testes locais com CI.
+- Revisão independente Claude desta implementação **pendente**; pedido preparado.
+  Sem push, PR, integração, cutover ou alteração da origem histórica/demo.
+- FinancialCore permanece inactivo, legado mantém autoridade operacional,
+  RC/RL novos não activados e Fatia 1e suspensa.
+
+[Contrato implementado e fontes](../fiscal/catalog/H2_03_IMPLEMENTATION.md).
