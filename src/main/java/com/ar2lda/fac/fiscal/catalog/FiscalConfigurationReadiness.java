@@ -10,7 +10,7 @@ import java.util.*;
 @Transactional(readOnly=true)
 public class FiscalConfigurationReadiness {
     public enum Finding { UNBOUND_FT_DEFERRED, UNCLASSIFIED_EMISSION_PATH, EMISSION_HISTORY_WITHOUT_IDENTITY,
-        CATALOG_UNAVAILABLE, INCOMPATIBLE_BINDING }
+        CATALOG_UNAVAILABLE, INCOMPATIBLE_BINDING, DEMO_ARTIFACTS }
     public record Row(String id, String fiscalCode, Integer area, boolean immediate,
                       String catalogCode, Long catalogRevision, long commercialHistory, long financialHistory,
                       Set<Finding> findings) {
@@ -41,16 +41,28 @@ public class FiscalConfigurationReadiness {
               where estado in ('EMITIDO','ANULADO') or momento_emissao is not null group by id_tipo_documento
             ), financial as (
               select id_tipo_documento,count(*) n from documento_financeiro group by id_tipo_documento
+            ), demo_types as (
+              select id_tipo_documento from documento_comercial
+               where qr_payload like 'TUULI-DEMO-%' or qr_payload_version like 'TUULI-DEMO-%'
+              union
+              select id_tipo_documento from documento_financeiro
+               where qr_payload like 'TUULI-DEMO-%' or qr_payload_version like 'TUULI-DEMO-%'
+              union
+              select id_tipo_documento from serie
+               where upper(serie) like 'DEMO-%' or upper(serie)='DEMO26' or upper(codigo_at) like 'DEMO-%'
             )
-            select t.*,coalesce(c.n,0) commercial_history,coalesce(f.n,0) financial_history
+            select t.*,coalesce(c.n,0) commercial_history,coalesce(f.n,0) financial_history,
+                   (d.id_tipo_documento is not null) demo_artifacts
             from tipodocumento t left join commercial c on c.id_tipo_documento=t.id
-              left join financial f on f.id_tipo_documento=t.id order by t.id
+              left join financial f on f.id_tipo_documento=t.id
+              left join demo_types d on d.id_tipo_documento=t.id order by t.id
             """,(rs,index)->{
             String id=rs.getString("id"), code=rs.getString("codigo_fiscal"), binding=rs.getString("fiscal_catalog_code");
             Long revision=rs.getObject("fiscal_catalog_revision",Long.class);
             int area=rs.getInt("area_gestao");boolean immediate=rs.getBoolean("liquidacao_imediata");
             long commercial=rs.getLong("commercial_history"), financial=rs.getLong("financial_history");
             Set<Finding> findings=EnumSet.noneOf(Finding.class);
+            if (rs.getBoolean("demo_artifacts")) findings.add(Finding.DEMO_ARTIFACTS);
             if (binding==null && "FT".equals(code) && !immediate) findings.add(Finding.UNBOUND_FT_DEFERRED);
             // Areas identify implemented paths only; never infer a fiscal type from ID/name/area.
             if (code==null || code.isBlank()) {

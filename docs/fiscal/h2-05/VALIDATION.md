@@ -132,3 +132,16 @@ para eventual utilização futura será necessária configuração explícita do
 fornecedor, identidade do cluster e montagem segura da chave; nenhum opt-in
 ou deployment é efectuado por este commit. Sem credenciais comerciais,
 comunicação AT ou homologação. A confirmação incremental Claude fica pendente.
+
+
+## R2 — fixação ao commit
+
+As mesmas 15 classes foram repetidas, antes de qualquer edição R2, em
+`203276f706773b4ae56764d54c88d6ccca0c7479`, tree
+`a370beef85c53ca025e8c17c4e4ef94dd212359c`: 254 testes aprovados, sem falhas,
+erros ou ignorados. Metadados e hashes em `2026-10-28-r2/approved-203276f/`.
+O complemento acrescenta testes dos rótulos HTML e do inventário PostgreSQL.
+A sua validação fixada ao novo commit é executada **depois** do commit, com
+worktree limpa; resultados, HEAD/tree e XML em `2026-10-28-r2/final/` e no
+relatório externo R2. Não somar as duas execuções como testes únicos.
+[Contrato e protocolo de repetição](R2.md). Sem testes ou operações na Ubuntu.

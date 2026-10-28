@@ -715,3 +715,34 @@ R1 só acrescenta payload não fiscal a RC demo. RC/RG e enquadramento IVA de
 caixa permanecem gate fiscal próprio. Assinador/certificado reais em falta;
 produção sem fonte continua 409. Não há activação de catálogo, novo RC,
 FinancialCore ou Fatia 1e, nem homologação, cutover, push, PR ou merge.
+
+
+### H2-05-R2 — regressão preexistente de permissões e condições de integração
+
+28-10-2026. Parecer independente Claude R1: APPROVE WITH CONDITIONS,
+0 BLOCKER / 0 MAJOR / 3 MINOR (A/B/C), SHA-256
+`087ebd0d521649547d45c753ab50125a5cf27c855ecc04582513ca05151732cf`.
+Supera a indicação de confirmação R1 pendente acima; a confirmação R2 é distinta.
+
+**MINOR-C — facto de continuidade:** na base integrada H2-03/PR #40,
+`91da67bc5e799d30abfd1c569ec7ef22fbd5f703`, a fixture de
+PermissionMatrixIntegrationTests criava DCT com código FT sem vínculo governado.
+O código nesse commit foi conferido; a execução R1 reproduziu seis erros SQL
+23514, «New or reclassified FT deferred configuration requires a governed binding»,
+por efeito da V28. Era regressão preexistente da fixture, não consequência da
+separação de assinadores H2-05. R1 (`203276f`) passou a usar GovernedTypeFixtures.bind
+e a fonte exclusiva de testes, sem alterar protecções ou asserções de permissões;
+os seis testes passaram. Não se afirma que o CI limitado tenha detectado essa
+regressão. Em futuras migrations que afectem tipodocumento, inventariar e testar
+as classes SpringBootTest que criam tipos ou emitem documentos, além das suites
+directamente alteradas.
+
+MINOR-B: 15 classes repetidas e 254 testes aprovados em HEAD limpo `203276f`,
+tree `a370beef85c53ca025e8c17c4e4ef94dd212359c`, com metadados por execução e XML.
+O complemento R2 exige nova execução no seu próprio commit final; o resultado
+pós-commit é preservado no relatório externo, sem encadear commits autorreferenciais.
+MINOR-A: procedimento de instalação demo nova e novo GOLDEN documentado, sem
+actualizar a Ubuntu ou aprovar qualquer GOLDEN. R-1/R-2: diagnóstico interno de
+marcadores demo e rótulo QR adequado, sem alterar autoridade financeira ou gates.
+[Contrato, fontes e revisão R2](../fiscal/h2-05/R2.md). Produção sem fonte real
+continua 409; manifesto vazio, FinancialCore inactivo e Fatia 1e suspensa.

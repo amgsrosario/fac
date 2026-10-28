@@ -59,6 +59,15 @@ class DocumentoComercialPdfServiceTests {
         );
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={false,true})
+    void altQrIdentifiesPersistedOrigin(boolean demo)throws Exception {
+        var method=pdfService.getClass().getDeclaredMethod("fiscal",String.class,String.class);method.setAccessible(true);
+        String payload=demo?"TUULI-DEMO-1\n{}":"A:TEST";
+        String html=(String)method.invoke(pdfService,"TEST-1",payload);
+        assertThat(html).contains("alt=\""+(demo?"QR Code de demonstração":"QR Code fiscal")+"\"");
+    }
+
     @Test
     void documentoDeUmaLinhaMantemUmaPaginaSemCabecalhoDeContinuacao() throws Exception {
         byte[] pdf = gerar(1, Scenario.standard());

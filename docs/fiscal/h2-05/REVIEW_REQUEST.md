@@ -48,3 +48,15 @@ As falhas intermédias e as respectivas correcções estão preservadas no arqui
 R1, separado da evidência original. A emissão comercial real continua bloqueada.
 Solicita-se veredicto e matriz de resolução do MAJOR e três MINOR; não se
 declara confirmação Claude antes da revisão efectiva.
+
+
+## Pedido incremental H2-05-R2
+
+Rever exclusivamente o complemento após `203276f706773b4ae56764d54c88d6ccca0c7479`
+e [R2.md](R2.md), incluindo os registos finais pós-commit. Confirmar MINOR-A/B/C
+e R-1/R-2, fixação dos testes ao HEAD/tree/worktree limpos e ausência de alterações
+posteriores; distinguir os 254 testes do commit original da nova execução final.
+Conferir procedimento demo/GOLDEN sem deploy, registo da regressão preexistente
+de permissões, diagnóstico de marcadores demo sem alteração de dados e rótulos QR.
+Verificar preservação do 409, ausência de fallback, manifesto/gates fechados.
+Não declarar um novo GOLDEN aprovado ou revisão positiva antes de parecer efectivo.

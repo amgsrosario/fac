@@ -1,6 +1,23 @@
 # TUULI AIR — Golden Demo
 
-Guia operacional do ambiente Ubuntu em `/home/arosario/Projetos desenvolvimento/fac`.
+## H2-05: nova instalação obrigatória antes de novo GOLDEN
+
+28-10-2026. O procedimento [H2-05 — instalação demo nova e novo GOLDEN](h2-05-new-demo.md)
+é a referência para a versão com fornecedor de assinatura demo separado.
+O GOLDEN e a instalação antiga não são convertidos automaticamente: séries e
+payloads antigos são recusados pelo novo guard; sem fonte a emissão devolve 409.
+Preparar outra instância, chave e cluster autorizados, validar restauro e obter
+aprovação humana antes de promover outro GOLDEN. **Nenhum desses passos foi
+executado na Ubuntu nesta missão; não existe novo GOLDEN aprovado.**
+
+O restante guia descreve o procedimento histórico anterior à H2-05. Não usar os
+seus comandos como autorização para actualizar a Partner Demo ou restaurar o
+GOLDEN antigo sobre o código novo. Os scripts/Compose actuais requerem ensaio e
+configuração explícita antes da futura instalação; `.env.demo` não basta.
+
+## Procedimento histórico, anterior à H2-05
+
+Guia do ambiente Ubuntu em `/home/arosario/Projetos desenvolvimento/fac`.
 Para reposição do cenário aprovado, seguir este guia; recomendações antigas de reset
 noutros documentos não substituem o procedimento GOLDEN abaixo.
 
@@ -86,6 +103,11 @@ ficheiros reais; a existência de CURRENT, por si só, não prova integridade.
 | Documentos financeiros | 2 |
 | Flyway | V1–V11 |
 | Checks oficiais | OK |
+
+Este quadro regista o cenário histórico documentado; o estado actual do CURRENT
+não foi consultado na R2. Para H2-05, a meta de validação é Flyway V28, snapshots
+na versão corrente, origem TUULI-DEMO-1 e séries sintéticas próprias, conforme
+o procedimento novo. Isso não constitui aprovação de um backup ou deploy.
 
 Utilizadores oficiais: `admin.demo`, `operador.demo` e `consulta.demo`.
 As passwords do seed vêm de `.env.demo`, através de `FAC_DEMO_PASSWORD_ADMIN`,

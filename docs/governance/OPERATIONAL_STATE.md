@@ -832,3 +832,22 @@ PostgreSQL descartável e oito PDFs emitidos/16 páginas com aviso não fiscal
 verificados. Cluster `7701754504284078125` removido, bem como credenciais e
 chaves efémeras. Não é CI nem teste do deploy/Compose/demo persistente.
 Confirmação incremental Claude pendente; nenhum fornecedor real implementado.
+
+
+### H2-05-R2 — fecho das condições de integração
+
+Parecer Claude R1 recebido: 0 BLOCKER / 0 MAJOR / 3 MINOR A/B/C; confirmação
+R1 já realizada, confirmação R2 ainda pendente. Reexecução das 15 classes em
+`203276f`, tree `a370beef85c53ca025e8c17c4e4ef94dd212359c`, com worktree limpa
+registada por grupo: 254 aprovados, zero falhas/erros/ignorados.
+O novo commit complementar exige repetição integral fixada ao novo HEAD;
+consultar os resultados pós-commit no relatório externo e artefactos `final/`.
+
+Procedimento novo demo/GOLDEN documentado, sem operações na instalação actual.
+Regressão da fixture de permissões após H2-03 e correcção R1 registadas na memória.
+Inventário comercial sinaliza `DEMO_ARTIFACTS` por tipo, sem duplicar linhas,
+expor payloads ou alterar contagens históricas. PDFs identificam QR demo pelo
+payload persistido. Não são novos consumidores operacionais ou guards de emissão.
+[Âmbito e evidência R2](../fiscal/h2-05/R2.md). Nenhum deploy, restauro ou promoção
+GOLDEN executado. Preservados isolamento demo/produção, 409 sem fonte real,
+manifesto vazio e gates fiscais, FinancialCore/1e/cutover.

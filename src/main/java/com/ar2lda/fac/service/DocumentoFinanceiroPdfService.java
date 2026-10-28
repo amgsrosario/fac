@@ -183,7 +183,8 @@ public class DocumentoFinanceiroPdfService {
             return "";
         }
         String qr = hasText(qrPayload)
-                ? "<img class=\"qr\" src=\"" + qrCodeImageService.toPngDataUri(qrPayload) + "\" alt=\"QR Code fiscal\" />"
+                ? "<img class=\"qr\" src=\"" + qrCodeImageService.toPngDataUri(qrPayload) + "\" alt=\"" + (com.ar2lda.fac.demo.DemoSignatureSource.isDemoPayload(qrPayload)
+                    ? "QR Code de demonstração" : "QR Code fiscal") + "\" />"
                 : "";
         return "<div class=\"fiscal\"><div class=\"fiscal-card\"><div class=\"fiscal-atcud\">"
                 + (hasText(atcud) ? "ATCUD: " + esc(atcud) : "") + "</div>" + qr + "</div></div>";
