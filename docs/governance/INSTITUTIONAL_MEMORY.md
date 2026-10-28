@@ -582,3 +582,82 @@ aprovada. [Comparação e testes futuros](../fiscal/catalog/H1_1_FT_SPEC.md).
 Parecer inicial comunicado na ordem R1: 1 MAJOR e 2 MINOR; correcções documentais
 preparadas para revisão incremental Claude, ainda não aprovada. Sem implementação,
 activação ou alteração histórica. Mantêm-se todas as restantes reservas H1.1.
+
+## H2-03 / issue #39 — execução da política A em infraestrutura governada
+
+27-10-2026. O estado A/B pendente no registo histórico H1.1 acima foi superado
+pela [deliberação H2-02](sources/2026-10-23_H2-02_deliberacao-administracao-AR2.md):
+política A aprovada para novas FT não imediatas, integridade Java/PostgreSQL,
+sem guard de transição destinado a compatibilidade histórica da demo.
+H2-03/R1 e o respectivo parecer incremental aprovado foram lidos integralmente;
+fontes, hash da especificação e contrato em
+[H2_03_IMPLEMENTATION.md](../fiscal/catalog/H2_03_IMPLEMENTATION.md).
+
+A ordem/handoff do arquivo AR2-Executive-Reports no commit
+`4032d5742ac4a59cd3075f9d2dad85949a5a70ef` autorizou a implementação controlada
+na issue #39. Base comprovada: PR #37,
+`c17a9d8af9cf2d197c8c8c21f1f780a38efee0d9`. Trabalho local isolado em
+`codex/h2-03-document-type-contract`; ainda não integrado nem publicado.
+
+Implementados vínculo persistido/leitura, resolução explícita de revisão de
+criação, validação de tuplos completos e V28 aditiva contra escritas incompatíveis.
+V25/V26/V27 intactas; sem revisão atribuída a históricos e sem classificação por
+ID/nome. RC/RL/guias fora do perímetro mantêm as regras anteriores. O inventário
+interno de prontidão não constitui habilitação fiscal ou activação operacional.
+
+Mantém-se o manifesto vazio, sem combinação 2/1/1 ou projecção QR/PDF publicada.
+As definições usadas em testes são sintéticas e não decisões da Administração.
+Sem alterações à base histórica, demo, ambiente preparado #38, emissão, numeração,
+saldos ou consumidores. Legado como autoridade operacional; FinancialCore
+inactivo e Fatia 1e suspensa. [Validação local](../fiscal/catalog/H2_03_VALIDATION.md),
+distinta do CI; revisão independente Claude da implementação ainda pendente.
+
+Preservação paralela, sem alteração do conteúdo: parecer Claude R2 da issue #38
+arquivado em AR2-Executive-Reports, commit
+`353fed87899456b240d1af5d2982f5baf5daea97`, caminho
+`TUULI/2026/10/2026-10-27_TUULI_Issue38_R2_revisao-independente_Claude.md`.
+Original com 8454 bytes, SHA-256
+`a8f3cd7681f07cff703ae977183b795370eea47e09cba133c5fd985c2a131411`,
+conferido com o original local e com o conteúdo devolvido pelo GitHub.
+Não representa nova revisão nem repetição dos trabalhos #38.
+
+
+### H2-03 — resolução incremental do parecer de 28-10-2026
+
+Parecer Claude original APPROVE WITH CONDITIONS, 0 BLOCKER / 0 MAJOR / 3 MINOR,
+10711 bytes, SHA-256
+`b2475e9a09ebeda4c6170f6f57958648770297f5b018a2cd42d9d397ed3db74c`,
+arquivado sem alteração no repositório privado AR2-Executive-Reports, commit
+`b3234d47243707935b4c92cbb7d793951b17dc15`, pasta `TUULI/2026/10/`.
+A antiga indicação de revisão da implementação pendente fica superada por este
+parecer condicionado; a confirmação incremental das correcções continua pendente.
+
+MINOR-001: reexecução das mesmas 15 classes sobre `6c32e283`, com HEAD/worktree
+limpos e hashes do código antes/depois. A tentativa numa base partilhada teve
+316 aprovações e duas falhas de contagem por dados entre suites; preservada.
+Sem alterar código, fixtures ou asserções, a consolidação com base descartável
+por classe aprovou os 318 testes, zero falhas/erros/ignorados. Evidência e
+manifestos em [H2_03_VALIDATION.md](../fiscal/catalog/H2_03_VALIDATION.md).
+
+MINOR-002/003: clarificação documental de comportamentos existentes, sem mudança
+semântica: RC/RL/guias sem identidade explícita mantêm a prontidão fechada como
+pendência fiscal; a incoerência integral do catálogo recusa 409 mesmo para edição
+só descritiva de tipo vinculado. Não se criou fallback ou exigência universal
+para tipos fora do perímetro. Gates 2/1/1, QR/PDF e AT preservados; sem cutover,
+publicação fiscal, activação FinancialCore ou alteração à origem/demo.
+
+### H2-03 — aprovação incremental final e preparação da publicação
+
+28-10-2026. Parecer independente Claude integralmente recebido e lido:
+**APPROVE, 0 BLOCKER / 0 MAJOR / 0 MINOR**; os três MINOR estão resolvidos sobre
+`6c32e283` e `2dcb797c`. Supera a pendência de confirmação acima. O Revisor
+verificou hashes, XML e diff, sem executar testes. Original arquivado sem alterações
+em AR2-Executive-Reports, commit `a9992b9c8e79d850402b3e8c37be903bf24d9de8`,
+ficheiro `TUULI/2026/10/2026-10-28_TUULI_Issue39_H2-03_MINORS_verificacao-incremental_Claude.md`,
+SHA-256 `bfe568045999fa4984d12839935357c1343f3f92dd918a31224c497520eff0a3`.
+A Administração autorizou preparar publicação controlada, PR e CI. Autenticação
+SSH indisponível neste executor; nenhuma alteração de credenciais ou reconstrução
+dos commits. Infraestrutura aprovada permanece local até publicação efectiva.
+Manifesto vazio; gates fiscais/cutover/FinancialCore e Fatia 1e preservados.
+Norma central consultada: AI_DEVELOPMENT_SYSTEM.md, commit
+`2f6cd4a83aa9e552d1daa32c51a99a7bedd0b4e5`; decisão de merge de António.

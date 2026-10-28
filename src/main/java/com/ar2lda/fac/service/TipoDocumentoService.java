@@ -5,6 +5,9 @@ import com.ar2lda.fac.controller.dto.TipoDocumentoDto;
 import com.ar2lda.fac.controller.dto.TipoDocumentoUpdateDto;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.exception.NotFoundException;
+import com.ar2lda.fac.exception.BadRequestException;
+import com.ar2lda.fac.fiscal.catalog.FiscalCatalog;
+import com.ar2lda.fac.fiscal.catalog.FtDeferredSemantics;
 import com.ar2lda.fac.mapper.TipoDocumentoMapper;
 import com.ar2lda.fac.model.TipoDocumento;
 import com.ar2lda.fac.repository.TipoDocumentoRepository;
@@ -26,6 +29,7 @@ public class TipoDocumentoService {
     private final TipoDocumentoRepository repository;
     private final TipoDocumentoMapper mapper;
     private final EntityManager entityManager;
+    private final FiscalCatalog fiscalCatalog;
 
     /** Serialize configuration edits and first emission before reading fiscal attributes or numbering. */
     @Transactional(propagation = Propagation.MANDATORY)
@@ -36,11 +40,25 @@ public class TipoDocumentoService {
         return type;
     }
 
+    @Transactional
     public TipoDocumentoDto create(TipoDocumentoCreateDto dto) {
         if (repository.existsById(dto.id())) {
             throw new ConflictException("Tipo de documento já existe: " + dto.id());
         }
-        return mapper.toDTO(repository.save(mapper.fromCreateDTO(dto)));
+        TipoDocumento entity = mapper.fromCreateDTO(dto);
+        if ("FT".equals(entity.getCodigoFiscal()) && dto.liquidacaoImediata() == null)
+            throw new BadRequestException("A modalidade de liquidação da FT deve ser explícita");
+        if (deferredFt(entity.getCodigoFiscal(), entity.isLiquidacaoImediata())) {
+            var revision = creationRevision();
+            validateTuple(revision, entity.getCodigoFiscal(), entity.getAreaGestao(), entity.getEntidade(),
+                    entity.getSinalContabilistico(), entity.isLiquidacaoImediata());
+            entity = TipoDocumento.governed(entity, revision.key().fiscalCode(), revision.key().revision());
+        }
+        // Refusals must be observed inside the request transaction, before returning 201.
+        // Assigned IDs would make save() merge an intervening concurrent row. Creation is INSERT-only.
+        entityManager.persist(entity);
+        entityManager.flush();
+        return mapper.toDTO(entity);
     }
 
     public Page<TipoDocumentoDto> list(Pageable pageable) {
@@ -56,16 +74,41 @@ public class TipoDocumentoService {
         TipoDocumento existing = lockConfiguration(id);
         String fiscal = dto.codigoFiscal() == null || dto.codigoFiscal().isBlank()
                 ? null : dto.codigoFiscal().trim().toUpperCase(Locale.ROOT);
-        if (existing.isConfiguracaoBloqueada() && (
+        boolean classificationChanged = (
                 !Objects.equals(existing.getCodigoFiscal(), fiscal)
                 || !Objects.equals(existing.getAreaGestao(), dto.areaGestao())
                 || !Objects.equals(existing.getEntidade(), dto.entidade())
                 || !Objects.equals(existing.getSinalContabilistico(), dto.sinalContabilistico())
-                || existing.isLiquidacaoImediata() != dto.liquidacaoImediata())) {
+                || existing.isLiquidacaoImediata() != dto.liquidacaoImediata());
+        if (existing.isConfiguracaoBloqueada() && classificationChanged) {
             throw new ConflictException("Configuração fiscal e financeira bloqueada: já existe emissão documental deste tipo");
         }
+        if (existing.getFiscalCatalogCode() != null) {
+            FiscalCatalog.Revision revision;
+            try { revision = fiscalCatalog.revision(existing.getFiscalCatalogCode(), existing.getFiscalCatalogRevision()); }
+            catch (IllegalStateException error) { throw unavailable(); }
+            validateTuple(revision, fiscal, dto.areaGestao(), dto.entidade(), dto.sinalContabilistico(), dto.liquidacaoImediata());
+        } else if (classificationChanged && deferredFt(fiscal, dto.liquidacaoImediata())) {
+            throw new ConflictException("A conversão exige uma nova configuração FT governada; o vínculo não pode ser acrescentado por alteração");
+        }
         mapper.applyUpdate(dto, existing);
-        repository.save(existing);
+        repository.saveAndFlush(existing);
+    }
+
+    private static boolean deferredFt(String code, boolean immediate) { return "FT".equals(code) && !immediate; }
+    private FiscalCatalog.Revision creationRevision() {
+        try { return fiscalCatalog.ftDeferredCreation(); }
+        catch (IllegalStateException error) { throw unavailable(); }
+    }
+    private static ConflictException unavailable() {
+        return new ConflictException("Criação/utilização FT governada bloqueada: catálogo ou revisão aprovada indisponível");
+    }
+    private static void validateTuple(FiscalCatalog.Revision revision, String code, Integer area, Integer entity,
+                                      Integer sign, boolean immediate) {
+        final boolean permitted;
+        try { permitted = FtDeferredSemantics.permits(revision.definition(), code, area, entity, sign, immediate); }
+        catch (IllegalStateException error) { throw unavailable(); }
+        if (!permitted) throw new BadRequestException("Configuração incompatível com a revisão fiscal governada");
     }
 
     public void delete(String id) {

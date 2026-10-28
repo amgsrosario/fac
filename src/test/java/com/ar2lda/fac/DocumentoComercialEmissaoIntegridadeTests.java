@@ -113,6 +113,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         TipoDocumento tipo = new TipoDocumento(
                 primaryType, "Integridade emissão", null, null, null, null, 1, 1, 1, false);
         tipo.setCodigoFiscal("FT");
+        tipo = com.ar2lda.fac.testinfra.GovernedTypeFixtures.bind(jdbcTemplate, tipo);
         tipoDocumentoRepository.save(tipo);
         serieRepository.save(new Serie(tipo, "LOCK", "Série concorrente", "IC12026", LocalDate.of(2026, 1, 1)));
 
@@ -419,6 +420,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
         TipoDocumento outroTipo = new TipoDocumento(
                 secondaryType, "Documento alheio à fixture", null, null, null, null, 1, 1, 1, false);
         outroTipo.setCodigoFiscal("FT");
+        outroTipo = com.ar2lda.fac.testinfra.GovernedTypeFixtures.bind(jdbcTemplate, outroTipo);
         tipoDocumentoRepository.save(outroTipo);
         serieRepository.save(new Serie(
                 outroTipo, "SAFE", "Série alheia", "IC22026", LocalDate.of(2026, 1, 1)));

@@ -12,6 +12,8 @@ public record TipoDocumentoDto(
         Integer entidade,
         Integer sinalContabilistico,
         boolean liquidacaoImediata,
-        boolean configuracaoBloqueada
+        boolean configuracaoBloqueada,
+        String fiscalCatalogCode,
+        Long fiscalCatalogRevision
 ) {
 }

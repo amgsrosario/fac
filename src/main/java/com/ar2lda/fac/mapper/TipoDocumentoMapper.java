@@ -26,7 +26,9 @@ public interface TipoDocumentoMapper {
                 entity.getEntidade(),
                 entity.getSinalContabilistico(),
                 entity.isLiquidacaoImediata(),
-                entity.isConfiguracaoBloqueada()
+                entity.isConfiguracaoBloqueada(),
+                entity.getFiscalCatalogCode(),
+                entity.getFiscalCatalogRevision()
         );
     }
 
@@ -45,7 +47,7 @@ public interface TipoDocumentoMapper {
                 dto.areaGestao(),
                 dto.entidade(),
                 dto.sinalContabilistico(),
-                dto.liquidacaoImediata()
+                Boolean.TRUE.equals(dto.liquidacaoImediata())
         );
     }
 
@@ -66,6 +68,6 @@ public interface TipoDocumentoMapper {
     }
 
     private String normalize(String value) {
-        return value == null || value.isBlank() ? null : value.trim().toUpperCase();
+        return value == null || value.isBlank() ? null : value.trim().toUpperCase(java.util.Locale.ROOT);
     }
 }
