@@ -51,6 +51,13 @@ V25 continua a impedir alterações classificativas após emissão. Uma configur
 sem vínculo não o recebe por UPDATE: a conversão para FT não imediata exige nova
 configuração governada. Uma alteração apenas descritiva/técnica não reclassifica.
 
+Intencionalmente, uma edição só descritiva de tipo vinculado também recebe 409
+se o manifesto ou a materialização integral do catálogo da aplicação estiverem
+incoerentes: `update` resolve a mesma revisão e falha em fechado, sem fallback.
+Não foi introduzida uma excepção para edições não classificativas. Esta recusa
+não altera os emissores: a validação SQL da primeira emissão usa a revisão
+persistida, sem resolver o manifesto Java.
+
 ## V28 e caminhos alternativos
 
 A V28 é aditiva: funções e triggers de validação, sem dados fiscais, backfill,
@@ -87,6 +94,13 @@ exige classificação comprovada e operação própria; o serviço não altera d
 `configurationReady()` avalia este contrato de configuração;
 `operationalActivationPermitted()` permanece sempre false.
 
+RC, RL e guias sem identidade fiscal explícita nos caminhos inventariados de
+área 1–3 mantêm `configurationReady()` em false. É uma pendência de classificação
+ou correspondência fiscal, não um erro da configuração nem uma recusa da sua
+criação fora do perímetro FT. A sua inclusão/correcção ou exclusão da futura base
+comercial exige classificação e decisão comprovadas; não se presume um código
+para desbloquear a prontidão. Não há imposição universal de identidade fiscal.
+
 Dump completo pode transportar configurações já existentes; após restauro/upgrade
 a prontidão tem de ser inspeccionada antes do uso comercial. Um data-only que
 introduza novas FT incompatíveis é recusado. O antigo script P16 que atribui FT
@@ -109,5 +123,8 @@ consumidores financeiros, base histórica, demo ou preparação isolada #38.
 FinancialCore permanece inactivo, legado mantém a autoridade operacional,
 sem cutover e com Fatia 1e suspensa.
 
-Implementação preparada para **revisão Claude independente ainda pendente**.
-Ver [validação e limitações da evidência](H2_03_VALIDATION.md).
+Parecer Claude de 28-10-2026: **APPROVE WITH CONDITIONS**, 0 BLOCKER, 0 MAJOR,
+3 MINOR. O original foi preservado; a reexecução no commit exacto e as duas
+clarificações documentais estão preparadas para **revisão incremental ainda
+pendente**, sem autodeclaração de aprovação. Ver
+[validação e limitações da evidência](H2_03_VALIDATION.md).

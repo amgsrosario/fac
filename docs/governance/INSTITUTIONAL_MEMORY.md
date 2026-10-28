@@ -620,3 +620,28 @@ Original com 8454 bytes, SHA-256
 `a8f3cd7681f07cff703ae977183b795370eea47e09cba133c5fd985c2a131411`,
 conferido com o original local e com o conteúdo devolvido pelo GitHub.
 Não representa nova revisão nem repetição dos trabalhos #38.
+
+
+### H2-03 — resolução incremental do parecer de 28-10-2026
+
+Parecer Claude original APPROVE WITH CONDITIONS, 0 BLOCKER / 0 MAJOR / 3 MINOR,
+10711 bytes, SHA-256
+`b2475e9a09ebeda4c6170f6f57958648770297f5b018a2cd42d9d397ed3db74c`,
+arquivado sem alteração no repositório privado AR2-Executive-Reports, commit
+`b3234d47243707935b4c92cbb7d793951b17dc15`, pasta `TUULI/2026/10/`.
+A antiga indicação de revisão da implementação pendente fica superada por este
+parecer condicionado; a confirmação incremental das correcções continua pendente.
+
+MINOR-001: reexecução das mesmas 15 classes sobre `6c32e283`, com HEAD/worktree
+limpos e hashes do código antes/depois. A tentativa numa base partilhada teve
+316 aprovações e duas falhas de contagem por dados entre suites; preservada.
+Sem alterar código, fixtures ou asserções, a consolidação com base descartável
+por classe aprovou os 318 testes, zero falhas/erros/ignorados. Evidência e
+manifestos em [H2_03_VALIDATION.md](../fiscal/catalog/H2_03_VALIDATION.md).
+
+MINOR-002/003: clarificação documental de comportamentos existentes, sem mudança
+semântica: RC/RL/guias sem identidade explícita mantêm a prontidão fechada como
+pendência fiscal; a incoerência integral do catálogo recusa 409 mesmo para edição
+só descritiva de tipo vinculado. Não se criou fallback ou exigência universal
+para tipos fora do perímetro. Gates 2/1/1, QR/PDF e AT preservados; sem cutover,
+publicação fiscal, activação FinancialCore ou alteração à origem/demo.

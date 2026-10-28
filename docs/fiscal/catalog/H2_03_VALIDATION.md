@@ -29,7 +29,57 @@ mvn -o -B -Dspring.profiles.active=test -Dspring.jpa.show-sql=false -Dtest=<clas
 JDK 21 e Maven 3.9.16 existentes; modo offline, sem instalar dependências.
 As variáveis FAC_TEST_DATASOURCE apontaram apenas para a instância descartável.
 
-## Resultados finais por classe
+## Fecho incremental dos três MINOR — 28-10-2026
+
+Parecer original Claude: `2026-10-28_TUULI_Issue39_H2-03_revisao-independente_Claude.md`,
+10711 bytes, SHA-256
+`b2475e9a09ebeda4c6170f6f57958648770297f5b018a2cd42d9d397ed3db74c`.
+Arquivo privado AR2-Executive-Reports, commit
+`b3234d47243707935b4c92cbb7d793951b17dc15`, pasta `TUULI/2026/10/`.
+Veredicto APPROVE WITH CONDITIONS, 0 BLOCKER / 0 MAJOR / 3 MINOR.
+
+**MINOR-001:** executadas novamente as mesmas 15 classes contra o commit exacto
+`6c32e283c474512014b075c0196ccf34c583999f`. Antes e depois de cada classe:
+HEAD confirmado, worktree limpa e hashes SHA-256 de todos os ficheiros versionados
+idênticos. Nenhum ficheiro do repositório foi alterado durante a execução.
+
+Primeira tentativa conjunta numa base partilhada: 318 executados, 316 aprovados,
+2 falhas, zero erros/ignorados. As duas falhas comerciais foram contagens globais
+contaminadas por dados de outras suites: lookup esperava 2 e obteve 108;
+extractos esperavam 10 e obtiveram 15. A tentativa original foi preservada em
+`tuuli-backups/issue39/2026-10-28-h203-minors`. Nenhuma asserção, fixture ou código
+foi alterado para a fazer passar.
+
+Consolidação final: uma base nova por classe no mesmo cluster PostgreSQL 16.3
+descartável, **318 executados/aprovados, zero falhas, erros ou ignorados**. As 15
+invocações e respectivos XML estão em `commands.json`, `summary.json` e pastas
+por classe em `tuuli-backups/issue39/2026-10-28-h203-minors-isolated`.
+É a mesma selecção de 15 classes da tabela abaixo, sem soma de execuções repetidas.
+`git-before.json` e `git-after.json` registam o código exacto; o runner verificou
+também HEAD/limpeza/hashes antes e depois de cada classe.
+
+Manifesto desta execução isolada: `MANIFEST.sha256`, SHA-256
+`a7171f1a09c86196c27b171f8e70b37b2e4edb84dcf41852697543b871647815`.
+Evidência preparada para arquivo no GitHub privado, com manifestos e resumos
+para revisão dirigida. Não se executaram novos testes de
+restauro, package, frontend ou CI nesta correcção; os resultados anteriores
+continuam identificados na sua própria execução.
+
+**MINOR-002:** RC/RL/guias sem identidade fiscal explícita nas áreas inventariadas
+mantêm `configurationReady()` false como pendência de correspondência/classificação,
+não como erro nem bloqueio universal de criação. Não atribuir um código presumido
+para fechar o gate. [Contrato documentado](H2_03_IMPLEMENTATION.md).
+
+**MINOR-003:** documentada a recusa 409 intencional de edições apenas descritivas
+de tipos vinculados quando o catálogo da aplicação está incoerente. Mantém-se a
+falha em fechado e a ausência de fallback; não se alterou o serviço nem o SQL.
+A emissão continua a utilizar as garantias persistentes existentes.
+
+A revisão incremental dos três achados permanece pendente. Os registos de
+27-10-2026 abaixo são evidência histórica da implementação, substituídos pela
+reexecução acima para a condição específica de correspondência ao commit final.
+
+## Resultados da validação inicial de 27-10-2026 por classe
 
 | Classe | Executados/aprovados | Evidência final |
 | --- | ---: | --- |
@@ -123,8 +173,8 @@ de regressão com 1/1/1 e 2/1/1 é exclusivamente de teste, não homologação f
 Sem seeds reais, backfill, limpeza, alteração QR/PDF ou dados operacionais.
 FinancialCore/RC/RL não activados; sem cutover; Fatia 1e suspensa.
 
-Revisão Claude da implementação **pendente**. Não foi encontrado executor Claude
-disponível neste ambiente; a aprovação da especificação e o R2 da issue #38
-não constituem aprovação independente deste diff. Preparar revisão com base,
-commit local, código, testes, logs e este documento; não publicar antes do gate
-institucional aplicável. Os ensaios não substituem homologação 2/1/1, QR/PDF ou AT.
+Revisão Claude da implementação recebida: APPROVE WITH CONDITIONS, 0 BLOCKER /
+0 MAJOR / 3 MINOR. Reexecução e correcções documentais preparadas para revisão
+incremental independente; não declarar aprovação final antes do parecer dirigido.
+A aprovação da especificação e o R2 da issue #38 não substituem esta revisão.
+Os ensaios não substituem homologação 2/1/1, QR/PDF ou AT.

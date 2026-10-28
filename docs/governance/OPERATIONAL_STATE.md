@@ -1,6 +1,6 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-27, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-28, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
@@ -765,7 +765,14 @@ substitui a revisão da implementação da issue #39.
   QR/PDF e AT não são resolvidos por esta implementação.
 - Validação apenas em PostgreSQL 16.3 descartável; [resultados e limites](../fiscal/catalog/H2_03_VALIDATION.md).
   CI não executado nesta branch local; não confundir testes locais com CI.
-- Revisão independente Claude desta implementação **pendente**; pedido preparado.
+- Parecer Claude de 28-10-2026: APPROVE WITH CONDITIONS, 0 BLOCKER / 0 MAJOR /
+  3 MINOR. Reexecutadas as 15 classes no commit limpo `6c32e283`, com base
+  descartável por classe: 318 aprovados, zero falhas/erros/ignorados na consolidação
+  final; tentativa conjunta anterior com duas falhas de contagem preservada.
+- Documentados os comportamentos existentes: RC/RL/guias sem identidade fiscal
+  mantêm a prontidão fechada como pendência; incoerência do catálogo recusa também
+  edições descritivas de tipos vinculados. Sem alteração funcional ou semântica.
+- Correcções preparadas para revisão Claude incremental, ainda pendente.
   Sem push, PR, integração, cutover ou alteração da origem histórica/demo.
 - FinancialCore permanece inactivo, legado mantém autoridade operacional,
   RC/RL novos não activados e Fatia 1e suspensa.
