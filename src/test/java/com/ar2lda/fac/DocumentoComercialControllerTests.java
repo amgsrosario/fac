@@ -82,6 +82,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@org.springframework.context.annotation.Import(com.ar2lda.fac.testinfra.FiscalSignatureTestConfiguration.class)
 class DocumentoComercialControllerTests {
     @Autowired private org.springframework.jdbc.core.JdbcTemplate financialIsolationDb;
     @Autowired private jakarta.persistence.EntityManager financialFixtureEntities;

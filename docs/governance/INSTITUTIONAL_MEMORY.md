@@ -661,3 +661,29 @@ dos commits. Infraestrutura aprovada permanece local até publicação efectiva.
 Manifesto vazio; gates fiscais/cutover/FinancialCore e Fatia 1e preservados.
 Norma central consultada: AI_DEVELOPMENT_SYSTEM.md, commit
 `2f6cd4a83aa9e552d1daa32c51a99a7bedd0b4e5`; decisão de merge de António.
+
+
+### H2-05 / issue #41 — implementação delimitada e dependência fiscal
+
+28-10-2026. Base integrada `91da67bc5e799d30abfd1c569ec7ef22fbd5f703`, PR #40,
+H2-03. Supera a indicação histórica de publicação bloqueada acima. Ordem issue
+#41 autoriza ATCUD em todas as páginas, geometria QR T12 e derivação Q/R, sem
+homologação, activação, cutover ou alteração a históricos. H2-04/R1 foi lida no
+commit documental `64c6a2d1a33cd5926bcd67b5c50c2fc995c126c2`, não integrado
+nesta base.
+
+Implementados cabeçalhos ATCUD, Byte/ECC M/versão ≥9 e margem física, extracção
+Q das posições 1/11/21/31 e R de fonte autorizada por documento. Removidos os
+defaults fictícios. Não existe fonte produtiva de assinatura persistida; a nova
+fronteira é um contrato interno, não um assinador ou certificado AT. Ausência
+recusa nova emissão comercial com rollback; reimpressões preservam payloads
+existentes. Esta dependência impede declarar a emissão comercial pronta e exige
+identificação do mecanismo fiscal autorizado, sem invenção de chaves/valores.
+
+231 testes finais locais aprovados (57 dirigidos e 174 PostgreSQL descartável),
+package e PDF final verificados. Não se somam execuções intermédias nem se
+confunde evidência local com CI. Revisão Claude solicitável pelo
+[pedido preparado](../fiscal/h2-05/REVIEW_REQUEST.md), ainda pendente.
+[Implementação, alternativas técnicas e reservas](../fiscal/h2-05/IMPLEMENTATION.md).
+V25–V28, dados históricos, manifesto e circuitos mantidos; nenhuma activação
+de catálogo, FinancialCore ou Fatia 1e. Gates fiscais e FAQ 4443 não resolvidos.

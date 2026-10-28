@@ -97,10 +97,11 @@ public class DocumentoComercialPdfService {
                   <meta charset="UTF-8" />
                   <style>
                     @page { size: A4; margin: 29mm 13mm 18mm; @top-center { content: element(continuation-header); } @bottom-center { content: "Pagina " counter(page) " de " counter(pages); font-size: 8pt; color: #737980; } }
-                    @page:first { margin-top: 16mm; @top-center { content: none; } }
+                    @page:first { margin-top: 16mm; @top-center { content: element(first-page-atcud); } }
                     * { box-sizing: border-box; }
                     body { font-family: Arial, sans-serif; font-size: 9pt; color: #38434d; margin: 0; }
                     h1, h2, p { margin: 0; }
+                    .first-page-atcud { position: running(first-page-atcud); font-size: 7.5pt; color: #111; text-align: right; }
                     .continuation-header { position: running(continuation-header); width: 100%%; border-bottom: 1.5px solid #ba963c; padding: 0 0 2.2mm; color: #44515d; font-size: 7.5pt; line-height: 1.35; }
                     .continuation-header table { width: 100%%; border-collapse: collapse; }
                     .continuation-header td { vertical-align: top; }
@@ -152,11 +153,12 @@ public class DocumentoComercialPdfService {
                 </head>
                 <body>
                 %s
+                <div class="first-page-atcud">ATCUD: %s</div>
                 <div class="continuation-header"><table><tr>
                   <td class="continuation-company"><strong>%s</strong><br />NIF %s</td>
                   <td class="continuation-document"><span class="continuation-label">Continuação</span><br /><strong>%s - %s %s/%s</strong><br />Data %s</td>
                   <td class="continuation-client"><strong>%s</strong><br />NIF %s<br /><span class="continuation-page"></span></td>
-                </tr></table></div>
+                </tr></table><div>ATCUD: %s</div></div>
                 %s
                 <table class="top"><tr>
                   <td class="company">%s%s</td>
@@ -190,10 +192,10 @@ public class DocumentoComercialPdfService {
                 <div class="footer">%s</div>
                 </body></html>
                 """.formatted(
-                demoLabel(),
+                demoLabel(), esc(documento.atcud()),
                 esc(empresa.nome()), esc(empresa.nif()), esc(documento.tipoDocumentoDescricao()),
                 esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
-                esc(documento.clienteNome()), esc(documento.clienteNif()),
+                esc(documento.clienteNome()), esc(documento.clienteNif()), esc(documento.atcud()),
                 anulada,
                 logo(empresa), companyHeader(empresa),
                 esc(documento.tipoDocumentoDescricao()), esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(),

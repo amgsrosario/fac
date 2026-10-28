@@ -242,6 +242,49 @@ class DocumentoComercialPdfServiceTests {
         )));
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints={1,35,90})
+    void pdfFinalMantemAtcudModoVersaoDimensoesEMargem(int lines) throws Exception {
+        var scenario=lines==90?Scenario.cancelledScenario():Scenario.standard();
+        var input=criarImpressao(lines,scenario);byte[] bytes=gerar(input);
+        Path out=Path.of("target","h2-05-pdf-validation");Files.createDirectories(out);
+        Files.write(out.resolve("ft-"+lines+".pdf"),bytes);
+        int qrCount=0;
+        try(var doc=Loader.loadPDF(bytes)) {
+            for(int page=0;page<doc.getNumberOfPages();page++) {
+                assertThat(pageText(doc,page+1)).contains("ATCUD: "+ATCUD);
+                var codes=com.ar2lda.fac.testinfra.PdfQrInspection.inspect(doc.getPage(page));
+                for(var qr:codes) {
+                    qrCount++;
+                    assertThat(qr.payload()).isEqualTo(input.documento().qrPayload());
+                    assertThat(qr.version()).isGreaterThanOrEqualTo(9);
+                    assertThat(qr.ecLevel()).isEqualTo("M");assertThat(qr.byteSegments()).isEqualTo(1);
+                    assertThat(qr.widthMm()).isBetween(39.99,40.01);assertThat(qr.heightMm()).isBetween(39.99,40.01);
+                    assertThat(qr.activeWidthMm()).isGreaterThanOrEqualTo(30.0);
+                    assertThat(qr.minBorderMm()).isGreaterThanOrEqualTo(2.5);
+                    var labels=new ArrayList<Float>();
+                    var text=new PDFTextStripper() {
+                        @Override protected void writeString(String value,List<org.apache.pdfbox.text.TextPosition> positions)throws IOException {
+                            if(value.contains("ATCUD: "+ATCUD))labels.add(positions.getFirst().getYDirAdj());
+                            super.writeString(value,positions);
+                        }
+                    };
+                    text.setStartPage(page+1);text.setEndPage(page+1);text.getText(doc);
+                    assertThat(labels).anyMatch(y->qr.topFromPageTop()-y>=0 && qr.topFromPageTop()-y<34.1);
+                }
+                var rendered=new org.apache.pdfbox.rendering.PDFRenderer(doc).renderImageWithDPI(page,300);
+                javax.imageio.ImageIO.write(rendered,"PNG",out.resolve("ft-"+lines+"-page-"+(page+1)+".png").toFile());
+                if(!codes.isEmpty()) {
+                    var bitmap=new com.google.zxing.BinaryBitmap(new com.google.zxing.common.HybridBinarizer(
+                            new com.google.zxing.client.j2se.BufferedImageLuminanceSource(rendered)));
+                    var decoded=new com.google.zxing.qrcode.QRCodeReader().decode(bitmap,java.util.Map.of(com.google.zxing.DecodeHintType.TRY_HARDER,true));
+                    assertThat(decoded.getText()).isEqualTo(input.documento().qrPayload());
+                }
+            }
+        }
+        assertThat(qrCount).isEqualTo(1);
+    }
+
     private void writeArtifact(Path output, String uniqueName, String latestName, String content) throws IOException {
         Files.writeString(output.resolve(uniqueName), content, StandardCharsets.UTF_8);
         writeLatest(output.resolve(latestName), content);
@@ -429,7 +472,7 @@ class DocumentoComercialPdfServiceTests {
     private void assertMultipageStructure(PDDocument document) throws IOException {
         for (int page = 1; page <= document.getNumberOfPages(); page++) {
             String text = pageText(document, page);
-            assertThat(text).contains(DOCUMENT_NUMBER, COMPANY, CLIENT);
+            assertThat(text).contains(DOCUMENT_NUMBER, COMPANY, CLIENT, "ATCUD: " + ATCUD);
             if (text.contains("ART-")) {
                 assertThat(text).contains("Descricao", "Qtd.", "Liquido");
             }
@@ -441,7 +484,7 @@ class DocumentoComercialPdfServiceTests {
 
     private void assertFinalArea(PDDocument document) throws IOException {
         for (int page = 1; page < document.getNumberOfPages(); page++) {
-            assertThat(pageText(document, page)).doesNotContain("Valor bruto", "ATCUD: " + ATCUD);
+            assertThat(pageText(document, page)).doesNotContain("Valor bruto");
         }
         String lastPage = pageText(document, document.getNumberOfPages());
         assertThat(lastPage).contains("Resumo IVA", "Valor bruto", "Total", "ATCUD: " + ATCUD);

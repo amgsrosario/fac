@@ -5,7 +5,7 @@ Fonte canónica do estado corrente. Atualização: 2026-10-28, Europe/Lisbon. Su
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD integrado observado na issue #39: `c17a9d8af9cf2d197c8c8c21f1f780a38efee0d9`, PR #37. Confirmado por GitHub e objecto Git local em 27-10-2026; checkout principal preservado. A implementação H2-03 descrita abaixo é local e ainda não está integrada.
+- HEAD integrado observado no início da H2-05: `91da67bc5e799d30abfd1c569ec7ef22fbd5f703`, merge do PR #40 (H2-03), confirmado no remoto e no objecto Git local em 28-10-2026. Checkout principal preservado. Supera o estado pré-publicação da issue #39 registado abaixo.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -777,12 +777,30 @@ substitui a revisão da implementação da issue #39.
   AR2-Executive-Reports, commit `a9992b9c8e79d850402b3e8c37be903bf24d9de8`, SHA-256
   `bfe568045999fa4984d12839935357c1343f3f92dd918a31224c497520eff0a3`.
   Sem testes próprios do Revisor; aprovação da infraestrutura inactiva.
-- Publicação da branch autorizada, mas ainda bloqueada neste executor por
-  autenticação SSH: `Permission denied (publickey)`. Base remota confirmada em
-  `c17a9d8`, branch de trabalho ainda ausente no GitHub; PR/CI por iniciar.
-  Sem integração, cutover ou alteração da origem histórica/demo. Merge reservado
-  a António pelas normas centrais consultadas em `2f6cd4a83aa9e552d1daa32c51a99a7bedd0b4e5`.
+- Actualização H2-05: H2-03 integrada pelo PR #40 em `91da67bc5e799d30abfd1c569ec7ef22fbd5f703`; supera o bloqueio de publicação anteriormente observado. A integração não autoriza cutover ou alteração da origem histórica/demo. CI desse PR não reexecutado nesta missão.
 - FinancialCore permanece inactivo, legado mantém autoridade operacional,
   RC/RL novos não activados e Fatia 1e suspensa.
 
 [Contrato implementado e fontes](../fiscal/catalog/H2_03_IMPLEMENTATION.md).
+
+
+## H2-05 / issue #41 — PDF e QR, implementação local para revisão
+
+28-10-2026. Branch isolada `codex/h2-05-fiscal-pdf-qr`, baseada no PR #40.
+ATCUD em todas as páginas comerciais e acima do QR; QR Byte/ECC M, versão ≥9,
+impressão 40 mm e margem branca ≥2,5 mm. Q derivado da assinatura completa nas
+posições 1/11/21/31; R do certificado aplicável, sem defaults fictícios.
+
+**Dependência material:** não existe produtor/persistência produtiva de assinatura
+fiscal no código observado. A nova fronteira exige fonte real vinculada ao
+documento; não a fornece nem certifica. Sem fonte, nova emissão comercial recusa
+409 com rollback da numeração. Reimpressão usa payload já persistido. Geração
+financeira mantém contrato opcional. Não apresentar como emissão comercial pronta.
+
+Validação local: 57 testes dirigidos + 174 de regressão PostgreSQL 16.3 descartável,
+231 aprovados, zero falhas/erros/ignorados; PDF final descodificado a 300 dpi.
+Package backend aprovado. Não é CI nem suite integral. Revisão Claude preparada,
+ainda não realizada. [Dossier e reservas](../fiscal/h2-05/IMPLEMENTATION.md) e
+[evidência](../fiscal/h2-05/VALIDATION.md). Sem migrations ou alterações históricas,
+manifesto vazio, catálogo/FinancialCore inactivos e Fatia 1e suspensa.
+Gates 2/1/1, QR/PDF, AT e FAQ 4443 permanecem abertos. Sem push/PR/merge.

@@ -41,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.context.annotation.Import(com.ar2lda.fac.testinfra.FiscalSignatureTestConfiguration.class)
 class DocumentoComercialEmissaoIntegridadeTests {
 
     @Autowired private MockMvc mockMvc;
@@ -63,6 +64,7 @@ class DocumentoComercialEmissaoIntegridadeTests {
     @Autowired private UtilizadorRepository utilizadorRepository;
     @Autowired private EmpresaRepository empresaRepository;
     @Autowired private FiscalQrService fiscalQrService;
+    @Autowired private com.ar2lda.fac.testinfra.FiscalSignatureTestConfiguration.TestSource signatureSource;
     @Autowired private DocumentoComercialService documentoService;
     @Autowired private JdbcTemplate jdbcTemplate;
     @SpyBean private FinancialCore financialCore;
@@ -300,18 +302,32 @@ class DocumentoComercialEmissaoIntegridadeTests {
         TipoDocumento tipo = tipoDocumentoRepository.findById(primaryType).orElseThrow();
         serieRepository.save(new Serie(tipo, "BADQR", "Série QR inválido", "IC1QR", LocalDate.of(2026, 1, 1)));
         Long id = criarRascunho("BADQR");
-        Object originalHash = ReflectionTestUtils.getField(fiscalQrService, "hashCharacters");
+        boolean originalInvalid = signatureSource.invalidSignature;
         try {
-            ReflectionTestUtils.setField(fiscalQrService, "hashCharacters", "BAD");
+            signatureSource.invalidSignature = true;
             mockMvc.perform(post("/documentos-comerciais/{id}/emitir", id)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"emissorId\":\"EMITINT\"}"))
                     .andExpect(status().isBadRequest());
         } finally {
-            ReflectionTestUtils.setField(fiscalQrService, "hashCharacters", originalHash);
+            signatureSource.invalidSignature = originalInvalid;
         }
 
         assertRascunhoSemDadosFiscais(id, "BADQR");
+    }
+
+    @Test
+    void ausenciaDeAssinaturaFiscalRecusaEmissaoSemConsumirNumero() throws Exception {
+        TipoDocumento tipo = tipoDocumentoRepository.findById(primaryType).orElseThrow();
+        serieRepository.save(new Serie(tipo, "NOSIG", "Fonte ausente", "IC1NOSIG", LocalDate.of(2026, 1, 1)));
+        Long id = criarRascunho("NOSIG");
+        try {
+            signatureSource.unavailable = true;
+            mockMvc.perform(post("/documentos-comerciais/{id}/emitir", id)
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"emissorId\":\"EMITINT\"}"))
+                    .andExpect(status().isConflict());
+        } finally { signatureSource.unavailable = false; }
+        assertRascunhoSemDadosFiscais(id, "NOSIG");
     }
 
     @Test
