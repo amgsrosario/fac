@@ -96,7 +96,7 @@ public class DocumentoComercialPdfService {
                 <head>
                   <meta charset="UTF-8" />
                   <style>
-                    @page { size: A4; margin: 29mm 13mm 18mm; @top-center { content: element(continuation-header); } @bottom-center { content: "Pagina " counter(page) " de " counter(pages); font-size: 8pt; color: #737980; } }
+                    @page { size: A4; margin: 29mm 13mm 18mm; @top-center { content: element(continuation-header); } @bottom-left { content: element(demo-notice); } @bottom-center { content: "Pagina " counter(page) " de " counter(pages); font-size: 8pt; color: #737980; } }
                     @page:first { margin-top: 16mm; @top-center { content: element(first-page-atcud); } }
                     * { box-sizing: border-box; }
                     body { font-family: Arial, sans-serif; font-size: 9pt; color: #38434d; margin: 0; }
@@ -146,19 +146,19 @@ public class DocumentoComercialPdfService {
                     .fiscal-atcud { font-size: 7.5pt; font-weight: bold; color: #111; margin-bottom: 3mm; }
                     .qr { width: 40mm; height: 40mm; }
                     .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #dfe2e3; font-size: 7.5pt; color: #777f87; line-height: 1.4; }
-                    .demo-label { position: fixed; bottom: 2mm; left: 0; width: 100%%; text-align: left; font-size: 7pt; color: #8a8f94; }
+                    .demo-label { position: running(demo-notice); text-align: left; font-size: 7pt; color: #333; }
                     .watermark { position: fixed; top: 44%%; left: 18%%; width: 64%%; transform: rotate(-28deg); text-align: center; font-size: 58pt; font-weight: bold; color: #efdede; }
                     .annulment { border: 2px solid #a51f1f; color: #7d1717; background: #fff4f4; padding: 8px; margin-bottom: 10px; line-height: 1.45; }
                   </style>
                 </head>
                 <body>
                 %s
-                <div class="first-page-atcud">ATCUD: %s</div>
+                <div class="first-page-atcud">%s</div>
                 <div class="continuation-header"><table><tr>
                   <td class="continuation-company"><strong>%s</strong><br />NIF %s</td>
                   <td class="continuation-document"><span class="continuation-label">Continuação</span><br /><strong>%s - %s %s/%s</strong><br />Data %s</td>
                   <td class="continuation-client"><strong>%s</strong><br />NIF %s<br /><span class="continuation-page"></span></td>
-                </tr></table><div>ATCUD: %s</div></div>
+                </tr></table><div>%s</div></div>
                 %s
                 <table class="top"><tr>
                   <td class="company">%s%s</td>
@@ -192,10 +192,10 @@ public class DocumentoComercialPdfService {
                 <div class="footer">%s</div>
                 </body></html>
                 """.formatted(
-                demoLabel(), esc(documento.atcud()),
+                demoLabel(documento.qrPayload()), atcudLabel(documento.atcud()),
                 esc(empresa.nome()), esc(empresa.nif()), esc(documento.tipoDocumentoDescricao()),
                 esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
-                esc(documento.clienteNome()), esc(documento.clienteNif()), esc(documento.atcud()),
+                esc(documento.clienteNome()), esc(documento.clienteNif()), atcudLabel(documento.atcud()),
                 anulada,
                 logo(empresa), companyHeader(empresa),
                 esc(documento.tipoDocumentoDescricao()), esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(),
@@ -216,8 +216,8 @@ public class DocumentoComercialPdfService {
         );
     }
 
-    private String demoLabel() {
-        return demoEnabled ? "<div class=\"demo-label\">Versão de demonstração</div>" : "";
+    private String demoLabel(String payload) {
+        return demoEnabled || com.ar2lda.fac.demo.DemoSignatureSource.isDemoPayload(payload) ? "<div class=\"demo-label\">DEMONSTRAÇÃO — SEM VALIDADE FISCAL</div>" : "";
     }
 
     private String logo(EmitenteFiscalSnapshotDto empresa) {
@@ -296,6 +296,8 @@ public class DocumentoComercialPdfService {
                 + "<br />Matricula: " + esc(d.matricula()) + "</td></tr></table></div>";
     }
 
+    private String atcudLabel(String atcud) { return hasText(atcud) ? "ATCUD: " + esc(atcud) : ""; }
+
     private String fiscal(String atcud, String qrPayload) {
         if (!hasText(atcud) && !hasText(qrPayload)) {
             return "";
@@ -303,8 +305,8 @@ public class DocumentoComercialPdfService {
         String qr = hasText(qrPayload)
                 ? "<img class=\"qr\" src=\"" + qrCodeImageService.toPngDataUri(qrPayload) + "\" alt=\"QR Code fiscal\" />"
                 : "";
-        return "<div class=\"fiscal\"><div class=\"fiscal-card\"><div class=\"fiscal-atcud\">ATCUD: "
-                + esc(atcud) + "</div>" + qr + "</div></div>";
+        return "<div class=\"fiscal\"><div class=\"fiscal-card\"><div class=\"fiscal-atcud\">"
+                + atcudLabel(atcud) + "</div>" + qr + "</div></div>";
     }
 
     private void validateQrConsolidado(DocumentoComercialDto documento) {

@@ -81,3 +81,14 @@ Gates 2/1/1, projecção QR/PDF, AT e activação continuam sujeitos a validaç�
 decisão próprias. Geometria testada não equivale a homologação integral.
 
 [Validação e evidências](VALIDATION.md) · [Pedido de revisão Claude](REVIEW_REQUEST.md).
+
+
+## Actualização R1 — alternativa B autorizada
+
+A decisão executiva H2-05-R1 autoriza fornecedor separado exclusivamente demo.
+[Contrato e correcções R1](R1.md) superam a limitação anterior de inexistência
+de fornecedor demo utilizável: opt-in, perfil exclusivo, cluster/base/séries
+próprios, chave externa e QR de formato não fiscal. Não existe fornecedor
+produtivo real; mantém-se a recusa 409 e a dependência fiscal original.
+O gate RC/RG e a mudança anterior do QR opcional dos recibos estão expressos
+na R1. Nenhuma autorização de activação comercial decorre desta correcção.

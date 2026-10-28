@@ -804,3 +804,31 @@ ainda não realizada. [Dossier e reservas](../fiscal/h2-05/IMPLEMENTATION.md) e
 [evidência](../fiscal/h2-05/VALIDATION.md). Sem migrations ou alterações históricas,
 manifesto vazio, catálogo/FinancialCore inactivos e Fatia 1e suspensa.
 Gates 2/1/1, QR/PDF, AT e FAQ 4443 permanecem abertos. Sem push/PR/merge.
+
+
+### H2-05-R1 — correcção incremental da revisão Claude
+
+Parecer original de 28-10-2026: APPROVE WITH CONDITIONS, 0 BLOCKER / 1 MAJOR /
+3 MINOR; supera a indicação anterior de revisão ainda não realizada. A ordem
+executiva aprovou a alternativa B. Fornecedor demo implementado separadamente,
+com activação explícita, perfil demo exclusivo, base fac_demo e cluster
+autorizado, séries sintéticas próprias e chave externa. Recusa antes de
+Flyway/JPA em destinos incompatíveis; nenhum histórico foi convertido.
+Origem no payload/versão `TUULI-DEMO-1`, Q/R deliberadamente não fiscais,
+aviso permanente no PDF. ATCUD ausente deixa de imprimir rótulo vazio.
+
+Produção mantém 409 sem fonte real, sem fallback demo. RC legado sem fonte
+real pode não ter QR, mudança introduzida na H2-05 e agora explicitada; apenas
+RC demo autorizado recebe QR não fiscal. Gate RC/RG preservado. ZXing 3.5.3
+fixado, com smoke de JAR e regressão de emissão/permissões.
+[Validação original](../fiscal/h2-05/VALIDATION.md) e
+[correcções/ensaios R1](../fiscal/h2-05/R1.md); revisão incremental Claude
+ainda pendente. Sem alteração de migrations, manifesto fiscal ou bases
+persistentes/demo, sem activação de FinancialCore/1e ou publicação.
+
+Validação efectiva R1: 254 testes (74 dirigidos + 180 regressão) aprovados,
+package e smoke do JAR aprovados; sete cenários de arranque/seed/reset em
+PostgreSQL descartável e oito PDFs emitidos/16 páginas com aviso não fiscal
+verificados. Cluster `7701754504284078125` removido, bem como credenciais e
+chaves efémeras. Não é CI nem teste do deploy/Compose/demo persistente.
+Confirmação incremental Claude pendente; nenhum fornecedor real implementado.

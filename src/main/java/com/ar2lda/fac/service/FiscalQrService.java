@@ -29,7 +29,9 @@ public class FiscalQrService {
             throw new BadRequestException("A geração do payload QR fiscal está desativada");
         }
         var document=impressao.documento();
-        var signature=source().commercial(impressao).orElseThrow(FiscalQrService::unavailable);
+        var source=source();
+        if (source instanceof com.ar2lda.fac.demo.DemoSignatureSource demo) return demo.commercialQr(impressao);
+        var signature=source.commercial(impressao).orElseThrow(FiscalQrService::unavailable);
         var identity=identity(signature,document.id(),document.numeroDocumentoCompleto(),document.atcud());
         return new QrFiscal(
                 payloadBuilder.buildDocumentoComercial(impressao, identity.hashCharacters(), identity.certificateNumber()),
@@ -44,7 +46,9 @@ public class FiscalQrService {
         }
         try {
             var document=impressao.documento();
-            var signature=source().financial(impressao).orElseThrow(FiscalQrService::unavailable);
+            var source=source();
+            if (source instanceof com.ar2lda.fac.demo.DemoSignatureSource demo) return Optional.of(demo.financialQr(impressao));
+            var signature=source.financial(impressao).orElseThrow(FiscalQrService::unavailable);
             var identity=identity(signature,document.id(),document.tipoDocumentoId()+" "+document.serie()+"/"+document.numeroDocumento(),document.atcud());
             return Optional.of(new QrFiscal(
                     payloadBuilder.buildDocumentoFinanceiro(impressao, identity.hashCharacters(), identity.certificateNumber()),

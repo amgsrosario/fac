@@ -77,13 +77,13 @@ class DocumentoComercialPdfServiceTests {
         ReflectionTestUtils.setField(pdfService, "demoEnabled", true);
         try (PDDocument demo = Loader.loadPDF(gerar(35, Scenario.standard()))) {
             for (int page = 1; page <= demo.getNumberOfPages(); page++) {
-                assertThat(pageText(demo, page)).contains("Versão de demonstração");
+                assertThat(pageText(demo, page)).contains("DEMONSTRAÇÃO — SEM VALIDADE FISCAL");
             }
         }
 
         ReflectionTestUtils.setField(pdfService, "demoEnabled", false);
         try (PDDocument normal = Loader.loadPDF(gerar(1, Scenario.standard()))) {
-            assertThat(pageText(normal, 1)).doesNotContain("Versão de demonstração");
+            assertThat(pageText(normal, 1)).doesNotContain("DEMONSTRAÇÃO — SEM VALIDADE FISCAL");
         }
     }
 
@@ -283,6 +283,31 @@ class DocumentoComercialPdfServiceTests {
             }
         }
         assertThat(qrCount).isEqualTo(1);
+    }
+
+    @Test
+    void historicalDocumentWithoutAtcudDoesNotPrintEmptyLabel() throws Exception {
+        var input=criarImpressao(35,Scenario.standard());
+        var d=replaceDocumentField(input.documento(),"atcud",null);
+        try(var pdf=Loader.loadPDF(gerar(new DocumentoComercialImpressaoDto(input.empresa(),d,input.linhas())))) {
+            assertThat(new PDFTextStripper().getText(pdf)).doesNotContain("ATCUD:");
+        }
+    }
+
+    @Test
+    void persistedDemoOriginMarksEveryPageEvenWithDemoProfileOff() throws Exception {
+        var input=criarImpressao(35,Scenario.standard());
+        var d=replaceDocumentField(input.documento(),"qrPayload","TUULI-DEMO-1\nSEM VALIDADE FISCAL");
+        try(var pdf=Loader.loadPDF(gerar(new DocumentoComercialImpressaoDto(input.empresa(),d,input.linhas())))) {
+            for(int page=1;page<=pdf.getNumberOfPages();page++)
+                assertThat(pageText(pdf,page)).contains("DEMONSTRAÇÃO — SEM VALIDADE FISCAL");
+        }
+    }
+
+    private DocumentoComercialDto replaceDocumentField(DocumentoComercialDto d,String name,Object value)throws Exception {
+        var fields=DocumentoComercialDto.class.getRecordComponents();var args=new Object[fields.length];var types=new Class<?>[fields.length];
+        for(int i=0;i<fields.length;i++){types[i]=fields[i].getType();args[i]=fields[i].getName().equals(name)?value:fields[i].getAccessor().invoke(d);}
+        return DocumentoComercialDto.class.getDeclaredConstructor(types).newInstance(args);
     }
 
     private void writeArtifact(Path output, String uniqueName, String latestName, String content) throws IOException {

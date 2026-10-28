@@ -10,6 +10,8 @@ import java.util.Optional;
  * to the numbered snapshot, durably recorded in the emission transaction.
  * QR extraction does not replace signing, signature verification or certification.
  * This release supplies no production signer, keys, certificate or fake fallback.
+ * The separately guarded DemoSignatureSource emits a different, explicitly non-fiscal
+ * format; it never returns a synthetic Signature through this production method.
  */
 public interface FiscalDocumentSignatureSource {
     record Signature(Long documentId, String documentNumber, String atcud,

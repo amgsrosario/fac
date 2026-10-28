@@ -59,6 +59,11 @@ insert into transporte (id, nome)
 values ('001', 'Sem transporte')
 on conflict (id) do update set nome = excluded.nome;
 
+-- Referências mínimas usadas pelo cenário, conferidas em
+-- data/reference/codigos_postais_portugal.csv. Não inferir nem substituir históricos.
+insert into codpostal (id,nome) values ('7000-000','Évora'),('3750-099','Águeda')
+on conflict (id) do nothing;
+
 -- Empresa proprietaria
 insert into empresa (
     id,
@@ -176,8 +181,8 @@ on conflict (id) do update set
 
 insert into serie (id_tipo_documento, serie, nome, codigo_at, data_codigo_at, numerador)
 values
-    ('FT', 'DEMO26', 'Serie demonstracao FT 2026', 'DEMOFT26', '2026-01-01', 0),
-    ('RC', 'DEMO26', 'Serie demonstracao RC 2026', 'DEMORC26', '2026-01-01', 0)
+    ('FT', 'DEMO26', 'Serie demonstracao FT 2026', 'DEMO-FT', '2026-01-01', 0),
+    ('RC', 'DEMO26', 'Serie demonstracao RC 2026', 'DEMO-RC', '2026-01-01', 0)
 on conflict (id_tipo_documento, serie) do update set
     nome = excluded.nome,
     codigo_at = excluded.codigo_at,

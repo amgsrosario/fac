@@ -32,3 +32,19 @@ da dependência fiscal explícita da assinatura/certificado e dos gates já aber
 Revisão exclusivamente de leitura. Sem bases persistentes, merge, activação ou
 homologação. Não há execução Claude disponível neste ambiente; esta entrega
 prepara o pedido e não declara revisão independente realizada.
+
+
+## Pedido incremental H2-05-R1
+
+A ordem executiva escolheu a alternativa B do MAJOR-001. Rever exclusivamente
+o diff após `32623904e2427e712b77a1002475e341821f4db0` e [R1.md](R1.md):
+fornecedor demo separado, ausência de fallback, guard datasource anterior ao
+Flyway/JPA, origem persistida/aviso no PDF, chave externa, representação Q/R
+deliberadamente não fiscal e produção sem fonte 409. Conferir ATCUD ausente,
+registo do gate RC/RG, pin ZXing/smoke JAR, todas as classes emissoras (incluindo
+PermissionMatrixIntegrationTests) e ensaios de seed/repetição/reset descartável.
+Não homologar configuração fiscal ou considerar RSA demo como assinatura AT.
+As falhas intermédias e as respectivas correcções estão preservadas no arquivo
+R1, separado da evidência original. A emissão comercial real continua bloqueada.
+Solicita-se veredicto e matriz de resolução do MAJOR e três MINOR; não se
+declara confirmação Claude antes da revisão efectiva.

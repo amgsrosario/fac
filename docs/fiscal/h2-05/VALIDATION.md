@@ -83,3 +83,52 @@ O manifesto não inclui o seu próprio hash. Credenciais descartáveis e chaves
 privadas não integram a evidência. Não se publicou o arquivo no GitHub.
 
 Revisão Claude pendente. [Limitações e fonte fiscal em falta](IMPLEMENTATION.md).
+
+
+## R1 — confirmação local após alternativa B (28-10-2026)
+
+Parecer original Claude: APPROVE WITH CONDITIONS, 0 BLOCKER / 1 MAJOR /
+3 MINOR. Decisão executiva escolheu fornecedor demo separado.
+[Resolução dos achados e reservas](R1.md).
+
+- **74 testes dirigidos**: os 57 originais, mais dois cenários PDF, treze do
+  fornecedor/arranque demo e dois DemoResetSafetyTests. Zero falhas/erros/ignorados.
+- **180 testes de regressão**: DocumentoComercialControllerTests 46,
+  DocumentoComercialEmissaoIntegridadeTests 26, PermissionMatrixIntegrationTests 6,
+  FinancialReceiptIntegrationTests 80, FinancialReconciliationIntegrationTests 22.
+  Zero falhas/erros/ignorados na selecção final. Total **254**, não suite integral.
+- PermissionMatrixIntegrationTests passou após importar a fonte exclusiva de
+  testes e usar o helper de vínculo governado V28 na fixture. As asserções de
+  acesso não foram alteradas. O manifesto produtivo continua vazio.
+- Sete cenários **adicionais, fora da contagem JUnit**, pelo JAR empacotado:
+  seed e oito PDFs por API autenticada; repetição do seed sem duplicação nem
+  avanço de numeradores; recusa com perfis demo+prod; recusa de base errada
+  antes de migrations, confirmando zero tabelas; recusa de cluster errado;
+  recusa de código AT não demonstrativo; reprodução do reset/seed numa base
+  fac_demo nova no mesmo cluster exclusivamente descartável.
+- Package offline e smoke QR executado via PropertiesLauncher do JAR: ZXing
+  3.5.3, Byte, ECC M, versão ≥9, descodificação exacta, sem arranque Spring.
+- Oito PDFs **efectivamente emitidos**, 16 páginas, aviso sem validade fiscal
+  em todas. Os oito QR foram descodificados das páginas a 300 dpi: versão 19,
+  ECC M, Byte, símbolo activo mínimo 34,771 mm, margem mínima 2,617 mm.
+  Aviso na primeira página do documento multipágina inspeccionado visualmente.
+
+PostgreSQL 16.3 descartável: cluster `7701754504284078125`, contentor
+`tuuli-h205r1-18b86ac7`, tmpfs e porta loopback 50275. Recursos removidos após
+a validação; credenciais e todas as chaves privadas geradas também removidas.
+Sem operações na origem histórica, destino #38 ou demo persistente.
+
+Arquivo separado `/home/arosario/tuuli-backups/h2-05/2026-10-28-r1/`:
+`consolidated.json`, `directed-post-demo-fix/`, `regression-r1/`,
+`permission-fixed/`, `jar-demo-verified/`, `demo-pdf-summary.json`,
+`demo-pdf-inspection.log`, `package-verified.log`, `jar-smoke-verified.log`,
+`jar-integrity.json`, `cleanup.json` e manifesto SHA256SUMS. As tentativas
+intermédias falhadas também permanecem no arquivo; a consolidação substitui
+apenas o resultado falhado de permissões pela sua reexecução corrigida.
+
+Os ensaios de reset foram pelo JAR e bases novas, não pelos scripts de deploy
+Linux/Windows nem pela demo Ubuntu. O Compose existente não foi alterado:
+para eventual utilização futura será necessária configuração explícita do
+fornecedor, identidade do cluster e montagem segura da chave; nenhum opt-in
+ou deployment é efectuado por este commit. Sem credenciais comerciais,
+comunicação AT ou homologação. A confirmação incremental Claude fica pendente.

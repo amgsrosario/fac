@@ -687,3 +687,31 @@ confunde evidência local com CI. Revisão Claude solicitável pelo
 [Implementação, alternativas técnicas e reservas](../fiscal/h2-05/IMPLEMENTATION.md).
 V25–V28, dados históricos, manifesto e circuitos mantidos; nenhuma activação
 de catálogo, FinancialCore ou Fatia 1e. Gates fiscais e FAQ 4443 não resolvidos.
+
+
+### H2-05-R1 — alternativa B autorizada para demonstração isolada
+
+28-10-2026. Parecer Claude sobre `3262390`: APPROVE WITH CONDITIONS,
+0 BLOCKER / 1 MAJOR / 3 MINOR, original SHA-256
+`4540cbf2ec6e1a2a238b98d4dd60374f555822d36326bf4ad2de0844cb38bb5a`.
+A ordem executiva H2-05-R1 escolheu expressamente fornecedores demo/produção
+separados. Implementado fornecedor sintético opt-in, perfil demo exclusivo,
+cluster/base/séries autorizados e chave externa não versionada. Guard anterior
+a Flyway/JPA recusa destinos impróprios e séries reais. QR demo tem formato
+não fiscal e origem persistida `TUULI-DEMO-1`, Q prefixado DEMO e R textual
+DEMO-SEM-CERTIFICADO; PDF marcado sem validade fiscal mesmo na reimpressão.
+Não há certificado AT fictício ou relaxamento da validação produtiva.
+
+ATCUD vazio omitido. ZXing 3.5.3 fixado e smoke empacotado preparado.
+Fixture da matriz de permissões adaptada ao vínculo governado V28 já exigido;
+sem alteração às regras fiscais ou asserções de permissões. O seed novo inclui
+apenas as duas referências postais canónicas que já utilizava. Não se aplicou
+a qualquer demo/base persistente. Resultados efectivos e confirmação Claude
+da R1 são tratados separadamente da revisão original: [contrato R1](../fiscal/h2-05/R1.md).
+
+Registo explícito: a H2-05 inicial retirou o QR fictício dos novos recibos
+legados sem fonte e do fallback de impressão; QR opcional pode ficar ausente.
+R1 só acrescenta payload não fiscal a RC demo. RC/RG e enquadramento IVA de
+caixa permanecem gate fiscal próprio. Assinador/certificado reais em falta;
+produção sem fonte continua 409. Não há activação de catálogo, novo RC,
+FinancialCore ou Fatia 1e, nem homologação, cutover, push, PR ou merge.

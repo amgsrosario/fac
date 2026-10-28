@@ -36,3 +36,8 @@ fac:
     password-admin: ${FAC_DEMO_PASSWORD_ADMIN:}
     password-operador: ${FAC_DEMO_PASSWORD_OPERADOR:}
     password-consulta: ${FAC_DEMO_PASSWORD_CONSULTA:}
+
+    signature:
+      enabled: ${FAC_DEMO_SIGNATURE_ENABLED:false}
+      authorized-cluster: ${FAC_DEMO_SIGNATURE_AUTHORIZED_CLUSTER:}
+      key-file: ${FAC_DEMO_SIGNATURE_KEY_FILE:}
