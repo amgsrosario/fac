@@ -123,8 +123,9 @@ consumidores financeiros, base histórica, demo ou preparação isolada #38.
 FinancialCore permanece inactivo, legado mantém a autoridade operacional,
 sem cutover e com Fatia 1e suspensa.
 
-Parecer Claude de 28-10-2026: **APPROVE WITH CONDITIONS**, 0 BLOCKER, 0 MAJOR,
-3 MINOR. O original foi preservado; a reexecução no commit exacto e as duas
-clarificações documentais estão preparadas para **revisão incremental ainda
-pendente**, sem autodeclaração de aprovação. Ver
-[validação e limitações da evidência](H2_03_VALIDATION.md).
+Parecer inicial Claude de 28-10-2026: APPROVE WITH CONDITIONS, 0/0/3.
+Confirmação incremental independente recebida e lida: **APPROVE, 0 BLOCKER,
+0 MAJOR, 0 MINOR**, sobre `6c32e283` e `2dcb797c`; os três achados estão resolvidos.
+O Revisor conferiu hashes, XML e diffs, sem executar testes próprios. A aprovação
+abrange a infraestrutura inactiva, não a homologação ou activação. Fonte e hash
+em [validação e limitações da evidência](H2_03_VALIDATION.md).

@@ -772,8 +772,16 @@ substitui a revisão da implementação da issue #39.
 - Documentados os comportamentos existentes: RC/RL/guias sem identidade fiscal
   mantêm a prontidão fechada como pendência; incoerência do catálogo recusa também
   edições descritivas de tipos vinculados. Sem alteração funcional ou semântica.
-- Correcções preparadas para revisão Claude incremental, ainda pendente.
-  Sem push, PR, integração, cutover ou alteração da origem histórica/demo.
+- Confirmação incremental Claude recebida e lida: **APPROVE, 0/0/0**; os três
+  achados estão resolvidos sobre `6c32e283` e `2dcb797c`. Original arquivado em
+  AR2-Executive-Reports, commit `a9992b9c8e79d850402b3e8c37be903bf24d9de8`, SHA-256
+  `bfe568045999fa4984d12839935357c1343f3f92dd918a31224c497520eff0a3`.
+  Sem testes próprios do Revisor; aprovação da infraestrutura inactiva.
+- Publicação da branch autorizada, mas ainda bloqueada neste executor por
+  autenticação SSH: `Permission denied (publickey)`. Base remota confirmada em
+  `c17a9d8`, branch de trabalho ainda ausente no GitHub; PR/CI por iniciar.
+  Sem integração, cutover ou alteração da origem histórica/demo. Merge reservado
+  a António pelas normas centrais consultadas em `2f6cd4a83aa9e552d1daa32c51a99a7bedd0b4e5`.
 - FinancialCore permanece inactivo, legado mantém autoridade operacional,
   RC/RL novos não activados e Fatia 1e suspensa.
 

@@ -75,7 +75,13 @@ de tipos vinculados quando o catálogo da aplicação está incoerente. Mantém-
 falha em fechado e a ausência de fallback; não se alterou o serviço nem o SQL.
 A emissão continua a utilizar as garantias persistentes existentes.
 
-A revisão incremental dos três achados permanece pendente. Os registos de
+Confirmação incremental Claude recebida e lida: **APPROVE, 0/0/0**, três MINOR
+resolvidos, para `6c32e283` com os documentos `2dcb797c`. Original
+`2026-10-28_TUULI_Issue39_H2-03_MINORS_verificacao-incremental_Claude.md`, SHA-256
+`bfe568045999fa4984d12839935357c1343f3f92dd918a31224c497520eff0a3`,
+arquivado sem alterações em AR2-Executive-Reports, commit
+`a9992b9c8e79d850402b3e8c37be903bf24d9de8`, pasta `TUULI/2026/10/`.
+O Revisor conferiu a evidência, sem executar testes próprios. Os registos de
 27-10-2026 abaixo são evidência histórica da implementação, substituídos pela
 reexecução acima para a condição específica de correspondência ao commit final.
 
@@ -173,8 +179,8 @@ de regressão com 1/1/1 e 2/1/1 é exclusivamente de teste, não homologação f
 Sem seeds reais, backfill, limpeza, alteração QR/PDF ou dados operacionais.
 FinancialCore/RC/RL não activados; sem cutover; Fatia 1e suspensa.
 
-Revisão Claude da implementação recebida: APPROVE WITH CONDITIONS, 0 BLOCKER /
-0 MAJOR / 3 MINOR. Reexecução e correcções documentais preparadas para revisão
-incremental independente; não declarar aprovação final antes do parecer dirigido.
+Revisão inicial Claude: APPROVE WITH CONDITIONS, 0/0/3. Confirmação incremental
+final: APPROVE, 0/0/0, três achados resolvidos. Isto permite preparar a publicação
+da infraestrutura inactiva, sujeita a autenticação, CI e normas de integração.
 A aprovação da especificação e o R2 da issue #38 não substituem esta revisão.
 Os ensaios não substituem homologação 2/1/1, QR/PDF ou AT.

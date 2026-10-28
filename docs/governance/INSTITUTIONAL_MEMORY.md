@@ -645,3 +645,19 @@ pendência fiscal; a incoerência integral do catálogo recusa 409 mesmo para ed
 só descritiva de tipo vinculado. Não se criou fallback ou exigência universal
 para tipos fora do perímetro. Gates 2/1/1, QR/PDF e AT preservados; sem cutover,
 publicação fiscal, activação FinancialCore ou alteração à origem/demo.
+
+### H2-03 — aprovação incremental final e preparação da publicação
+
+28-10-2026. Parecer independente Claude integralmente recebido e lido:
+**APPROVE, 0 BLOCKER / 0 MAJOR / 0 MINOR**; os três MINOR estão resolvidos sobre
+`6c32e283` e `2dcb797c`. Supera a pendência de confirmação acima. O Revisor
+verificou hashes, XML e diff, sem executar testes. Original arquivado sem alterações
+em AR2-Executive-Reports, commit `a9992b9c8e79d850402b3e8c37be903bf24d9de8`,
+ficheiro `TUULI/2026/10/2026-10-28_TUULI_Issue39_H2-03_MINORS_verificacao-incremental_Claude.md`,
+SHA-256 `bfe568045999fa4984d12839935357c1343f3f92dd918a31224c497520eff0a3`.
+A Administração autorizou preparar publicação controlada, PR e CI. Autenticação
+SSH indisponível neste executor; nenhuma alteração de credenciais ou reconstrução
+dos commits. Infraestrutura aprovada permanece local até publicação efectiva.
+Manifesto vazio; gates fiscais/cutover/FinancialCore e Fatia 1e preservados.
+Norma central consultada: AI_DEVELOPMENT_SYSTEM.md, commit
+`2f6cd4a83aa9e552d1daa32c51a99a7bedd0b4e5`; decisão de merge de António.
