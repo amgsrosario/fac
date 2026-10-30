@@ -746,3 +746,28 @@ actualizar a Ubuntu ou aprovar qualquer GOLDEN. R-1/R-2: diagnóstico interno de
 marcadores demo e rótulo QR adequado, sem alterar autoridade financeira ou gates.
 [Contrato, fontes e revisão R2](../fiscal/h2-05/R2.md). Produção sem fonte real
 continua 409; manifesto vazio, FinancialCore inactivo e Fatia 1e suspensa.
+
+
+### H2-05 integrada e H2-06 — proposta produtiva sujeita a decisão
+
+30-10-2026. PR #42 integrado em `ac07247da7f4dce973b471e5334e2b86bb4e97e4`, incluindo H2-05 `e1e9e63`. Parecer final Claude APPROVE 0/0/0, SHA-256 `d377b2f572fb9f3c95e1b19dc2bc06e3cd7f0eb663842290086b325c21d6d5af`, original conferido. Supera a pendência R2 anterior. Os 286 testes locais/17 classes e o CI success (safety tests/package) têm âmbitos distintos; não foram repetidos na H2-06.
+
+Issue #43 autoriza análise, não integração funcional: [levantamento H2-06](../fiscal/h2-06/CURRENT_CONTRACT.md), [alternativas e decisões propostas](../fiscal/h2-06/PROPOSAL.md), [fontes/revisão](../fiscal/h2-06/SOURCES_REVIEW.md). Separados assinatura documental, certificado do programa, chave/versão, ATCUD, Q/R e credenciais de operação. Identificadas lacunas de persistência, instante técnico antes do QR, cadeia e validação criptográfica; não apresentadas como novas decisões do PO nem como defeitos reabertos da H2-05.
+
+A proposta compara custódia local e serviço não exportável, sem escolher custódia produtiva pela Administração. Perfil normativo, proveniência legítima, reservas fiscais e revisão Claude H2-06 continuam pendentes. Nenhuma implementação, chave, emissão, migration ou acesso a base nesta missão. Preservados 409 sem fonte, gates fiscais, isolamento demo, legado como autoridade financeira e suspensão da Fatia 1e.
+
+
+### H2-06-R1 — correcção documental pós-revisão
+
+30-10-2026. Revisão H2-06: APROVADO COM RESERVAS, 0 BLOCKER / 1 MAJOR / 2 MINOR, conforme [registo executivo #43](https://github.com/amgsrosario/fac/issues/43#issuecomment-6530199084). Supera a indicação de revisão inicial pendente; confirmação incremental ainda pendente. Corrigidas a caracterização dos requisitos criptográficos do exemplar do Despacho 8632/2014 (separada da confirmação de vigência actual), a alegação não demonstrada de arquivo integral FAQ 4443 e a delimitação da cadeia série/tipo fiscal, plurianualidade e datas. Actualizados A/B e T02/T03/T04.
+
+[Fontes e pedido incremental Claude](../fiscal/h2-06/SOURCES_REVIEW.md). D-SIGN-01 a D-SIGN-05 suspensas até confirmação; não há aprovação independente desta correcção. Parecer original não arquivado nesta R1 por não estar disponibilizado; não reconstruído a partir do resumo executivo. Nenhum código, teste executável, chave ou base alterado; sem emissão, chamadas operacionais AT, despesa, deploy, activação ou merge. Mantidos 409 e todos os gates fiscais/financeiros.
+
+
+### H2-07 / issue #44 — primeiro mecanismo de assinatura, experimental e inactivo
+
+30-10-2026. A issue #44 regista aprovação final Claude H2-06 (0/0/0 em `10483f8`) e D-SIGN-01 parcialmente aprovada para FT posterior/EUR, série nova e material de ensaio. Supera a confirmação incremental H2-06 pendente acima; D-SIGN-02..05 não foram aprovadas. A retoma autorizada criou `codex/h2-07-signature-isolated` sobre a integração `ac07247` e incorporou apenas a documentação H2-06 aprovada. Trabalho de autoria não comprovada em `h2-07-signature-inactive`/`7ce573f` preservado e não reutilizado.
+
+[Contrato H2-07](../fiscal/h2-07/CONTRACT.md): biblioteca sem bean/endpoint/fonte produtiva, canonicalização, assinador efémero, provas experimentais imutáveis, cadeia e replay. Schema Flyway de ensaio separado; não cria V29 produtiva nem toca V25–V28. [Validação e reservas](../fiscal/h2-07/VALIDATION.md): 29 testes novos e 165 de regressão aprovados em execuções documentadas, não uma suite integral nem uma única execução sem erros. PostgreSQL 16.3 descartável; fases com erros de fixture/expectativa preservadas.
+
+Revisão Claude H2-07 pendente. Não é emissor fiscal, prova de custódia real, certificação ou activação. SQL não verifica RSA; leitura/append recusam prova forjada. Preservados produção sem fonte HTTP 409, gates 2/1/1, QR/PDF, AT, RC/RG, FAQ 4443, catálogo vazio, FinancialCore inactivo e Fatia 1e suspensa. Origem, demo e #38 sem alterações. Sem deploy, cutover ou merge.
