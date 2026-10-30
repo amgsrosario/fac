@@ -661,3 +661,88 @@ dos commits. Infraestrutura aprovada permanece local até publicação efectiva.
 Manifesto vazio; gates fiscais/cutover/FinancialCore e Fatia 1e preservados.
 Norma central consultada: AI_DEVELOPMENT_SYSTEM.md, commit
 `2f6cd4a83aa9e552d1daa32c51a99a7bedd0b4e5`; decisão de merge de António.
+
+
+### H2-05 / issue #41 — implementação delimitada e dependência fiscal
+
+28-10-2026. Base integrada `91da67bc5e799d30abfd1c569ec7ef22fbd5f703`, PR #40,
+H2-03. Supera a indicação histórica de publicação bloqueada acima. Ordem issue
+#41 autoriza ATCUD em todas as páginas, geometria QR T12 e derivação Q/R, sem
+homologação, activação, cutover ou alteração a históricos. H2-04/R1 foi lida no
+commit documental `64c6a2d1a33cd5926bcd67b5c50c2fc995c126c2`, não integrado
+nesta base.
+
+Implementados cabeçalhos ATCUD, Byte/ECC M/versão ≥9 e margem física, extracção
+Q das posições 1/11/21/31 e R de fonte autorizada por documento. Removidos os
+defaults fictícios. Não existe fonte produtiva de assinatura persistida; a nova
+fronteira é um contrato interno, não um assinador ou certificado AT. Ausência
+recusa nova emissão comercial com rollback; reimpressões preservam payloads
+existentes. Esta dependência impede declarar a emissão comercial pronta e exige
+identificação do mecanismo fiscal autorizado, sem invenção de chaves/valores.
+
+231 testes finais locais aprovados (57 dirigidos e 174 PostgreSQL descartável),
+package e PDF final verificados. Não se somam execuções intermédias nem se
+confunde evidência local com CI. Revisão Claude solicitável pelo
+[pedido preparado](../fiscal/h2-05/REVIEW_REQUEST.md), ainda pendente.
+[Implementação, alternativas técnicas e reservas](../fiscal/h2-05/IMPLEMENTATION.md).
+V25–V28, dados históricos, manifesto e circuitos mantidos; nenhuma activação
+de catálogo, FinancialCore ou Fatia 1e. Gates fiscais e FAQ 4443 não resolvidos.
+
+
+### H2-05-R1 — alternativa B autorizada para demonstração isolada
+
+28-10-2026. Parecer Claude sobre `3262390`: APPROVE WITH CONDITIONS,
+0 BLOCKER / 1 MAJOR / 3 MINOR, original SHA-256
+`4540cbf2ec6e1a2a238b98d4dd60374f555822d36326bf4ad2de0844cb38bb5a`.
+A ordem executiva H2-05-R1 escolheu expressamente fornecedores demo/produção
+separados. Implementado fornecedor sintético opt-in, perfil demo exclusivo,
+cluster/base/séries autorizados e chave externa não versionada. Guard anterior
+a Flyway/JPA recusa destinos impróprios e séries reais. QR demo tem formato
+não fiscal e origem persistida `TUULI-DEMO-1`, Q prefixado DEMO e R textual
+DEMO-SEM-CERTIFICADO; PDF marcado sem validade fiscal mesmo na reimpressão.
+Não há certificado AT fictício ou relaxamento da validação produtiva.
+
+ATCUD vazio omitido. ZXing 3.5.3 fixado e smoke empacotado preparado.
+Fixture da matriz de permissões adaptada ao vínculo governado V28 já exigido;
+sem alteração às regras fiscais ou asserções de permissões. O seed novo inclui
+apenas as duas referências postais canónicas que já utilizava. Não se aplicou
+a qualquer demo/base persistente. Resultados efectivos e confirmação Claude
+da R1 são tratados separadamente da revisão original: [contrato R1](../fiscal/h2-05/R1.md).
+
+Registo explícito: a H2-05 inicial retirou o QR fictício dos novos recibos
+legados sem fonte e do fallback de impressão; QR opcional pode ficar ausente.
+R1 só acrescenta payload não fiscal a RC demo. RC/RG e enquadramento IVA de
+caixa permanecem gate fiscal próprio. Assinador/certificado reais em falta;
+produção sem fonte continua 409. Não há activação de catálogo, novo RC,
+FinancialCore ou Fatia 1e, nem homologação, cutover, push, PR ou merge.
+
+
+### H2-05-R2 — regressão preexistente de permissões e condições de integração
+
+28-10-2026. Parecer independente Claude R1: APPROVE WITH CONDITIONS,
+0 BLOCKER / 0 MAJOR / 3 MINOR (A/B/C), SHA-256
+`087ebd0d521649547d45c753ab50125a5cf27c855ecc04582513ca05151732cf`.
+Supera a indicação de confirmação R1 pendente acima; a confirmação R2 é distinta.
+
+**MINOR-C — facto de continuidade:** na base integrada H2-03/PR #40,
+`91da67bc5e799d30abfd1c569ec7ef22fbd5f703`, a fixture de
+PermissionMatrixIntegrationTests criava DCT com código FT sem vínculo governado.
+O código nesse commit foi conferido; a execução R1 reproduziu seis erros SQL
+23514, «New or reclassified FT deferred configuration requires a governed binding»,
+por efeito da V28. Era regressão preexistente da fixture, não consequência da
+separação de assinadores H2-05. R1 (`203276f`) passou a usar GovernedTypeFixtures.bind
+e a fonte exclusiva de testes, sem alterar protecções ou asserções de permissões;
+os seis testes passaram. Não se afirma que o CI limitado tenha detectado essa
+regressão. Em futuras migrations que afectem tipodocumento, inventariar e testar
+as classes SpringBootTest que criam tipos ou emitem documentos, além das suites
+directamente alteradas.
+
+MINOR-B: 15 classes repetidas e 254 testes aprovados em HEAD limpo `203276f`,
+tree `a370beef85c53ca025e8c17c4e4ef94dd212359c`, com metadados por execução e XML.
+O complemento R2 exige nova execução no seu próprio commit final; o resultado
+pós-commit é preservado no relatório externo, sem encadear commits autorreferenciais.
+MINOR-A: procedimento de instalação demo nova e novo GOLDEN documentado, sem
+actualizar a Ubuntu ou aprovar qualquer GOLDEN. R-1/R-2: diagnóstico interno de
+marcadores demo e rótulo QR adequado, sem alterar autoridade financeira ou gates.
+[Contrato, fontes e revisão R2](../fiscal/h2-05/R2.md). Produção sem fonte real
+continua 409; manifesto vazio, FinancialCore inactivo e Fatia 1e suspensa.

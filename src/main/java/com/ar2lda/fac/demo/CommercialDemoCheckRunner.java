@@ -22,7 +22,7 @@ public class CommercialDemoCheckRunner implements ApplicationRunner {
         System.out.printf("FAC_COMMERCIAL_DEMO_CHECK OK | base=%s | perfil=demo%n", report.database());
         System.out.printf("  narrativa: utilizadores=%d clientes=%d artigos=%d%n",
                 report.users(), report.clients(), report.articles());
-        System.out.printf("  evidencias: comerciais=%d recebimentos=%d snapshots_v2=%d auditoria=%d%n",
+        System.out.printf("  evidencias: comerciais=%d recebimentos=%d snapshots_correntes=%d auditoria=%d%n",
                 report.commercialDocuments(), report.financialDocuments(), report.fiscalSnapshots(), report.audits());
         if (context.getEnvironment().getProperty("fac.demo.exit-after-commercial-check", Boolean.class, false)) {
             context.close();

@@ -5,7 +5,7 @@ Fonte canónica do estado corrente. Atualização: 2026-10-28, Europe/Lisbon. Su
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD integrado observado na issue #39: `c17a9d8af9cf2d197c8c8c21f1f780a38efee0d9`, PR #37. Confirmado por GitHub e objecto Git local em 27-10-2026; checkout principal preservado. A implementação H2-03 descrita abaixo é local e ainda não está integrada.
+- HEAD integrado observado no início da H2-05: `91da67bc5e799d30abfd1c569ec7ef22fbd5f703`, merge do PR #40 (H2-03), confirmado no remoto e no objecto Git local em 28-10-2026. Checkout principal preservado. Supera o estado pré-publicação da issue #39 registado abaixo.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -777,12 +777,77 @@ substitui a revisão da implementação da issue #39.
   AR2-Executive-Reports, commit `a9992b9c8e79d850402b3e8c37be903bf24d9de8`, SHA-256
   `bfe568045999fa4984d12839935357c1343f3f92dd918a31224c497520eff0a3`.
   Sem testes próprios do Revisor; aprovação da infraestrutura inactiva.
-- Publicação da branch autorizada, mas ainda bloqueada neste executor por
-  autenticação SSH: `Permission denied (publickey)`. Base remota confirmada em
-  `c17a9d8`, branch de trabalho ainda ausente no GitHub; PR/CI por iniciar.
-  Sem integração, cutover ou alteração da origem histórica/demo. Merge reservado
-  a António pelas normas centrais consultadas em `2f6cd4a83aa9e552d1daa32c51a99a7bedd0b4e5`.
+- Actualização H2-05: H2-03 integrada pelo PR #40 em `91da67bc5e799d30abfd1c569ec7ef22fbd5f703`; supera o bloqueio de publicação anteriormente observado. A integração não autoriza cutover ou alteração da origem histórica/demo. CI desse PR não reexecutado nesta missão.
 - FinancialCore permanece inactivo, legado mantém autoridade operacional,
   RC/RL novos não activados e Fatia 1e suspensa.
 
 [Contrato implementado e fontes](../fiscal/catalog/H2_03_IMPLEMENTATION.md).
+
+
+## H2-05 / issue #41 — PDF e QR, implementação local para revisão
+
+28-10-2026. Branch isolada `codex/h2-05-fiscal-pdf-qr`, baseada no PR #40.
+ATCUD em todas as páginas comerciais e acima do QR; QR Byte/ECC M, versão ≥9,
+impressão 40 mm e margem branca ≥2,5 mm. Q derivado da assinatura completa nas
+posições 1/11/21/31; R do certificado aplicável, sem defaults fictícios.
+
+**Dependência material:** não existe produtor/persistência produtiva de assinatura
+fiscal no código observado. A nova fronteira exige fonte real vinculada ao
+documento; não a fornece nem certifica. Sem fonte, nova emissão comercial recusa
+409 com rollback da numeração. Reimpressão usa payload já persistido. Geração
+financeira mantém contrato opcional. Não apresentar como emissão comercial pronta.
+
+Validação local: 57 testes dirigidos + 174 de regressão PostgreSQL 16.3 descartável,
+231 aprovados, zero falhas/erros/ignorados; PDF final descodificado a 300 dpi.
+Package backend aprovado. Não é CI nem suite integral. Revisão Claude preparada,
+ainda não realizada. [Dossier e reservas](../fiscal/h2-05/IMPLEMENTATION.md) e
+[evidência](../fiscal/h2-05/VALIDATION.md). Sem migrations ou alterações históricas,
+manifesto vazio, catálogo/FinancialCore inactivos e Fatia 1e suspensa.
+Gates 2/1/1, QR/PDF, AT e FAQ 4443 permanecem abertos. Sem push/PR/merge.
+
+
+### H2-05-R1 — correcção incremental da revisão Claude
+
+Parecer original de 28-10-2026: APPROVE WITH CONDITIONS, 0 BLOCKER / 1 MAJOR /
+3 MINOR; supera a indicação anterior de revisão ainda não realizada. A ordem
+executiva aprovou a alternativa B. Fornecedor demo implementado separadamente,
+com activação explícita, perfil demo exclusivo, base fac_demo e cluster
+autorizado, séries sintéticas próprias e chave externa. Recusa antes de
+Flyway/JPA em destinos incompatíveis; nenhum histórico foi convertido.
+Origem no payload/versão `TUULI-DEMO-1`, Q/R deliberadamente não fiscais,
+aviso permanente no PDF. ATCUD ausente deixa de imprimir rótulo vazio.
+
+Produção mantém 409 sem fonte real, sem fallback demo. RC legado sem fonte
+real pode não ter QR, mudança introduzida na H2-05 e agora explicitada; apenas
+RC demo autorizado recebe QR não fiscal. Gate RC/RG preservado. ZXing 3.5.3
+fixado, com smoke de JAR e regressão de emissão/permissões.
+[Validação original](../fiscal/h2-05/VALIDATION.md) e
+[correcções/ensaios R1](../fiscal/h2-05/R1.md); revisão incremental Claude
+ainda pendente. Sem alteração de migrations, manifesto fiscal ou bases
+persistentes/demo, sem activação de FinancialCore/1e ou publicação.
+
+Validação efectiva R1: 254 testes (74 dirigidos + 180 regressão) aprovados,
+package e smoke do JAR aprovados; sete cenários de arranque/seed/reset em
+PostgreSQL descartável e oito PDFs emitidos/16 páginas com aviso não fiscal
+verificados. Cluster `7701754504284078125` removido, bem como credenciais e
+chaves efémeras. Não é CI nem teste do deploy/Compose/demo persistente.
+Confirmação incremental Claude pendente; nenhum fornecedor real implementado.
+
+
+### H2-05-R2 — fecho das condições de integração
+
+Parecer Claude R1 recebido: 0 BLOCKER / 0 MAJOR / 3 MINOR A/B/C; confirmação
+R1 já realizada, confirmação R2 ainda pendente. Reexecução das 15 classes em
+`203276f`, tree `a370beef85c53ca025e8c17c4e4ef94dd212359c`, com worktree limpa
+registada por grupo: 254 aprovados, zero falhas/erros/ignorados.
+O novo commit complementar exige repetição integral fixada ao novo HEAD;
+consultar os resultados pós-commit no relatório externo e artefactos `final/`.
+
+Procedimento novo demo/GOLDEN documentado, sem operações na instalação actual.
+Regressão da fixture de permissões após H2-03 e correcção R1 registadas na memória.
+Inventário comercial sinaliza `DEMO_ARTIFACTS` por tipo, sem duplicar linhas,
+expor payloads ou alterar contagens históricas. PDFs identificam QR demo pelo
+payload persistido. Não são novos consumidores operacionais ou guards de emissão.
+[Âmbito e evidência R2](../fiscal/h2-05/R2.md). Nenhum deploy, restauro ou promoção
+GOLDEN executado. Preservados isolamento demo/produção, 409 sem fonte real,
+manifesto vazio e gates fiscais, FinancialCore/1e/cutover.

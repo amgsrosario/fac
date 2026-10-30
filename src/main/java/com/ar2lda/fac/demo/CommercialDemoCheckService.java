@@ -53,13 +53,13 @@ public class CommercialDemoCheckService {
         long fiscalSnapshots = scalar(jdbc, """
                 select count(*) from documento_comercial
                 where serie='DEMO26'
-                  and fiscal_snapshot_version=2
+                  and fiscal_snapshot_version=%d
                   and emitente_nome is not null
                   and emitente_nif is not null
                   and emitente_logo is not null
                   and atcud is not null
                   and qr_payload is not null
-                """);
+                """.formatted(com.ar2lda.fac.model.DocumentoComercial.CURRENT_FISCAL_SNAPSHOT_VERSION));
         long auditDenied = scalar(jdbc, """
                 select count(*) from auditoria_evento
                 where tipo_evento in ('TENTATIVA_ANULACAO_NEGADA','TENTATIVA_ADMINISTRATIVA_NEGADA','TENTATIVA_IMPORTACAO_NEGADA')
@@ -81,7 +81,7 @@ public class CommercialDemoCheckService {
         expect(company == 1, problems, "empresa demo ou logotipo incompletos");
         expect(expectedUsers == 3 && permissions == 3, problems, "perfis demo incoerentes");
         expect(importsAvailable >= 0, problems, "tabela de importacoes indisponivel");
-        expect(fiscalSnapshots == 6, problems, "snapshots fiscais v2, ATCUD, QR ou logo documental incompletos");
+        expect(fiscalSnapshots == 6, problems, "snapshots fiscais na versão corrente, ATCUD, QR ou logo documental incompletos");
         expect(auditDenied >= 1, problems, "auditoria nao demonstra tentativas recusadas");
         expect(auditBusiness >= 6, problems, "auditoria comercial insuficiente");
         expect(noFacReferences == 0, problems, "base fac existe no servidor demo");

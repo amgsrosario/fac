@@ -59,6 +59,15 @@ class DocumentoComercialPdfServiceTests {
         );
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={false,true})
+    void altQrIdentifiesPersistedOrigin(boolean demo)throws Exception {
+        var method=pdfService.getClass().getDeclaredMethod("fiscal",String.class,String.class);method.setAccessible(true);
+        String payload=demo?"TUULI-DEMO-1\n{}":"A:TEST";
+        String html=(String)method.invoke(pdfService,"TEST-1",payload);
+        assertThat(html).contains("alt=\""+(demo?"QR Code de demonstração":"QR Code fiscal")+"\"");
+    }
+
     @Test
     void documentoDeUmaLinhaMantemUmaPaginaSemCabecalhoDeContinuacao() throws Exception {
         byte[] pdf = gerar(1, Scenario.standard());
@@ -77,13 +86,13 @@ class DocumentoComercialPdfServiceTests {
         ReflectionTestUtils.setField(pdfService, "demoEnabled", true);
         try (PDDocument demo = Loader.loadPDF(gerar(35, Scenario.standard()))) {
             for (int page = 1; page <= demo.getNumberOfPages(); page++) {
-                assertThat(pageText(demo, page)).contains("Versão de demonstração");
+                assertThat(pageText(demo, page)).contains("DEMONSTRAÇÃO — SEM VALIDADE FISCAL");
             }
         }
 
         ReflectionTestUtils.setField(pdfService, "demoEnabled", false);
         try (PDDocument normal = Loader.loadPDF(gerar(1, Scenario.standard()))) {
-            assertThat(pageText(normal, 1)).doesNotContain("Versão de demonstração");
+            assertThat(pageText(normal, 1)).doesNotContain("DEMONSTRAÇÃO — SEM VALIDADE FISCAL");
         }
     }
 
@@ -240,6 +249,74 @@ class DocumentoComercialPdfServiceTests {
                 linhaComercial(3, "ART-3", "Artigo intermedio"),
                 linhaTexto(4, "Nota final")
         )));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints={1,35,90})
+    void pdfFinalMantemAtcudModoVersaoDimensoesEMargem(int lines) throws Exception {
+        var scenario=lines==90?Scenario.cancelledScenario():Scenario.standard();
+        var input=criarImpressao(lines,scenario);byte[] bytes=gerar(input);
+        Path out=Path.of("target","h2-05-pdf-validation");Files.createDirectories(out);
+        Files.write(out.resolve("ft-"+lines+".pdf"),bytes);
+        int qrCount=0;
+        try(var doc=Loader.loadPDF(bytes)) {
+            for(int page=0;page<doc.getNumberOfPages();page++) {
+                assertThat(pageText(doc,page+1)).contains("ATCUD: "+ATCUD);
+                var codes=com.ar2lda.fac.testinfra.PdfQrInspection.inspect(doc.getPage(page));
+                for(var qr:codes) {
+                    qrCount++;
+                    assertThat(qr.payload()).isEqualTo(input.documento().qrPayload());
+                    assertThat(qr.version()).isGreaterThanOrEqualTo(9);
+                    assertThat(qr.ecLevel()).isEqualTo("M");assertThat(qr.byteSegments()).isEqualTo(1);
+                    assertThat(qr.widthMm()).isBetween(39.99,40.01);assertThat(qr.heightMm()).isBetween(39.99,40.01);
+                    assertThat(qr.activeWidthMm()).isGreaterThanOrEqualTo(30.0);
+                    assertThat(qr.minBorderMm()).isGreaterThanOrEqualTo(2.5);
+                    var labels=new ArrayList<Float>();
+                    var text=new PDFTextStripper() {
+                        @Override protected void writeString(String value,List<org.apache.pdfbox.text.TextPosition> positions)throws IOException {
+                            if(value.contains("ATCUD: "+ATCUD))labels.add(positions.getFirst().getYDirAdj());
+                            super.writeString(value,positions);
+                        }
+                    };
+                    text.setStartPage(page+1);text.setEndPage(page+1);text.getText(doc);
+                    assertThat(labels).anyMatch(y->qr.topFromPageTop()-y>=0 && qr.topFromPageTop()-y<34.1);
+                }
+                var rendered=new org.apache.pdfbox.rendering.PDFRenderer(doc).renderImageWithDPI(page,300);
+                javax.imageio.ImageIO.write(rendered,"PNG",out.resolve("ft-"+lines+"-page-"+(page+1)+".png").toFile());
+                if(!codes.isEmpty()) {
+                    var bitmap=new com.google.zxing.BinaryBitmap(new com.google.zxing.common.HybridBinarizer(
+                            new com.google.zxing.client.j2se.BufferedImageLuminanceSource(rendered)));
+                    var decoded=new com.google.zxing.qrcode.QRCodeReader().decode(bitmap,java.util.Map.of(com.google.zxing.DecodeHintType.TRY_HARDER,true));
+                    assertThat(decoded.getText()).isEqualTo(input.documento().qrPayload());
+                }
+            }
+        }
+        assertThat(qrCount).isEqualTo(1);
+    }
+
+    @Test
+    void historicalDocumentWithoutAtcudDoesNotPrintEmptyLabel() throws Exception {
+        var input=criarImpressao(35,Scenario.standard());
+        var d=replaceDocumentField(input.documento(),"atcud",null);
+        try(var pdf=Loader.loadPDF(gerar(new DocumentoComercialImpressaoDto(input.empresa(),d,input.linhas())))) {
+            assertThat(new PDFTextStripper().getText(pdf)).doesNotContain("ATCUD:");
+        }
+    }
+
+    @Test
+    void persistedDemoOriginMarksEveryPageEvenWithDemoProfileOff() throws Exception {
+        var input=criarImpressao(35,Scenario.standard());
+        var d=replaceDocumentField(input.documento(),"qrPayload","TUULI-DEMO-1\nSEM VALIDADE FISCAL");
+        try(var pdf=Loader.loadPDF(gerar(new DocumentoComercialImpressaoDto(input.empresa(),d,input.linhas())))) {
+            for(int page=1;page<=pdf.getNumberOfPages();page++)
+                assertThat(pageText(pdf,page)).contains("DEMONSTRAÇÃO — SEM VALIDADE FISCAL");
+        }
+    }
+
+    private DocumentoComercialDto replaceDocumentField(DocumentoComercialDto d,String name,Object value)throws Exception {
+        var fields=DocumentoComercialDto.class.getRecordComponents();var args=new Object[fields.length];var types=new Class<?>[fields.length];
+        for(int i=0;i<fields.length;i++){types[i]=fields[i].getType();args[i]=fields[i].getName().equals(name)?value:fields[i].getAccessor().invoke(d);}
+        return DocumentoComercialDto.class.getDeclaredConstructor(types).newInstance(args);
     }
 
     private void writeArtifact(Path output, String uniqueName, String latestName, String content) throws IOException {
@@ -429,7 +506,7 @@ class DocumentoComercialPdfServiceTests {
     private void assertMultipageStructure(PDDocument document) throws IOException {
         for (int page = 1; page <= document.getNumberOfPages(); page++) {
             String text = pageText(document, page);
-            assertThat(text).contains(DOCUMENT_NUMBER, COMPANY, CLIENT);
+            assertThat(text).contains(DOCUMENT_NUMBER, COMPANY, CLIENT, "ATCUD: " + ATCUD);
             if (text.contains("ART-")) {
                 assertThat(text).contains("Descricao", "Qtd.", "Liquido");
             }
@@ -441,7 +518,7 @@ class DocumentoComercialPdfServiceTests {
 
     private void assertFinalArea(PDDocument document) throws IOException {
         for (int page = 1; page < document.getNumberOfPages(); page++) {
-            assertThat(pageText(document, page)).doesNotContain("Valor bruto", "ATCUD: " + ATCUD);
+            assertThat(pageText(document, page)).doesNotContain("Valor bruto");
         }
         String lastPage = pageText(document, document.getNumberOfPages());
         assertThat(lastPage).contains("Resumo IVA", "Valor bruto", "Total", "ATCUD: " + ATCUD);

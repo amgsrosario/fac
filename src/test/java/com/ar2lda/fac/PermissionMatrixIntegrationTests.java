@@ -78,6 +78,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@org.springframework.context.annotation.Import(com.ar2lda.fac.testinfra.FiscalSignatureTestConfiguration.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @org.springframework.test.context.TestPropertySource(properties = "fac.security.enabled=true")
@@ -86,6 +87,8 @@ class PermissionMatrixIntegrationTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate fiscalFixtureJdbc;
 
     @Autowired
     private DocumentoComercialRepository documentoRepository;
@@ -206,6 +209,7 @@ class PermissionMatrixIntegrationTests {
 
         TipoDocumento tipoDocumento = new TipoDocumento("DCT", "Documento teste", null, null, null, null, 1, 1, 1, false);
         tipoDocumento.setCodigoFiscal("FT");
+        tipoDocumento = com.ar2lda.fac.testinfra.GovernedTypeFixtures.bind(fiscalFixtureJdbc, tipoDocumento);
         tipoDocumentoRepository.save(tipoDocumento);
         TipoDocumento tipoDocumentoFinanceiro = new TipoDocumento("RCB", "Recibo teste", null, null, null, null, 3, 1, 2, true);
         tipoDocumentoFinanceiro.setCodigoFiscal("RC");

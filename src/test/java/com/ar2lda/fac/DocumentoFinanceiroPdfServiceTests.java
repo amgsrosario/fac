@@ -81,11 +81,20 @@ class DocumentoFinanceiroPdfServiceTests {
             assertThat(text).contains("Recibo", "RC 2026/3", "ATCUD");
             assertThat(text).contains("ABCD1234-3", "Data Valor");
             assertThat(text).contains(valueDate == null ? "Não registada" : "08/06/2026");
-            assertThat(text).doesNotContain("Versão de demonstração");
+            assertThat(text).doesNotContain("DEMONSTRAÇÃO — SEM VALIDADE FISCAL");
         }
         verify(documentoService).marcarComoImpresso(documentoId);
     }
 
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={false,true})
+    void altQrIdentifiesPersistedOrigin(boolean demo)throws Exception {
+        var method=pdfService.getClass().getDeclaredMethod("fiscal",String.class,String.class);method.setAccessible(true);
+        String payload=demo?"TUULI-DEMO-1\n{}":"A:TEST";
+        String html=(String)method.invoke(pdfService,"TEST-1",payload);
+        assertThat(html).contains("alt=\""+(demo?"QR Code de demonstração":"QR Code fiscal")+"\"");
+    }
 
     @Test
     void identificaReciboComoVersaoDeDemonstracaoQuandoAtivada() throws Exception {
@@ -110,7 +119,7 @@ class DocumentoFinanceiroPdfServiceTests {
         Files.write(output.resolve("fac-recibo-demo.pdf"), pdf);
         try (PDDocument pdfDocument = Loader.loadPDF(pdf)) {
             String text = new PDFTextStripper().getText(pdfDocument);
-            assertThat(text).contains("Recibo", "RC 2026/4", "Versão de demonstração");
+            assertThat(text).contains("Recibo", "RC 2026/4", "DEMONSTRAÇÃO — SEM VALIDADE FISCAL");
             assertThat(text).doesNotContain("Data Valor");
         }
     }
