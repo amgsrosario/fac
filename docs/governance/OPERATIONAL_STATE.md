@@ -860,3 +860,10 @@ manifesto vazio e gates fiscais, FinancialCore/1e/cutover.
 Issue #43 / H2-06: levantamento e proposta documentais preparados para revisão independente. [Contrato observado](../fiscal/h2-06/CURRENT_CONTRACT.md), [proposta](../fiscal/h2-06/PROPOSAL.md), [riscos e testes futuros](../fiscal/h2-06/RISKS_TESTS.md). Não há implementação produtiva de assinatura nesta entrega. Faltam proveniência legítima, perfil validado, prova persistente, cadeia/cronologia e integração transaccional comprovada. As recomendações de perímetro e custódia não são decisões aprovadas. Revisão Claude H2-06 pendente.
 
 Produção comercial sem fonte real mantém 409; isolamento demo/produção preservado. Manifesto fiscal vazio, gates 2/1/1, QR/PDF, AT, FAQ 4443 e RC/RG mantidos. FinancialCore inactivo, Fatia 1e suspensa; sem deploy, cutover ou alteração à #38/demo/bases.
+
+
+### H2-06-R1 — correcção documental pós-revisão
+
+30-10-2026. Revisão H2-06: APROVADO COM RESERVAS, 0 BLOCKER / 1 MAJOR / 2 MINOR, conforme [registo executivo #43](https://github.com/amgsrosario/fac/issues/43#issuecomment-6530199084). Supera a indicação de revisão inicial pendente; confirmação incremental ainda pendente. Corrigidas a caracterização dos requisitos criptográficos do exemplar do Despacho 8632/2014 (separada da confirmação de vigência actual), a alegação não demonstrada de arquivo integral FAQ 4443 e a delimitação da cadeia série/tipo fiscal, plurianualidade e datas. Actualizados A/B e T02/T03/T04.
+
+[Fontes e pedido incremental Claude](../fiscal/h2-06/SOURCES_REVIEW.md). D-SIGN-01 a D-SIGN-05 suspensas até confirmação; não há aprovação independente desta correcção. Parecer original não arquivado nesta R1 por não estar disponibilizado; não reconstruído a partir do resumo executivo. Nenhum código, teste executável, chave ou base alterado; sem emissão, chamadas operacionais AT, despesa, deploy, activação ou merge. Mantidos 409 e todos os gates fiscais/financeiros.

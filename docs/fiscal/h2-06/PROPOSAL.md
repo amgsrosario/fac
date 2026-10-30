@@ -46,7 +46,7 @@ Nomes abaixo são **P**, não classes/colunas/migrations existentes.
 | --- | --- |
 | Identidade | ID do documento, snapshot de emitente/NIF, tipo **interno**, série e número; âmbito da instalação/programa; unicidade documental |
 | Conteúdo canónico | Data documental, SystemEntryDate fiscal definido uma vez, número completo, total EUR conforme contrato homologado, assinatura anterior completa; bytes exactos e versão de canonicalização |
-| Encadeamento | Âmbito emitente/tipo interno/série; referência ao antecessor e sua assinatura; primeiro documento apenas quando vazio comprovado; número monotónico |
+| Encadeamento | Âmbito emitente/série/tipo fiscal aplicável, com mapeamento explícito do tipo interno; referência ao antecessor e sua assinatura; primeiro documento apenas quando vazio comprovado; número monotónico |
 | Material fiscal | Assinatura completa, perfil/algoritmo aprovado, versão da chave, referência/fingerprint público, certificado do programa aplicável à emissão e proveniência documental dessa configuração |
 | Auditoria | Utilizador/contexto autorizado, correlação da tentativa, instante técnico UTC, versão da aplicação e referência da prova; sem segredo privado |
 | Integração | Referência inequívoca ao snapshot fiscal, QR/versão e resultado da verificação; nenhuma segunda autoridade de montantes ou classificação |
@@ -60,10 +60,23 @@ por prova evita alterar retroactivamente R com configuração nova.
 `InvoiceDate;SystemEntryDate;InvoiceNo;GrossTotal;HashAnterior`. O termo Hash
 anterior designa a assinatura anterior completa, não um SHA escolhido pelo
 programador. Primeira emissão e continuidade/rotação seguem o perfil fiscal.
-O Despacho exemplifica SHA-1/RSA com resultado Base64 de 172 caracteres;
-o exemplo de chave é 1024 bits. Isto **não autoriza** transpor o SHA256/RSA
-2048 da demo para produção, nem escolher outro perfil por preferência técnica.
-Validar o perfil actual e os oráculos com responsável fiscal/AT antes de o fixar.
+**N — conteúdo do exemplar consultado:** o Despacho 8632/2014 exige RSA
+(§4.1) e especifica chave de 1024 bits, SHA-1 e PKCS#1 v1.5 (§6.2);
+§7.1 exige assinatura de 172 caracteres Base64 sem separadores de linha.
+São requisitos desse texto, não meros exemplos nem alternativas de produto.
+A designação do capítulo 7 como exemplo prático não torna facultativa essa
+exigência. §6.2 contém ainda parâmetros de formato/codificação a conferir na
+fonte e nos oráculos, sem traduzir literalmente rótulos ambíguos para APIs.
+
+**Reserva distinta — vigência/aplicabilidade actual:** o exemplar oficial
+apresenta o estado «Vigente»; isso é evidência editorial consultada, não uma
+verificação exaustiva de alterações, instruções posteriores ou do enquadramento
+concreto do TUULI. Confirmar esses pontos com responsável competente antes da
+implementação produtiva. Não tratar a reserva como liberdade para escolher
+algoritmo, tamanho ou padding. Não transpor SHA256/RSA-2048 da demo, nem trocar
+por RSA-PSS/OAEP por conveniência de um fornecedor. Exigir oráculos compatíveis
+com o perfil aplicável demonstrado; se a oferta A/B não o suportar, recusá-la.
+Não se implementa criptografia nem se geram chaves nesta missão.
 
 **P:** canonicalização independente de `DTO.toString()`, JSON ou locale.
 Definir datas/segundos/fuso, representação de valores, separadores e bytes com
@@ -71,6 +84,28 @@ oráculos aprovados. Não introduzir política de arredondamento, câmbio ou
 regras monetárias novas: se não houver correspondência comprovada entre total
 assinado, snapshot, QR e futura exportação, recusar o caso e escalar a lacuna.
 O total não-EUR continua fora do perímetro já bloqueado no código.
+
+### Identidade da cadeia e mapeamento interno/fiscal
+
+**N:** §2.1.5 usa o último documento da mesma série/tipo; admite continuidade
+plurianual com o último Hash do exercício anterior. Não pressupor reset anual.
+§1.8 exige unicidade da série no contribuinte/tipo. **P:** representar e validar
+o tipo fiscal aplicável e a série, além do ID interno, antes de definir a chave
+de serialização. Um lock por `tipoDocumentoId` não demonstra, por si, ausência
+de duas cadeias para uma mesma identidade fiscal.
+
+| Tipo interno / decisão existente | Mapeamento a respeitar / limite desta proposta |
+| --- | --- |
+| FT não imediata | Tipologia interna FT aprovada; mapeamento fiscal explícito da configuração/revisão e identidade série/tipo a provar no perímetro homologado. Não homologar 2/1/1 ou QR/PDF por esta tabela |
+| FR imediata | Partilha tipologia interna FT pela D-CAT-2A; isto não autoriza projectar FR como FT em SAF-T/QR nem fundir cadeias por analogia. FR continua excluída até projecção validada |
+| RC/RG/RL e outras famílias | Fora do perímetro; não inferir tipo fiscal, assinatura ou partilha de cadeia a partir de nomes, sinal ou ID interno |
+
+**N:** §3.4.2 prevê alerta para data documental futura e impede regressar à
+data actual ou anterior na mesma série depois dessa emissão. Distinguir esta
+regra de datas documentais da verificação global de SystemEntryDate (§3.4.3).
+**P:** validar cronologia documental sob o lock da identidade série/tipo fiscal,
+incluindo a não regressão de datas; testar fronteiras e séries plurianuais.
+Não alterar agora a política de datas do TUULI nem autorizar emissões futuras.
 
 ## 3. Transacção e ciclo de emissão propostos
 
@@ -80,7 +115,7 @@ O total não-EUR continua fora do perímetro já bloqueado no código.
    certificado/proveniência, perímetro e gates **antes da numeração**, sempre
    que essas verificações não dependam de estado ainda não consolidado.
 2. Bloquear documento/configuração/série segundo ordem global auditada. Ler
-   antecessor sob o mesmo lock da série, não antes. Revalidar cronologia e
+   antecessor sob o lock da identidade série/tipo fiscal mapeada, não antes. Revalidar cronologia e
    condições dependentes de estado concorrente depois da aquisição do lock.
 3. Fixar uma vez o instante fiscal de registo e os campos definitivos. Não
    usar o instante de commit nem permitir que o assinador consulte outro relógio.
@@ -128,7 +163,8 @@ fluxo FinancialCore ou regras temporais de anulação de FT/RC.
 à identidade de âmbito/série/número. SQL deve proteger referências, campos
 obrigatórios, compatibilidade do conteúdo, imutabilidade, sequência e ausência
 de dois sucessores concorrentes. Desenhar o tratamento de início/continuidade
-de exercício antes de escolher constraints: não inventar reset anual.
+de exercício antes de escolher constraints: preservar a possibilidade de continuidade
+plurianual do §2.1.5, sem inventar reset anual ou apagar o predecessor.
 
 Não fazer backfill de assinaturas nem actualizar migrations integradas.
 Históricos sem prova mantêm a condição conhecida; documento importado não
@@ -148,8 +184,8 @@ invulnerabilidade por triggers.
 
 | Alternativa P | Benefícios | Custos/limitações | Riscos e pressupostos | Consequências futuras |
 | --- | --- | --- | --- | --- |
-| A — Assinador Java local com segredo externo protegido | Menor superfície inicial; sem serviço remoto na transacção; ensaio offline reprodutível | Hardening do processo/host, armazenamento/backup seguro e administração da chave; não elimina custo de certificação | Acesso à memória/host pode expor chave; não copiar o ficheiro simples da demo como política produtiva; requer responsável de custódia e perfil aprovado | Adaptador substituível; rotação/recovery e exportação de prova desenhadas desde início |
-| B — Módulo/HSM/KMS não exportável ou serviço de assinatura controlado | Melhor fronteira de custódia, potencial separação de funções e trilho de uso | Infraestrutura/contrato, custos não autorizados, disponibilidade/latência, compatibilidade do algoritmo e integração | Serviço externo não reverte com a base; exige resposta verificável, correlação, recuperação de timeout e autorização do produtor | Pode reduzir exposição da chave, mas aumenta dependência operacional e complexidade de continuidade |
+| A — Assinador Java local com segredo externo protegido | Menor superfície inicial; sem serviço remoto na transacção; ensaio offline reprodutível | Hardening do processo/host, armazenamento/backup seguro e administração da chave; não elimina custo de certificação | Acesso à memória/host pode expor chave; não copiar o ficheiro simples da demo como política produtiva; requer responsável de custódia e suporte comprovado do perfil aplicável (RSA-1024/SHA-1/PKCS#1 v1.5/172 Base64 no exemplar), sem substituição automática pelo provider Java | Adaptador substituível; rotação/recovery e exportação de prova desenhadas desde início |
+| B — Módulo/HSM/KMS não exportável ou serviço de assinatura controlado | Melhor fronteira de custódia, potencial separação de funções e trilho de uso | Infraestrutura/contrato, custos não autorizados, disponibilidade/latência, compatibilidade exacta do perfil e integração | Serviço externo não reverte com a base; exige prova de suporte ao perfil aplicável (incluindo RSA-1024/SHA-1/PKCS#1 v1.5/172 Base64 no exemplar), resposta verificável, correlação, recuperação de timeout e autorização do produtor; uma política que recuse esse perfil não autoriza substituí-lo | Pode reduzir exposição da chave, mas aumenta dependência operacional e complexidade de continuidade |
 
 **Recomendação P:** desenhar a fronteira independente do mecanismo e propor A
 para a primeira fatia **inactiva/de ensaio**, se a avaliação de segurança e o

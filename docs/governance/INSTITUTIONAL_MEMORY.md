@@ -755,3 +755,10 @@ continua 409; manifesto vazio, FinancialCore inactivo e Fatia 1e suspensa.
 Issue #43 autoriza análise, não integração funcional: [levantamento H2-06](../fiscal/h2-06/CURRENT_CONTRACT.md), [alternativas e decisões propostas](../fiscal/h2-06/PROPOSAL.md), [fontes/revisão](../fiscal/h2-06/SOURCES_REVIEW.md). Separados assinatura documental, certificado do programa, chave/versão, ATCUD, Q/R e credenciais de operação. Identificadas lacunas de persistência, instante técnico antes do QR, cadeia e validação criptográfica; não apresentadas como novas decisões do PO nem como defeitos reabertos da H2-05.
 
 A proposta compara custódia local e serviço não exportável, sem escolher custódia produtiva pela Administração. Perfil normativo, proveniência legítima, reservas fiscais e revisão Claude H2-06 continuam pendentes. Nenhuma implementação, chave, emissão, migration ou acesso a base nesta missão. Preservados 409 sem fonte, gates fiscais, isolamento demo, legado como autoridade financeira e suspensão da Fatia 1e.
+
+
+### H2-06-R1 — correcção documental pós-revisão
+
+30-10-2026. Revisão H2-06: APROVADO COM RESERVAS, 0 BLOCKER / 1 MAJOR / 2 MINOR, conforme [registo executivo #43](https://github.com/amgsrosario/fac/issues/43#issuecomment-6530199084). Supera a indicação de revisão inicial pendente; confirmação incremental ainda pendente. Corrigidas a caracterização dos requisitos criptográficos do exemplar do Despacho 8632/2014 (separada da confirmação de vigência actual), a alegação não demonstrada de arquivo integral FAQ 4443 e a delimitação da cadeia série/tipo fiscal, plurianualidade e datas. Actualizados A/B e T02/T03/T04.
+
+[Fontes e pedido incremental Claude](../fiscal/h2-06/SOURCES_REVIEW.md). D-SIGN-01 a D-SIGN-05 suspensas até confirmação; não há aprovação independente desta correcção. Parecer original não arquivado nesta R1 por não estar disponibilizado; não reconstruído a partir do resumo executivo. Nenhum código, teste executável, chave ou base alterado; sem emissão, chamadas operacionais AT, despesa, deploy, activação ou merge. Mantidos 409 e todos os gates fiscais/financeiros.
