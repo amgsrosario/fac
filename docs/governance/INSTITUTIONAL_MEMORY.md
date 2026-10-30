@@ -746,3 +746,12 @@ actualizar a Ubuntu ou aprovar qualquer GOLDEN. R-1/R-2: diagnóstico interno de
 marcadores demo e rótulo QR adequado, sem alterar autoridade financeira ou gates.
 [Contrato, fontes e revisão R2](../fiscal/h2-05/R2.md). Produção sem fonte real
 continua 409; manifesto vazio, FinancialCore inactivo e Fatia 1e suspensa.
+
+
+### H2-05 integrada e H2-06 — proposta produtiva sujeita a decisão
+
+30-10-2026. PR #42 integrado em `ac07247da7f4dce973b471e5334e2b86bb4e97e4`, incluindo H2-05 `e1e9e63`. Parecer final Claude APPROVE 0/0/0, SHA-256 `d377b2f572fb9f3c95e1b19dc2bc06e3cd7f0eb663842290086b325c21d6d5af`, original conferido. Supera a pendência R2 anterior. Os 286 testes locais/17 classes e o CI success (safety tests/package) têm âmbitos distintos; não foram repetidos na H2-06.
+
+Issue #43 autoriza análise, não integração funcional: [levantamento H2-06](../fiscal/h2-06/CURRENT_CONTRACT.md), [alternativas e decisões propostas](../fiscal/h2-06/PROPOSAL.md), [fontes/revisão](../fiscal/h2-06/SOURCES_REVIEW.md). Separados assinatura documental, certificado do programa, chave/versão, ATCUD, Q/R e credenciais de operação. Identificadas lacunas de persistência, instante técnico antes do QR, cadeia e validação criptográfica; não apresentadas como novas decisões do PO nem como defeitos reabertos da H2-05.
+
+A proposta compara custódia local e serviço não exportável, sem escolher custódia produtiva pela Administração. Perfil normativo, proveniência legítima, reservas fiscais e revisão Claude H2-06 continuam pendentes. Nenhuma implementação, chave, emissão, migration ou acesso a base nesta missão. Preservados 409 sem fonte, gates fiscais, isolamento demo, legado como autoridade financeira e suspensão da Fatia 1e.

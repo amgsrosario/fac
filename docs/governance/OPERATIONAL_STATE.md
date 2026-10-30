@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-10-28, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-10-30, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD integrado observado no início da H2-05: `91da67bc5e799d30abfd1c569ec7ef22fbd5f703`, merge do PR #40 (H2-03), confirmado no remoto e no objecto Git local em 28-10-2026. Checkout principal preservado. Supera o estado pré-publicação da issue #39 registado abaixo.
+- HEAD integrado observado no início da H2-06: `ac07247da7f4dce973b471e5334e2b86bb4e97e4`, merge do PR #42 (H2-05), confirmado no remoto e no objecto Git local em 30-10-2026. Checkout principal preservado. A referência tracking local estava desactualizada; a base desta missão foi obtida por HTTPS para FETCH_HEAD. Supera as indicações de publicação/revisão H2-05 pendentes nas notas históricas abaixo.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -851,3 +851,12 @@ payload persistido. Não são novos consumidores operacionais ou guards de emiss
 [Âmbito e evidência R2](../fiscal/h2-05/R2.md). Nenhum deploy, restauro ou promoção
 GOLDEN executado. Preservados isolamento demo/produção, 409 sem fonte real,
 manifesto vazio e gates fiscais, FinancialCore/1e/cutover.
+
+
+### H2-05 integrada / H2-06 — análise de assinatura produtiva
+
+30-10-2026. PR #42 integrado em `ac07247`; HEAD H2-05 `e1e9e63` incluído por ancestralidade. Parecer Claude final APPROVE, 0/0/0, hash e referência em [fontes H2-06](../fiscal/h2-06/SOURCES_REVIEW.md). Supera expressamente a confirmação R2 pendente acima. Evidência anterior: 286 testes locais em 17 classes; não repetidos nesta análise. Workflow `41083075726` success; cobre safety tests e package, não a suite PostgreSQL integral.
+
+Issue #43 / H2-06: levantamento e proposta documentais preparados para revisão independente. [Contrato observado](../fiscal/h2-06/CURRENT_CONTRACT.md), [proposta](../fiscal/h2-06/PROPOSAL.md), [riscos e testes futuros](../fiscal/h2-06/RISKS_TESTS.md). Não há implementação produtiva de assinatura nesta entrega. Faltam proveniência legítima, perfil validado, prova persistente, cadeia/cronologia e integração transaccional comprovada. As recomendações de perímetro e custódia não são decisões aprovadas. Revisão Claude H2-06 pendente.
+
+Produção comercial sem fonte real mantém 409; isolamento demo/produção preservado. Manifesto fiscal vazio, gates 2/1/1, QR/PDF, AT, FAQ 4443 e RC/RG mantidos. FinancialCore inactivo, Fatia 1e suspensa; sem deploy, cutover ou alteração à #38/demo/bases.
