@@ -798,3 +798,14 @@ Nenhuma alteração funcional, acesso a bases, chave real, teste de aplicação,
 R1 liga proveniência de cada keyVersion à chave pública comunicada por Modelo 24/upload e mantém âncora independente; âmbito da chave é matéria normativa do produtor/programa, não opção livre por cliente. Gate prévio de rotação e validação jurídica de custódia B2/exclusivo conhecimento explicitados. Retirada preferência B; alternativas sem preferência até perfil actual e suporte demonstrados. Acrescentados persistência/regime de cifragem, Hash/HashControl SAF-T, política de backups, contador de reposições e detecção de manipulações a N02/D-SIGN-05/T08/T11/T12/T16. Reservas de vigência/aplicabilidade e fornecedores mantidas.
 
 [Pedido incremental](../fiscal/h2-08/REVIEW_HANDOFF.md). Confirmação Claude R1 pendente, D-SIGN-02..05 reservadas à Administração. Só documentação: H2-07 não reaberta, nenhum código/chave/base/gate alterado, PR #47 draft, sem implementação, activação, deploy ou merge.
+
+
+### Repriorização executiva — levantamento de pendências em 02-11-2026
+
+[Mandato #46/6584848804](https://github.com/amgsrosario/fac/issues/46#issuecomment-6584848804). H2-08 integrada pelo PR #47 em `051b1fc`, incluindo `2523095`; confirmação original Claude R1 APROVADO 0/0/0 lida e hash conferido (`518ef2c1c58a04a223ef2042b84ef3e6f42bc33885e8babcd6315a8226b237e7`). Supera as indicações anteriores de revisão/integração pendentes; não decide D-SIGN-02..05, agora reservadas à fase final. H2-07/H2-08 não reabertas.
+
+[Mapa de pendências](../planning/reprioritization-2026-11-02/PENDING_MAP.md), [fontes](../planning/reprioritization-2026-11-02/EVIDENCE.md) e [missões propostas/revisão](../planning/reprioritization-2026-11-02/MISSIONS.md). #38 fechada quanto à preparação e restauro: R2 confirmou a prova V27, errata cc67e3f resolveu metadado temporal. Reserva operacional MINOR-003R persiste; H2-03 já foi integrada (V28/PR #40), não continua por implementar. Delta da base exacta/runtime actual ainda não comprovado neste inventário. Só metadata Docker lida, sem SQL ou credenciais.
+
+Prioridade proposta de execução futura: M01 verificar/demonstrar delta da base limpa, M02 capacidade segura de primeiro provisionamento, M03 jornada comercial não fiscal, M04 evidências fiscais independentes e M05 piloto isolado. São propostas para decisão, não novas missões iniciadas. JWT/permissões/Security Gate continuam encerrados; ensaio da instalação e inputs operacionais são pendências distintas. Não presumir prontidão por issue fechada ou ausência de implementação por issue aberta.
+
+Este levantamento é documental, sem testes de aplicação ou alteração de bases. Revisão Claude pendente. Mantidos 409, origem/demo/#38, worktree desconhecida `7ce573f`, manifesto/gates, FinancialCore inactivo e 1e suspensa; sem chaves, contratação, activação, deploy, cutover ou merge.
