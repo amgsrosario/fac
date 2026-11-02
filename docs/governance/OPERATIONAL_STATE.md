@@ -876,3 +876,12 @@ Produção comercial sem fonte real mantém 409; isolamento demo/produção pres
 [Contrato H2-07](../fiscal/h2-07/CONTRACT.md): biblioteca sem bean/endpoint/fonte produtiva, canonicalização, assinador efémero, provas experimentais imutáveis, cadeia e replay. Schema Flyway de ensaio separado; não cria V29 produtiva nem toca V25–V28. [Validação e reservas](../fiscal/h2-07/VALIDATION.md): 29 testes novos e 165 de regressão aprovados em execuções documentadas, não uma suite integral nem uma única execução sem erros. PostgreSQL 16.3 descartável; fases com erros de fixture/expectativa preservadas.
 
 Revisão Claude H2-07 pendente. Não é emissor fiscal, prova de custódia real, certificação ou activação. SQL não verifica RSA; leitura/append recusam prova forjada. Preservados produção sem fonte HTTP 409, gates 2/1/1, QR/PDF, AT, RC/RG, FAQ 4443, catálogo vazio, FinancialCore inactivo e Fatia 1e suspensa. Origem, demo e #38 sem alterações. Sem deploy, cutover ou merge.
+
+
+### H2-07-R1 — reservas Claude e isolamento em âmbito de testes
+
+02-11-2026. Conforme ordem #44, parecer sobre `eff724f`: APROVADO COM RESERVAS, 0 BLOCKER / 0 MAJOR / 3 MINOR; supera a revisão inicial pendente acima. R1 move biblioteca e SQL experimentais para src/test, retirando-os do artefacto produtivo, e explicita ausência de âncora independente para a chave da própria prova. O desenho produtivo exige registo confiável separado para chave/keyVersion/âmbito, sem implementar custódia nesta missão.
+
+[Procedimento R1](../fiscal/h2-07/VALIDATION.md): runner para execução única das dez classes/194 casos sobre commit fixo e limpo, HEAD/tree/status antes/depois, logs/XML/hashes e inspecção do JAR. O SHA testado e resultados efectivos são preservados no relatório externo R1 e na issue #44, sem commits autorreferenciais; os resultados de 30-10 não substituem esta execução. Confirmação incremental Claude pendente.
+
+Worktree desconhecida/`7ce573f` preservada. Mantidos HTTP 409, D-SIGN-02..05 pendentes, gates fiscais e financeiros, ausência de chaves reais, emissão produtiva, activação, deploy ou merge.

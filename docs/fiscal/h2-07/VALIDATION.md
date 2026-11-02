@@ -99,3 +99,37 @@ serialização, aceitação de 40001, canonicalização, limites da prova e chav
 só de ensaio. Verificar as evidências, incluindo falhas iniciais e repetições.
 Emitir findings por severidade, sem homologar ou activar. PR deverá permanecer
 draft/sem merge até revisão e decisão da Administração. D-SIGN-02..05 pendentes.
+
+## H2-07-R1 — evidência única fixada ao commit
+
+02-11-2026. Parecer inicial Claude APROVADO COM RESERVAS, 0/0/3,
+[ordem incremental #44](https://github.com/amgsrosario/fac/issues/44#issuecomment-6575613728).
+A tabela de 30-10-2026 acima é histórica e não substitui a evidência R1.
+
+MINOR-001: `tools/validation/h207_r1.py` exige HEAD limpo e datasource localhost
+explícito com base `_test`; executa as dez classes/194 casos numa única chamada
+Maven, preserva logs completos e XML, valida contagens/ausência de ignorados,
+regista HEAD/tree/status antes e depois e exige igualdade. Executa também
+package e inspecção do JAR. Os artefactos ficam fora de target/worktree e são
+manifestados com tamanho/SHA-256, inclusive em falha. Um commit fixo contendo
+a R1 é criado **antes** da execução. O relatório externo e a issue #44 indicam
+o SHA exacto e o resultado efectivo; não encadear commits autorreferenciais.
+Se houver correcção de código/testes, criar novo commit e repetir a chamada.
+
+MINOR-002: RSA contra a chave pública armazenada na própria prova verifica
+coerência, não proveniência. Não há âncora de confiança independente; uma
+prova auto-consistente produzida com chave de atacante não é autenticada por
+esta arquitectura. O desenho produtivo exige chave/keyVersion e âmbito em
+registo confiável separado e protegido, com autorização/proveniência e rotação
+verificáveis. Não se afirma que os testes de adulteração provem essa confiança.
+
+MINOR-003: biblioteca e SQL passaram para âmbito Maven de testes. Build limpo
+elimina classes/resources antigos de target; o runner verifica ausência desses
+artefactos e de referências das classes produtivas no JAR. Não foi introduzida
+migration produtiva ou excepção aos gates. A mudança de localização não muda
+a semântica dos ensaios.
+
+Confirmação incremental Claude pendente: rever exclusivamente o complemento
+sobre `eff724f`, os artefactos da execução única e a ausência experimental no
+JAR. O resultado do executor não equivale a aprovação independente. Preservados
+409, gates fiscais, obra de autoria desconhecida e ausência de activação/merge.

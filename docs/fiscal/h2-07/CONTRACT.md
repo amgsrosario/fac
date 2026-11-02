@@ -20,6 +20,17 @@ schema `signature_trial`. Não é carregada por `db/migration` nem pelo arranque
 normal. A migration de ensaio recusa bases sem nome `h207_<32 hex>_test`.
 Não é uma migration comercial alternativa nem uma solução para históricos.
 
+## Isolamento R1 do artefacto produtivo
+
+02-11-2026, MINOR-003: as três classes de ensaio foram movidas de
+`src/main/java` para `src/test/java`, mantendo o pacote e os testes.
+O SQL foi movido de `src/main/resources/db/signature-trial` para
+`src/test/resources/db/signature-trial`. Nenhum deles integra o JAR produtivo.
+Não se optou por manter a biblioteca no artefacto com um guard de utilização.
+A compilação produtiva não depende das classes de teste. O runner R1 executa
+build limpo e inspecciona entradas/referências do JAR empacotado, falhando se
+nele encontrar classes, SQL ou referências à biblioteca experimental.
+
 ## Componentes implementados
 
 - `TrialCanonical`: snapshot experimental apenas FT, EUR, sem liquidação
@@ -82,6 +93,24 @@ promete prevenção criptográfica SQL. Não há consumidor produtivo desse sche
 Superutilizador, desactivação de triggers e host comprometido não são ameaças
 resolvidas por esta biblioteca. Custódia produtiva e verificação criptográfica
 no perímetro comercial continuam matéria futura.
+
+### Limite de confiança da chave pública — MINOR-002
+
+A chave pública está guardada na própria prova experimental. Uma verificação
+RSA bem-sucedida demonstra coerência entre mensagem, assinatura e essa chave;
+**não demonstra a proveniência ou autorização dessa chave**. Não há uma âncora
+independente de confiança. Um atacante capaz de inserir uma prova com a sua
+própria chave e assinatura coerentes pode passar essa verificação. A detecção
+de assinatura inválida ou de chave diferente numa cadeia iniciada não resolve
+a autenticação do primeiro par de chave/prova nem de uma cadeia substituída.
+
+No desenho produtivo, a chave pública/keyVersion e o âmbito autorizado devem
+estar vinculados a um registo confiável separado das provas, protegido contra
+substituição pelo escritor das provas e com proveniência/rotação verificáveis.
+O leitor deve verificar a identidade autorizada nesse registo e depois a
+assinatura; não confiar automaticamente na chave recebida do próprio registo
+assinado. D-SIGN-02..05 decidirão custódia/proveniência/gestão segundo os gates.
+Esta R1 não implementa custódia real, registo de confiança ou certificação.
 
 ## Fronteira mantida
 
