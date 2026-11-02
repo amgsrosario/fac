@@ -780,3 +780,21 @@ Revisão Claude H2-07 pendente. Não é emissor fiscal, prova de custódia real,
 [Procedimento R1](../fiscal/h2-07/VALIDATION.md): runner para execução única das dez classes/194 casos sobre commit fixo e limpo, HEAD/tree/status antes/depois, logs/XML/hashes e inspecção do JAR. O SHA testado e resultados efectivos são preservados no relatório externo R1 e na issue #44, sem commits autorreferenciais; os resultados de 30-10 não substituem esta execução. Confirmação incremental Claude pendente.
 
 Worktree desconhecida/`7ce573f` preservada. Mantidos HTTP 409, D-SIGN-02..05 pendentes, gates fiscais e financeiros, ausência de chaves reais, emissão produtiva, activação, deploy ou merge.
+
+
+### H2-07 integrada / H2-08 — preparação das decisões produtivas
+
+02-11-2026. PR #45 integrado em `f7e8f8ad405a0e5714af0e9fc7264a9e581ff0de`, incluindo `e7eb142`; Git/API/ancestralidade conferidos. [Parecer H2-07-R1 registado](https://github.com/amgsrosario/fac/issues/44#issuecomment-6580103638): APROVADO 0/0/0, por leitura e evidências, sem testes executados pelo revisor. [Integração autorizada](https://github.com/amgsrosario/fac/issues/44#issuecomment-6580136463). Supera as indicações de confirmação/integração pendentes acima. H2-07 encerrada, ensaio em src/test, sem assinatura produtiva; não reaberta nesta missão. Arquivo byte a byte do parecer original não é presumido a partir do comentário executivo.
+
+Issue #46 autoriza análise H2-08, não aprovação D-SIGN-02..05. [Dossier de decisão](../fiscal/h2-08/DECISIONS.md), [integração/riscos/testes futuros](../fiscal/h2-08/INTEGRATION_TESTS.md), [fontes](../fiscal/h2-08/SOURCES.md) e [sucessão/pedido Claude](../fiscal/h2-08/REVIEW_HANDOFF.md). Comparadas custódia local, HSM local e serviço remoto; A/B1/B2 sem preferência até confirmação D-SIGN-04 e suporte real (R1); sem escolha/contratação. Registo de confiança independente, proveniência, perfil actual e operação futura sujeitos às decisões/validação indicadas. Revisão Claude H2-08 pendente.
+
+Nenhuma alteração funcional, acesso a bases, chave real, teste de aplicação, serviço pago ou operação AT. Exemplares normativos públicos arquivados com hashes; não são confirmação integral de vigência/aplicabilidade ou certificação. Preservados 409, gates fiscais/financeiros, manifesto, demo, origem/#38 e worktree desconhecida `7ce573f`. Sem activação, deploy, cutover ou merge.
+
+
+### H2-08-R1 — correcção documental após parecer 0/1/2
+
+02-11-2026. [Ordem #46/6583447094](https://github.com/amgsrosario/fac/issues/46#issuecomment-6583447094): parecer Claude APROVADO COM RESERVAS sobre `882381f`, 0 BLOCKER / 1 MAJOR / 2 MINOR; supera a revisão inicial pendente, sem declarar R1 aprovada. Original local lido e hash conferido: `cfde064651675a9898bf4316ef9f188bad2b4dd0e5fce14618cbc4a0ae92fca2`, 14805 bytes. Não se presume publicação do original no arquivo privado.
+
+R1 liga proveniência de cada keyVersion à chave pública comunicada por Modelo 24/upload e mantém âncora independente; âmbito da chave é matéria normativa do produtor/programa, não opção livre por cliente. Gate prévio de rotação e validação jurídica de custódia B2/exclusivo conhecimento explicitados. Retirada preferência B; alternativas sem preferência até perfil actual e suporte demonstrados. Acrescentados persistência/regime de cifragem, Hash/HashControl SAF-T, política de backups, contador de reposições e detecção de manipulações a N02/D-SIGN-05/T08/T11/T12/T16. Reservas de vigência/aplicabilidade e fornecedores mantidas.
+
+[Pedido incremental](../fiscal/h2-08/REVIEW_HANDOFF.md). Confirmação Claude R1 pendente, D-SIGN-02..05 reservadas à Administração. Só documentação: H2-07 não reaberta, nenhum código/chave/base/gate alterado, PR #47 draft, sem implementação, activação, deploy ou merge.

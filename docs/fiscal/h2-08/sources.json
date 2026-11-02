@@ -1,0 +1,59 @@
+[
+  {
+    "name": "despacho-8632-2014.pdf",
+    "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Despacho_n%C2%BA_8632_2014_03_07.pdf",
+    "checked_date": "2026-11-02",
+    "retrieved_at_utc": "2026-11-02T15:41:14.054274+00:00",
+    "status": 200,
+    "final_url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Despacho_n%C2%BA_8632_2014_03_07.pdf",
+    "bytes": 253457,
+    "sha256": "890b9b4dae906035600aa6038e17022ff7f82391473546a36794d9727bfa5bd7"
+  },
+  {
+    "name": "portaria-363-2010.pdf",
+    "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_363_2010.pdf",
+    "checked_date": "2026-11-02",
+    "retrieved_at_utc": "2026-11-02T15:41:14.428460+00:00",
+    "status": 200,
+    "final_url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_363_2010.pdf",
+    "bytes": 47074,
+    "sha256": "6bbfc8e1e4405542c0fa1533964d3ee0d235d363ba3adf0e83414edb2db2a5b3"
+  },
+  {
+    "name": "portaria-195-2020.pdf",
+    "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_195_2020.pdf",
+    "checked_date": "2026-11-02",
+    "retrieved_at_utc": "2026-11-02T15:41:14.662628+00:00",
+    "status": 200,
+    "final_url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_195_2020.pdf",
+    "bytes": 37995,
+    "sha256": "f2f5be68ba8bbc019bc6a9b35b5f169da8640259aba1233bd9e8c7cee32fd1b8"
+  },
+  {
+    "name": "qr-v1_1.pdf",
+    "url": "https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/Regras_mecanismos_comunicacao/Comunicacao_de_series_ATCUD/Codigo_barras_bidimensional/Documents/Especificacoes_Tecnicas_Codigo_QR.pdf",
+    "checked_date": "2026-11-02",
+    "retrieved_at_utc": "2026-11-02T15:41:14.883605+00:00",
+    "status": 200,
+    "final_url": "https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/Regras_mecanismos_comunicacao/Comunicacao_de_series_ATCUD/Codigo_barras_bidimensional/Documents/Especificacoes_Tecnicas_Codigo_QR.pdf",
+    "bytes": 957688,
+    "sha256": "e0f1fdd24623916ef573dcda9a99de4d3cb09e6396b2c2b01807af460bc552f2"
+  },
+  {
+    "name": "certificacao-index.html",
+    "url": "https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/Regras_mecanismos_comunicacao/Certificacao_programas/Certificacao_software_faturacao/Paginas/default.aspx",
+    "checked_date": "2026-11-02",
+    "retrieved_at_utc": "2026-11-02T15:41:17.038889+00:00",
+    "status": 200,
+    "final_url": "https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/Regras_mecanismos_comunicacao/Certificacao_programas/Certificacao_software_faturacao/Paginas/default.aspx",
+    "bytes": 58630,
+    "sha256": "19c3bb010f79d29d6a8fd6a1d1b5c5b059845e099513ba14a968082c10dee275"
+  },
+  {
+    "name": "faq-4443.html",
+    "url": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/questoes_frequentes/pages/faqs-00879.aspx",
+    "checked_date": "2026-11-02",
+    "retrieved_at_utc": "2026-11-02T15:41:17.499417+00:00",
+    "error": "HTTP Error 404: Not Found"
+  }
+]
