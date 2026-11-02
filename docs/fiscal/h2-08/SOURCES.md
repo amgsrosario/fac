@@ -10,7 +10,7 @@ clientes, chaves, contratos de fornecedor ou serviços pagos.
 | ID / fonte oficial | Conteúdo a rastrear no exemplar | Confirmação alcançada / reserva humana |
 | --- | --- | --- |
 | N01 [Portaria 363/2010, exemplar consolidado](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_363_2010.pdf) | Arts. 3–6: certificação, identificação, conservação e impressão; alterações indicadas no exemplar | Texto e origem pública confirmados; validar regime consolidado aplicável e responsabilidade do produtor. Não comprova certificado TUULI |
-| N02 [Despacho 8632/2014](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Despacho_n%C2%BA_8632_2014_03_07.pdf) | §§4.1/6.2/7.1 exigem no exemplar RSA-1024, SHA-1, PKCS#1 v1.5, 172 Base64; §§2.1.3–5, 3.4.2–3 regulam versão/cadeia/datas | Requisitos, não sugestões de algoritmo. Estado editorial «Vigente» e presença no portal não demonstram ausência de instruções posteriores; responsável fiscal/jurídico deve confirmar perfil/aplicabilidade antes de escolha produtiva |
+| N02 [Despacho 8632/2014](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Despacho_n%C2%BA_8632_2014_03_07.pdf) | §§4.1/6.2/7.1 exigem no exemplar RSA-1024, SHA-1, PKCS#1 v1.5, 172 Base64; §§2.1.1/2.1.4/4.2/4.3/3.1.4: chave do produtor, Modelo 24/upload, exclusivo conhecimento e protecção; §§2.1.2/2.6.5/3.1.2–3: persistência, cifragem, Hash/HashControl, backups/reposições; §§2.1.3–5/3.4.2–3: versão/cadeia/datas | Requisitos, não sugestões de algoritmo. Estado editorial «Vigente» e presença no portal não demonstram ausência de instruções posteriores; responsável fiscal/jurídico deve confirmar perfil/aplicabilidade antes de escolha produtiva |
 | N03 [Portal de certificação](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/Regras_mecanismos_comunicacao/Certificacao_programas/Certificacao_software_faturacao/Paginas/default.aspx) | Índice de normas, lista e ferramenta de validação, evidências de chave pública/Modelo 24 | Página confirmada; não se consultou certificação concreta, executou validador ou descarregou chave privada de exemplo |
 | N04 [Portaria 195/2020](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_195_2020.pdf) | Arts. 2–5: séries/tipo, ATCUD e projecção QR | Exemplar confirmado; não comprova comunicação de qualquer série TUULI, homologação 2/1/1 ou adequação da representação concreta |
 | N05 [QR v1.1, Outubro 2020](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/Regras_mecanismos_comunicacao/Comunicacao_de_series_ATCUD/Codigo_barras_bidimensional/Documents/Especificacoes_Tecnicas_Codigo_QR.pdf) | Conteúdo Q/R e geometria; relação com projecção documental | Exemplar confirmado; R numérico de exemplo não é certificado. Confirmar regras/projecção actuais para o perímetro antes de produção |
@@ -29,6 +29,27 @@ legítima do produtor/certificado; procedimentos de chave/versão/séries aplic�
 menções/exportação/retenção e política de documentos anulados/reimpressão.
 Não há prazo legal de retenção inventado nem reconhecimento de validade fiscal
 para demo ou para os 194 testes. RC/RG conserva análise própria, fora desta fatia.
+
+### N02 — complemento R1 de rastreabilidade
+
+Conferidos no mesmo exemplar, sem nova conclusão de vigência: §§2.1.1 e
+2.1.4/4.2 vinculam chave do produtor e proveniência Modelo 24/upload; §§4.3 e
+3.1.4 condicionam custódia e protecção em uso. D-SIGN-03 deve ligar cada versão
+à chave pública comunicada, mantendo âncora independente. D-SIGN-05 exige esse
+gate antes da rotação. Validar juridicamente B2 face ao exclusivo conhecimento,
+sem transformar o regime de chave em escolha comercial por cliente.
+
+§§2.1.2 e 2.6.5 mapeados para persistência/associação/conservação da assinatura,
+regime de cifragem da base e exportação Hash/HashControl históricos; §§3.1.2–3
+para política periódica de backups, número de reposições e controlo de manipulação.
+Interpretação/aplicabilidade actual, incluindo cifragem de BD/suportes/backups,
+requer validação competente. Não se autoriza desactivar segurança ou dispensar
+requisitos por esta reserva. Critérios em D-SIGN-05 e T08/T11/T12/T16.
+
+A/B1/B2 **sem preferência** até confirmação D-SIGN-04 e suporte real. Eventual
+incompatibilidade de KMS/HSM com o perfil do exemplar é hipótese a confirmar por
+fontes técnicas/ensaios; o revisor não verificou fornecedores ou vigência e esta
+R1 não transforma essa hipótese numa conclusão sobre serviços concretos.
 
 ## Exemplares e integridade
 

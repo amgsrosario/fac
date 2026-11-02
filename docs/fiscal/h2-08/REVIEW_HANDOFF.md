@@ -38,7 +38,7 @@ Confirmar especialmente:
 5. Rotação/incidente/restore/rollback preservam prova/cadeia e não reactivam
    escrita legada paralela, nem reduzem numeradores após documentos entregues.
 6. Decisões específicas D-SIGN-02..05 estão reservadas à Administração;
-   recomendação B condicional e alternativas de confiança não são decisões tomadas.
+   A/B1/B2 sem preferência prévia, âmbito normativo da chave e alternativas de confiança não são decisões tomadas.
 7. Nenhuma alteração funcional, chave, migration, acesso a base, custo, activação,
    deploy ou merge. HTTP 409, gates, demo e `7ce573f` intactos.
 
@@ -64,3 +64,11 @@ perfil actual e projecções dependem de validação fiscal/jurídica; capacidad
 custos e recuperação A/B ainda não demonstrados; FAQ integral ausente; regras
 de 2/1/1, QR/PDF, AT, RC/RG, FinancialCore/1e e #38 não libertadas por esta missão.
 RTO/RPO, custódia e responsáveis não são inventados. Sem prazo comercial prometido.
+
+## H2-08-R1 — confirmação dirigida dos três achados
+
+[Ordem executiva #46](https://github.com/amgsrosario/fac/issues/46#issuecomment-6583447094): parecer sobre `882381f`, APROVADO COM RESERVAS, 0 BLOCKER / 1 MAJOR / 2 MINOR. Original local lido, 14805 bytes, SHA-256 conferido com sidecar `cfde064651675a9898bf4316ef9f188bad2b4dd0e5fce14618cbc4a0ae92fca2`. Não se declara publicação byte a byte no arquivo privado nesta intervenção.
+
+Rever apenas `882381f..HEAD` R1 (SHA exacto no PR/issue/relatório): MAJOR-001, ligação de cada keyVersion à chave pública Modelo 24/upload, âmbito normativo produtor/programa e gate prévio de rotação, compatibilidade jurídica B2/exclusivo conhecimento; MINOR-001, ausência de preferência A/B1/B2 e suporte/perfil por demonstrar; MINOR-002, N02, persistência/cifragem/Hash-HashControl/backups/contador-manipulação em D-SIGN-05 e T08/T12/T16. Conferir ainda T11.
+
+Emitir confirmação incremental com severidades e referências. A R1 é correcção do executor, não parecer positivo. Permanecem confirmação de vigência/aplicabilidade jurídica, verificação de fornecedores, certificação concreta e D-SIGN-02..05 pendentes. Sem implementar ou mudar gates; PR draft/sem merge.
