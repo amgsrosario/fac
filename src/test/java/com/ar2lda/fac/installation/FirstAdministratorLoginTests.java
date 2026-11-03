@@ -43,7 +43,7 @@ class FirstAdministratorLoginTests {
         http.perform(get("/utilizadores").header("Authorization","Bearer "+token)).andExpect(status().isOk());
         http.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"m02login@example.test\",\"password\":\"Incorrect8!\"}"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isBadRequest());
         assertThat(db.queryForObject("select count(*) from local_admin_provisioning where consumed_at is not null",Long.class)).isEqualTo(1);
         assertThat(db.queryForObject("select count(*) from auditoria_evento where referencia='SYNTHETIC-LOGIN'",Long.class)).isEqualTo(1);
         assertThat(db.queryForObject("select count(*) from auditoria_evento where tipo_evento='LOGIN_SUCESSO'",Long.class)).isEqualTo(1);

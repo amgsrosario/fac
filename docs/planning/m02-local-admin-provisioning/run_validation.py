@@ -11,6 +11,7 @@ import secrets
 import shutil
 import subprocess as sp
 import time
+import sys
 import xml.etree.ElementTree as ET
 
 os.umask(0o077)
@@ -18,6 +19,11 @@ ROOT = Path(__file__).resolve().parents[3]
 CLASSES = ['FirstAdministratorAuthorizationTests','FirstAdministratorProvisioningTests','FirstAdministratorLoginTests',
            'UtilizadorControllerTests','SecurityIntegrationTests','PermissionMatrixIntegrationTests','SecuritySettingsTests',
            'DocumentTypeImmutabilityTests','FinancialDocumentClassificationTests','FiscalMigrationCompatibilityTests']
+if len(sys.argv)>1:
+    selected=sys.argv[1:]
+    if len(set(selected))!=len(selected) or not set(selected)<=set(CLASSES):
+        raise ValueError('Only explicit M02 validation classes are allowed')
+    CLASSES=selected
 SOURCE = ROOT/'src/main/java/com/ar2lda/fac/installation/FirstAdministratorProvisioner.java'
 STAMP = time.strftime('%Y%m%d-%H%M%S',time.gmtime())+'-'+secrets.token_hex(3)
 OUT = ROOT/'target/m02-evidence'/STAMP
