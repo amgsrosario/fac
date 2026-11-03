@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-11-02, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-11-03, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD integrado observado no início da H2-08: `f7e8f8ad405a0e5714af0e9fc7264a9e581ff0de`, merge do PR #45 (H2-07), confirmado no remoto/API e por ancestralidade de `e7eb142` em 02-11-2026. Checkout principal preservado. Tracking origin local desactualizado; base obtida por HTTPS para FETCH_HEAD. A integração é exclusivamente inactiva.
+- HEAD integrado observado no levantamento executivo de 02-11-2026: `051b1fc1eb78e5c0c81c51b77d0d2f94bde20435`, merge do PR #47 (H2-08), confirmado no remoto/Git e por ancestralidade de `2523095`. Checkout principal preservado; tracking origin local antigo não usado como base. Base obtida por HTTPS para FETCH_HEAD. Integração não significa deploy ou activação.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -328,7 +328,39 @@ podem ser ligados antes do passo 5.
 Esta sequência é uma recomendação técnica, não uma autorização para iniciar as
 etapas, implementar contratos ou activar funcionalidades.
 
-## Sequência estratégica vigente
+## Sequência estratégica — prioridade executiva actual
+
+A [ordem de 02-11-2026](https://github.com/amgsrosario/fac/issues/46#issuecomment-6584848804)
+estabelece: (1) base limpa #38, sem cutover; (2) circuitos comerciais/documentais;
+(3) segurança/permissões/auditoria nas pendências reais, sem reabrir os capítulos
+encerrados; (4) fecho fiscal independente da assinatura; (5) piloto não produtivo.
+D-SIGN-02..05 ficam reservadas para a fase final, com contributos da Administração.
+[Mapa/dependências e missões propostas](../planning/reprioritization-2026-11-02/PENDING_MAP.md).
+Este inventário não autoriza executar todas as missões propostas ou abrir gates.
+
+### Trabalhos adiados e mantidos — não cancelados
+
+A repriorização não revoga as pendências seguintes, que continuam no roteiro:
+
+- **NC/ND e RC/NL: ADIADOS/RESERVADOS, sujeitos a nova OP**, conforme a Fundação
+  fiscal e OP19 abaixo. Mecanismos RC inactivos não encerram o bloco completo.
+- **Gates legais NL/RCzero/descontos/adiantamentos: ABERTOS/RESERVADOS**, exigem
+  validação específica antes da activação, conforme OP19. Nenhuma homologação
+  ou equivalência NL/RL é introduzida por este registo.
+- **Auditoria Funcional Final: ADIADA E MANTIDA**, depois dos incrementos e
+  evidências necessários, em missão própria; não cumprida por este inventário
+  ou pela CI e não confundida com o Security Gate já encerrado.
+- **Preparação e Certificação AT: ADIADAS E MANTIDAS**, após as fases
+  preparatórias M01–M05 e dependências de assinatura D-SIGN-02..05, além dos
+  gates aplicáveis. O piloto não produtivo não antecipa certificação/uso comercial.
+
+Evidência: sequência da base `051b1fc`, Fundação fiscal/OP19 e
+[RES01–RES04 / fontes E16–E17](../planning/reprioritization-2026-11-02/PENDING_MAP.md).
+A [revisão PR #48](https://github.com/amgsrosario/fac/pull/48#issuecomment-6600046074)
+exige esta preservação. M01–M05 continuam propostas não iniciadas, sem alteração
+à ordem autorizada, abertura de gates ou cancelamento de trabalho posterior.
+
+### Sequência anterior preservada — itens posteriores mantidos e adiados
 
 1. JWT / Gestão e Invalidação de Sessões — **CONCLUÍDA**.
 2. Fundação de Permissões — **CONCLUÍDA E INTEGRADA; GATE HUMANO CONCLUÍDO**.
@@ -338,7 +370,7 @@ etapas, implementar contratos ou activar funcionalidades.
 6. Preparação e Certificação AT.
 7. Piloto Controlado.
 
-Esta sequência é a orientação vigente do Executivo. A conclusão JWT não antecipa os gates seguintes nem declara certificação ou prontidão global de segurança.
+A lista anterior mantém as pendências posteriores; a prioridade de execução corrente é a ordem de 02-11 acima. Não constitui autorização para iniciar NC/ND, Auditoria Funcional Final ou certificação agora. Estes trabalhos foram adiados, não cancelados. A conclusão JWT não antecipa gates nem declara prontidão comercial.
 
 ## Resíduos e limites
 
@@ -903,3 +935,21 @@ Nenhuma alteração funcional, acesso a bases, chave real, teste de aplicação,
 R1 liga proveniência de cada keyVersion à chave pública comunicada por Modelo 24/upload e mantém âncora independente; âmbito da chave é matéria normativa do produtor/programa, não opção livre por cliente. Gate prévio de rotação e validação jurídica de custódia B2/exclusivo conhecimento explicitados. Retirada preferência B; alternativas sem preferência até perfil actual e suporte demonstrados. Acrescentados persistência/regime de cifragem, Hash/HashControl SAF-T, política de backups, contador de reposições e detecção de manipulações a N02/D-SIGN-05/T08/T11/T12/T16. Reservas de vigência/aplicabilidade e fornecedores mantidas.
 
 [Pedido incremental](../fiscal/h2-08/REVIEW_HANDOFF.md). Confirmação Claude R1 pendente, D-SIGN-02..05 reservadas à Administração. Só documentação: H2-07 não reaberta, nenhum código/chave/base/gate alterado, PR #47 draft, sem implementação, activação, deploy ou merge.
+
+
+### Repriorização executiva — levantamento de pendências em 02-11-2026
+
+[Mandato #46/6584848804](https://github.com/amgsrosario/fac/issues/46#issuecomment-6584848804). H2-08 integrada pelo PR #47 em `051b1fc`, incluindo `2523095`; confirmação original Claude R1 APROVADO 0/0/0 lida e hash conferido (`518ef2c1c58a04a223ef2042b84ef3e6f42bc33885e8babcd6315a8226b237e7`). Supera as indicações anteriores de revisão/integração pendentes; não decide D-SIGN-02..05, agora reservadas à fase final. H2-07/H2-08 não reabertas.
+
+[Mapa de pendências](../planning/reprioritization-2026-11-02/PENDING_MAP.md), [fontes](../planning/reprioritization-2026-11-02/EVIDENCE.md) e [missões propostas/revisão](../planning/reprioritization-2026-11-02/MISSIONS.md). #38 fechada quanto à preparação e restauro: R2 confirmou a prova V27, errata cc67e3f resolveu metadado temporal. Reserva operacional MINOR-003R persiste; H2-03 já foi integrada (V28/PR #40), não continua por implementar. Delta da base exacta/runtime actual ainda não comprovado neste inventário. Só metadata Docker lida, sem SQL ou credenciais.
+
+Prioridade proposta de execução futura: M01 verificar/demonstrar delta da base limpa, M02 capacidade segura de primeiro provisionamento, M03 jornada comercial não fiscal, M04 evidências fiscais independentes e M05 piloto isolado. São propostas para decisão, não novas missões iniciadas. JWT/permissões/Security Gate continuam encerrados; ensaio da instalação e inputs operacionais são pendências distintas. Não presumir prontidão por issue fechada ou ausência de implementação por issue aberta.
+
+Este levantamento é documental, sem testes de aplicação ou alteração de bases. Revisão Claude pendente. Mantidos 409, origem/demo/#38, worktree desconhecida `7ce573f`, manifesto/gates, FinancialCore inactivo e 1e suspensa; sem chaves, contratação, activação, deploy, cutover ou merge.
+
+
+### PR #48-R1 — preservação das pendências posteriores
+
+03-11-2026. [Revisão/ordem 6600046074](https://github.com/amgsrosario/fac/pull/48#issuecomment-6600046074): APROVADO COM RESERVAS 0 BLOCKER / 0 MAJOR / 1 MINOR sobre `fdacf90`; supera revisão inicial pendente, sem declarar R1 aprovada. Correcção documental preserva expressamente NC/ND e RC/NL sujeito a nova OP, gates legais NL/RCzero/descontos/adiantamentos, Auditoria Funcional Final e Preparação/Certificação AT como adiados/reservados, não cancelados. Certificação posterior às fases preparatórias e dependências de assinatura; nenhum gate ou ordem M01–M05 alterados.
+
+O-1: autoria do R2 #38 atestada por Claude Code no parecer original PR #48, SHA-256 `e84c4fd27cda2439b2936f465d5240a2eb292aa1ddeca94a78ceaf2b69de6d1c`, conferido com sidecar. EVIDENCE.md regista a atestação e a atribuição anterior errada, sem repetir ensaios ou presumir publicação privada. O-2 apenas explicita menor privilégio/uso único/auditoria/ausência de canal remoto como critérios futuros M02. [Pedido incremental](../planning/reprioritization-2026-11-02/MISSIONS.md) pendente. PR draft, sem código, bases, gates, implementação, activação, cutover ou merge.
