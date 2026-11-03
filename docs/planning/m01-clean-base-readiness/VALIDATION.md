@@ -39,7 +39,7 @@ Arquivo restrito: `/home/arosario/tuuli-backups/m01/2026-11-03/`, 32 artefactos 
 **Resultado executor: M01_PASS no perímetro do delta isolado.** Não significa prontidão comercial, autorização de actualizar a preparação ou aprovação independente. Revisão Claude pendente; [pedido operacional](REVIEW_HANDOFF.md). M02–M05 não iniciadas. Sem alterações operacionais, push, PR, merge, activação ou cutover nesta entrega.
 
 
-## R1 — Correcções da qualidade da prova (em validação incremental)
+## R1 — Correcções da qualidade da prova e ensaio incremental
 
 Parecer original Claude de 03-11-2026: **APROVADO COM RESERVAS, 0 BLOCKER / 0 MAJOR / 2 MINOR**, sobre `bf80a2fb648d84e056c2c6f36a126a2d253aec03`. Original preservado, SHA-256 `9bd30872d2399cc941385460c8e3ec4d77ae8f326b4335e726d3a14ed533e719`, conferido com sidecar. Não confundir o parecer original com uma confirmação de R1.
 
@@ -49,4 +49,14 @@ Parecer original Claude de 03-11-2026: **APROVADO COM RESERVAS, 0 BLOCKER / 0 MA
 
 Para os ensaios incrementais/futuros, `run_security_r1.py` regista HEAD, tree, branch, status completo e SHA-256 da fonte do teste **antes e depois** da chamada Maven. Exige worktree limpa no início e identidade Git inalterada no fim; não regista ambiente nem credenciais. Usa apenas um PostgreSQL sintético novo e efémero, sem snapshot, importação ou restauro #38. Inicializar um schema vazio não reensaia o delta V27→V28 da preparação. O método R1 é seleccionado isoladamente; os outros seis casos M01 não se repetem.
 
-Resultado R1 ainda pendente nesta preparação; será acrescentado após a execução.
+### Resultado incremental R1
+
+**MINOR-001 corrigido pelo executor:** 1 executado / 1 aprovado / 0 falhas / 0 erros / 0 ignorados, BUILD SUCCESS. Método `signatureSourceAbsentAndProtectedRequestRequiresAuthentication`: fonte de assinatura ausente, `SecuritySettings.enabled()` verdadeiro, cadeia `/clientes` contém `BearerTokenAuthenticationFilter` e `AuthorizationFilter`, GET anónimo `/clientes` recusado com **401**. Não prova login, todos os endpoints/perfis ou segurança produtiva; não se repetiu o caso 409 ou os seis restantes casos M01.
+
+Execução em base **sintética vazia**, `tuuli_m01_r1_test`, PGDATA tmpfs/PostgreSQL 16.3, com rede interna e proxy apenas loopback. Sem snapshot, restauro ou importação. O schema foi inicializado de raiz pelas migrations existentes; não foi repetido o ensaio de upgrade do snapshot V27→V28 nem acedida qualquer base conservada. Contentores/redes próprios eliminados após guard de IDs/labels e segredo técnico efémero removido.
+
+**MINOR-002 documentado e captura operacional demonstrada:** antes/depois do Maven, HEAD `1bf2f135074b1141913afdc1dffd723516951cb9`, tree `55dd470b30b41fd77b05511e196ce2c8ce8c5ca1`, branch `codex/m01-clean-base-readiness` e status vazio, exactamente iguais. SHA-256 do teste antes/depois: `1d3f18a2cfd629cf1aab282d7bd43f818d174048fd5fe0ea33ad0da2e59fdcf1`. Não reconstruído retrospectivamente. O commit final posterior apenas acrescenta documentação dos resultados; não altera a fonte testada.
+
+Evidência R1 separada: `tuuli-backups/m01-r1/2026-11-03/`, **13 artefactos + manifesto** de 2 061 bytes, SHA-256 `a6c480f9eccc7fecdee7d736b3da77fba1bdaac94194d8457fcfcd4a26c1563e`. Git antes/depois, isolamento, comando sem segredos, log, XML, fonte, runner, resultado e descarte. Identidade da cópia e 13 entradas conferidas. Evidência M01 original: 32/32 artefactos e manifesto originais novamente conferidos, sem alterações; relatório original e parecer Claude com hashes preservados.
+
+A correcção do executor não é aprovação independente. Confirmação R1 pendente; o PO indicou que encaminhará o pedido disponibilizado nesta conversa. Sem runtime Claude nesta sessão, não se afirma transmissão automática/execução nem se usa comentário GitHub como activação.

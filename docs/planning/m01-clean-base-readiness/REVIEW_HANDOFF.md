@@ -17,3 +17,17 @@ Confirmar:
 7. M02–M05 e todos os gates mantidos; nenhuma mudança a código operacional, bases conservadas, Ubuntu/GOLDEN ou worktree 7ce573f.
 
 Emitir APROVADO / APROVADO COM RESERVAS / DEVOLVER PARA CORRECÇÃO, com BLOCKER/MAJOR/MINOR, referências exactas, cobertura e limitações. Não implementar, emitir, activar, fazer cutover/deploy ou merge. Parecer ainda pendente até recepção de original independente verificável.
+
+
+## R1 — Pedido incremental, exclusivamente dois MINOR
+
+O PO indicou que transmitirá ao Claude o pedido disponibilizado na conversa. Não há runtime Claude acessível nesta sessão; esta indicação não é parecer ou confirmação de execução.
+
+Comparar `bf80a2fb648d84e056c2c6f36a126a2d253aec03..HEAD` final da branch (SHA exacto no relatório externo e na issue #46). O código de teste foi validado no commit `1bf2f135074b1141913afdc1dffd723516951cb9`; o commit seguinte é apenas documental.
+
+- MINOR-001: verificar `SecuritySettings.enabled()`, filtros Bearer/Authorization e 401 do GET anónimo `/clientes`, com limites expressos. Ensaio sintético dirigido 1/1, sem snapshots ou upgrade da preparação. Não interpretar como matriz de segurança, login, 409 repetido ou prontidão produtiva.
+- MINOR-002: conferir declaração de ausência de estado Git dos ensaios originais, sem atribuição retroactiva ao commit `bf80a2f`; conferir captura antes/depois e fonte idêntica no novo ensaio.
+- Conferir manifesto incremental `a6c480f9eccc7fecdee7d736b3da77fba1bdaac94194d8457fcfcd4a26c1563e` no arquivo `tuuli-backups/m01-r1/2026-11-03/`, sem repetir testes, #38 ou V27→V28. Originais M01 preservados.
+- Confirmar diff sem src/main, migrations, configurações operacionais, dados ou alteração de gates. M02 não iniciada.
+
+Emitir parecer incremental com BLOCKER/MAJOR/MINOR, commit revisto e fontes concretas. Não executar SQL/testes, publicar, fazer cutover ou activar circuitos. Aguardar parecer real; resolução do executor ainda sujeita a confirmação independente.
