@@ -24,7 +24,7 @@ Credencial técnica aleatória efémera, fora das evidências; não é conta com
 - Controlos integrais das 42 tabelas conservados no clone, exceptuando a alteração esperada do histórico Flyway 27→28. Mestres: 4 clientes, 10 artigos, 197 772 códigos postais e 5 188 freguesias. **84 FKs, zero órfãos, zero constraints não validadas.**
 - Zero documentos comerciais/financeiros, linhas, pendentes, auditoria histórica, movimentos/posições/afectações FinancialCore, tipos documentais, séries, utilizadores, parâmetros documentais e revisões fiscais. Sem DEMO26, códigos AT ou transacções transportadas.
 - Emitente: 1 registo herdado; presença não constitui validação da identidade/regime fiscal. Sem publicação de nomes, NIF, contactos ou outros dados pessoais. Parâmetros de aplicação/cliente presentes não são homologação de valores operacionais.
-- Catálogo vazio continua a permitir o arranque legado, mas `ftDeferredCreation` recusa; readiness não pronta e activação não permitida. Nenhum fornecedor de assinatura registado no contexto M01 de leitura, segurança explicitamente activa.
+- Catálogo vazio continua a permitir o arranque legado, mas `ftDeferredCreation` recusa; readiness não pronta e activação não permitida. Nenhum fornecedor de assinatura registado no contexto M01 de leitura; a segurança foi configurada como activa, mas a prova original não mediu o estado efectivo do bean/cadeia (MINOR-001; ver VALIDATION.md).
 - Diagnóstico FinancialReconciliation vazio por cliente: zero documentos, diferença comparável **NULL**, activação recusada. Ausência de movimentos não é saldo comercial reconciliado ou autorização de operação.
 
 ## Testes e limitações da prova
@@ -35,7 +35,7 @@ Resultados finais e manifesto: ver [VALIDATION.md](VALIDATION.md).
 
 Eventos de preparação não ocultados: primeira compilação do novo teste falhou por acesso package-private de `verifiedSnapshot`; corrigido o package do teste, sem mudar a aplicação. Na execução seguinte V28 foi aplicada e seis das sete verificações passaram; a asserção de segurança detectou o default **false do Surefire no pom**. O teste passou a exigir `fac.security.enabled=true` por propriedade explícita do contexto. Não é falha do runtime produtivo nem alteração ao contrato de segurança. Logs/XML dessa tentativa preservados.
 
-O teste HTTP usa a operação real do controller via MockMvc com fixture sintética já existente e fonte indisponível, em segunda base descartável: verifica resposta 409 e ausência de consumo de número. O bypass de segurança dessa regressão é exclusivamente o mecanismo de teste existente; não é usado no contexto M01 de leitura. Não se afirma ensaio HTTP produtivo com login/conta comercial, TLS, roles/HBA ou segredo JWT persistente. Isso permanece nas etapas futuras de provisionamento/piloto; não se executam M02–M05.
+O teste HTTP usa a operação real do controller via MockMvc com fixture sintética já existente e fonte indisponível, em segunda base descartável: verifica resposta 409 e ausência de consumo de número. O bypass de segurança dessa regressão é exclusivamente o mecanismo de teste existente; não foi configurado para o contexto M01 de leitura; a comprovação efectiva desse contexto exige a correcção MINOR-001. Não se afirma ensaio HTTP produtivo com login/conta comercial, TLS, roles/HBA ou segredo JWT persistente. Isso permanece nas etapas futuras de provisionamento/piloto; não se executam M02–M05.
 
 ## Reservas e decisão executiva
 
@@ -45,4 +45,4 @@ Permanecem: dados legítimos do emitente, identidades/perfis e primeiro provisio
 
 Histórica `fac/facdb` não acedida; sem SQL ou operação de serviço/volume nessa origem. Ubuntu, GOLDEN, restantes bases e worktree `7ce573f` preservados. Principal mantém `docker-compose.yml` e `.worktrees/` preexistentes. Recursos efémeros M01 eliminados após guard de identidade/labels; nenhuma evidência original #38 é alterada.
 
-Revisão independente Claude **pendente**: o pedido deve ser efectivamente encaminhado pela Coordenação, caso não exista runtime Claude acessível; comentário GitHub não o activa. [Handoff](REVIEW_HANDOFF.md).
+Revisão original Claude recebida: **APROVADO COM RESERVAS 0/0/2** sobre `bf80a2f`. Correcção R1 em curso; a confirmação incremental permanece pendente e será encaminhada pelo PO, conforme indicação expressa nesta missão. Comentário GitHub não activa o revisor. [Handoff](REVIEW_HANDOFF.md).

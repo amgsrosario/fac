@@ -8,13 +8,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.core.env.Environment;
+import com.ar2lda.fac.security.SecuritySettings;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.security.web.FilterChainProxy;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
+import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.context.ApplicationContext;
 import static org.assertj.core.api.Assertions.*;
 
 /** M01 only: authorized #38 snapshot clone; no fixtures, DML or commercial provisioning. */
 @org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named="M01_CLUSTER", matches="[0-9]+")
 @SpringBootTest(properties={"spring.jpa.show-sql=false","fac.demo.seed-on-startup=false","fac.security.enabled=true"})
+@AutoConfigureMockMvc
 @Transactional(readOnly=true)
 class M01PreparedSnapshotTests {
     @Autowired JdbcTemplate db;
@@ -22,7 +30,9 @@ class M01PreparedSnapshotTests {
     @Autowired FiscalConfigurationReadiness readiness;
     @Autowired FinancialReconciliation diagnostic;
     @Autowired ApplicationContext context;
-    @Autowired Environment environment;
+    @Autowired SecuritySettings securitySettings;
+    @Autowired FilterChainProxy securityFilters;
+    @Autowired MockMvc http;
     long count(String table) {return db.queryForObject("select count(*) from "+table,Long.class);}
     @Test void exactDisposableIdentityAndV28() {
         assertThat(db.queryForObject("select current_database()",String.class)).isEqualTo("tuuli_m01_test");
@@ -45,9 +55,14 @@ class M01PreparedSnapshotTests {
         assertThat(report.configurationReady()).isFalse();assertThat(report.creationBindingAvailable()).isFalse();
         assertThat(report.operationalActivationPermitted()).isFalse();
     }
-    @Test void noSignatureProviderOrSecurityBypassIsActivated() {
+    /** Effective state and one anonymous protected GET; not a full security audit. */
+    @Test void signatureSourceAbsentAndProtectedRequestRequiresAuthentication() throws Exception {
         assertThat(context.getBeansOfType(FiscalDocumentSignatureSource.class)).isEmpty();
-        assertThat(environment.getProperty("fac.security.enabled",Boolean.class,true)).isTrue();
+        assertThat(securitySettings.enabled()).isTrue();
+        var filters=securityFilters.getFilters("/clientes");
+        assertThat(filters).anyMatch(BearerTokenAuthenticationFilter.class::isInstance);
+        assertThat(filters).anyMatch(AuthorizationFilter.class::isInstance);
+        http.perform(get("/clientes")).andExpect(status().isUnauthorized());
     }
     @Test void reconciliationRemainsEmptyAndInactive() {
         for(Long id:db.queryForList("select id from cliente",Long.class)) {

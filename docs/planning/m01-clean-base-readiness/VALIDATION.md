@@ -20,7 +20,7 @@ mvn -o -B -Dspring.profiles.active=test -Dfac.security.enabled=false \
   '-Dtest=DocumentoComercialEmissaoIntegridadeTests#ausenciaDeAssinaturaFiscalRecusaEmissaoSemConsumirNumero' test
 ```
 
-Executado apenas em `tuuli_m01_http_test`, com a fixture/duplo de teste já existentes, fonte indisponível e nenhuma emissão bem-sucedida. Exercita controller real via MockMvc e ausência de consumo de numeração. Não é chamada comercial com login nem ensaio de deploy. Contextos de leitura M01, por contraste, exigem segurança activa e zero fornecedores de assinatura. Não se modificou o pom para obter estes resultados.
+Executado apenas em `tuuli_m01_http_test`, com a fixture/duplo de teste já existentes, fonte indisponível e nenhuma emissão bem-sucedida. Exercita controller real via MockMvc e ausência de consumo de numeração. Não é chamada comercial com login nem ensaio de deploy. Os contextos de leitura M01 declaravam a propriedade de segurança activa e verificavam zero fornecedores de assinatura; a prova original não media o estado efectivo do bean/cadeia, conforme MINOR-001 abaixo. Não se modificou o pom para obter estes resultados.
 
 ## Medições SQL e descarte
 
@@ -37,3 +37,16 @@ Arquivo restrito: `/home/arosario/tuuli-backups/m01/2026-11-03/`, 32 artefactos 
 `MANIFEST_SHA256.json`: **5 521 bytes**, SHA-256 **`9800d974d4f793954c4082b8a68b0b506cee8b07e4160702b627c6b25128b0e8`**. Cada entrada contém nome/tamanho/SHA-256. Evidências brutas não são publicadas no PR. Os scripts privados são evidência, não comandos para executar em bases preservadas; não repetir provisionamento ou restauro sem mandato.
 
 **Resultado executor: M01_PASS no perímetro do delta isolado.** Não significa prontidão comercial, autorização de actualizar a preparação ou aprovação independente. Revisão Claude pendente; [pedido operacional](REVIEW_HANDOFF.md). M02–M05 não iniciadas. Sem alterações operacionais, push, PR, merge, activação ou cutover nesta entrega.
+
+
+## R1 — Correcções da qualidade da prova (em validação incremental)
+
+Parecer original Claude de 03-11-2026: **APROVADO COM RESERVAS, 0 BLOCKER / 0 MAJOR / 2 MINOR**, sobre `bf80a2fb648d84e056c2c6f36a126a2d253aec03`. Original preservado, SHA-256 `9bd30872d2399cc941385460c8e3ec4d77ae8f326b4335e726d3a14ed533e719`, conferido com sidecar. Não confundir o parecer original com uma confirmação de R1.
+
+**MINOR-001:** a asserção original lia a propriedade que o próprio teste definia. Os ensaios originais, por si, **não demonstram estado efectivo de SecuritySettings nem da cadeia autenticada**. R1 substitui-a por `SecuritySettings.enabled()`, presença de filtros Bearer/Authorization na cadeia seleccionada para `/clientes` e GET anónimo com resposta 401, via MockMvc real. Este é apenas um percurso protegido, sem prova de login, matriz completa de permissões, TLS/HBA, segurança de produção ou ausência universal de bypass.
+
+**MINOR-002:** os ensaios originais antecederam o commit `bf80a2f` e não capturaram HEAD, tree ou estado da worktree por execução. Correram sobre a base `472cf58` mais o teste ainda não commitado; **não são execuções fixadas ao commit final**. A coincidência byte a byte da fonte arquivada com a fonte do commit é uma mitigação, não substitui esse registo. Não se pode reconstruir retrospectivamente um estado Git que não foi capturado. Logs, XML e relatórios originais permanecem intactos.
+
+Para os ensaios incrementais/futuros, `run_security_r1.py` regista HEAD, tree, branch, status completo e SHA-256 da fonte do teste **antes e depois** da chamada Maven. Exige worktree limpa no início e identidade Git inalterada no fim; não regista ambiente nem credenciais. Usa apenas um PostgreSQL sintético novo e efémero, sem snapshot, importação ou restauro #38. Inicializar um schema vazio não reensaia o delta V27→V28 da preparação. O método R1 é seleccionado isoladamente; os outros seis casos M01 não se repetem.
+
+Resultado R1 ainda pendente nesta preparação; será acrescentado após a execução.
