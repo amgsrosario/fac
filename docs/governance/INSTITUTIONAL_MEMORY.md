@@ -849,3 +849,16 @@ Reconhecimento dirigido não localizou bootstrap comercial local aprovado: CRUD 
 Evidência restrita `tuuli-backups/m02/2026-11-03/`, 100 entradas + manifesto geral SHA-256 `4cdcbd11d90c1c69c35fc6badf130f47f8e0fc550860418d5530f0ed622f83b0`. Recursos e segredos efémeros M02 removidos. Nenhuma base conservada/histórica, Ubuntu/GOLDEN ou worktree `7ce573f` operada; V29 não instalada na preparação conservada (V27 conforme M01). Nenhum histórico fiscal reclassificado, saldo, consumidor ou manifesto alterado.
 
 **Estado M02: implementada/testada em isolamento, revisão independente Claude pendente** — [handoff](../planning/m02-local-admin-provisioning/REVIEW_HANDOFF.md). Autorizações/identidades comerciais, roles/HBA reais e operação numa instalação real dependem de ordem própria. Sem push, PR, merge, deploy, cutover ou activação. Legado autoridade operacional; FinancialCore inactivo, 1e suspensa, gates mantidos e M03–M05 não iniciadas.
+
+
+### M02-R1 — Correcção incremental após revisão Claude, 03-11-2026
+
+[Ordem #46/6612496711](https://github.com/amgsrosario/fac/issues/46#issuecomment-6612496711). Primeiro parecer original Claude sobre `5ae9e50`: **APROVADO COM RESERVAS 0/0/2**, SHA-256 `790a988f0b9d5af3f0e037387c02a91cd389057d26338d151cfb3aa5bd52744a` conferido com sidecar e igual à cópia recebida pela Coordenação. Supera a indicação anterior de primeira revisão ainda pendente; não é aprovação R1.
+
+[R1](../planning/m02-local-admin-provisioning/R1.md): MINOR-001 com guarda efectiva de terminal compatível Java 21/reflexão Java 22+, recusa própria 3 e teste stdin não vazio; MINOR-002 com ownership de objectos relevantes/schema/CREATE/DML e casos não-superuser; O-1 com READ COMMITTED explícito em Java/SQL. V29 ainda local corrigida, sem outra migration. **33 casos dirigidos aprovados**, package/smoke aprovados no commit limpo `b3eb249fb1d13795af72fadc32dade62b5686896`, tree `a5462552377b318c7afef448e1d427817d61c45d`, Git antes/depois igual. Não repetidos os 99 casos, M01/#38 ou testes não afectados.
+
+Arquivo separado `tuuli-backups/m02-r1/2026-11-03/`, 41 artefactos + manifesto de 7698 bytes, SHA-256 `56bc1818a820f8f054b74f17416a8de90865e8dff7f07015f5270035f2771f91`. Original M02: 100 entradas/manifests conferidos e intactos; parecer/sidecar preservados. Recursos R1 descartados com guards, sem segredos nos artefactos. Nenhuma base conservada/histórica, Ubuntu/GOLDEN ou worktree 7ce573f operada.
+
+O-2 dono SECURITY DEFINER não-superuser continua limite de prova de instalação; testes de owners são de **recusa**. O-3 localhost depende de resolução para loopback, preferir 127.0.0.1. O-4 dívida de testes históricos fora do incremento; O-5 colisão V29 condicional a eventual mandato futuro sobre worktree desconhecida, sem presumir integração ou reabrir H2-07. Java nativo disponível é 21; caminhos pós-21 simulados e guarda implementada, não declarada execução nativa inexistente. O-1 mantém classificação não condicionante original.
+
+**Confirmação incremental Claude pendente**, [handoff actualizado](../planning/m02-local-admin-provisioning/REVIEW_HANDOFF.md) para transmissão efectiva pela Administração. Sem auto-aprovação, push, PR, merge, contas reais, cutover, deploy, activação ou M03–M05. Legado autoridade operacional, FinancialCore inactivo, 1e suspensa, manifesto/gates preservados.

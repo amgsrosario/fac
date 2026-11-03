@@ -48,3 +48,10 @@ Cada entrada possui caminho relativo, tamanho e SHA-256; ficheiros/digests e có
 Verificações adicionais: referências documentais, sintaxe Python, fonte funcional idêntica entre commits ensaiados e `git diff --check`. `FlywaySchemaIntegrationTests` conserva uma expectativa V23 preexistente e não faz parte da execução dirigida; não se declara suite integral ou validação de todos os testes históricos. A correcção funcional M02 não depende dessa expectativa desactualizada.
 
 **Estado: IMPLEMENTADO E TESTADO EM ISOLAMENTO; revisão independente Claude pendente.** Ainda sem aprovação independente da solução. [Pedido de revisão](REVIEW_HANDOFF.md). Sem autorização operacional, deploy, push/PR/merge, M03–M05 ou alterações de gates.
+
+
+## M02-R1 — Prova incremental posterior ao parecer
+
+Primeiro parecer Claude sobre `5ae9e50`: APROVADO COM RESERVAS 0/0/2, original/sidecar SHA-256 `790a988f0b9d5af3f0e037387c02a91cd389057d26338d151cfb3aa5bd52744a` conferidos. Supera a indicação histórica de revisão ainda não recebida; não aprova R1. [Resolução/evidência R1](R1.md): MINOR-001/002 corrigidos e O-1 com READ COMMITTED em Java/SQL. **33 casos dirigidos aprovados**, package/smoke aprovados no commit limpo `b3eb249fb1d13795af72fadc32dade62b5686896`, tree `a5462552377b318c7afef448e1d427817d61c45d`, Git antes/depois igual. Não se repetiram os 99 casos ou M01/#38.
+
+Arquivo R1, 41 artefactos + manifesto de 7698 bytes: `tuuli-backups/m02-r1/2026-11-03/`, SHA-256 `56bc1818a820f8f054b74f17416a8de90865e8dff7f07015f5270035f2771f91`. O arquivo e relatório originais M02 permanecem intactos. O-2 dono restrito não ensaiado positivamente, O-3 resolução localhost, O-4 dívida de testes e O-5 colisão condicional com worktree desconhecida explicitados; não alegar prova inexistente ou nova missão. Java nativo disponível: 21.0.12.1; caminhos de decisão 22/25 testados por probes, não por execução de JDK 22+. Guarda efectiva implementada, não mera redução da garantia. Confirmação incremental Claude pendente.

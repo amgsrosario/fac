@@ -16,3 +16,14 @@ Pontos prioritários:
 8. Bases/Ubuntu/GOLDEN/worktrees/gates preservados; sem contas reais ou uso na preparação conservada, M03–M05 não iniciadas. Roles/HBA reais/identidades comerciais continuam dependentes de autorização legítima.
 
 Emitir APROVADO / APROVADO COM RESERVAS / DEVOLVER PARA CORRECÇÃO com BLOCKER/MAJOR/MINOR, commit revisto, ficheiro/linha e evidência. Não executar testes/SQL ou alterar ficheiros sem risco concreto e mandato; não publicar, activar, fazer cutover ou merge. Parecer real ainda pendente.
+
+
+## R1 — Confirmação incremental exclusivamente do delta
+
+Comparar `5ae9e5038184122f38309c8293e368de9d27e451..HEAD` final desta branch (SHA exacto no relatório R1/issue #46). Ordem #46/6612496711; parecer original SHA-256 `790a988f0b9d5af3f0e037387c02a91cd389057d26338d151cfb3aa5bd52744a` conferido com sidecar.
+
+Confirmar MINOR-001 (guarda real de terminal, Java 21 compatível/reflexão 22+, código 3, teste com stdin redireccionado não vazio e sem dependência de EOF), MINOR-002 (ownership relevante/schema/CREATE/DML, memberships e casos não-superuser discriminantes), e O-1 READ COMMITTED em SQL/Java antes de locks/leitura privilegiada. Conferir O-2–O-5 como limites, sem instalar/alterar hosts, corrigir dívida histórica ou incorporar 7ce573f.
+
+Ler R1.md e arquivo restrito `tuuli-backups/m02-r1/2026-11-03/`, 41 artefactos + manifesto SHA-256 `56bc1818a820f8f054b74f17416a8de90865e8dff7f07015f5270035f2771f91`. 33 casos dirigidos, sem reexecução dos 99, M01 ou #38; HEAD de ensaio limpo `b3eb249fb1d13795af72fadc32dade62b5686896`, fecho posterior só documental. Java nativo 22+ não executado, estado/limites explícitos; testes de owners não-superuser são de recusa, não prova de instalação com dono SECURITY DEFINER restrito.
+
+Emitir parecer incremental BLOCKER/MAJOR/MINOR e commit revisto. Sem SQL, testes ou alterações de bases/ficheiros, push/PR/merge, activação ou M03–M05. O pedido precisa de encaminhamento efectivo pela Administração; comentário GitHub não activa o Claude. Correcção do executor não constitui aprovação.
