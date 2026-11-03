@@ -5,7 +5,7 @@ Fonte canónica do estado corrente. Atualização: 2026-11-03, Europe/Lisbon. Su
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD integrado observado no levantamento executivo de 02-11-2026: `051b1fc1eb78e5c0c81c51b77d0d2f94bde20435`, merge do PR #47 (H2-08), confirmado no remoto/Git e por ancestralidade de `2523095`. Checkout principal preservado; tracking origin local antigo não usado como base. Base obtida por HTTPS para FETCH_HEAD. Integração não significa deploy ou activação.
+- HEAD integrado confirmado no início da M02 em 03-11-2026: `ca1e80245d95362eb8c7a78c90350f1a930eb0bf`, merge do PR #49 (M01), confirmado por HTTPS/FETCH_HEAD. Checkout principal preservado; tracking origin local antigo não usado como base. Integração não significa actualização de base, deploy ou activação.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -973,3 +973,16 @@ Parecer original Claude sobre `bf80a2f`: **APROVADO COM RESERVAS 0/0/2**, SHA-25
 MINOR-001 corrigido no teste: estado efectivo de `SecuritySettings.enabled()`, filtros Bearer/Authorization e resposta 401 ao GET anónimo `/clientes`. Apenas esse percurso, não prova universal de segurança/bypass. MINOR-002: ensaios originais anteriores ao commit e sem estado Git por execução explicitamente documentados; nova captura antes/depois implementada. Validação adicional: **1 caso/1 aprovado**, exclusivamente em banco sintético tmpfs, HEAD limpo `1bf2f135074b1141913afdc1dffd723516951cb9`, tree `55dd470b30b41fd77b05511e196ce2c8ce8c5ca1`, invariantes antes/depois. Sem repetir #38 ou o delta do snapshot V27→V28; sem acesso às bases conservadas. Recursos próprios/segredo efémero eliminados.
 
 [Validação R1](../planning/m01-clean-base-readiness/VALIDATION.md), arquivo separado `tuuli-backups/m01-r1/2026-11-03/`, manifesto SHA-256 `a6c480f9eccc7fecdee7d736b3da77fba1bdaac94194d8457fcfcd4a26c1563e`; originais M01 mantidos. [Pedido incremental](../planning/m01-clean-base-readiness/REVIEW_HANDOFF.md) será encaminhado pelo PO, conforme indicação expressa; confirmação Claude **pendente**, sem presumir activação pelo GitHub. Sem M02, alterações operacionais, bases, gates, push, PR, merge, cutover ou activação.
+
+
+### M02 — Primeiro administrador local, implementação isolada de 03-11-2026
+
+[Ordem #46/6611272547](https://github.com/amgsrosario/fac/issues/46#issuecomment-6611272547). Base `ca1e802`/PR #49 confirma a M01 encerrada após Claude 0/0/0 e CI verde, superando as indicações históricas de revisão M01 pendente. M01 e o Security Gate não reabertos. Nova branch `codex/m02-local-admin-provisioning`; checkout principal e worktrees conservados.
+
+Reconhecimento dirigido não localizou bootstrap comercial local aprovado: CRUD é autenticado e runners/seeds de demo não constituem esse mecanismo. [Desenho M02](../planning/m02-local-admin-provisioning/DESIGN.md): CLI local explícita sem Spring/endpoint, autorização 0600 e identidade base/cluster/UUID/role, passwords só por consola sem eco. V29 aditiva cria comprovativo/UUID e funções sem EXECUTE PUBLIC, sem contas/roles/grants automáticos. Operador técnico restrito só executa funções; criação de ADMINISTRADOR activo + auditoria existente + consumo único atómicos, locks ordenados e receipt imutável. Não é recuperação/reset de administradores existentes.
+
+[Validação dirigida](../planning/m02-local-admin-provisioning/VALIDATION.md): **99 casos distintos aprovados** (22 novos M02 + 77 regressões), package e smoke do JAR aprovados, com Git limpo capturado por classe. Duas tentativas de testes com expectativas incorrectas/desactualizadas preservadas e corrigidas, sem mudança aos contratos de autenticação ou fiscais. Código funcional idêntico nos commits ensaiados `3a5f49b`, `7fc4e28`, `077a44a`; fecho posterior só documental. Não é suite integral nem CI.
+
+Evidência restrita `tuuli-backups/m02/2026-11-03/`, 100 entradas + manifesto geral SHA-256 `4cdcbd11d90c1c69c35fc6badf130f47f8e0fc550860418d5530f0ed622f83b0`. Recursos e segredos efémeros M02 removidos. Nenhuma base conservada/histórica, Ubuntu/GOLDEN ou worktree `7ce573f` operada; V29 não instalada na preparação conservada (V27 conforme M01). Nenhum histórico fiscal reclassificado, saldo, consumidor ou manifesto alterado.
+
+**Estado M02: implementada/testada em isolamento, revisão independente Claude pendente** — [handoff](../planning/m02-local-admin-provisioning/REVIEW_HANDOFF.md). Autorizações/identidades comerciais, roles/HBA reais e operação numa instalação real dependem de ordem própria. Sem push, PR, merge, deploy, cutover ou activação. Legado autoridade operacional; FinancialCore inactivo, 1e suspensa, gates mantidos e M03–M05 não iniciadas.

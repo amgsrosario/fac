@@ -35,3 +35,16 @@ A classe CLI fica no JAR para execução local explícita por PropertiesLauncher
 ## Fora do âmbito
 
 Sem contas reais, operação das bases conservadas, deploy, configuração fiscal, catálogo/manifesto, assinatura, séries AT, cutover, FinancialCore, M03–M05 ou alteração de perfis/JWT. Não altera emitentes, saldos, extractos ou V25/V26. V29 no perímetro produtivo é nova: o SQL V29 experimental da worktree desconhecida `7ce573f` não é incorporado ou executado; não faz parte de Flyway integrado. Qualquer futura integração desse trabalho teria de reconciliar a numeração sob mandato próprio.
+
+## Fontes concretas do reconhecimento
+
+| Fonte | Resultado delimitado |
+| --- | --- |
+| `controller/UtilizadorController`, `service/UtilizadorService`, `SecurityConfig` | CRUD existente com autorização; não é bootstrap da instalação vazia |
+| `demo/DemoScenarioService` e runners demo | Criam contas da demonstração, não reutilizadas nem autorizadas como credenciais comerciais |
+| `scripts/backup/{linux,windows}`, `scripts/demo/linux` | Backup/restauro/inventário da tabela Utilizador, sem mecanismo aprovado de primeiro administrador |
+| `docs/security/SECURITY_GATE.md`, `AMBIENTES_E_ACESSOS.md` | Contratos JWT/permissões; sugestão antiga de seed local/dev não é aprovação de bootstrap comercial |
+
+Caminhos Java relativos a `src/main/java/com/ar2lda/fac/`. Os grants do DBA **por instalação/base**, a role local e o seu segredo constituem a fronteira de autorização do servidor; conhecer/copiar o UUID não concede EXECUTE noutra base. Referência/responsável no ficheiro preservam a decisão humana, sem a autenticar criptograficamente. O dono controlado das funções necessita das permissões sobre as tabelas e da leitura `pg_control_system()`; isto não é concedido ao operador. Em instalação futura a separação de roles e HBA é pré-condição a validar, não executada nesta missão.
+
+O ficheiro segue o formato Java Properties (`ISO-8859-1`/escapes Unicode); consola e nomes/passwords usam o contrato Java existente. O teste sintético e o smoke do JAR não substituem um ensaio futuro humano da consola/roles/HBA/TLS numa instalação autorizada; nenhuma conta real foi criada.
