@@ -16,6 +16,8 @@ public final class FirstAdministratorProvisioner {
         Objects.requireNonNull(password);
         try {
             if(!db.getAutoCommit()) throw new IllegalArgumentException("Exigida ligacao dedicada sem transaccao externa");
+            if(db.getTransactionIsolation()!=Connection.TRANSACTION_READ_COMMITTED)
+                throw new IllegalArgumentException("Provisionamento exige READ COMMITTED");
             if(auth.expiresAt().isBefore(java.time.Instant.now())) throw new IllegalArgumentException("Autorizacao expirada");
             String code=admin.code().trim().toUpperCase(Locale.ROOT);
             String name=admin.name().trim();String email=admin.email().trim().toLowerCase(Locale.ROOT);

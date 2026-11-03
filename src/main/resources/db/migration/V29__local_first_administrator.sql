@@ -49,6 +49,32 @@ DECLARE
     audit_id bigint;
     instant timestamptz;
 BEGIN
+    -- Reject unsafe isolation/ownership before any privileged data or identity read.
+    IF current_setting('transaction_isolation') IS DISTINCT FROM 'read committed' THEN
+        RAISE EXCEPTION 'Local provisioning requires READ COMMITTED' USING ERRCODE='25001';
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname=session_user
+               AND (rolsuper OR rolcreaterole OR rolcreatedb OR rolreplication OR rolbypassrls))
+       OR EXISTS (SELECT 1 FROM pg_auth_members WHERE member=(SELECT oid FROM pg_roles WHERE rolname=session_user))
+       OR EXISTS (SELECT 1 FROM pg_database WHERE datname=current_database()
+                  AND datdba=(SELECT oid FROM pg_roles WHERE rolname=session_user))
+       OR EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='public'
+                  AND nspowner=(SELECT oid FROM pg_roles WHERE rolname=session_user))
+       OR has_schema_privilege(session_user,'public','CREATE')
+       OR EXISTS (SELECT 1 FROM pg_class WHERE oid IN
+                  ('public.utilizador'::regclass,'public.local_admin_provisioning'::regclass,
+                   'public.auditoria_evento'::regclass,pg_get_serial_sequence('public.auditoria_evento','id')::regclass)
+                  AND relowner=(SELECT oid FROM pg_roles WHERE rolname=session_user))
+       OR EXISTS (SELECT 1 FROM pg_proc WHERE oid IN
+                  ('public.local_admin_identity()'::regprocedure,
+                   'public.local_admin_receipt_guard()'::regprocedure,
+                   'public.provision_first_administrator(text,text,uuid,text,text,text,timestamptz,text,text,text,text)'::regprocedure)
+                  AND proowner=(SELECT oid FROM pg_roles WHERE rolname=session_user))
+       OR has_table_privilege(session_user,'public.utilizador','INSERT,UPDATE,DELETE,TRUNCATE')
+       OR has_table_privilege(session_user,'public.local_admin_provisioning','INSERT,UPDATE,DELETE,TRUNCATE')
+       OR has_table_privilege(session_user,'public.auditoria_evento','INSERT,UPDATE,DELETE,TRUNCATE') THEN
+        RAISE EXCEPTION 'Use a restricted local provisioning operator, not an owner or privileged role';
+    END IF;
     IF current_database() IS DISTINCT FROM expected_database
        OR (SELECT system_identifier::text FROM pg_control_system()) IS DISTINCT FROM expected_cluster
        OR session_user::text IS DISTINCT FROM expected_operator
@@ -56,13 +82,6 @@ BEGIN
        OR authorization_reference IS NULL OR length(btrim(authorization_reference)) NOT BETWEEN 1 AND 100
        OR authorization_actor IS NULL OR length(btrim(authorization_actor)) NOT BETWEEN 1 AND 100 THEN
         RAISE EXCEPTION 'Local provisioning authorization does not match installation';
-    END IF;
-    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname=session_user
-               AND (rolsuper OR rolcreaterole OR rolcreatedb OR rolreplication OR rolbypassrls))
-       OR EXISTS (SELECT 1 FROM pg_auth_members WHERE member=(SELECT oid FROM pg_roles WHERE rolname=session_user))
-       OR EXISTS (SELECT 1 FROM pg_database WHERE datname=current_database()
-                  AND datdba=(SELECT oid FROM pg_roles WHERE rolname=session_user)) THEN
-        RAISE EXCEPTION 'Use a restricted local provisioning operator, not an owner or privileged role';
     END IF;
     SELECT * INTO STRICT receipt FROM public.local_admin_provisioning WHERE singleton FOR UPDATE;
     IF receipt.installation_id IS DISTINCT FROM expected_installation OR NOT receipt.eligible

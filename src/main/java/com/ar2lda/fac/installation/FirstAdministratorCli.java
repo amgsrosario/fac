@@ -8,6 +8,18 @@ import java.util.Arrays;
 /** Explicit local CLI. Never starts Spring, a web server, migrations or a demo runner. */
 public final class FirstAdministratorCli {
     private FirstAdministratorCli() { }
+    @FunctionalInterface interface TerminalProbe { boolean isTerminal() throws ReflectiveOperationException; }
+    /** Java 21 has no isTerminal API; newer runtimes must positively prove a terminal. */
+    static boolean terminalAllowed(int runtime,boolean consolePresent,TerminalProbe probe) {
+        if(!consolePresent || runtime<21)return false;
+        if(runtime==21)return true;
+        try {return probe.isTerminal();}
+        catch(ReflectiveOperationException | RuntimeException unavailable) {return false;}
+    }
+    private static boolean localTerminal(Console console) {
+        return terminalAllowed(Runtime.version().feature(),console!=null,
+            ()->(boolean)Console.class.getMethod("isTerminal").invoke(console));
+    }
     public static void main(String[] args) {
         if(args.length==1 && args[0].equals("--help")) {
             System.out.println("Uso local: --authorization /caminho/absoluto/autorizacao.properties (0600; consola obrigatoria)");return;
@@ -15,7 +27,10 @@ public final class FirstAdministratorCli {
         try {
             if(args.length!=2 || !args[0].equals("--authorization")) throw new IllegalArgumentException();
             Console console=System.console();
-            if(console==null) throw new IllegalStateException("Consola local obrigatoria; stdin/HTTP/ambiente nao aceites para passwords");
+            if(!localTerminal(console)) {
+                System.err.println("Consola terminal local obrigatoria; entrada redireccionada recusada.");
+                System.exit(3);return;
+            }
             var auth=FirstAdministratorAuthorization.load(Path.of(args[1]));
             console.printf("Instalacao %s; base %s; cluster %s; referencia %s%n",auth.installation(),auth.database(),auth.cluster(),auth.reference());
             String confirm=console.readLine("Confirmar: PROVISIONAR %s%n> ",auth.installation());
