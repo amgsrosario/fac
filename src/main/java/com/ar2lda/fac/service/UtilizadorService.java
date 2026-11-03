@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import java.util.Locale;
 import java.time.Clock;
 import java.time.OffsetDateTime;
-import java.util.Set;
 import com.ar2lda.fac.model.PapelUtilizador;
 import com.ar2lda.fac.model.ResultadoAuditoria;
 import com.ar2lda.fac.model.TipoAuditoriaEvento;
@@ -39,10 +38,6 @@ public class UtilizadorService {
     private final AuditoriaService auditoriaService;
     private final AuditoriaIsoladaService auditoriaIsoladaService;
     private final Clock clock;
-
-    private static final Set<String> PASSWORDS_PROIBIDAS = Set.of(
-            "password", "password123!", "admin123!", "fac12345!", "1234567890"
-    );
 
     @Transactional
     public UtilizadorDto create(UtilizadorCreateDto dto) {
@@ -183,10 +178,7 @@ public class UtilizadorService {
     }
 
     private void validarPassword(String password, String codigo) {
-        String lower = password.toLowerCase(Locale.ROOT);
-        if (PASSWORDS_PROIBIDAS.contains(lower) || lower.contains(codigo.toLowerCase(Locale.ROOT))) {
-            throw new BadRequestException("A password escolhida é demasiado simples ou previsível");
-        }
+        UtilizadorPasswordPolicy.validate(password, codigo);
     }
 
     private int nivel(PapelUtilizador papel) {

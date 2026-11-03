@@ -80,7 +80,7 @@ class FiscalMigrationCompatibilityTests {
 
                 Flyway current = Flyway.configure().dataSource(fixtureUrl, username, password)
                         .locations("classpath:db/migration").cleanDisabled(true).load();
-                assertThat(current.migrate().migrationsExecuted).isEqualTo(8);
+                assertThat(current.migrate().migrationsExecuted).isEqualTo(9);
                 current.validate();
                 try(var preserved=DriverManager.getConnection(fixtureUrl,username,password)) {
                     assertThat(value(preserved,"select count(*) from financial_document_origin")).isEqualTo("0");
