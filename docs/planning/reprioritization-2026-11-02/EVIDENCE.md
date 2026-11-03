@@ -23,6 +23,21 @@ Caminhos Java são relativos a `src/main/java/com/ar2lda/fac/`.
 | E14 | Busca de issues com topn=100, seis resultados, seguida de consulta individual de #38/#39/#41/#43/#44/#46; Git log merges #32–#47 | #38/#39/#41 closed; #43/#44/#46 open. Históricos de integração prevalecem sobre aparência do estado da issue. Não foram alterados esses estados |
 | E15 | Parecer original `2026-11-02_TUULI_H2-08-R1_confirmacao-incremental_Claude.md`, SHA-256 518ef2c1c58a04a223ef2042b84ef3e6f42bc33885e8babcd6315a8226b237e7, 7028 bytes, sidecar conferido; integração #47/051b1fc | APROVADO 0/0/0, achados encerrados, sem reabrir H2-08. Não se presume publicação do original no arquivo privado nem decisão produtiva |
 
+## Fontes adicionais da correcção PR #48-R1
+
+- **E16:** `OPERATIONAL_STATE.md` na base integrada `051b1fc`, secções «Fundação
+  fiscal RIVA + motor monetário», «OP19» e «Sequência estratégica vigente»:
+  bloco NC/ND e RC/NL sujeito a nova OP, gates NL/RCzero/descontos/adiantamentos,
+  Auditoria Funcional Final e Preparação/Certificação AT. A ordem de repriorização
+  altera a prioridade, não revoga estes trabalhos. A tabela RES01–RES04 do mapa
+  e o estado corrente explicitam a sua preservação.
+- **E17:** [parecer/ordem PR #48, comentário 6600046074](https://github.com/amgsrosario/fac/pull/48#issuecomment-6600046074),
+  03-11-2026. Original local `2026-11-03_TUULI_PR48_mapa-pendencias_revisao-independente_Claude.md`,
+  SHA-256 `e84c4fd27cda2439b2936f465d5240a2eb292aa1ddeca94a78ceaf2b69de6d1c`,
+  conferido com sidecar; lido integralmente. APROVADO COM RESERVAS 0/0/1 sobre
+  `fdacf90`. Contém a atestação de autoria R2 #38. Revisão incremental desta R1
+  ainda pendente; não se declara arquivo do parecer no repositório privado.
+
 ## Registos técnicos preservados e lacunas de actualidade
 
 - Arquivo #38 de restauro: `tuuli-backups/issue38/2026-10-27-restore-readiness/`,
@@ -53,12 +68,15 @@ Caminhos Java são relativos a `src/main/java/com/ar2lda/fac/`.
 4. A linha antiga «verificar/migrar demo Ubuntu antes do corte» não autoriza tocar
    no servidor nem exige transportar histórico. A alternativa B e a instalação
    futura têm perímetro próprio; a origem e demo mantêm-se conservadas.
-5. O comentário de fecho #38/6446559236 chama ao R2 documental «GPT-6»; o
-   original local E03 identifica revisor «Claude Code», e o comentário posterior
-   6446567501 não nomeia modelo. Há divergência de atribuição nos registos:
-   ligar original/hashes à proveniência institucional, sem inferir autoria só
-   do nome/sidecar ou repetir restauro para corrigir metadados. Isto não altera
-   as provas técnicas examinadas nem autoriza declarar arquivo público/privado.
+5. **O-1 encerrada documentalmente por atestação, não por inferência de hash.**
+   Claude Code atesta no parecer original PR #48 de 03-11-2026 ser autor do R2
+   #38 E03 (27-10, 8454 bytes, SHA-256
+   `a8f3cd7681f07cff703ae977183b795370eea47e09cba133c5fd985c2a131411`).
+   A atestação está registada no [comentário 6600046074](https://github.com/amgsrosario/fac/pull/48#issuecomment-6600046074).
+   Assim, a atribuição «GPT-6» em #38/6446559236 é errada segundo a atestação do
+   próprio revisor; não permanece aqui como autoria indeterminada. Conservam-se
+   original/hashes e registo histórico, sem repetir ensaios nem presumir publicação
+   byte-exacta no arquivo privado. Este PR não altera o comentário histórico #38.
 6. Uma issue aberta não reabre entrega integrada; uma issue fechada não valida
    emitente/séries/utilizadores. Estado técnico e estado administrativo separados.
 

@@ -809,3 +809,10 @@ R1 liga proveniência de cada keyVersion à chave pública comunicada por Modelo
 Prioridade proposta de execução futura: M01 verificar/demonstrar delta da base limpa, M02 capacidade segura de primeiro provisionamento, M03 jornada comercial não fiscal, M04 evidências fiscais independentes e M05 piloto isolado. São propostas para decisão, não novas missões iniciadas. JWT/permissões/Security Gate continuam encerrados; ensaio da instalação e inputs operacionais são pendências distintas. Não presumir prontidão por issue fechada ou ausência de implementação por issue aberta.
 
 Este levantamento é documental, sem testes de aplicação ou alteração de bases. Revisão Claude pendente. Mantidos 409, origem/demo/#38, worktree desconhecida `7ce573f`, manifesto/gates, FinancialCore inactivo e 1e suspensa; sem chaves, contratação, activação, deploy, cutover ou merge.
+
+
+### PR #48-R1 — preservação das pendências posteriores
+
+03-11-2026. [Revisão/ordem 6600046074](https://github.com/amgsrosario/fac/pull/48#issuecomment-6600046074): APROVADO COM RESERVAS 0 BLOCKER / 0 MAJOR / 1 MINOR sobre `fdacf90`; supera revisão inicial pendente, sem declarar R1 aprovada. Correcção documental preserva expressamente NC/ND e RC/NL sujeito a nova OP, gates legais NL/RCzero/descontos/adiantamentos, Auditoria Funcional Final e Preparação/Certificação AT como adiados/reservados, não cancelados. Certificação posterior às fases preparatórias e dependências de assinatura; nenhum gate ou ordem M01–M05 alterados.
+
+O-1: autoria do R2 #38 atestada por Claude Code no parecer original PR #48, SHA-256 `e84c4fd27cda2439b2936f465d5240a2eb292aa1ddeca94a78ceaf2b69de6d1c`, conferido com sidecar. EVIDENCE.md regista a atestação e a atribuição anterior errada, sem repetir ensaios ou presumir publicação privada. O-2 apenas explicita menor privilégio/uso único/auditoria/ausência de canal remoto como critérios futuros M02. [Pedido incremental](../planning/reprioritization-2026-11-02/MISSIONS.md) pendente. PR draft, sem código, bases, gates, implementação, activação, cutover ou merge.

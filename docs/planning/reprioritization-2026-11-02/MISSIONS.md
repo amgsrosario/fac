@@ -37,7 +37,9 @@ no âmbito E06. Confirmar antes de implementar se há mecanismo externo aprovado
   Identidades/perfis comerciais reais precisam de aprovação, não são fixtures.
 - Proposta técnica: capacidade administrativa local controlada para instalação
   vazia, com identidade da base/instalação explícita, uso único e trilho de auditoria,
-  sem endpoint anónimo, seed universal, password versionada ou bypass de segurança.
+  sem qualquer canal remoto (incluindo endpoint anónimo ou autenticado), seed universal,
+  password versionada ou bypass de segurança. Aplicar menor privilégio, uso único
+  verificável e trilho de auditoria como critérios explícitos da futura revisão.
   A forma exacta é especificada/revista no mandato de execução, não escolhida aqui
   como nova decisão de segurança. Reutilizar capacidade equivalente se já aprovada.
 - Aceitação/testes: base não autorizada recusada; não substituir administrador
@@ -124,3 +126,9 @@ Emitir APROVADO / APROVADO COM RESERVAS / DEVOLVER PARA CORRECÇÃO e findings
 BLOCKER/MAJOR/MINOR com ficheiro/linha, cobertura e limitações. Não implementar,
 activar, aceder a bases ou fazer merge. Revisão pendente até existir parecer real;
 Codex não substitui Claude. Após revisão, Administração escolhe a próxima ordem.
+
+## PR #48-R1 — confirmação incremental solicitada
+
+[Ordem/revisão de 03-11-2026](https://github.com/amgsrosario/fac/pull/48#issuecomment-6600046074): APROVADO COM RESERVAS 0/0/1 sobre `fdacf90`. Rever exclusivamente `fdacf90..HEAD` R1 (SHA exacto no PR/relatório), confirmando RES01–RES04 no mapa e no estado operacional, todos **adiados/reservados, não cancelados**, com evidências E16/E17; certificação depois das fases preparatórias e dependências de assinatura. Confirmar O-1 pela atestação Claude, sem repetir testes; O-2 apenas qualifica os critérios futuros de M02.
+
+Emitir parecer incremental com severidades e referências, sem iniciar M01–M05 ou alterar gates. A correcção do executor não é aprovação independente. Ordem de execução mantida; Segurança/H2-07/H2-08 não reabertas; PR draft/sem merge.

@@ -85,6 +85,23 @@ escolhe mecanismo/chave ou custódia D-SIGN-02..05, reservadas à fase final.
 | P02 Demo/GOLDEN novo | NÃO DEMONSTRADO como realizado após H2-05 | E13 guia exige nova instalação e aprovação de outro GOLDEN | Não actualizar Ubuntu, restaurar seed antigo ou reutilizar DEMO26 comercial. Qualquer missão demo nova é autónoma; não repetir #38 como demo |
 | P03 Entrada piloto comercial | BLOQUEADO | Gates fiscais/financeiros, credenciais/dados/séries, assinatura final e autorização de instalação | Não propor data ou cutover. Aceitar primeiro evidência de piloto não produtivo |
 
+## Reservados para fases posteriores — adiados, não cancelados (PR #48-R1)
+
+A repriorização mantém estes trabalhos no roteiro, sem alterar a sequência
+M01–M05 nem autorizar a sua execução. [Fonte E16 e atestação E17](EVIDENCE.md).
+
+| ID | Trabalho preservado | Estado e evidência | Dependências / limite |
+| --- | --- | --- | --- |
+| RES01 | Bloco fiscal NC/ND e RC/NL | ADIADO/RESERVADO, NÃO CANCELADO. OPERATIONAL_STATE da base 051b1fc, secção Fundação fiscal, indica próximo bloco sujeito a nova OP; contrato OP19 preserva decisões funcionais | Nova OP delimitada, validações específicas e gates mantidos. Mecanismos RC internos posteriores não equivalem ao fecho de todo este bloco. Não equiparar NL histórico a RL nem homologar correspondência por esta inclusão |
+| RES02 | Gates legais NL/RCzero/descontos/adiantamentos | ABERTOS/RESERVADOS, NÃO CANCELADOS. OPERATIONAL_STATE secção OP19 e INSTITUTIONAL_MEMORY «Contrato comercial e financeiro aprovado — OP19» | Validação específica antes de activação; preservar distinção entre decisão funcional e conformidade fiscal. Não alterar F2/T1 ou inventar regras |
+| RES03 | Auditoria Funcional Final | ADIADA E MANTIDA. Sequência estratégica da base 051b1fc, item 5 | Depois dos incrementos e evidências necessários, em missão própria. Não é nova auditoria de Segurança nem se considera cumprida pelo inventário, pela CI ou pela revisão deste mapa |
+| RES04 | Preparação e Certificação AT | ADIADA E MANTIDA. Sequência estratégica da base 051b1fc, item 6; objectivo institucional de certificação preservado | Posterior às fases preparatórias M01–M05 e às dependências de assinatura D-SIGN-02..05, com validações/documentos/gates aplicáveis. Sem candidatura, certificação, activação ou contratação nesta missão |
+
+O adiamento não elimina estes itens nem presume que já estejam implementados,
+validados ou certificados. O piloto M05 é não produtivo e não antecipa a
+certificação ou o piloto comercial. D-SIGN-02..05 continuam reservadas à fase
+final, sem ordem de implementação pelo presente mapa.
+
 ## Não são pendências novas deste levantamento
 
 - H2-07 e H2-08: entregues/integradas, não reabrir achados encerrados.
