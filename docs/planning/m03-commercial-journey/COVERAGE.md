@@ -33,4 +33,4 @@ MockMvc com serviços/persistência reais não é browser, deployment TLS/HBA, i
 
 Ver [VALIDATION.md](VALIDATION.md): 27 casos finais aprovados (9 novos +18 seleccionados), package aprovado; duas tentativas anteriores separadas, sem alteração funcional. Revisão Claude pendente.
 
-R1 ordenada em #46/6627651498: retirar alegação de propagação de alterações do mestre a linhas/totais; os preços das linhas são enviados explicitamente. Novas asserções de edição de artigo e PUT/DELETE de linha preparadas, execução incremental pendente.
+R1 ordenada em #46/6627651498: retirar alegação de propagação de alterações do mestre a linhas/totais; os preços das linhas são enviados explicitamente. Novas asserções de edição de artigo e PUT/DELETE de linha aprovadas nos nove casos da execução R1 em `49b1623`; confirmação incremental Claude pendente.
