@@ -1,0 +1,59 @@
+# M04 — Fontes e prova reutilizada
+
+04-11-2026. Base integrada `ff9d2ec92e2419cbe6fec9be22d65afa5520e84b` (PR #51), ancestralidade de `41a73bb` confirmada por Git, merge confirmado por API e remoto HTTPS. Checkout principal antigo e tracking antigo não usados como base. [Ordem #46/6628280906](https://github.com/amgsrosario/fac/issues/46#issuecomment-6628280906), [contrato M04](../reprioritization-2026-11-02/MISSIONS.md), [mapa anterior](../reprioritization-2026-11-02/PENDING_MAP.md). Sem M05, assinatura produtiva, homologação ou implementação SAF-T.
+
+Legenda: F=leitura actual de fonte/código; R=prova anterior arquivada e identificada; P=contrato/prova futura proposta. Demonstrado não significa homologado/certificado. Não reabrir decisões D-CAT-1/2A/3, H2-02 ou M01–M03.
+
+## Decisões e evidências
+
+| ID | Fonte | Alcance verificado / limite |
+| --- | --- | --- |
+| D01 | ADR-003, H1_1_FT_SPEC, D-CAT-2_MATRIX e fonte H2-02 em docs/governance | FT/FR partilham tipologia interna FT e diferem na liquidação imediata; RC reduz dívida. Homologação semântica não homologa 2/1/1, projecções ou RC/RG. H1.1 conserva estados históricos A/B já superados pela política A aprovada em H2-02; não reapresentar essa escolha |
+| E01 | docs/fiscal/catalog/H2_03_IMPLEMENTATION.md e H2_03_VALIDATION.md; arquivo issue39/2026-10-28-h203-minors-isolated | R: 318 casos reportados em 15 classes sobre `6c32e283`; manifesto a7171f1a09c86196c27b171f8e70b37b2e4edb84dcf41852697543b871647815, **50/50 ficheiros conferidos por hash agora**. SQL/Java, UPSERT/conversões, vínculos e V25–V28; revisões sintéticas não homologam valores |
+| E02 | Dossier H2-04/R1 no objecto local `64c6a2d1a33cd5926bcd67b5c50c2fc995c126c2`, docs/fiscal/catalog/H2_04_{FT_DOSSIER,SOURCES,TRACEABILITY,ACCEPTANCE}.md | F/R: ler via git show; estes ficheiros não estão na base integrada M04. Não apresentar a branch documental como integrada. H401–H413/T00–T14 são oráculos, não testes novos executados |
+| E03 | docs/fiscal/h2-05/{IMPLEMENTATION,VALIDATION,R1,R2}.md; arquivo h2-05/2026-10-28-r2 | R: manifesto 9252db455eafd206e7f1a9879ba1d9869ad6d1032af101c9a874592e83079b9f, **124/124 ficheiros conferidos**. XML final contado agora:17 classes/286 casos/0 falhas/erros/ignorados em e1e9e63, tree 7c1350086e6308c8aea9f8771f977c1753e63353. Não somar254 da execução anterior. Os ficheiros fiscais/PDF/QR examinados e testes PDF não mudaram até à base M04; não é nova execução sobre ff9d2ec |
+| E04 | Pareceres Claude H2-04-R1 e H2-05-R2, arquivo Relatorios-AR2/TUULI | Originais/sidecars conferidos: H2-04-R1 SHA-256 `8a06be839a56ad791654dcdc27cc49e01e3c9f73d97678bb9f7f67e7dd809718`, reserva de fonte então aberta; H2-05-R2 SHA-256 `d377b2f572fb9f3c95e1b19dc2bc06e3cd7f0eb663842290086b325c21d6d5af`, APPROVE 0/0/0. Nenhum constitui homologação fiscal |
+| E05 | docs/planning/m03-commercial-journey/VALIDATION.md; parecer incremental Claude 04-11 e PR #51 | R:27 casos originais +9 R1 sobrepostos, não36 únicos; 409/rollback/ausência dos efeitos abrangidos. Parecer SHA-256 `186a75d90ecd53df62dea5e531a4424fc8c0086b4f2225c130d098f32d87f7de` conferido com sidecar. CI PR #51 run 41812144559 success safety/package, não suite PostgreSQL. O-6: temporário removido; cópia exacta permanece arquivada |
+
+| E06 | [H2-07/CONTRACT.md](../../fiscal/h2-07/CONTRACT.md):49–59,107–113; [H2-08/DECISIONS.md](../../fiscal/h2-08/DECISIONS.md):135–139,202–215; [FiscalDocumentSignatureSource.java](../../../src/main/java/com/ar2lda/fac/service/FiscalDocumentSignatureSource.java):17–18 | F: ensaio H2-07 não é fornecedor produtivo. H2-08 documenta keyVersion/proveniência e exportação histórica; não autoriza novas escolhas D-SIGN. A record Signature só expõe documentId, documentNumber, atcud, fullSignature e softwareCertificateNumber: **não expõe versão de chave e não fornece actualmente a origem de HashControl**. A lacuna de contrato/persistência pertence à futura fase autorizada, não se preenche com certificado ou versão activa |
+
+Arquivos E01/E03 continuam nos seus locais originais sob `/home/arosario/tuuli-backups/`; não foram alterados nem copiados em massa. H2-05 usa fixtures/fornecedores sintéticos e ensaios PDF medidos; não prova assinatura real ou certificação. A M04 executou **zero testes de aplicação, zero SQL e zero Docker**. Só leitura Git/código/XML/hashes e consulta/download de fontes públicas. Não se justificou repetir testes válidos para uma matriz documental.
+
+## Fontes primárias
+
+| ID | Fonte e localização normativa | Preservação / alcance |
+| --- | --- | --- |
+| N01 | [CIVA36](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/civa_rep/Pages/iva36.aspx), n.os4–5 | Original28-10 em h2-04/2026-10-28-sources/civa36.html, SHA-256 `ba8c6314be4457ad865b8bb4c8c51d012ec804740f0a074d52b1f9b39e1a61fb` conferido. Requisitos gerais de factura; aplicabilidade ao emitente a validar |
+| N02 | [DL28/2019](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Decreto_Lei_28_2019.pdf), arts.4/6/7/35 | Original anterior dl28-2019.pdf, SHA-256 `16197b7b8155cf941ace7f2633003cb993a2948928316fc4dfbb0380949148d8` conferido. Não demonstra certificação TUULI |
+| N03 | [Portaria195/2020](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_195_2020.pdf), arts.2–4 | Original anterior portaria195-2020.pdf, SHA-256 `f2f5be68ba8bbc019bc6a9b35b5f169da8640259aba1233bd9e8c7cee32fd1b8` conferido. Série/tipo/comunicação, concatenação e ATCUD em todas as páginas; não aplicar dispensas transitórias antigas |
+| N04 | [AT, QR v1.1](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/Regras_mecanismos_comunicacao/Comunicacao_de_series_ATCUD/Codigo_barras_bidimensional/Documents/Especificacoes_Tecnicas_Codigo_QR.pdf), §§2–4 | Original anterior qr-especificacoes-v1_1.pdf, SHA-256 `e0f1fdd24623916ef573dcda9a99de4d3cb09e6396b2c2b01807af460bc552f2` conferido; geometria e campos QR. Vigência/aplicação integral sujeitas à validação fiscal, não ao nome da constante no código |
+| N05 | [Portaria302/2016](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_302_2016.pdf), AnexoI §§1/2/4.1/4.4 | Original anterior portaria302-2016.pdf, SHA-256 `7ef94dfc0d1e8677f5c705abe301148e1cdedfb7a4305634259be095ca37a0d0` conferido; referência para significado dos campos, não apenas XSD |
+| N06 | [FAQ oficial QR, resposta4443](https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/questoes_frequentes/pages/faqs-00084.aspx) | **Obtida integralmente HTTP 200 em 04-11-2026**, faq-qr-00084.html,79020 bytes, SHA-256 `01dccd91844986d3e86c86b68475c870b8038c400649b4e1d4cd514f913ddd47`. Conferida pergunta e resposta completas no HTML, não só índice de pesquisa. O antigo faqs-00879 permanece404. Regula preservação da mensagem, incluindo E/S, na reimpressão; não confundir com estado actual no SAF-T |
+| N07 | [Índice oficial SAF-T](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/SAF_T_PT/SAF_T_PT_Versao_PT/Paginas/default.aspx) e [XSD1.04_01](https://info.portaldasfinancas.gov.pt/apps/saft-pt04/saftpt1.04_01.xsd) | Obtidos04-11 HTTP 200. Índice 64806 bytes, SHA-256 `b36943debf17abd627172f295b16c1c71ee6e44d47b037a81dbd85dc1af2102c`. XSD 104696 bytes, SHA-256 `292c0ab4611e3f5a0cdf2abb4e62d9bd41254dc2e76a1fae4d35a8b132d79350`. Namespace PT_1.04_01 e minVersion1.1 lidos da estrutura, sem validar um exportador |
+
+| N08 | [Portaria363/2010, exemplar AT](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_363_2010.pdf), arts.6–7, para os quais remetem N05 §4.1.4.4 e N04 campoQ | **Original já obtido na H2-06 em 30-10-2026**, HTTP 200 segundo sources.json dessa recolha, 47074 bytes, SHA-256 `6bbfc8e1e4405542c0fa1533964d3ee0d235d363ba3adf0e83414edb2db2a5b3`, conferido agora. Origem preservada em `/home/arosario/tuuli-backups/h2-06/2026-10-30/portaria-363-2010.pdf`; cópia byte a byte no arquivo M04-R1. **N05 §4.1.4.5 define HashControl como versão da chave privada**; N08 dá o fundamento remissivo da assinatura. Exemplar/alterações não constituem confirmação global de vigência ou enquadramento, nem homologação |
+
+A reserva **de obtenção integral** N7 da H2-04 fica documentalmente suprida pela N06; não se reescrevem as fontes/pareceres históricos e não se declara fechado o gate QR/PDF. Datas de obtenção são distintas de datas de vigência; fonte disponível não confirma por si a situação fiscal de um emitente. As decisões/validações materiais continuam na [matriz](MATRIX.md).
+
+## Integridade desta recolha
+
+Arquivo M04 `/home/arosario/tuuli-backups/m04/2026-11-04/`: 6 ficheiros + MANIFEST_SHA256.json (955 bytes), SHA-256 `1536e33418d9d9bd40d43ef7bb6cb2953663776074f946918536746d93af3468`. Contém HTML/XSD oficiais inalterados, retrieval.json (URL/data/status/hash), reused-evidence-verification.json e structural-inspection.json. [Metadados versionados](sources.json). Hash da tentativa404 não é hash de FAQ. Texto de pesquisa não substituiu original. Sem credenciais ou dados pessoais.
+
+## R1 — Delimitação das provas de 2/1/1 (C211)
+
+As linhas abaixo referem-se ao código imutável da base `ff9d2ec` e do HEAD revisto `ddd563b`; esta R1 não altera os componentes. O estado permanece parcial, com 2/1/1 pendente de validação fiscal expressa.
+
+| Componente e localização exacta | O que demonstra | O que não demonstra |
+| --- | --- | --- |
+| [demo-base.sql](../../../src/main/resources/demo/demo-base.sql):156–169 | Colunas área/entidade/sinal/imediata e linha FT com 2/1/1,false | É um **seed de demonstração**; não comprova homologação, código fiscal explícito nessa inserção ou configuração comercial legítima |
+| [FinancialFtOrigin.java](../../../src/main/java/com/ar2lda/fac/financial/FinancialFtOrigin.java):28–38 | Verifica estado EMITIDO, código fiscal FT, não imediata e EUR; cria posição DEBT no âmbito empresa/cliente/moeda | **Não lê área, entidade ou sinal do TipoDocumento**. A dívida criada não constitui prova do tuplo 2/1/1 |
+| [ExtratoClienteService.java](../../../src/main/java/com/ar2lda/fac/service/ExtratoClienteService.java):182,227–228 | Usa sinal1 para débito e sinal2 para crédito; caso imediato examina sinal | Demonstra apenas esse uso do sinal, não a combinação integral nem conformidade fiscal |
+| [ParametrosDocumentoView.tsx](../../../frontend/src/ParametrosDocumentoView.tsx):41 e [PendentesView.tsx](../../../frontend/src/PendentesView.tsx):372 | Filtram por área1/2 no comercial e área3 no financeiro | Não validam entidade/sinal nem homologam a combinação; opções/filtros UI não são autoridade fiscal |
+
+## R1 — Parecer e preservação
+
+[Ordem #46/6628777871](https://github.com/amgsrosario/fac/issues/46#issuecomment-6628777871). Original Claude M04 sobre `ddd563b`: APROVADO COM RESERVAS 0/0/2, SHA-256 `e09a436ba2818678a8fd2a82d94b5b42bd83f5020eb18357ad7201d7f6b888f0`, igual ao sidecar e à cópia referida pela Administração. Lido integralmente; original preservado. Não é aprovação da R1.
+
+Arquivo separado `/home/arosario/tuuli-backups/m04-r1/2026-11-04/`: 4 ficheiros + manifesto 743 bytes, SHA-256 `d5063556d61cc7948388492c145fd00730f147a4c91718c5c8ff8a3aa7b4e805`. Contém Portaria363 original, metadados HTTP originais da H2-06 e parecer/sidecar Claude inalterados. A recolha M04 anterior de 6 ficheiros e seu manifesto continuam intactos. Nenhum teste, SQL, migration ou Docker executado na R1; só leitura das fontes e correcção documental.
+
+O-1–O-4 permanecem observações não condicionantes. Não se declara o seu fecho nem se modifica código para as tratar. A forma do commit local E02 foi corrigida mecanicamente ao actualizar as fontes; restantes reservas e oráculos mantidos. Confirmação incremental Claude pendente.
