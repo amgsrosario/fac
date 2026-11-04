@@ -15,7 +15,11 @@ containers={};networks=[];secret_values=[];checks=[]
 
 def run(args,input=None,check=True):
     r=sp.run(args,input=input,stdout=sp.PIPE,stderr=sp.PIPE,cwd=ROOT)
-    if check and r.returncode:raise RuntimeError('Command failed: '+args[0]+' (details retained only after secret filtering)')
+    if check and r.returncode:
+        error=(r.stderr+r.stdout).decode(errors='replace')
+        for value in secret_values:error=error.replace(value,'[REDACTED]')
+        if OUT.exists():write('command-error.json',dict(command=args[0],exit_code=r.returncode,detail=error))
+        raise RuntimeError('Command failed: '+args[0]+'; see filtered command-error.json')
     return r
 
 def call(args):return run(args).stdout.decode().strip()
@@ -49,7 +53,7 @@ def make_pg(letter):
     e=envfile(letter+'-postgres.env',{'POSTGRES_PASSWORD':password()})
     docker_new(name,['--network',n,'--tmpfs','/var/lib/postgresql/data:rw,nosuid,size=768m','--env-file',str(e),'postgres:16.3'])
     for _ in range(100):
-        r=run(['docker','exec',name,'pg_isready','-U','postgres'],check=False)
+        r=run(['docker','exec',name,'pg_isready','-h','127.0.0.1','-U','postgres'],check=False)
         if r.returncode==0:break
         time.sleep(.3)
     cluster=pg_cluster(name);assert cluster not in ['7689035507522658342','7701042457621884972']
@@ -207,9 +211,19 @@ try:
     for image in ['postgres:16.3','node:20-alpine','eclipse-temurin:21-jre']:
         x=json.loads(call(['docker','image','inspect',image]))[0];images[image]=dict(id=x['Id'],digests=x.get('RepoDigests'))
     write('images.json',images)
-    with (OUT/'package.log').open('wb') as f:
-        r=sp.run(['/mnt/c/Tools/apache-maven-3.9.16/bin/mvn','-o','-B','-DskipTests','package'],cwd=ROOT,stdout=f,stderr=sp.STDOUT)
-    check('package',r.returncode==0);check('Git unchanged after package',identity()==before);write('jar.json',dict(bytes=JAR.stat().st_size,sha256=digest(JAR),git=identity()))
+    if len(sys.argv)==3 and sys.argv[1]=='--reuse-package':
+        previous=(ROOT/'target/m05-evidence'/sys.argv[2]).resolve()
+        assert previous.parent==(ROOT/'target/m05-evidence').resolve()
+        prior=json.loads((previous/'jar.json').read_text())
+        assert prior['sha256']==digest(JAR) and not prior['git']['status']
+        assert not call(['git','diff',prior['git']['head'],'HEAD','--','src','frontend','pom.xml'])
+        write('package-reused.json',dict(original=str(previous),original_manifest_sha256=digest(previous/'MANIFEST_SHA256.json'),original_jar=prior,production_code_unchanged=True))
+    else:
+        assert len(sys.argv)==1
+        with (OUT/'package.log').open('wb') as f:
+            r=sp.run(['/mnt/c/Tools/apache-maven-3.9.16/bin/mvn','-o','-B','-DskipTests','package'],cwd=ROOT,stdout=f,stderr=sp.STDOUT)
+        check('package',r.returncode==0)
+    check('Git unchanged after package/reuse',identity()==before);write('jar.json',dict(bytes=JAR.stat().st_size,sha256=digest(JAR),git=identity(),reused_package=len(sys.argv)>1))
     a=make_pg('a');boot=start_app(a,'migration',True);collect_log(boot,'migration-a.log');remove(boot)
     check('initial installation without users',sql(a['pg'],a['db'],'select count(*) from utilizador')=='0')
     grants(a);admin_password=password();cli(a,admin_password,0)
