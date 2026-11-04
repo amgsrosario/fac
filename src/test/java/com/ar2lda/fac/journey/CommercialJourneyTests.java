@@ -54,7 +54,7 @@ class CommercialJourneyTests {
         http.perform(auth(post("/artigos"),admin).contentType(MediaType.APPLICATION_JSON).content(article(true))).andExpect(status().isCreated());
         // An unclassified legacy-shaped TEST fixture, NOT a governed FT or fiscal approval.
         db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,liquidacao_imediata) values('M3N','Fixture nao homologada M03',1,1,1,false)");
-        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_comunicacao_at) values('M3N','SYNTH','Apenas teste negativo',0,'SYNM0301','2026-01-01'),('M3N','NOAT','Sem codigo de teste',0,null,null)");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('M3N','SYNTH','Apenas teste negativo',0,'SYNM0301','2026-01-01'),('M3N','NOAT','Sem codigo de teste',0,null,null)");
     }
     @BeforeEach void cleanDrafts() throws Exception {
         for(Long id:db.queryForList("select id from documento_comercial",Long.class))
