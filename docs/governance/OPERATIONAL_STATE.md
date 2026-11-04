@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-11-03, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-11-04, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- HEAD integrado confirmado no início da M02 em 03-11-2026: `ca1e80245d95362eb8c7a78c90350f1a930eb0bf`, merge do PR #49 (M01), confirmado por HTTPS/FETCH_HEAD. Checkout principal preservado; tracking origin local antigo não usado como base. Integração não significa actualização de base, deploy ou activação.
+- HEAD integrado confirmado no início da M03: `e6bb33f76523a268b39978733e099c96e98d7999`, merge do PR #50 (M02), confirmado por HTTPS/FETCH_HEAD. Checkout principal preservado; tracking origin local antigo não usado como base. Integração não significa actualização de base, deploy ou activação.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
 ## JWT / Gestão e Invalidação de Sessões
@@ -175,7 +175,7 @@ estrutural de persistência nesta missão. Política RC6/núcleo2 permanece rese
 Pendente permanece fonte operacional; RC legado não escreve no núcleo.
 [Contratos](../fiscal/op22-a/QUERY_CONTRACTS.md) e [validação](../fiscal/op22-a/VALIDATION.md).
 Validação local:99 testes distintos aprovados (mais7 reexecuções dirigidas),
-PostgreSQL16.3 descartável V19, package BUILD SUCCESS, diff/links aprovados.
+PostgreSQL 16.3 descartável V19, package BUILD SUCCESS, diff/links aprovados.
 Revisão independente op22_a_review: APROVAR, BLOCKER0/MAJOR0/MINOR0.
 Entrega OP22-A publicada e PR #22 merged, confirmado por Git/GitHub. CI do HEAD
 b83f418 aprovado na execução38269640856 (safety e package; não integração SQL).
@@ -985,7 +985,7 @@ Reconhecimento dirigido não localizou bootstrap comercial local aprovado: CRUD 
 
 Evidência restrita `tuuli-backups/m02/2026-11-03/`, 100 entradas + manifesto geral SHA-256 `4cdcbd11d90c1c69c35fc6badf130f47f8e0fc550860418d5530f0ed622f83b0`. Recursos e segredos efémeros M02 removidos. Nenhuma base conservada/histórica, Ubuntu/GOLDEN ou worktree `7ce573f` operada; V29 não instalada na preparação conservada (V27 conforme M01). Nenhum histórico fiscal reclassificado, saldo, consumidor ou manifesto alterado.
 
-**Estado M02: implementada/testada em isolamento, revisão independente Claude pendente** — [handoff](../planning/m02-local-admin-provisioning/REVIEW_HANDOFF.md). Autorizações/identidades comerciais, roles/HBA reais e operação numa instalação real dependem de ordem própria. Sem push, PR, merge, deploy, cutover ou activação. Legado autoridade operacional; FinancialCore inactivo, 1e suspensa, gates mantidos e M03–M05 não iniciadas.
+**Estado inicial M02 (superado pelo registo M03 abaixo): implementada/testada em isolamento, então com revisão independente Claude pendente** — [handoff](../planning/m02-local-admin-provisioning/REVIEW_HANDOFF.md). Autorizações/identidades comerciais, roles/HBA reais e operação numa instalação real dependem de ordem própria. Sem push, PR, merge, deploy, cutover ou activação. Legado autoridade operacional; FinancialCore inactivo, 1e suspensa, gates mantidos e M03–M05 não iniciadas.
 
 
 ### M02-R1 — Correcção incremental após revisão Claude, 03-11-2026
@@ -998,4 +998,24 @@ Arquivo separado `tuuli-backups/m02-r1/2026-11-03/`, 41 artefactos + manifesto d
 
 O-2 dono SECURITY DEFINER não-superuser continua limite de prova de instalação; testes de owners são de **recusa**. O-3 localhost depende de resolução para loopback, preferir 127.0.0.1. O-4 dívida de testes históricos fora do incremento; O-5 colisão V29 condicional a eventual mandato futuro sobre worktree desconhecida, sem presumir integração ou reabrir H2-07. Java nativo disponível é 21; caminhos pós-21 simulados e guarda implementada, não declarada execução nativa inexistente. O-1 mantém classificação não condicionante original.
 
-**Confirmação incremental Claude pendente**, [handoff actualizado](../planning/m02-local-admin-provisioning/REVIEW_HANDOFF.md) para transmissão efectiva pela Administração. Sem auto-aprovação, push, PR, merge, contas reais, cutover, deploy, activação ou M03–M05. Legado autoridade operacional, FinancialCore inactivo, 1e suspensa, manifesto/gates preservados.
+**Estado na entrega R1: confirmação incremental então pendente, entretanto aprovada e integrada pelo PR #50 conforme registo M03 abaixo**, [handoff actualizado](../planning/m02-local-admin-provisioning/REVIEW_HANDOFF.md) para transmissão efectiva pela Administração. Sem auto-aprovação, push, PR, merge, contas reais, cutover, deploy, activação ou M03–M05. Legado autoridade operacional, FinancialCore inactivo, 1e suspensa, manifesto/gates preservados.
+
+
+### M03 — Jornada comercial não fiscal, 04-11-2026
+
+[Ordem #46/6613324580](https://github.com/amgsrosario/fac/issues/46#issuecomment-6613324580). Base integrada confirmada `e6bb33f76523a268b39978733e099c96e98d7999`, merge PR #50/M02. Final M02 `e09433b` incluído; revisão incremental Claude 0/0/0, original/sidecar conferidos, SHA-256 `3a4f9110e2d0a8492e49a5a3bd53bddcf0c70baef98354c8aaba51c15cdd94a3`. CI PR #50 safety/package verde; não representa suite PostgreSQL. Supera as indicações históricas de revisão/integração M02 pendente. Observações O2–O9 e limites de instalação continuam válidos.
+
+[Levantamento M03](../planning/m03-commercial-journey/COVERAGE.md) reutilizou cobertura existente e limitou a lacuna à jornada HTTP autenticada sem fonte/revisão fiscal. Branch isolada `codex/m03-commercial-journey`, sem alterar principal ou outras worktrees. **27 casos distintos aprovados** (9 novos de jornada +18 seleccionados) e package no HEAD limpo `7acfc9ec71d9f5c46b61b162ec19a48c3e76c843`, tree `dfc0a646f7d348e7d687c137640669f0d9fc0746`; antes/depois iguais por classe. PG16.3 novo/tmpfs V1–V29, sem reutilizar dados conservados; não repetiu M01/#38. Duas tentativas iniciais de preparação do teste preservadas, corrigidas no teste, não somadas aos casos únicos. Nenhum defeito funcional demonstrado nem alteração de src/main/migrations.
+
+[Validação e limites](../planning/m03-commercial-journey/VALIDATION.md): rascunhos/linhas/mestres/parâmetros, auditoria/perfis e exportações CSV/XLSX não fiscais; 409 sem assinatura/manifesto, rollback da numeração e ausência de movimentos financeiros. Fixtures não homologam configuração fiscal; não é browser, SAF-T, deploy ou prontidão comercial. Arquivo restrito `tuuli-backups/m03/2026-11-04/`, 87 ficheiros + manifesto global SHA-256 `1af9232f2bc54289fcf490806dc995f7017930520f25c0cd1e3a68cce2791cd3`, cópias conferidas e originais preservados. Recursos/segredos efémeros próprios removidos.
+
+**Estado na entrega inicial M03: então preparada para revisão; primeira revisão recebida com duas reservas conforme R1 abaixo. Não integrada.** [Handoff](../planning/m03-commercial-journey/REVIEW_HANDOFF.md) a transmitir pelo PO/Coordenação; comentário GitHub não activa Claude. Sem push/PR/merge, contas reais, bases conservadas, demo/GOLDEN ou 7ce573f operadas. Mantidos manifesto vazio, HTTP 409 e gates fiscais; legado autoridade operacional, FinancialCore inactivo, Fatia 1e suspensa. M04/M05 não iniciadas; assinatura reservada à fase final, trabalhos fiscais adiados/auditoria final/certificação AT não cancelados.
+
+
+### M03-R1 — Reservas de cobertura, 04-11-2026
+
+[Ordem #46/6627651498](https://github.com/amgsrosario/fac/issues/46#issuecomment-6627651498). Parecer original Claude sobre `97db276`: **APROVADO COM RESERVAS 0/0/2**, SHA-256 `34d9bd8b279705b8bde4c975b5d6495718d169b58ef766bb6e048e7c739453b7`, original/sidecar conferidos e cópia inalterada preservada. Supera a indicação histórica de primeira revisão M03 pendente; não é confirmação da R1.
+
+MINOR-001: descrição do artigo efectivamente alterada e relida; retirada alegação de propagação do mestre às linhas/totais. MINOR-002: PUT/DELETE da linha com leituras persistidas e totais 24,60→30,75→12,30, sem mudar código funcional. [Matriz](../planning/m03-commercial-journey/COVERAGE.md) e [validação R1](../planning/m03-commercial-journey/VALIDATION.md) delimitam os resultados. **Apenas nove casos CommercialJourneyTests, nove aprovados/zero falhas/erros/ignorados**, no HEAD limpo `49b1623d34c1dae4061313a5476bab98cbd08261`, tree `9b33526066b69397db29de1b2c0a2ede19f6238b`, antes/depois iguais. Não somar aos 27 como casos únicos; não repetir as 18 regressões/package, M01/#38.
+
+Arquivo restrito separado `tuuli-backups/m03-r1/2026-11-04/`, 16 ficheiros + manifesto de 3062 bytes, SHA-256 `8c67239595d917a9ccd341b49b2cccb131f8341d190aeb9916b6a5b22d93a378`. Originais M03/87 ficheiros mantidos. PG16.3 sintético/tmpfs e recursos/segredo próprios descartados. Apenas teste/documentação, nenhuma base conservada/Ubuntu/GOLDEN/7ce573f operada. O-1–O-5 Claude e limites M02 mantidos. **Confirmação incremental Claude pendente**, [handoff](../planning/m03-commercial-journey/REVIEW_HANDOFF.md) para transmissão pelo PO. Sem push/PR/merge, contas reais, activação, deploy, cutover ou M04/M05; gates 409, manifesto vazio, FinancialCore inactivo e 1e suspensa.
