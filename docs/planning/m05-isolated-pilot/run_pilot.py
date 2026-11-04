@@ -223,6 +223,7 @@ try:
         with (OUT/'package.log').open('wb') as f:
             r=sp.run(['/mnt/c/Tools/apache-maven-3.9.16/bin/mvn','-o','-B','-DskipTests','package'],cwd=ROOT,stdout=f,stderr=sp.STDOUT)
         check('package',r.returncode==0)
+    JAR.chmod(0o644) # Public executable artifact only; secrets remain in private files.
     check('Git unchanged after package/reuse',identity()==before);write('jar.json',dict(bytes=JAR.stat().st_size,sha256=digest(JAR),git=identity(),reused_package=len(sys.argv)>1))
     a=make_pg('a');boot=start_app(a,'migration',True);collect_log(boot,'migration-a.log');remove(boot)
     check('initial installation without users',sql(a['pg'],a['db'],'select count(*) from utilizador')=='0')
