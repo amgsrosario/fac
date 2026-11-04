@@ -1,0 +1,134 @@
+{
+  "retrieval": [
+    {
+      "url": "https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/SAF_T_PT/SAF_T_PT_Versao_PT/Paginas/default.aspx",
+      "retrieved_at_utc": "2026-11-04T10:25:55.255274+00:00",
+      "status": 200,
+      "final_url": "https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/SAF_T_PT/SAF_T_PT_Versao_PT/Paginas/default.aspx",
+      "content_type": "text/html; charset=utf-8",
+      "file": "saft-index.html",
+      "bytes": 64806,
+      "sha256": "b36943debf17abd627172f295b16c1c71ee6e44d47b037a81dbd85dc1af2102c"
+    },
+    {
+      "url": "https://info.portaldasfinancas.gov.pt/apps/saft-pt04/saftpt1.04_01.xsd",
+      "retrieved_at_utc": "2026-11-04T10:25:55.903788+00:00",
+      "status": 200,
+      "final_url": "https://info.portaldasfinancas.gov.pt/apps/saft-pt04/saftpt1.04_01.xsd",
+      "content_type": "text/xml",
+      "file": "saftpt1.04_01.xsd",
+      "bytes": 104696,
+      "sha256": "292c0ab4611e3f5a0cdf2abb4e62d9bd41254dc2e76a1fae4d35a8b132d79350"
+    },
+    {
+      "url": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/questoes_frequentes/pages/faqs-00084.aspx",
+      "retrieved_at_utc": "2026-11-04T10:25:56.113942+00:00",
+      "status": 200,
+      "final_url": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/questoes_frequentes/pages/faqs-00084.aspx",
+      "content_type": "text/html; charset=utf-8",
+      "file": "faq-qr-00084.html",
+      "bytes": 79020,
+      "sha256": "01dccd91844986d3e86c86b68475c870b8038c400649b4e1d4cd514f913ddd47"
+    },
+    {
+      "url": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/questoes_frequentes/pages/faqs-00879.aspx",
+      "retrieved_at_utc": "2026-11-04T10:25:56.794707+00:00",
+      "status": 404,
+      "error": "HTTPError",
+      "original_sha256": null
+    }
+  ],
+  "reused_evidence": {
+    "h2-05/2026-10-28-r2": {
+      "manifest_sha256": "9252db455eafd206e7f1a9879ba1d9869ad6d1032af101c9a874592e83079b9f",
+      "verified_files": 124
+    },
+    "issue39/2026-10-28-h203-minors-isolated": {
+      "manifest_sha256": "a7171f1a09c86196c27b171f8e70b37b2e4edb84dcf41852697543b871647815",
+      "verified_files": 50
+    },
+    "h205_final": {
+      "classes": 17,
+      "counts": {
+        "tests": 286,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "2026-10-28_TUULI_H2-04-R1_verificacao-incremental_Claude.md": {
+      "bytes": 5300,
+      "sha256": "8a06be839a56ad791654dcdc27cc49e01e3c9f73d97678bb9f7f67e7dd809718",
+      "sidecar_matches": true
+    },
+    "2026-10-28_TUULI_H2-05-R2_confirmacao-final_Claude.md": {
+      "bytes": 6678,
+      "sha256": "d377b2f572fb9f3c95e1b19dc2bc06e3cd7f0eb663842290086b325c21d6d5af",
+      "sidecar_matches": true
+    },
+    "2026-11-04_TUULI_M03-R1_confirmacao-incremental_Claude.md": {
+      "bytes": 7260,
+      "sha256": "186a75d90ecd53df62dea5e531a4424fc8c0086b4f2225c130d098f32d87f7de",
+      "sidecar_matches": true
+    },
+    "civa36.html": {
+      "sha256": "ba8c6314be4457ad865b8bb4c8c51d012ec804740f0a074d52b1f9b39e1a61fb",
+      "verified_original": true
+    },
+    "dl28-2019.pdf": {
+      "sha256": "16197b7b8155cf941ace7f2633003cb993a2948928316fc4dfbb0380949148d8",
+      "verified_original": true
+    },
+    "portaria195-2020.pdf": {
+      "sha256": "f2f5be68ba8bbc019bc6a9b35b5f169da8640259aba1233bd9e8c7cee32fd1b8",
+      "verified_original": true
+    },
+    "portaria302-2016.pdf": {
+      "sha256": "7ef94dfc0d1e8677f5c705abe301148e1cdedfb7a4305634259be095ca37a0d0",
+      "verified_original": true
+    },
+    "qr-especificacoes-v1_1.pdf": {
+      "sha256": "e0f1fdd24623916ef573dcda9a99de4d3cb09e6396b2c2b01807af460bc552f2",
+      "verified_original": true
+    },
+    "scope": {
+      "new_application_tests": 0,
+      "database_access": false,
+      "sources_reused": true
+    }
+  },
+  "inspection": {
+    "inspection": "documentary only; no exporter, XML output or application tests executed",
+    "faq4443_in_full_html": true,
+    "faq_html_sha256": "01dccd91844986d3e86c86b68475c870b8038c400649b4e1d4cd514f913ddd47",
+    "xsd_attributes": {
+      "attributeFormDefault": "unqualified",
+      "elementFormDefault": "qualified",
+      "id": "SAF-T_PT",
+      "targetNamespace": "urn:OECD:StandardAuditFile-Tax:PT_1.04_01",
+      "version": "1.04_01",
+      "{http://www.w3.org/2007/XMLSchema-versioning}minVersion": "1.1"
+    },
+    "payment_direct_elements": [
+      "PaymentRefNo",
+      "ATCUD",
+      "Period",
+      "TransactionID",
+      "TransactionDate",
+      "PaymentType",
+      "Description",
+      "SystemID",
+      "DocumentStatus",
+      "PaymentMethod",
+      "SourceID",
+      "SystemEntryDate",
+      "CustomerID",
+      "Line",
+      "DocumentTotals",
+      "WithholdingTax"
+    ],
+    "hashcontrol_is_not_generalized_to_payments": true,
+    "validator_xsd_1_1_required_by_schema": true
+  },
+  "archive_manifest_sha256": "1536e33418d9d9bd40d43ef7bb6cb2953663776074f946918536746d93af3468"
+}
