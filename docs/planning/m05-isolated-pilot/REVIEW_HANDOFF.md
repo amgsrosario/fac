@@ -14,3 +14,9 @@ Prioridades:
 Arquivo restrito `/home/arosario/tuuli-backups/m05/2026-11-04/`, 54 ficheiros + manifesto SHA-256 `b016d9fccaf74b2d19d2b58ca2eded52326914b4ff4d82c6c4878d49d37516b3`. Original final `20261104-114945-709f54/MANIFEST_SHA256.json`, SHA-256 `d8299a487bef35f3cc352e977105fdabc703f059611cef57778eeab7c4268ee2`. Todos os originais anteriores mantidos. Não publicar dump/logs brutos; mesmo sintéticos, acesso restrito.
 
 Emitir APROVADO / APROVADO COM RESERVAS / DEVOLVER PARA CORRECÇÃO, BLOCKER/MAJOR/MINOR, HEAD, cobertura/limites e condições comerciais em aberto. Não tomar decisões fiscais, activar, operar bases conservadas, fazer push/PR/merge/cutover ou promover GOLDEN. Sem runtime Claude acessível nesta sessão: pedido para transmissão efectiva pelo PO, não activação por documento/comentário. Executor não se auto-aprova.
+
+## Confirmação incremental M05-R1 — #46/6631045763
+
+Comparar 6318e52..HEAD final indicado no relatório externo. MINOR-001: branch/Maven parametrizados, digests fixos, obtenção/limpeza manual explícitas, percurso sem argumentos com build novo em HEAD limpo4d4d9e4/tree cee9b134:48/48 checks aprovados. MINOR-002: divergência podeEmitir=true/emissão400, matriz de sinais e limites, sem mudança do diagnóstico. MINOR-003: MockMvc/test/fixtureSQL M03 versus runtimeM05; decisão de aceitação/negativo adicional/adiamento reservada à Administração. O-1–O-6 mantidas não condicionantes, não alegadas resolvidas.
+
+Original Claude/sidecar e511c301b4894aeb5869f98776720bdc81fc0b53afc45f797837428117cb4ffb conferidos; hash da cópia executiva distinto explicitado. Arquivo incremental 35 ficheiros + manifesto72a931d520966f8cf9b2a86a25b1dd788af8320c2683e5ee7060a15b4a2b3ddb. Conferir cópias/Git/logs/checks/limpeza e alcance das provas sem repetir ensaios, salvo risco concreto. Não declarar aprovação até parecer independente; pedido para transmissão efectiva pelo PO.

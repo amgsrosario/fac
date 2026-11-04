@@ -67,3 +67,9 @@ Ordem #46/6631045763. Original Claude/sidecar conferidos: SHA-256 `e511c301b4894
 | MINOR-003 | M03=MockMvc/test/fixtureSQL/409 assinatura; M05=runtime HTTP/400 emissão sem AT e409 criaçãoFT catálogo vazio. Fonte igual permite inferência da lógica, não demonstração runtime da ausência de assinatura. Decisão de aceitação/ensaio adicional/adiamento reservada à Administração |
 
 Sem alteração do produto, gates, permissões, emissores ou diagnóstico. Uma nova execução não transforma observações O-1–O-6 em garantias adicionais. Originais das 47 verificações e tentativas anteriores preservados; não somar verificações repetidas como casos únicos.
+
+### Ensaio R1 por omissão concluído
+
+`python3 docs/planning/m05-isolated-pilot/run_pilot.py`, sem argumentos/sem reuse, Maven obtido por PATH, build offline novo: **48/48 verificações aprovadas** (47 percursos anteriores mais check package; não casos únicos/JUnit). Execução `20261104-125327-6ca8de`, HEAD limpo antes/depois `4d4d9e47aa273a34e286ec364b1a4453a4c5d861`, tree `cee9b134a340a903eb0771398c240ffa59c8eabd`. Nenhuma suite M01–M04 repetida; package -DskipTests. Imagens por digest, sem pull. Restauro/dados/sequences/FKs e gates preservados; não é prova de outra máquina ou nova prova de assinatura409 runtime.
+
+Backup sintético 237659 bytes SHA-256 `081288af1d519862ac1874fb0e69d14228f682baa6e08c8d254396cc89d202b5`. Manifesto da execução SHA-256 `b803b38ca6f81c6074dbeb0fbfed2e849f64bff53410f04d996290fba4cf2599`. Originais em target/m05-evidence/20261104-125327-6ca8de; cópias byte a byte verificadas em arquivo separado `tuuli-backups/m05-r1/2026-11-04/`, com parecer/sidecar originais. **35 ficheiros + manifesto global 5812 bytes**, SHA-256 `72a931d520966f8cf9b2a86a25b1dd788af8320c2683e5ee7060a15b4a2b3ddb`. Consulta Docker final por label M05 sem contentores/redes; pasta privada da tentativa removida. Originais M05 anteriores intactos. Confirmação incremental Claude pendente.
