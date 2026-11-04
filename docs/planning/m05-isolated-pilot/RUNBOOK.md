@@ -71,3 +71,29 @@ M03: 409 de assinatura em MockMvc/perfil test, fixture SQL com marcador de séri
 A execução R1 `20261104-125327-6ca8de` correu sem argumentos, com Git limpo em `4d4d9e47aa273a34e286ec364b1a4453a4c5d861` (tree `cee9b134a340a903eb0771398c240ffa59c8eabd`). O comando `mvn -o -B -DskipTests package`, resolvido pelo PATH, terminou com sucesso sobre um `target/` existente. O log regista classes actualizadas, testes omitidos e a fase de reempacotamento Spring Boot. O JAR utilizado conservou os mesmos bytes e SHA-256 `a1e73e8f67aeaf813775587b64e69ae9a0230118116fcd0bce8efcad544e8b09` do artefacto produzido em `c0968cd49fc3f76cd9b3c1232a9f36cb0dc61373` (tree `a42ec72f2b25dcceb1b35cd408e53c1433e771db`). Em `jar.json`, `git` identifica o ensaio e `reused_package=false` indica a ausência da opção `--reuse-package`. A prova cobre o package incremental e o percurso de instalação e restauro com o binário existente. Falta uma execução integral de raiz, da compilação com `target/` vazio ao restauro.
 
 [A ordem #46/6633281690](https://github.com/amgsrosario/fac/issues/46#issuecomment-6633281690) regista a confirmação R1 com 0 BLOCKER, 0 MAJOR e 1 MINOR. Os sidecars conferem o parecer inicial vinculativo (`e511c301b4894aeb5869f98776720bdc81fc0b53afc45f797837428117cb4ffb`) e o parecer incremental (`2c66fd9c1a01b548d10cc3c9cbfbe553eb5f0566b24c753a7468c737f390d278`). Segundo a atestação do revisor, `4b54cac3171ecb84627ca0f3d2d1d7baddcdfcb059a43bb76416d62f32014cd8` identifica a primeira versão do parecer inicial, anterior a dois acertos textuais. O-1 a O-8 permanecem registadas. A decisão sobre a prova de assinatura 409 em runtime é administrativa e separada. Confirmação R2 pendente.
+
+### Preparação e invocação da execução `20261104-173954-ef7da4`
+
+Os comandos abaixo foram recuperados da chamada de terminal desta sessão. São excertos da mesma sequência `set -eu`. A saída da chamada identifica `w=/tmp/m05-clean.PRPFyd` e `p=/tmp/m05-clean-runner.NOBZoH.py`.
+
+```bash
+set -eu
+w=$(mktemp -d /tmp/m05-clean.XXXXXX)
+git worktree add --detach "$w" 1d1c63da79340c9df3b6c07dd81dcc8156d68ff7
+cd "$w"
+test ! -e target
+mkdir target
+test -z "$(ls -A target)"
+p=$(mktemp /tmp/m05-clean-runner.XXXXXX.py)
+```
+
+Entre estes excertos, `python3 - "$p" <<'PY'` gerou o runner a partir do ficheiro versionado, com adaptações para esta execução. O runner resultante, preservado como `run_pilot.py` no manifesto original, coincide byte a byte com o script temporário. Depois da geração, a chamada original executou:
+
+```bash
+printf '%s\n' "$w" "$p"
+python3 "$p"
+```
+
+O runner voltou a verificar que `target/` estava vazio antes de criar os directórios de evidência. Executou `mvn -o -B -DskipTests package`. A saída final e o log de compilação foram preservados. Os testes shell de ausência e de directório vazio são silenciosos e a worktree foi removida, pelo que a comprovação resulta da sequência registada e da verificação no runner, sem uma listagem autónoma do directório inicial.
+
+**Reprodução futura.** Numa worktree destacada do mesmo commit, aplicar as verificações acima e invocar, a partir da raiz dessa worktree, `python3 /caminho/do/arquivo/20261104-173954-ef7da4/run_pilot.py`. Este comando com o caminho de arquivo é uma reconstrução para reprodução. Na execução original foi usado o script temporário gerado. O bloco acima é um excerto, pelo que a geração intermédia não deve ser omitida se for usada a invocação original.
