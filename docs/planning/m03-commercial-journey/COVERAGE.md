@@ -28,3 +28,7 @@ Para testar rascunhos sem publicar uma revisão fiscal, existe uma fixture **nã
 Sem rascunho FT produtivo criado a partir de catálogo vazio: esse percurso está deliberadamente bloqueado por H2-03/gates. Não fabricar catálogo para pintar a jornada de verde. Esse bloqueio esperado será separado de um defeito real.
 
 MockMvc com serviços/persistência reais não é browser, deployment TLS/HBA, isolamento runtime comercial, SAF-T ou emissão/certificação. M04/M05 e assinatura continuam por autorizar; observações M02 O2–O9 conservadas e não resolvidas implicitamente. Os ensaios existentes de segurança aqui reutilizados não são repetidos nem reabertos.
+
+## Resultado posterior ao levantamento
+
+Ver [VALIDATION.md](VALIDATION.md): 27 casos finais aprovados (9 novos +18 seleccionados), package aprovado; duas tentativas anteriores separadas, sem alteração funcional. Revisão Claude pendente.
