@@ -94,7 +94,7 @@ class CommercialJourneyTests {
         long second=body(http.perform(auth(post(doc(id)+"/linhas"),operator).contentType(MediaType.APPLICATION_JSON).content(line("M3ART",2,5))).andExpect(status().isCreated()).andReturn()).get("id").asLong();
         http.perform(auth(get(doc(id)),consulta)).andExpect(status().isOk()).andExpect(jsonPath("$.valorTotal").value(24.6));
         http.perform(auth(put(doc(id)+"/linhas/ordem"),operator).contentType(MediaType.APPLICATION_JSON).content("{\"linhaIds\":["+second+","+first+"]}")).andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(second));
-        http.perform(auth(put(doc(id)),operator).contentType(MediaType.APPLICATION_JSON).content("{\"dataEmissao\":\"2026-11-03\",\"armazemCargaId\":\"M3A\",\"observacoes\":\"M03 rascunho\"}")).andExpect(status().isNoContent());
+        http.perform(auth(put(doc(id)),operator).contentType(MediaType.APPLICATION_JSON).content("{\"dataEmissao\":\"2026-11-03\",\"armazemCargaId\":\"M3A\",\"moedaId\":\"EUR\",\"rivaId\":\"CON\",\"pPagamentoId\":\"P30\",\"transporteId\":\"M3T\",\"observacoes\":\"M03 rascunho\"}")).andExpect(status().isNoContent());
         http.perform(auth(get(doc(id)),consulta)).andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("RASCUNHO")).andExpect(jsonPath("$.observacoes").value("M03 rascunho"));
         http.perform(auth(get("/documentos-comerciais?estado=RASCUNHO&size=20"),consulta)).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
         http.perform(auth(get("/auditoria?entidadeTipo=DOCUMENTO_COMERCIAL&entidadeId="+id),admin)).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements",org.hamcrest.Matchers.greaterThanOrEqualTo(1)));
