@@ -1,0 +1,16 @@
+# M05 — Pedido de revisão independente Claude Code
+
+Ordem #46/6629520296. Branch codex/m05-isolated-pilot, worktree `/home/arosario/Projetos/fac/.worktrees/m05-isolated-pilot`, base `d17de43f714a18c7f7bb7b1fc719f71d77b4e14f`/PR #52. HEAD final exacto no relatório externo. Ler AGENTS, memória/estado, contrato M05, RUNBOOK.md, VALIDATION.md e run_pilot.py; comparar base..HEAD, apenas testes/ferramenta de ensaio e documentação, sem src/main/configurações/migrations.
+
+Prioridades:
+
+1. Dois clusters sintéticos tmpfs distintos, recursos próprios, HBA loopback/SCRAM, HTTP proxy loopback, runtime não-root/read-only e roles separadas. Não aceder a bases conservadas ou executar o runner sem mandato/risco concreto. Conferir limites do inventário persistido e o que o script realmente verifica.
+2. CLI real M02 via PTY/container, autorização0600/tmpfs root privado,7 prompts/sem eco/sem Spring. Dono não-superuser com pg_control_system mínimo, operador restrito, consumo/auditoria e revogação. Primeiro admin sintético; não é bypass HTTP ou grant administrativo automático. Avaliar se prova positiva do dono neste ambiente corresponde ao limite declarado O-2 sem extrapolação.
+3. HTTP real de health/login/perfis, mestres/rascunho/leitura/diagnóstico/exportação/auditoria e recusa dos gates. Emissão400 na barreira de código AT e catálogo 409 efectivamente observados; **assinatura 409 só reutilizada da M03**, explicitamente não nova prova HTTP M05. Não foi fabricada série AT. Confirmar essa distinção e a suficiência da reutilização face ao mandato, sem inventar homologação.
+4. Backup sintético/restauro transaccional num segundo destino:43 tabelas/15 sequences iguais antes de logins,86 FKs/0 órfãos, validate 29 sem migrations, comprovativo consumido recusa bootstrap B, login e rascunho restaurados. Segredos/roles globais/HBA fora do dump; nenhum reset ou user por SQL.
+5. Proveniência: runner executado limpo 244abddbfd91ee9091becd87a060ab0d81551c33/tree 1f24738f59141c21dc72aa1ff93b06bcb284a5dc. JAR construído limpo c0968cd/tree a42ec72f e reutilizado por hash com código funcional igual. Arquivo conserva o JAR, 47 checks não são 47 testes JUnit; tentativas falhadas e ausência do stderr da primeira estão explícitas. Não repetir M01/#38/suites nem interpretar build -DskipTests como testes.
+6. Hashes e descarte, ausência de credenciais/transcript de terminal no arquivo, datas/versões efectivas. A evidência textual é do executor, não execução independente. Fontes/contratos M04 continuam com gates próprios.
+
+Arquivo restrito `/home/arosario/tuuli-backups/m05/2026-11-04/`, 54 ficheiros + manifesto SHA-256 `b016d9fccaf74b2d19d2b58ca2eded52326914b4ff4d82c6c4878d49d37516b3`. Original final `20261104-114945-709f54/MANIFEST_SHA256.json`, SHA-256 `d8299a487bef35f3cc352e977105fdabc703f059611cef57778eeab7c4268ee2`. Todos os originais anteriores mantidos. Não publicar dump/logs brutos; mesmo sintéticos, acesso restrito.
+
+Emitir APROVADO / APROVADO COM RESERVAS / DEVOLVER PARA CORRECÇÃO, BLOCKER/MAJOR/MINOR, HEAD, cobertura/limites e condições comerciais em aberto. Não tomar decisões fiscais, activar, operar bases conservadas, fazer push/PR/merge/cutover ou promover GOLDEN. Sem runtime Claude acessível nesta sessão: pedido para transmissão efectiva pelo PO, não activação por documento/comentário. Executor não se auto-aprova.

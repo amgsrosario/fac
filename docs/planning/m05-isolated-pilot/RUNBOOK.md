@@ -25,6 +25,16 @@ A CLI M02 recusa autorização cujo caminho tenha ancestrais de dono diferente d
 
 ## Interpretação
 
-Resultados efectivos ainda pendentes até existir evidence/result.json. Não tratar checks do runner como casos JUnit ou suite integral. Digests pré/pós-restauro são comparados antes do login B, pois login escreve legitimamente auditoria/último acesso. Role/passwords/HBA/JWT são configuração externa do ensaio, não segredos transportados pelo backup; recuperação comercial requer custódia/autorização próprias.
+Resultado efectivo: [VALIDATION.md](VALIDATION.md), execução 47/47 verificações aprovadas no perímetro delimitado. Não tratar checks do runner como casos JUnit ou suite integral. Digests pré/pós-restauro são comparados antes do login B, pois login escreve legitimamente auditoria/último acesso. Role/passwords/HBA/JWT são configuração externa do ensaio, não segredos transportados pelo backup; recuperação comercial requer custódia/autorização próprias.
 
 Mesmo com êxito, permanecem emitente/regime/identidades comerciais, séries legítimas/comunicação AT, homologação2/1/1 e projecções FT/FR/RC, RC/RG, perfil/implementação SAF-T, assinatura/certificação e ordens de activação/deploy. Base limpa não elimina F01, autoridade única, anulações e recuperação futuras. Não iniciar essas matérias, novos consumidores, Fatia1e ou promoção de GOLDEN. Ubuntu/origem/preparação conservada/worktree7ce573f ficam fora do ensaio. Revisão independente Claude e decisão da Administração precedem qualquer publicação ou integração.
+
+## Repetição governada e identificação do artefacto
+
+Na primeira tentativa, package foi aprovado em `c0968cd49fc3f76cd9b3c1232a9f36cb0dc61373`. A prontidão inicial PG por socket Unix foi insuficiente; runner corrigido para TCP127.0.0.1. Uma tentativa seguinte mostrou que o JAR600 não era legível pelo UID10001; só o modo do artefacto compilado passou a0644, mantendo os bytes. Código funcional não foi alterado. Logs/manifestos das três tentativas preservados.
+
+Para uma continuação nesta mesma worktree, o executor admite `--reuse-package <directório-da-tentativa>` apenas dentro de target/m05-evidence: exige hash do JAR e identidade original limpa, mais diff vazio em src/frontend/pom. O ensaio final usou `--reuse-package 20261104-114708-4295c0`. Não usar esta opção se houver alteração funcional ou falta do artefacto/proveniência. Não confundir metadados do ensaio actual com o commit original do build. Um build posterior pode ter hash diferente; reprodutibilidade dos passos não equivale a build binário reproduzível.
+
+Recuperação aqui é backup custom e restauro transaccional em **cluster distinto**, com roles existentes recriadas legitimamente e segredos técnicos novos. Não existe procedimento automático de produção nem reset do comprovativo. Os identificadores do cluster/BD mudam; o UUID/comprovativo da instalação é preservado pelo backup. Os grants globais, HBA e passwords não são transportados por pg_dump; são configuração explícita do destino. Não copiar credenciais ou reabrir bootstrap para resolver falhas.
+
+Imagens oficiais ficam na cache Docker; não são removidas globalmente. Todos os contentores/redes criados pelo ensaio foram removidos; as imagens/cache não contêm credenciais deste ensaio. Nenhum ficheiro secreto ou transcript CLI persistido no arquivo. O JAR apenas contém a aplicação e dependências normais, não passwords/autorizações do piloto.
