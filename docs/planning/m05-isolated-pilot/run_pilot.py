@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 """M05 synthetic installation/recovery only. Does not accept retained DB/resources.
-Requires cached postgres:16.3, node:20-alpine, eclipse-temurin:21-jre and offline Maven.
+Requires cached digest-pinned images and offline Maven on PATH (or M05_MAVEN).
 Only exact container IDs and labels created by this process are removed.
 """
 from pathlib import Path
-import os,sys,json,hashlib,secrets,time,subprocess as sp,pty,select,signal,re,urllib.request,urllib.error,datetime
+import argparse,shutil,os,sys,json,hashlib,secrets,time,subprocess as sp,pty,select,signal,re,urllib.request,urllib.error,datetime
 os.umask(0o077)
 ROOT=Path(__file__).resolve().parents[3]
 STAMP=time.strftime('%Y%m%d-%H%M%S',time.gmtime())+'-'+secrets.token_hex(3)
 OUT=ROOT/'target/m05-evidence'/STAMP
 PRIVATE=ROOT/'target/m05-private'/STAMP
 LABEL='M05'
+PG_IMAGE='postgres@sha256:d0f363f8366fbc3f52d172c6e76bc27151c3d643b870e1062b4e8bfe65baf609'
+NODE_IMAGE='node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293'
+JAVA_IMAGE='eclipse-temurin@sha256:0b99b3376fbb50dbf9c0af8535fdd5b8eb0d3fdfc8b1e4967f383b6919f6901a'
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--branch',default=os.environ.get('M05_BRANCH','codex/m05-isolated-pilot'))
+parser.add_argument('--maven',default=os.environ.get('M05_MAVEN','mvn'))
+parser.add_argument('--reuse-package')
+options=parser.parse_args()
 containers={};networks=[];secret_values=[];checks=[]
 
 def run(args,input=None,check=True):
@@ -51,7 +59,7 @@ def make_pg(letter):
     name='tuuli-m05-'+STAMP[-6:]+'-'+letter
     n=name+'-internal';call(['docker','network','create','--internal','--label','ar2.mission='+LABEL,n]);networks.append(n)
     e=envfile(letter+'-postgres.env',{'POSTGRES_PASSWORD':password()})
-    docker_new(name,['--network',n,'--tmpfs','/var/lib/postgresql/data:rw,nosuid,size=768m','--env-file',str(e),'postgres:16.3'])
+    docker_new(name,['--network',n,'--tmpfs','/var/lib/postgresql/data:rw,nosuid,size=768m','--env-file',str(e),PG_IMAGE])
     for _ in range(100):
         r=run(['docker','exec',name,'pg_isready','-h','127.0.0.1','-U','postgres'],check=False)
         if r.returncode==0:break
@@ -67,7 +75,7 @@ def make_pg(letter):
     p=dict(pg=name,db=db,network=n,cluster=cluster,owner_pw=owner_pw,app_pw=app_pw,op_pw=op_pw)
     ip=meta['NetworkSettings']['Networks'][n]['IPAddress'];net=name+'-proxy-net';call(['docker','network','create','--label','ar2.mission='+LABEL,net]);networks.append(net)
     code="require('net').createServer(c=>{let r=require('net').connect(18080,process.env.TARGET);c.pipe(r);r.pipe(c);r.on('error',()=>c.destroy());c.on('error',()=>r.destroy())}).listen(18080,'0.0.0.0')"
-    proxy=name+'-proxy';docker_new(proxy,['--network',net,'-p','127.0.0.1::18080','--read-only','--cap-drop','ALL','--security-opt','no-new-privileges','-e','TARGET='+ip,'node:20-alpine','node','-e',code]);call(['docker','network','connect',n,proxy])
+    proxy=name+'-proxy';docker_new(proxy,['--network',net,'-p','127.0.0.1::18080','--read-only','--cap-drop','ALL','--security-opt','no-new-privileges','-e','TARGET='+ip,NODE_IMAGE,'node','-e',code]);call(['docker','network','connect',n,proxy])
     ports=json.loads(call(['docker','inspect',proxy]))[0]['NetworkSettings']['Ports']['18080/tcp'];assert all(x['HostIp']=='127.0.0.1' for x in ports)
     p['http']='http://127.0.0.1:'+ports[0]['HostPort']
     write(letter+'/isolation.json',dict(database=db,cluster=cluster,postgres_id=containers[name],network=n,proxy_id=containers[proxy],http=p['http'],tmpfs=True,retained_mounts=False,db_port_published=False,hba_sha256=hashlib.sha256(hba.encode()).hexdigest()))
@@ -86,7 +94,7 @@ def start_app(p,phase,migrate=False):
          'FAC_SECURITY_ENABLED':'true','FAC_JWT_SECRET':password(),'FAC_DEMO_SEED_ON_STARTUP':'false','MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS':'never','MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE':'health,info'}
     docker_new(name,['--network','container:'+p['pg'],'--user','10001:10001','--read-only','--tmpfs','/tmp:rw,nosuid,size=128m',
                      '--cap-drop','ALL','--security-opt','no-new-privileges','--memory','768m','--env-file',str(envfile(name+'.env',env)),
-                     '--mount','type=bind,src='+str(JAR)+',dst=/app/fac.jar,readonly','--entrypoint','java','eclipse-temurin:21-jre','-Xmx512m','-jar','/app/fac.jar'])
+                     '--mount','type=bind,src='+str(JAR)+',dst=/app/fac.jar,readonly','--entrypoint','java',JAVA_IMAGE,'-Xmx512m','-jar','/app/fac.jar'])
     for _ in range(180):
         try:
             with urllib.request.urlopen(p['http']+'/actuator/health',timeout=1) as r:
@@ -108,7 +116,7 @@ def grants(p):
     x=json.loads(sql(p['pg'],p['db'],checks_sql));check('separated database roles',x==dict(owner_superuser=False,operator_superuser=False,runtime_schema_create=False,runtime_receipt_insert=False,function_owner='m05_owner'));write(p['db']+'/roles.json',x)
 
 def cli(p,admin_password,expected):
-    name=p['pg']+'-cli';docker_new(name,['--network','container:'+p['pg'],'--read-only','--tmpfs','/run/m05:rw,nosuid,size=1m,mode=0700','--tmpfs','/tmp:rw,nosuid,size=32m','--cap-drop','ALL','--security-opt','no-new-privileges','--memory','384m','--mount','type=bind,src='+str(JAR)+',dst=/app/fac.jar,readonly','--entrypoint','sleep','eclipse-temurin:21-jre','600'])
+    name=p['pg']+'-cli';docker_new(name,['--network','container:'+p['pg'],'--read-only','--tmpfs','/run/m05:rw,nosuid,size=1m,mode=0700','--tmpfs','/tmp:rw,nosuid,size=32m','--cap-drop','ALL','--security-opt','no-new-privileges','--memory','384m','--mount','type=bind,src='+str(JAR)+',dst=/app/fac.jar,readonly','--entrypoint','sleep',JAVA_IMAGE,'600'])
     install=sql(p['pg'],p['db'],'select installation_id from local_admin_provisioning')
     values=dict(jdbcUrl='jdbc:postgresql://127.0.0.1:5432/'+p['db'],operator='m05_operator',database=p['db'],cluster=p['cluster'],installation=install,reference='M05-SYNTHETIC-6629520296',actor='M05 synthetic operator',expiresAt=(datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(minutes=15)).isoformat().replace('+00:00','Z'))
     content=''.join(k+'='+v+'\n' for k,v in values.items())
@@ -203,28 +211,29 @@ def integrity(p):
         assert sql(p['pg'],p['db'],'select count(*) from '+qi(c['src'])+' s where '+cond+' and not exists(select 1 from '+qi(c['dst'])+' d where '+join+')')=='0'
     write(p['db']+'/integrity.json',dict(foreign_keys=len(constraints),orphans=0,not_validated=0))
 
-before=identity();assert before['branch']=='codex/m05-isolated-pilot' and not before['status']
+before=identity();assert before['branch']==options.branch and options.branch.startswith('codex/') and not before['status']
 OUT.mkdir(parents=True);PRIVATE.mkdir(parents=True);write('git-before.json',before)
+write('execution-options.json',dict(expected_branch=options.branch,maven=options.maven,reuse_package=options.reuse_package))
 JAR=ROOT/'target/fac-0.0.1-SNAPSHOT.jar'
 try:
     images={}
-    for image in ['postgres:16.3','node:20-alpine','eclipse-temurin:21-jre']:
+    for image in [PG_IMAGE,NODE_IMAGE,JAVA_IMAGE]:
         x=json.loads(call(['docker','image','inspect',image]))[0];images[image]=dict(id=x['Id'],digests=x.get('RepoDigests'))
     write('images.json',images)
-    if len(sys.argv)==3 and sys.argv[1]=='--reuse-package':
-        previous=(ROOT/'target/m05-evidence'/sys.argv[2]).resolve()
+    if options.reuse_package:
+        previous=(ROOT/'target/m05-evidence'/options.reuse_package).resolve()
         assert previous.parent==(ROOT/'target/m05-evidence').resolve()
         prior=json.loads((previous/'jar.json').read_text())
         assert prior['sha256']==digest(JAR) and not prior['git']['status']
         assert not call(['git','diff',prior['git']['head'],'HEAD','--','src','frontend','pom.xml'])
         write('package-reused.json',dict(original=str(previous),original_manifest_sha256=digest(previous/'MANIFEST_SHA256.json'),original_jar=prior,production_code_unchanged=True))
     else:
-        assert len(sys.argv)==1
+        assert shutil.which(options.maven), 'Maven absent: configure PATH or M05_MAVEN/--maven'
         with (OUT/'package.log').open('wb') as f:
-            r=sp.run(['/mnt/c/Tools/apache-maven-3.9.16/bin/mvn','-o','-B','-DskipTests','package'],cwd=ROOT,stdout=f,stderr=sp.STDOUT)
+            r=sp.run([options.maven,'-o','-B','-DskipTests','package'],cwd=ROOT,stdout=f,stderr=sp.STDOUT)
         check('package',r.returncode==0)
     JAR.chmod(0o644) # Public executable artifact only; secrets remain in private files.
-    check('Git unchanged after package/reuse',identity()==before);write('jar.json',dict(bytes=JAR.stat().st_size,sha256=digest(JAR),git=identity(),reused_package=len(sys.argv)>1))
+    check('Git unchanged after package/reuse',identity()==before);write('jar.json',dict(bytes=JAR.stat().st_size,sha256=digest(JAR),git=identity(),reused_package=bool(options.reuse_package)))
     a=make_pg('a');boot=start_app(a,'migration',True);collect_log(boot,'migration-a.log');remove(boot)
     check('initial installation without users',sql(a['pg'],a['db'],'select count(*) from utilizador')=='0')
     grants(a);admin_password=password();cli(a,admin_password,0)

@@ -38,3 +38,30 @@ Para uma continuação nesta mesma worktree, o executor admite `--reuse-package 
 Recuperação aqui é backup custom e restauro transaccional em **cluster distinto**, com roles existentes recriadas legitimamente e segredos técnicos novos. Não existe procedimento automático de produção nem reset do comprovativo. Os identificadores do cluster/BD mudam; o UUID/comprovativo da instalação é preservado pelo backup. Os grants globais, HBA e passwords não são transportados por pg_dump; são configuração explícita do destino. Não copiar credenciais ou reabrir bootstrap para resolver falhas.
 
 Imagens oficiais ficam na cache Docker; não são removidas globalmente. Todos os contentores/redes criados pelo ensaio foram removidos; as imagens/cache não contêm credenciais deste ensaio. Nenhum ficheiro secreto ou transcript CLI persistido no arquivo. O JAR apenas contém a aplicação e dependências normais, não passwords/autorizações do piloto.
+
+## R1 — Reprodução noutro executor e remoção manual
+
+Requer Linux x86_64, Python3 stdlib, Docker, JDK21 e Maven disponível em PATH. Alternativas explícitas: `M05_MAVEN=/caminho/bin/mvn` ou `--maven /caminho/bin/mvn`; `M05_BRANCH=codex/outra-branch` ou `--branch codex/outra-branch`. Continua obrigatório HEAD identificado, branch codex/ esperada e worktree limpa. O script não instala ferramentas nem altera configurações globais. Maven corre offline: preparar previamente a cache de dependências aprovada; se faltar, abortar e registar a dependência, sem activar downloads implícitos. O percurso por omissão constrói o JAR, sem --reuse-package.
+
+Obter as imagens oficiais antes do ensaio, numa máquina com rede autorizada (ou transferir com docker save/load e conferir os mesmos digests); o runner usa --pull=never:
+
+```bash
+docker pull postgres@sha256:d0f363f8366fbc3f52d172c6e76bc27151c3d643b870e1062b4e8bfe65baf609
+docker pull node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+docker pull eclipse-temurin@sha256:0b99b3376fbb50dbf9c0af8535fdd5b8eb0d3fdfc8b1e4967f383b6919f6901a
+python3 docs/planning/m05-isolated-pilot/run_pilot.py
+```
+
+São digests fixos da plataforma ensaiada; outra arquitectura exige validação própria, não substituição automática de imagem. Execução noutra máquina não foi realizada; a R1 demonstra o comando por omissão neste executor descartável, sem caminho Maven fixo ou reutilização de package.
+
+Se SIGKILL/interrupção impedir finally: não executar prune ou remoção por nomes genéricos. Identificar o sufixo exclusivo da tentativa em target/m05-evidence/<timestamp-sufixo>, confrontar isolation.json e listar candidatos com `docker ps -a --filter label=ar2.mission=M05 --no-trunc` e `docker network ls --filter label=ar2.mission=M05 --no-trunc`. Inspeccionar cada ID com `docker inspect <ID>`: confirmar nome tuuli-m05-<sufixo>-*, labels ar2.mission=M05/ar2.disposable=true, IDs PG/proxy arquivados e ausência de mounts conservados. Contentores transitórios sem ID persistido exigem confirmar nome, label, imagem e namespace exclusivo desta tentativa; perante dúvida, não remover. Remover apenas IDs assim conferidos, primeiro apps/CLI/proxy, depois PG, por `docker rm -f <ID-conferido>`. Redes: conferir label, sufixo e Containers vazio por `docker network inspect <ID>`, depois `docker network rm <ID-conferido>`. Não usar substituição automática de todos os recursos M05, pois pode haver outra execução concorrente.
+
+Só depois de terminar os processos próprios, conferir que target/m05-private/<timestamp-sufixo> é directório real desta worktree (sem symlinks); apagar exclusivamente os .env regulares dessa tentativa e remover esse directório vazio. Não imprimir o conteúdo. Autorizações da CLI vivem no tmpfs do contentor removido. Preservar target/m05-evidence e os originais; copiar para arquivo restrito com manifesto/hash antes de qualquer limpeza futura de target. Remoção de ficheiros não prova eliminação física de memória/disco. Não apagar imagens ou volumes globais.
+
+## R1 — Observabilidade e alcance das recusas
+
+O diagnóstico do rascunho responde 200 e `podeEmitir=true`, bloqueios vazios; a emissão do mesmo documento recusa 400 por ausência do código AT. O diagnóstico actual avalia estado/linhas/totais, não todas as pré-condições fiscais: não é autorização de emissão nem prova de prontidão. Registar esta divergência como condição aberta; corrigir o diagnóstico/UI exige mandato próprio.
+
+Sinais disponíveis: health UP (apenas prontidão, detalhes desligados), respostas HTTP e permissões, diagnóstico JSON, mensagens dos gates, logs de arranque/runtime, comprovativo/auditoria CLI e auditoria documental, contagens financeiras/numeradores, digests e FKs de restauro, Git e manifests. Logs foram recolhidos, não submetidos a asserções automatizadas de ausência de erros; não há métricas, alertas, tracing, TLS ou observabilidade comercial demonstrados. Auditoria visível não prova imutabilidade da role runtime; O-1–O-6 do parecer mantêm-se não condicionantes e não resolvidas nesta R1.
+
+M03: 409 de assinatura em MockMvc/perfil test, fixture SQL com marcador de série sintético; igualdade de fonte sustenta reutilização da lógica, não prova runtime prod. M05: emissão sem código AT=400; criação de tipo FT com catálogo vazio=409, operação distinta. Não foi observado 409 de assinatura no JAR em runtime. Administração deve decidir entre aceitar a prova reutilizada com limites, autorizar negativo adicional em runtime descartável com marcador sintético, ou adiar para assinatura; nenhuma opção escolhida aqui.

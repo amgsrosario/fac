@@ -55,3 +55,15 @@ Arquivo restrito `/home/arosario/tuuli-backups/m05/2026-11-04/`, **54 ficheiros 
 Consulta Docker pós-limpeza: nenhum contentor/rede M05; remoção só por IDs/labels próprios. As imagens oficiais permanecem na cache. Origem fac/facdb, preparação conservada, Ubuntu/GOLDEN, outras worktrees/7ce573f não operadas; preservação sustentada no isolamento, não nova medição dessas bases. Não houve alteração funcional, nova regra fiscal, revisão publicada, SAF-T, assinatura real, activação ou cutover.
 
 Condições comerciais: emitente/regime e identidades reais, roles/HBA/TLS/custódia/backups operacionais, séries/códigos AT legítimos, 2/1/1 e projecções/RC-RG, perfil/exportador SAF-T, assinatura/certificação, F01/autoridade e semântica futura onde reservadas, auditoria final e ordens de instalação/activação. M04 documental não fecha gates. Esta M05 não implementa essas matérias nem promove GOLDEN. [Pedido Claude](REVIEW_HANDOFF.md) pendente; não apresentar o resultado executor como aprovação independente ou piloto comercial pronto.
+
+## M05-R1 — Reservas do parecer e provas delimitadas
+
+Ordem #46/6631045763. Original Claude/sidecar conferidos: SHA-256 `e511c301b4894aeb5869f98776720bdc81fc0b53afc45f797837428117cb4ffb`. O hash `4b54cac3171ecb84627ca0f3d2d1d7baddcdfcb059a43bb76416d62f32014cd8` citado na ordem corresponde à cópia recebida pelo Executivo; não é o original local e não se declara equivalência de bytes. Parecer original preservado, APROVADO COM RESERVAS 0/0/3, O-1–O-6 não condicionantes mantidas.
+
+| Reserva | Resolução delimitada / alcance |
+| --- | --- |
+| MINOR-001 | Branch/Maven parametrizados, imagens fixadas por digest, obtenção explícita e limpeza manual segura no runbook; ensaio por omissão com build novo a registar após execução limpa |
+| MINOR-002 | journey-diagnostic.json mostra podeEmitir=true/bloqueios vazios apesar de emissão400; condição de sinal aberta para mandato próprio. Health UP, respostas HTTP/perfis, logs arquivados, auditoria visível, contagens/digests/Git/manifests são sinais do ensaio; logs sem avaliação automatizada, sem métricas/alertas/tracing/TLS |
+| MINOR-003 | M03=MockMvc/test/fixtureSQL/409 assinatura; M05=runtime HTTP/400 emissão sem AT e409 criaçãoFT catálogo vazio. Fonte igual permite inferência da lógica, não demonstração runtime da ausência de assinatura. Decisão de aceitação/ensaio adicional/adiamento reservada à Administração |
+
+Sem alteração do produto, gates, permissões, emissores ou diagnóstico. Uma nova execução não transforma observações O-1–O-6 em garantias adicionais. Originais das 47 verificações e tentativas anteriores preservados; não somar verificações repetidas como casos únicos.
