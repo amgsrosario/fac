@@ -130,5 +130,19 @@
     "hashcontrol_is_not_generalized_to_payments": true,
     "validator_xsd_1_1_required_by_schema": true
   },
-  "archive_manifest_sha256": "1536e33418d9d9bd40d43ef7bb6cb2953663776074f946918536746d93af3468"
+  "archive_manifest_sha256": "1536e33418d9d9bd40d43ef7bb6cb2953663776074f946918536746d93af3468",
+  "r1": {
+    "review_sha256": "e09a436ba2818678a8fd2a82d94b5b42bd83f5020eb18357ad7201d7f6b888f0",
+    "review_sidecar_matches": true,
+    "source_N08": {
+      "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_363_2010.pdf",
+      "original_retrieved_at_utc": "2026-10-30T17:33:43.775567+00:00",
+      "original_archive": "/home/arosario/tuuli-backups/h2-06/2026-10-30/portaria-363-2010.pdf",
+      "bytes": 47074,
+      "sha256": "6bbfc8e1e4405542c0fa1533964d3ee0d235d363ba3adf0e83414edb2db2a5b3",
+      "copy_verified": true
+    },
+    "archive_manifest_sha256": "d5063556d61cc7948388492c145fd00730f147a4c91718c5c8ff8a3aa7b4e805",
+    "new_application_tests": 0
+  }
 }

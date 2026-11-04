@@ -15,3 +15,13 @@ Prioridades:
 Arquivo M04 `/home/arosario/tuuli-backups/m04/2026-11-04/`: 6 ficheiros + manifesto SHA-256 `1536e33418d9d9bd40d43ef7bb6cb2953663776074f946918536746d93af3468`. Originais antigos mantidos nos locais E01–E05. Conferir fontes e hashes antes do parecer, sem operar bases conservadas. Só repetir teste mediante risco concreto e autorização; aqui basta leitura.
 
 Emitir APROVADO / APROVADO COM RESERVAS / DEVOLVER PARA CORRECÇÃO com BLOCKER/MAJOR/MINOR, HEAD revisto, referências exactas, distinção entre lacuna fiscal reservada e defeito documental, limitações e matérias efectivamente reservadas à Administração. Parecer não equivale a homologação/activação ou autorização SAF-T. Sem runtime Claude nesta sessão: pedido preparado para transmissão efectiva pelo PO/Coordenação, não activação por comentário GitHub.
+
+## R1 — Confirmação incremental dos dois MINOR
+
+Comparar `ddd563b3ddb7da4db215e581957941ce5387cab3..HEAD` final indicado no relatório R1, branch/worktree M04 existentes. Ordem #46/6628777871; parecer original SHA-256 `e09a436ba2818678a8fd2a82d94b5b42bd83f5020eb18357ad7201d7f6b888f0`, original/sidecar conferidos.
+
+MINOR-001: verificar N08/Portaria363 original e hash, relação normativa N05→N08, E06 com referências exactas a H2-07/CONTRACT e H2-08/DECISIONS, e falta de versão de chave em Signature. Não confundir keyVersion de um desenho/ensaio com implementação produtiva ou certificado; M4-14 deixa explícita a inexistência actual da origem de HashControl no contrato.
+
+MINOR-002: conferir por componente C211/M4-02: seed com tuplo completo exclusivamente demonstrativo, FinancialFtOrigin sem leitura do tuplo, extracto só sinal, UI só filtro de área; todos com ficheiro/linha. 2/1/1 permanece pendente de validação fiscal expressa.
+
+Arquivo R1 `/home/arosario/tuuli-backups/m04-r1/2026-11-04/`,4 ficheiros + manifesto SHA-256 `d5063556d61cc7948388492c145fd00730f147a4c91718c5c8ff8a3aa7b4e805`. Original M04/FAQ/XSD/provas anteriores intactos; R1 só documental, zero testes/SQL/Docker. O-1–O-4 não condicionantes mantidas, sem alegado fecho. Emitir veredicto e estado dos dois MINOR sobre o HEAD exacto, sem repetir a revisão global ou tomar decisões fiscais/D-SIGN. Sem push/PR/merge, bases, activação ou M05. Pedido a transmitir efectivamente pelo PO, não activação por ficheiro/comentário.
