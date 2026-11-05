@@ -35,7 +35,7 @@ def record(name,value):
     (OUT/name).write_text(json.dumps(value,indent=2)+'\n')
 
 before=git_identity()
-assert before['branch']=='codex/emission-readiness' and not before['status'], 'Require clean M03 worktree'
+assert before['branch']=='codex/emission-readiness-pr53' and not before['status'], 'Require clean M03 worktree'
 OUT.mkdir(parents=True,exist_ok=False)
 PRIVATE.mkdir(parents=True,exist_ok=False)
 record('git-before.json',before)
