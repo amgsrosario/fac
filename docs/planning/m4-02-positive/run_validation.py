@@ -17,7 +17,7 @@ import xml.etree.ElementTree as ET
 os.umask(0o077)
 ROOT = Path(__file__).resolve().parents[3]
 CLASSES = ['GovernedFtPositiveTests']
-SOURCE = ROOT/'src/test/java/com/ar2lda/fac/journey/GovernedFtPositiveTests.java'
+SOURCE = ROOT/'src/test/java/com/ar2lda/fac/fiscal/catalog/GovernedFtPositiveTests.java'
 STAMP = time.strftime('%Y%m%d-%H%M%S',time.gmtime())+'-'+secrets.token_hex(3)
 OUT = ROOT/'target/m402-positive-evidence'/STAMP
 PRIVATE = ROOT/'target/m402-positive-private'/STAMP

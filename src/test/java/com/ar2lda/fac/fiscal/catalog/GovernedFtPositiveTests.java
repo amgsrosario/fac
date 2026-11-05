@@ -1,4 +1,4 @@
-package com.ar2lda.fac.journey;
+package com.ar2lda.fac.fiscal.catalog;
 
 import com.fasterxml.jackson.databind.*;
 import com.ar2lda.fac.testinfra.FiscalSignatureTestConfiguration;
