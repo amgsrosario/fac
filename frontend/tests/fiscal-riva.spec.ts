@@ -83,8 +83,8 @@ test('aviso surgido ao guardar exige nova revisão e confirmação antes da emis
   expect(confirmations).toHaveLength(1);
   expect(confirmations[0]).toContain('recalculado');
   const lastSave=calls.lastIndexOf('PUT documentos-comerciais/9/linhas/1');
-  const lastDiagnostic=calls.lastIndexOf('GET documentos-comerciais/9/diagnostico');
   const issue=calls.indexOf('POST documentos-comerciais/9/emitir');
+  const lastDiagnostic=calls.slice(0,issue).lastIndexOf('GET documentos-comerciais/9/diagnostico');
   expect(lastDiagnostic).toBeGreaterThan(lastSave);
   expect(issue).toBeGreaterThan(lastDiagnostic);
 });
