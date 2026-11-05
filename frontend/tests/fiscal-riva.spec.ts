@@ -27,7 +27,9 @@ async function fiscalEditor(page: Page, { failed = false, emitted = false, warni
       return send(doc);
     }
     if (path === 'documentos-comerciais/9/linhas') return send([line]);
-    if (path === 'documentos-comerciais/9/diagnostico') return send({ podeEmitir: true, podeAnular: false, alertas: [], bloqueios: [] });
+    if (path === 'documentos-comerciais/9/diagnostico') return send({ podeEmitir: true, podeAnular: false, alertas: [], bloqueios: [],
+      avaliacaoEmissao: { confirmacaoRecalculoNecessaria: doc.resultadoFiscal.recalculoAviso, totalApresentado:50, totalProjectado:50,
+        impedimentos:[], avisos: doc.resultadoFiscal.recalculoAviso ? [{codigo:'RECALCULO_POR_CONFIRMAR',mensagem:'O rascunho foi recalculado. Confirma os valores.'}] : [] } });
     if (path === 'documentos-comerciais/9/impressao') return send({ documento: doc, linhas: [line] });
     if (path.startsWith('documentos-comerciais/9')) return send(doc);
     const catalogues: Record<string, unknown[]> = {
@@ -77,12 +79,12 @@ test('aviso surgido ao guardar exige nova revisão e confirmação antes da emis
   const emit = page.getByRole('button', { name: 'Emitir documento', exact: true });
   await expect(emit).toBeEnabled();
   await emit.click();
-  await expect(page.getByText('Rascunho recalculado', { exact: true })).toBeVisible();
-  expect(calls.filter((call) => call === 'POST documentos-comerciais/9/emitir')).toHaveLength(0);
-  await expect(emit).toBeEnabled();
-  await emit.click();
   await expect.poll(() => calls.filter((call) => call === 'POST documentos-comerciais/9/emitir').length).toBe(1);
-  expect(confirmations).toHaveLength(2);
-  expect(confirmations[0]).not.toContain('recalculado');
-  expect(confirmations[1]).toContain('recalculado');
+  expect(confirmations).toHaveLength(1);
+  expect(confirmations[0]).toContain('recalculado');
+  const lastSave=calls.lastIndexOf('PUT documentos-comerciais/9/linhas/1');
+  const lastDiagnostic=calls.lastIndexOf('GET documentos-comerciais/9/diagnostico');
+  const issue=calls.indexOf('POST documentos-comerciais/9/emitir');
+  expect(lastDiagnostic).toBeGreaterThan(lastSave);
+  expect(issue).toBeGreaterThan(lastDiagnostic);
 });
