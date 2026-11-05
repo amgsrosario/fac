@@ -145,7 +145,7 @@ class GovernedFtPositiveTests {
         Map<String,Object> after=state(id);
         record("after",after);
         MvcResult repeated=http.perform(auth(post(doc(id)+"/emitir"),admin).contentType(MediaType.APPLICATION_JSON).content("{\"emissorId\":\"M3ADMIN\"}"))
-            .andExpect(status().isBadRequest()).andReturn();
+            .andExpect(status().isConflict()).andReturn();
         record("repeat-response",body(repeated));
         assertThat(state(id)).isEqualTo(after);
         record("after-repeat",state(id));
