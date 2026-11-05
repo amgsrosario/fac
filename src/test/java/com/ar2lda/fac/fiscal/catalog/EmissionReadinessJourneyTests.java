@@ -158,9 +158,9 @@ class EmissionReadinessJourneyTests {
         db.update("update documento_comercial set valor_retencao=1 where id=?",id);
         hasBlock(diagnostic(id),"RETENCAO_NAO_HABILITADA");
         db.update("update documento_comercial set valor_retencao=0 where id=?",id);
-        db.update("update linha_documento_comercial set quantidade=0 where id_documento_comercial=?",id);
+        db.update("update linha_documento_comercial set desconto=99 where id_documento_comercial=?",id);
         hasBlock(diagnostic(id),"CALCULO_FISCAL_INVALIDO");
-        db.update("update linha_documento_comercial set quantidade=1 where id_documento_comercial=?",id);
+        db.update("update linha_documento_comercial set desconto=0 where id_documento_comercial=?",id);
         db.update("update documento_comercial set fiscal_recalculo_aviso=true where id=?",id);
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType(MediaType.APPLICATION_JSON).content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isBadRequest());
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType(MediaType.APPLICATION_JSON)
