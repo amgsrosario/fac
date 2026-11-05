@@ -44,9 +44,12 @@ async function setup(page: Page, consumer: string, allowed: boolean, warningOnSa
 for(const consumer of ['legacy','list','editor']) {
   test(consumer+' shows known blocker and prevents issuance',async({page})=>{
     const state=await setup(page,consumer,false);
-    if(consumer==='legacy') await page.getByRole('button',{name:'Conferir e emitir',exact:true}).first().click();
+    if(consumer==='legacy') {
+      await page.getByRole('button',{name:'Detalhe',exact:true}).click();
+      await page.getByRole('button',{name:'Conferir e emitir',exact:true}).last().click();
+    }
     if(consumer==='editor') await page.getByRole('button',{name:'Linhas e totais',exact:true}).click();
-    await expect(page.getByText('A série não possui código AT.',{exact:true})).toBeVisible();
+    await expect(page.getByText('A série não possui código AT.',{exact:true}).first()).toBeVisible();
     await expect(page.getByRole('button',{name:consumer==='list'?'Conferir e emitir':'Emitir documento',exact:true}).last()).toBeDisabled();
     expect(state.posts).toHaveLength(0);
   });
@@ -54,7 +57,10 @@ for(const consumer of ['legacy','list','editor']) {
     const state=await setup(page,consumer,true);
     const dialogs: string[]=[];
     page.on('dialog',async dialog=>{dialogs.push(dialog.message());await dialog.accept();});
-    if(consumer==='legacy') await page.getByRole('button',{name:'Conferir e emitir',exact:true}).first().click();
+    if(consumer==='legacy') {
+      await page.getByRole('button',{name:'Detalhe',exact:true}).click();
+      await page.getByRole('button',{name:'Conferir e emitir',exact:true}).last().click();
+    }
     if(consumer==='editor') await page.getByRole('button',{name:'Linhas e totais',exact:true}).click();
     const baseline=state.diagnostics();
     await page.getByRole('button',{name:consumer==='list'?'Conferir e emitir':'Emitir documento',exact:true}).last().click();
