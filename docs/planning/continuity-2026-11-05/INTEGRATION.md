@@ -51,3 +51,8 @@ As revisões aprovaram os perímetros entregues e o seguimento documental ficou 
 ## Salvaguardas da entrega
 
 A futura publicação neste repositório público expõe os caminhos locais, identificadores sintéticos e ferramentas contidos no diff. Os arquivos privados de evidência e logs brutos não integram o delta. A Administração deve apreciar essa exposição na decisão de publicação. Preservar as branches, as alterações locais M05 e os arquivos, sem transportar credenciais ou dados pessoais para o repositório. Revalidar o remoto e os checks/revisões exigidos no momento autorizado de publicação. A aprovação dos ensaios e a preparação desta entrega não activam catálogo, RC/RL, FinancialCore ou Fatia 1e. Mantêm-se a Partner Demo, o GOLDEN e as bases conservadas.
+
+
+## Delta cumulativo actualizado
+
+Até ao HEAD revisto `988dc1a68d8b8ccbcf02103bba21be48fc1d337d`, o delta desde d17de43 abrange 14 ficheiros, +1228/-6. A entrega desta R2 inclui também o seu commit documental. O delta cumulativo até à R2 é 14 ficheiros, +1250/-6. A identificação integral do HEAD e a lista de todos os commits constam do relatório externo, com o hash do diff cumulativo.
