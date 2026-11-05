@@ -955,3 +955,20 @@ O relatório do executor `tuuli-backups/m05-clean/2026-11-04/2026-11-04_TUULI_M0
 A Administração AR2 aprovou o fecho técnico global, condicionado à conferência e ao registo versionado agora concluídos. **Estado: `M05_CLOSED`.** Claude Code confirmou o fecho do MINOR-001 da prova integral com 0 BLOCKER, 0 MAJOR e 0 MINOR. O delta revisto, sobre `1d1c63da79340c9df3b6c07dd81dcc8156d68ff7`, corresponde à correcção nos três documentos. SHA-256 de `MINOR-001.delta.diff`: `d17618270d925628fa1d1dc241290d5dbbb19927197e78c3354df52d9f3f752b`. [Deliberação #46/6638075940](https://github.com/amgsrosario/fac/issues/46#issuecomment-6638075940)
 
 Original `2026-11-04_TUULI_M05-prova-integral-MINOR-001_confirmacao-incremental_Claude.md` e sidecar `2026-11-04_TUULI_M05-prova-integral-MINOR-001_confirmacao-incremental_Claude.md.sha256` preservados em `Relatorios-AR2/TUULI`. O SHA-256 calculado sobre o original coincide com o sidecar, `ec77d8f7e7a3a56a264ed4f748eec278f9dd06ba7a560310c6802f83d4e4f1d4`. O MINOR-003 está encerrado no cenário sintético M5N. A implementação de `podeEmitir` segue em mandato próprio. O fecho refere-se à validação técnica da M05 em isolamento.
+
+### M4-02 — FT diferida, 04-11-2026
+
+**Correspondência funcional aprovada** pela Administração AR2 para `2/1/1,false`. A FT diferida constitui dívida do cliente pelo total, mantém esse montante em aberto e não regista recebimento na emissão. Esta decisão actualiza as indicações históricas de correspondência funcional pendente em M04. [Deliberação #46/6638699008](https://github.com/amgsrosario/fac/issues/46#issuecomment-6638699008)
+
+**Prova integrada pendente.** O seed e a leitura dos serviços sustentam partes do critério. O primeiro gate observado é o HTTP 409 ao criar o tipo FT governado sem revisão aprovada disponível. A prova fica dependente de decisão própria para a revisão de ensaio e das pré-condições de emissão. Continuam aplicáveis os gates fiscais, de publicação e integração. [Matriz e evidências M4-02](../planning/m04-fiscal-evidence/MATRIX.md)
+
+### M4-02 — Ensaio integrado autorizado, 04-11-2026
+
+A revisão sintética exclusiva da FT diferida permitiu criar o tipo governado com HTTP 201 e vínculo FT/1. A emissão do rascunho recusou com HTTP 409 por ausência de fonte de assinatura. Rascunho, numerador e estado financeiro conservaram-se. **Correspondência funcional aprovada. Prova integrada pendente.** O requisito de assinatura é o próximo ponto para decisão própria. Evidência e revisão dirigida referenciadas na matriz. [Autorização #46/6638892326](https://github.com/amgsrosario/fac/issues/46#issuecomment-6638892326) · [Matriz M4-02](../planning/m04-fiscal-evidence/MATRIX.md)
+
+
+### M4-02 — Prova MockMvc positiva, 05-11-2026
+
+**Correspondência funcional aprovada. Prova integrada positiva demonstrada no contexto MockMvc, confirmação independente pendente.** [Mandato #46/6654412431](https://github.com/amgsrosario/fac/issues/46#issuecomment-6654412431). FT/1 sintética `2/1/1,false` e FiscalSignatureTestConfiguration exclusivamente em testes. Emissão EMITIDO, total12,30, dívida e saldo em aberto12,30, zero recebimentos/afectações/SETTLE. Repetição409 preserva a dívida única. Recusas de assinatura e série sem código conservam snapshots financeiros. Leituras persistidas fora de transacção exterior de teste.
+
+Um teste dirigido aprovado no HEAD limpo `e090a4add3fe084bad2244d2e66b76de6ab63b35`, tree `bd75df3aadd8d456753c340f8ea8db9965f53a62`. O arquivo contém três tentativas anteriores de preparação, logs/XML e resultados. Recursos PostgreSQL16.3 tmpfs próprios removidos e segredos efémeros retirados. Arquivo `tuuli-backups/m4-02-positive/2026-11-05/`,70 ficheiros+manifesto `d0e36a81e967a4c8b35e0ff7188197d11b7637981c6ef3f83ee0d48558e8e08f`. Parecer anterior original e sidecar `2026-11-05_TUULI_M4-02_ensaio-FT-diferida_revisao-independente_Claude.md` conferidos, SHA-256 `2478a7d7c383fc40d232ee35579c3078a8a6f92b03b4f1c170ad0d4b522b3ea8`. [Validação](../planning/m4-02-positive/VALIDATION.md). Os gates fiscais, de publicação e integração permanecem aplicáveis.
