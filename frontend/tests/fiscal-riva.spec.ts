@@ -76,7 +76,7 @@ test('aviso surgido ao guardar exige nova revisão e confirmação antes da emis
   page.on('dialog', async (dialog) => { confirmations.push(dialog.message()); await dialog.accept(); });
   await expect(page.getByText('Rascunho recalculado', { exact: true })).toHaveCount(0);
   await page.locator('tr:not(.active-line)').getByRole('textbox', { name: 'Descrição da linha' }).fill('Bens actualizados');
-  const emit = page.getByRole('button', { name: 'Emitir documento', exact: true });
+  const emit = page.getByRole('button', { name: 'Guardar e conferir', exact: true });
   await expect(emit).toBeEnabled();
   await emit.click();
   await expect.poll(() => calls.filter((call) => call === 'POST documentos-comerciais/9/emitir').length).toBe(1);

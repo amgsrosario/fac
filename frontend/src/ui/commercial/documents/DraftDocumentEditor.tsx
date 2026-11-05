@@ -791,7 +791,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
             {canOpenPdfCurrent && <FacButton disabled={saving} icon="pi pi-file-pdf" label="PDF" onClick={openPdf} variant="secondary" />}
             {canVoidCurrent && <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={() => setAnularOpen(true)} variant="destructive" />}
             {showSaveDraftAction && <FacButton disabled={saving || loading || !canEditCurrent} icon="pi pi-save" label={saveDraftLabel} onClick={() => void saveDraft()} variant="secondary" />}
-            {showEmitAction && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label="Emitir documento" onClick={emitDocument} variant="primary" />}
+            {showEmitAction && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label={!documento || dirty ? "Guardar e conferir" : "Emitir documento"} onClick={emitDocument} variant="primary" />}
           </div>
         </div>
       </header>

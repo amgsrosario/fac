@@ -76,7 +76,7 @@ test('dirty editor saves then reevaluates and confirms the new persisted warning
   await page.locator('tr:not(.active-line)').getByRole('textbox',{name:'Descrição da linha'}).fill('Updated synthetic article');
   const messages:string[]=[];
   page.on('dialog',async dialog=>{messages.push(dialog.message());await dialog.accept();});
-  await page.getByRole('button',{name:'Emitir documento',exact:true}).click();
+  await page.getByRole('button',{name:'Guardar e conferir',exact:true}).click();
   await expect.poll(()=>state.posts.length).toBe(1);
   expect(state.posts[0]).toMatchObject({recalculoConfirmado:true});
   expect(messages[0]).toContain('Confirme os valores recalculados.');
