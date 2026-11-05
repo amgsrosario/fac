@@ -96,7 +96,7 @@ class GovernedFtPositiveTests {
     Map<String,Object> state(long id) {
         Map<String,Object> result = new LinkedHashMap<>();
         result.put("document",db.queryForMap("select estado,valor_total,numero_documento,atcud,qr_payload from documento_comercial where id=?",id));
-        result.put("pending",db.queryForList("select cliente_id,valor_documento,valor_pendente from pendente where id_documento_comercial=?",id));
+        result.put("pending",db.queryForList("select id_cliente,valor_documento,valor_pendente from pendente where id_documento_comercial=?",id));
         result.put("positions",db.queryForList("select cliente_id,nature,original,available,cancelled from financial_position order by id"));
         result.put("series",db.queryForList("select serie,numerador from serie order by serie"));
         for (String table:List.of("financial_operation","financial_document_origin","financial_receipt","financial_allocation","financial_component","documento_financeiro","linha_documento_financeiro")) {
@@ -132,7 +132,7 @@ class GovernedFtPositiveTests {
         assertThat(total).isEqualByComparingTo("12.30");
         assertThat(db.queryForObject("select valor_documento from pendente where id_documento_comercial=?",java.math.BigDecimal.class,id)).isEqualByComparingTo(total);
         assertThat(db.queryForObject("select valor_pendente from pendente where id_documento_comercial=?",java.math.BigDecimal.class,id)).isEqualByComparingTo(total);
-        assertThat(db.queryForObject("select cliente_id from pendente where id_documento_comercial=?",Long.class,id)).isEqualTo(customer);
+        assertThat(db.queryForObject("select id_cliente from pendente where id_documento_comercial=?",Long.class,id)).isEqualTo(customer);
         assertThat(db.queryForObject("select count(*) from financial_document_origin where document_id=?",Long.class,id)).isEqualTo(1);
         assertThat(db.queryForObject("select original from financial_position",java.math.BigDecimal.class)).isEqualByComparingTo(total);
         assertThat(db.queryForObject("select available from financial_position",java.math.BigDecimal.class)).isEqualByComparingTo(total);
