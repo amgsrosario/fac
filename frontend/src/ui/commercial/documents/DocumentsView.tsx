@@ -1,3 +1,4 @@
+import { EmissionAssessment, EmissionReadinessMessages, emissionConfirmation } from "../../../emissionReadiness";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FilterMatchMode } from "primereact/api";
@@ -112,6 +113,7 @@ type DocumentoImpressao = {
 };
 
 type Diagnostico = {
+  avaliacaoEmissao?: EmissionAssessment;
   podeEmitir: boolean;
   podeAnular: boolean;
   alertas: string[];
@@ -467,7 +469,11 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
     if (!selected || saving) return;
     setSaving(true);
     try {
-      const updated = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, { emissorId: currentUser.codigo }, "POST");
+      const fresh = await requestJson<Diagnostico>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
+      setDiagnostico(fresh);
+      if (!fresh.podeEmitir || !window.confirm(emissionConfirmation(fresh, documentRef(selected)))) return;
+      const updated = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`,
+        { emissorId: currentUser.codigo, recalculoConfirmado: Boolean(fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria) }, "POST");
       await refreshAfterAction(updated.id, "Documento emitido.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível emitir o documento.");
@@ -838,7 +844,7 @@ function filterValue(filters: Record<string, unknown>, field: string) {
 function DocumentDetail(props: Parameters<typeof DocumentsContent>[0]) {
   const { canDeleteDraft, canEditDraft, canEmit, canPdf, canVoid, detailLoading, diagnostico, linhas, onEditDraft, onEmitir, onOpenAnular, onOpenDelete, onOpenPdf, saving, selected } = props;
   if (!selected) return <FacEmptyState description="Seleciona um documento para ver o detalhe." />;
-  const canEmitNow = canEmit && selected.estado === "RASCUNHO" && (diagnostico?.podeEmitir ?? linhas.length > 0);
+  const canEmitNow = canEmit && selected.estado === "RASCUNHO" && (diagnostico?.podeEmitir ?? false);
   const canVoidNow = canVoid && selected.estado === "EMITIDO" && (diagnostico?.podeAnular ?? !selected.anulado);
   const openLabel = selected.estado === "RASCUNHO" ? "Editar rascunho" : "Consultar documento";
 
@@ -863,10 +869,11 @@ function DocumentDetail(props: Parameters<typeof DocumentsContent>[0]) {
         {selected.motivoAnulacao && <div><dt>Motivo da anulação</dt><dd>{selected.motivoAnulacao}</dd></div>}
       </dl>
       <DocumentTotals documento={selected} />
+      <EmissionReadinessMessages diagnostic={diagnostico} />
       {diagnostico?.bloqueios?.length ? <FacMessage title="Bloqueios" tone="warning">{diagnostico.bloqueios.join(" ")}</FacMessage> : null}
       <div className="fac-documents-actions">
         {(selected.estado !== "RASCUNHO" || canEditDraft) && <FacButton icon={selected.estado === "RASCUNHO" ? "pi pi-pencil" : "pi pi-eye"} label={openLabel} onClick={() => onEditDraft(selected.id)} variant="primary" />}
-        {canEmitNow && <FacButton disabled={saving || detailLoading} icon="pi pi-check" label="Conferir e emitir" onClick={onEmitir} variant="secondary" />}
+        {canEmit && selected.estado === "RASCUNHO" && <FacButton disabled={saving || detailLoading || !canEmitNow} icon="pi pi-check" label="Conferir e emitir" onClick={onEmitir} variant="secondary" />}
         {canDeleteDraft && selected.estado === "RASCUNHO" && <FacButton disabled={saving} icon="pi pi-trash" label="Eliminar rascunho" onClick={onOpenDelete} variant="destructive" />}
         {canPdf && <FacButton icon="pi pi-file-pdf" label="Ver PDF" onClick={onOpenPdf} variant="secondary" />}
         {canVoidNow && <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={onOpenAnular} variant="destructive" />}

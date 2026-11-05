@@ -79,6 +79,19 @@ public class QrFiscalValidator {
         });
     }
 
+    public void validateKnownIdentity(String issuer, String customer, String country, String type) {
+        var fields = Map.of("A", issuer, "B", customer, "C", country, "D", type);
+        for (String code : fields.keySet()) {
+            require(fields, code);
+            if (fields.get(code).contains("*"))
+                throw new BadRequestException("Campo " + code + " do QR fiscal tem separador inválido");
+        }
+        validateLength(fields, "A", 9);
+        validateLength(fields, "B", 30);
+        validateLength(fields, "C", 12);
+        validateLength(fields, "D", 2);
+    }
+
     private Map<String, String> parse(String payload) {
         Map<String, String> fields = new LinkedHashMap<>();
         int previousOrder = -1;
