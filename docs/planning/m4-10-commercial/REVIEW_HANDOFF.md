@@ -5,3 +5,7 @@ Rever a branch `codex/m4-10-commercial-reprint-pr53`, desde `5ec635686a15c19f260
 A fixture prepara a emissão sintética; o estado ANULADO deve resultar do POST real. Verificar igualdade do payload persistido e do QR descodificado nos PDFs, texto ANULADO, três eventos de auditoria e ausência de outras escritas durante as reimpressões. Os efeitos da anulação são permitidos e conferidos separadamente. Examinar o spy sem interacção na reimpressão e a fonte indisponível após emissão.
 
 Conferir XML, logs, manifestos, snapshots, isolamento e descarte. Emitir parecer com HEAD/tree, achados, limites e SHA-256 do original. O perímetro é parcial/comercial; a homologação QR/PDF permanece reservada. Pedido preparado para encaminhamento pelo PO. Não existe aprovação independente desta entrega.
+
+## Estado do pedido
+
+Revisão realizada por Claude Code no HEAD 217e89fe6ef2f60cb473fd3466867fee7af9b9ca: APPROVE, 0/0/0, alcance MockMvc comercial parcial com assinatura sintética. SHA-256 original ba7b8bd5acd76ecc0ca28d35a48af8c9108094d18420dcebc462ae52d40ce36f, igual ao sidecar. As observações O-1 a O-5 estão delimitadas em VALIDATION.md. O delta posterior é exclusivamente documental, preparado para decisão de publicação, não auto-aprovação de código novo.
