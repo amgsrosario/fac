@@ -110,13 +110,23 @@ class CommercialReprintJourneyTests {
         json.writerWithDefaultPrettyPrinter().writeValue(dir.resolve(name+".json").toFile(),value);
     }
 
+    Map<String,Object> persistentRows() {
+        Map<String,Object> result=new TreeMap<>();
+        for (String table:db.queryForList("select tablename from pg_tables where schemaname='public' and tablename<>'auditoria_evento' order by tablename",String.class)) {
+            assertThat(table).matches("[a-zA-Z0-9_]+");
+            result.put(table,db.queryForList("select row_to_json(t)::text data from public.\"" + table + "\" t order by row_to_json(t)::text"));
+        }
+        return result;
+    }
     byte[] reprint(long id, String label, String payload, boolean cancelled) throws Exception {
         Map<String,Object> before=state(id);
+        Map<String,Object> allRows=persistentRows();
         long audit=db.queryForObject("select count(*) from auditoria_evento",Long.class);
         org.mockito.Mockito.clearInvocations(signer);
         byte[] pdf=http.perform(auth(get(doc(id)+"/pdf"),admin))
             .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
         assertThat(state(id)).isEqualTo(before);
+        assertThat(persistentRows()).isEqualTo(allRows);
         assertThat(db.queryForObject("select count(*) from auditoria_evento",Long.class)).isEqualTo(audit+1);
         org.mockito.Mockito.verifyNoInteractions(signer);
         Files.write(Path.of(System.getenv("M402_EVIDENCE"),label+".pdf"),pdf);
