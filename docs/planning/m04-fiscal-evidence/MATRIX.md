@@ -26,6 +26,8 @@ D=demonstrado no perímetro indicado; P=parcial; ND=por demonstrar. Estado mede 
 
 ## Decisões e sequência mínima
 
+Não há nova arquitectura nem reabertura de H2-07/H2-08. Os campos técnicos já decididos não voltam como escolha de negócio.
+
 A correspondência funcional da FT diferida `2/1/1,false` foi aprovada em #46/6638699008. A prova positiva MockMvc com fonte sintética foi confirmada, incluindo a correcção documental R1, conforme #46/6655672950. As próximas matérias são a emissão positiva pelo JAR, a assinatura real e as validações fiscais exteriores à correspondência aprovada, incluindo enquadramento RC/RG, projecções FT/FR/RC e perfil SAF-T, mediante mandatos e evidências próprios. Dados do emitente e certificação continuam a exigir elementos legítimos.
 
 Implementação SAF-T ou teste técnico adicional só em nova ordem, com perímetro/oráculos definidos; não iniciar automaticamente após a revisão. F01, NC/ND, RC/NL/RL e outros documentos reservados mantêm mandatos próprios. Matriz não permite publicação de revisões, emissão produtiva ou entrada em operação.

@@ -1,15 +1,15 @@
 # Proposta local de integração M05/M4-02
 
-Ordem #46/6656010004. Base remota consultada em leitura por HTTPS em05-11-2026, `d17de43f714a18c7f7bb7b1fc719f71d77b4e14f` (PR52). O checkout principal continua em11d5635 com alterações preexistentes docker-compose.yml e .worktrees/. A sua branch local e o tracking antigo não foram usados para determinar a base actual.
+Ordem #46/6656010004. **Destino proposto: `feature/visual-redesign` do repositório `amgsrosario/fac`.** Base remota consultada em leitura por HTTPS em 05-11-2026, `d17de43f714a18c7f7bb7b1fc719f71d77b4e14f` (PR52). O checkout principal continua em 11d5635 com alterações preexistentes docker-compose.yml e .worktrees/. A sua branch local e o tracking antigo não foram usados para determinar a base actual.
 
 | Entrega | HEAD | Relação |
 | --- | --- | --- |
 | M05 | 828eefa02bd4fbda6f3ad8d0283c879c11cd911f | Dez commits depois da base |
 | M4-02 | 43bea3f5e30fb045c3f927997a39d7798d286d2e | Sete commits depois da M05, contém toda a M05 |
 
-Proposta recomendada: usar uma única entrega derivada da branch M4-02, que já contém a sequência completa. Preservar os17 commits para rastrear ensaios, correcções e pareceres. Uma divisão em dois PRs é tecnicamente possível (base→M05 e M05→M4-02), com gestão adicional da base do segundo PR. A opção de publicação e a estratégia de integração ficam reservadas à Administração. A preparação actual acrescenta apenas documentação à sequência.
+Proposta recomendada: usar uma única entrega derivada da branch M4-02, que já contém a sequência completa. Preservar os 17 commits M05/M4-02 para rastrear ensaios, correcções e pareceres. Uma divisão em dois PRs é tecnicamente possível (base→M05 e M05→M4-02), com gestão adicional da base do segundo PR. A opção de publicação e a estratégia de integração ficam reservadas à Administração. A entrega inclui também o commit documental de preparação `e686eb8377965c98d3cd7280d95fd15e6a82ca68`, perfazendo 18 commits antes desta R1. Esta correcção documental acresce à mesma entrega. O relatório final fornece o seu HEAD e a lista completa obtida por `git log --reverse d17de43..HEAD`, evitando atribuir ao documento o hash do commit que o contém.
 
-## Commits necessários
+## Commits incluídos antes desta R1
 
 c0968cd49fc3f76cd9b3c1232a9f36cb0dc61373 test(pilot): prepare isolated M05 runtime and recovery exercise
 a635d62017feee0b73ab7d44d01a75a3d9c6a5de test(pilot): wait for final PostgreSQL TCP readiness and preserve failures
@@ -28,11 +28,12 @@ e090a4add3fe084bad2244d2e66b76de6ab63b35 test(m4-02): expect the existing confli
 835c8fc5ea2d17f6dc90daf04444b78cf63c0d90 docs(m4-02): record persisted positive proof and independent review handoff
 c24348a8cc8857957e276ed97c679951ed3a6657 docs(m4-02): distinguish synthetic proof from pending production evidence
 43bea3f5e30fb045c3f927997a39d7798d286d2e docs(m4-02): archive independent approval and align remaining status
+e686eb8377965c98d3cd7280d95fd15e6a82ca68 docs(planning): prepare M05 M4-02 integration and M04 continuity
 
 
 ## Delta e conflitos
 
-Delta base→43bea3f:11 ficheiros,1003 inserções/5 remoções. São três documentos de governação/matriz, três ficheiros de runbook/validação/handoff M05, runner M05, três ficheiros de documentação/runner M4-02 e o teste dirigido. A lista exacta e o diff estão no arquivo de entrega. src/main, frontend, pom.xml e migrations têm diff vazio. Os únicos executáveis acrescentados são ferramentas de ensaio e teste.
+Delta base→43bea3f: 11 ficheiros, 1003 inserções/5 remoções. São três documentos de governação/matriz, três ficheiros de runbook/validação/handoff M05, runner M05, três ficheiros de documentação/runner M4-02 e o teste dirigido. A lista exacta e o diff estão no arquivo de entrega. src/main, frontend, pom.xml e migrations têm diff vazio. Os únicos executáveis acrescentados são ferramentas de ensaio e teste.
 
 A base remota é ancestral da M05, que é ancestral da M4-02. Não existem linhas divergentes entre estas referências que produzam conflito de merge. Esta conclusão é de ancestralidade, sem efectuar merge. Se o remoto avançar, repetir apenas a comparação Git necessária antes de publicar.
 
@@ -40,8 +41,13 @@ A worktree M05 tem alterações documentais locais em INSTITUTIONAL_MEMORY.md e 
 
 ## Revisões e evidências
 
-M05 encerrada conforme #6638075940. Parecer de fecho da prova integral/MINOR001 e sidecar ec77d8f7e7a3a56a264ed4f748eec278f9dd06ba7a560310c6802f83d4e4f1d4. Prova integral: manifesto d295e03cfe80cc0a8d7411b2973418b8b619aa5f8a95739b2932b38e1761a77c. Prova409 noJAR limitada aM5N: parecer962394e0fc752564b705d6c57ce0e4e146f4a2070205168b322e581721dd6b64.
+M05 encerrada conforme o registo [#46/6638129158](https://github.com/amgsrosario/fac/issues/46#issuecomment-6638129158), após a aprovação condicionada #6638075940. Parecer de fecho da prova integral/MINOR001 e sidecar ec77d8f7e7a3a56a264ed4f748eec278f9dd06ba7a560310c6802f83d4e4f1d4. Prova integral: manifesto d295e03cfe80cc0a8d7411b2973418b8b619aa5f8a95739b2932b38e1761a77c. Prova 409 no JAR limitada a M5N: parecer 962394e0fc752564b705d6c57ce0e4e146f4a2070205168b322e581721dd6b64.
 
-M4-02 positivo confirmado no contexto MockMvc sintético: parecer e212d533b3ef1f75a0fcd5b169c16bdbb733a11117884464c800e18e6d51ab33 e confirmaçãoR1 04b22642b57115efaf5a50a234e1eb20d5bda17fc7a4d1da426dd87b7bd048d9. As evidências são reutilizadas. O presente levantamento não repete testes.
+M4-02 positivo confirmado no contexto MockMvc sintético: parecer e212d533b3ef1f75a0fcd5b169c16bdbb733a11117884464c800e18e6d51ab33 e confirmação R1 04b22642b57115efaf5a50a234e1eb20d5bda17fc7a4d1da426dd87b7bd048d9. As evidências são reutilizadas. O presente levantamento não repete testes.
 
-As revisões aprovaram os perímetros entregues e o seguimento documental ficou em43bea3f. A presente proposta de continuidade ainda requer apreciação. Nenhum conflito documental foi resolvido por merge nesta preparação.
+As revisões aprovaram os perímetros entregues e o seguimento documental ficou em 43bea3f. A presente proposta de continuidade ainda requer apreciação. Nenhum conflito documental foi resolvido por merge nesta preparação.
+
+
+## Salvaguardas da entrega
+
+A futura publicação neste repositório público expõe os caminhos locais, identificadores sintéticos e ferramentas contidos no diff. Os arquivos privados de evidência e logs brutos não integram o delta. A Administração deve apreciar essa exposição na decisão de publicação. Preservar as branches, as alterações locais M05 e os arquivos, sem transportar credenciais ou dados pessoais para o repositório. Revalidar o remoto e os checks/revisões exigidos no momento autorizado de publicação. A aprovação dos ensaios e a preparação desta entrega não activam catálogo, RC/RL, FinancialCore ou Fatia 1e. Mantêm-se a Partner Demo, o GOLDEN e as bases conservadas.
