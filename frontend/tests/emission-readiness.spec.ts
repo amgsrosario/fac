@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-async function setup(page: Page, consumer: string, allowed: boolean, warningOnSave = false) {
+async function setup(page: Page, consumer: string, allowed: boolean, warningOnSave = false, options: {missing?: boolean; failSave?: boolean; forbidden?: boolean; delayed?: boolean} = {}) {
   let diagCalls = 0;
   const posts: unknown[] = [];
   const session = { token:'synthetic',type:'Bearer',codigo:'TESTE',nome:'Teste',papel:'ADMINISTRADOR',
@@ -16,16 +16,18 @@ async function setup(page: Page, consumer: string, allowed: boolean, warningOnSa
     const send=(value: unknown,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(value)});
     if(path.endsWith('/diagnostico')) {
       diagCalls++;
+      if (options.delayed && diagCalls > 1) await new Promise(resolve => setTimeout(resolve, 250));
+      if (options.missing) return send({message:'Diagnóstico sintético indisponível'},503);
       return send({referencia:'FT A/9',podeEmitir:allowed,podeAnular:false,alertas:[],bloqueios:[],
         pendente:{existe:false},totais:{coerente:true,cabecalhoValorTotal:12.3,linhasValorTotal:12.3},
         avaliacaoEmissao:{confirmacaoRecalculoNecessaria:doc.resultadoFiscal.recalculoAviso,totalApresentado:12.3,totalProjectado:15,
           impedimentos:allowed?[]:[{codigo:'CODIGO_AT_AUSENTE',mensagem:'A série não possui código AT.'}],
           avisos:doc.resultadoFiscal.recalculoAviso?[{codigo:'RECALCULO_POR_CONFIRMAR',mensagem:'Confirme os valores recalculados.'}]:[]}});
     }
-    if(path.endsWith('/emitir')) {posts.push(route.request().postDataJSON());doc.estado='EMITIDO';return send(doc);}
+    if(path.endsWith('/emitir')) {posts.push(route.request().postDataJSON());if(options.forbidden)return send({message:'Sem permissão sintética'},403);doc.estado='EMITIDO';return send(doc);}
     if(path.endsWith('/recalcular-fiscal')) return send(doc);
     if(path==='documentos-comerciais/preview-fiscal') return send({linhas:[fiscal],totais:{valorBruto:10,valorDesconto:0,valorIvaTotal:2.3,valorTotal:12.3}});
-    if(path.endsWith('/linhas/1') && route.request().method()==='PUT') {doc.resultadoFiscal.recalculoAviso=warningOnSave; return send(line);}
+    if(path.endsWith('/linhas/1') && route.request().method()==='PUT') {if(options.failSave)return send({message:'Falha sintética ao guardar'},400);doc.resultadoFiscal.recalculoAviso=warningOnSave; return send(line);}
     if(path.endsWith('/linhas')) return send([line]);
     if(path.endsWith('/impressao')) return send({documento:doc,linhas:[line]});
     if(path.startsWith('documentos-comerciais/9')) return send(doc);
@@ -77,7 +79,66 @@ test('dirty editor saves then reevaluates and confirms the new persisted warning
   const messages:string[]=[];
   page.on('dialog',async dialog=>{messages.push(dialog.message());await dialog.accept();});
   await page.getByRole('button',{name:'Guardar e conferir',exact:true}).click();
+  await expect(page.getByText('O rascunho foi guardado e recalculado. Revê os valores apresentados e confirma novamente a emissão.',{exact:true})).toBeVisible();
+  expect(state.posts).toHaveLength(0);
+  expect(messages).toHaveLength(0);
+  await expect(page.locator('.fac-draft-total-final strong')).toHaveText(/12,30/);
+  await page.getByRole('button',{name:'Emitir documento',exact:true}).click();
   await expect.poll(()=>state.posts.length).toBe(1);
   expect(state.posts[0]).toMatchObject({recalculoConfirmado:true});
   expect(messages[0]).toContain('Confirme os valores recalculados.');
+});
+
+async function openConsumer(page: Page, consumer: string) {
+  if(consumer==='legacy') {
+    await page.getByRole('button',{name:'Detalhe',exact:true}).click();
+    await page.getByRole('button',{name:'Conferir e emitir',exact:true}).last().click();
+  }
+  if(consumer==='editor') await page.getByRole('button',{name:'Linhas e totais',exact:true}).click();
+}
+for(const consumer of ['legacy','list','editor']) {
+  test(consumer+' cancellation never posts issuance',async({page})=>{
+    const state=await setup(page,consumer,true);
+    await openConsumer(page,consumer);
+    let dialogs=0;
+    page.on('dialog',async dialog=>{dialogs++;await dialog.dismiss();});
+    await page.getByRole('button',{name:consumer==='list'?'Conferir e emitir':'Emitir documento',exact:true}).last().click();
+    await expect.poll(()=>dialogs).toBe(1);
+    expect(state.posts).toHaveLength(0);
+  });
+  test(consumer+' missing diagnostic never authorizes issuance',async({page})=>{
+    const state=await setup(page,consumer,true,false,{missing:true});
+    await openConsumer(page,consumer);
+    await expect(page.getByText('Diagnóstico sintético indisponível',{exact:true}).first()).toBeVisible();
+    expect(state.posts).toHaveLength(0);
+    const button=page.getByRole('button',{name:consumer==='list'?'Conferir e emitir':'Emitir documento',exact:true}).last();
+    if(await button.count()) await expect(button).toBeDisabled();
+  });
+  test(consumer+' POST 403 remains an error without success',async({page})=>{
+    const state=await setup(page,consumer,true,false,{forbidden:true});
+    await openConsumer(page,consumer);
+    page.on('dialog',dialog=>dialog.accept());
+    await page.getByRole('button',{name:consumer==='list'?'Conferir e emitir':'Emitir documento',exact:true}).last().click();
+    await expect.poll(()=>state.posts.length).toBe(1);
+    await expect(page.getByText(/Sem permissão sintética/).first()).toBeVisible();
+  });
+  test(consumer+' waits for delayed fresh diagnostic before confirmation',async({page})=>{
+    const state=await setup(page,consumer,true,false,{delayed:true});
+    await openConsumer(page,consumer);
+    let dialogs=0;
+    page.on('dialog',async dialog=>{dialogs++;await dialog.dismiss();});
+    await page.getByRole('button',{name:consumer==='list'?'Conferir e emitir':'Emitir documento',exact:true}).last().click();
+    expect(state.posts).toHaveLength(0);
+    expect(dialogs).toBe(0);
+    await expect.poll(()=>dialogs).toBe(1);
+    expect(state.posts).toHaveLength(0);
+  });
+}
+test('editor save failure does not request issuance',async({page})=>{
+  const state=await setup(page,'editor',true,false,{failSave:true});
+  await openConsumer(page,'editor');
+  await page.locator('tr:not(.active-line)').getByRole('textbox',{name:'Descrição da linha'}).fill('Synthetic changed');
+  await page.getByRole('button',{name:'Guardar e conferir',exact:true}).click();
+  await expect(page.getByText(/Falha sintética ao guardar/).first()).toBeVisible();
+  expect(state.posts).toHaveLength(0);
 });

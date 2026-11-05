@@ -677,6 +677,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   async function emitDocument() {
     if (saving || !canEmitCurrent) return;
+    const warningBeforeSave = Boolean(documento?.resultadoFiscal?.recalculoAviso || diagnostico?.avaliacaoEmissao?.confirmacaoRecalculoNecessaria);
     const requiresSave = !documento || dirty;
     const draft = requiresSave
       ? await saveDraft({ navigateAfterSave: false, notify: false })
@@ -687,6 +688,11 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     try {
       const fresh = await requestJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${draft.id}/diagnostico`);
       setDiagnostico(fresh);
+      if (requiresSave && !warningBeforeSave && (draft.resultadoFiscal?.recalculoAviso || fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria)) {
+        setRecalculationWarning(true);
+        setNotice("O rascunho foi guardado e recalculado. Revê os valores apresentados e confirma novamente a emissão.");
+        return;
+      }
       if (!fresh.podeEmitir || !window.confirm(emissionConfirmation(fresh, documentRef(draft)))) return;
       const recalculationConfirmed = Boolean(fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria);
       const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${draft.id}/emitir`, { emissorId: currentUser.codigo, recalculoConfirmado: recalculationConfirmed }, "POST");
@@ -796,7 +802,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         </div>
       </header>
       {error && <FacMessage tone="error" title="Erro">{error}</FacMessage>}
-      <EmissionReadinessMessages diagnostic={dirty ? null : diagnostico} />
+      <EmissionReadinessMessages diagnostic={dirty || !isDraft ? null : diagnostico} />
       {recalculationWarning && isDraft && <FacMessage tone="warning" title="Rascunho recalculado">As regras fiscais actuais alteraram os valores do rascunho. Revê as linhas e os totais antes da emissão.</FacMessage>}
       {previewError && isDraft && <FacMessage tone="error" title="Cálculo fiscal">{previewError}</FacMessage>}
       {notice && <div className="fac-draft-message success" role="status"><span aria-hidden="true">✓</span><span>{notice}</span></div>}

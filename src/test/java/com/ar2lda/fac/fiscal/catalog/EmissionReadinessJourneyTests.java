@@ -42,6 +42,7 @@ class EmissionReadinessJourneyTests {
         }
     }
     @org.springframework.boot.test.mock.mockito.SpyBean(name="fiscalTestSignatureSource") FiscalSignatureTestConfiguration.TestSource signer;
+    @org.springframework.boot.test.mock.mockito.SpyBean com.ar2lda.fac.service.EmissionReadinessService readiness;
     @Autowired JdbcTemplate db;
     @Autowired MockMvc http;
     @Autowired ObjectMapper json;
@@ -129,6 +130,11 @@ class EmissionReadinessJourneyTests {
         assertThat(diagnostic.at("/avaliacaoEmissao/impedimentos").toString()).contains(code);
     }
     @Test void readinessUsesPureProjectionAndPreservesRecalculationConfirmation() throws Exception {
+        org.mockito.Mockito.doAnswer(invocation -> {
+            assertThat(org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()).isTrue();
+            assertThat(org.springframework.transaction.support.TransactionSynchronizationManager.getCurrentTransactionIsolationLevel()).isEqualTo(java.sql.Connection.TRANSACTION_REPEATABLE_READ);
+            return invocation.callRealMethod();
+        }).when(readiness).evaluate(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.anyList());
         long id=create("SYNTH",admin);
         var ready=diagnostic(id);
         assertThat(ready.get("podeEmitir").asBoolean()).isTrue();
@@ -148,9 +154,21 @@ class EmissionReadinessJourneyTests {
         assertThat(legacy.get("podeEmitir").asBoolean()).isTrue();
         assertThat(legacy.at("/avaliacaoEmissao/confirmacaoRecalculoNecessaria").asBoolean()).isTrue();
         assertThat(db.queryForObject("select fiscal_recalculo_aviso from documento_comercial where id=?",Boolean.class,id)).isFalse();
+        db.update("update documento_comercial set valor_total=12.30 where id=?",id);
+        db.update("update linha_documento_comercial set quantidade=2 where id_documento_comercial=?",id);
+        var legacyLine=diagnostic(id);
+        assertThat(legacyLine.at("/avaliacaoEmissao/confirmacaoRecalculoNecessaria").asBoolean()).isTrue();
+        assertThat(legacyLine.at("/avaliacaoEmissao/totalProjectado").decimalValue()).isEqualByComparingTo("24.60");
+        record("legacy-line-projection",legacyLine);
+        db.update("update linha_documento_comercial set quantidade=1 where id_documento_comercial=?",id);
         db.update("update documento_comercial set fiscal_motor_version=1,valor_total=12.30 where id=?",id);
         db.update("update serie set codigo_at=null where serie='SYNTH'");
         hasBlock(diagnostic(id),"CODIGO_AT_AUSENTE");
+        var htmlBefore=state(id);
+        var html=http.perform(auth(get(doc(id)+"/diagnostico/html"),admin)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("Impedimentos de emissão","código de validação atribuído pela AT","Total projectado");
+        assertThat(state(id)).isEqualTo(htmlBefore);
+        record("html-blocker",html);
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType(MediaType.APPLICATION_JSON).content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isBadRequest());
         db.update("update serie set codigo_at='ATCUD:INVALID' where serie='SYNTH'");
         hasBlock(diagnostic(id),"CODIGO_AT_COM_PREFIXO_INVALIDO");
@@ -165,7 +183,14 @@ class EmissionReadinessJourneyTests {
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType(MediaType.APPLICATION_JSON).content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isBadRequest());
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType(MediaType.APPLICATION_JSON)
             .content("{\"emissorId\":\"M3ADMIN\",\"recalculoConfirmado\":true}")).andExpect(status().isOk());
-        hasBlock(diagnostic(id),"ESTADO_INCOMPATIVEL");
+        var emitted=diagnostic(id);
+        hasBlock(emitted,"ESTADO_INCOMPATIVEL");
+        assertThat(emitted.at("/avaliacaoEmissao/avisos").isEmpty()).isTrue();
+        assertThat(emitted.at("/avaliacaoEmissao/confirmacaoRecalculoNecessaria").asBoolean()).isFalse();
+        assertThat(emitted.at("/avaliacaoEmissao/totalProjectado").isNull()).isTrue();
+        var emittedHtml=http.perform(auth(get(doc(id)+"/diagnostico/html"),admin)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(emittedHtml).doesNotContain("Confirme os valores recalculados antes de emitir.","O total projectado difere do total apresentado.");
+        record("emitted-diagnostic",emitted);
         record("flagged",flagged);record("modern-difference",modern);record("legacy-projection",legacy);
     }
 }

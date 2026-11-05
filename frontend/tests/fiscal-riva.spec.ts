@@ -65,6 +65,7 @@ test('erro de resolução fiscal não produz fallback zero nem permite emissão'
 
 test('emitido mostra snapshot sem preview nem recálculo mutante', async ({ page }) => {
   const calls = await fiscalEditor(page, { emitted: true });
+  await expect(page.getByLabel('Condições de emissão')).toHaveCount(0);
   await expect(page.getByText(/Taxa aplicável 6%.*IVA calculado 3,00.*IVA liquidado 0,00/).first()).toBeVisible();
   await expect(page.locator('.fac-draft-total-final strong')).toHaveText(/50,00\s*€/);
   expect(calls.some((call) => call.includes('recalcular-fiscal') || call.includes('preview-fiscal'))).toBe(false);
@@ -79,6 +80,11 @@ test('aviso surgido ao guardar exige nova revisão e confirmação antes da emis
   const emit = page.getByRole('button', { name: 'Guardar e conferir', exact: true });
   await expect(emit).toBeEnabled();
   await emit.click();
+  await expect(page.getByText('O rascunho foi guardado e recalculado. Revê os valores apresentados e confirma novamente a emissão.', { exact: true })).toBeVisible();
+  expect(calls.filter(call => call === 'POST documentos-comerciais/9/emitir')).toHaveLength(0);
+  expect(confirmations).toHaveLength(0);
+  await expect(page.locator('.fac-draft-total-final strong')).toHaveText(/50,00/);
+  await page.getByRole('button', { name: 'Emitir documento', exact: true }).click();
   await expect.poll(() => calls.filter((call) => call === 'POST documentos-comerciais/9/emitir').length).toBe(1);
   expect(confirmations).toHaveLength(1);
   expect(confirmations[0]).toContain('recalculado');

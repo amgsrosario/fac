@@ -874,7 +874,7 @@ function DocumentDetail(props: Parameters<typeof DocumentsContent>[0]) {
         {selected.motivoAnulacao && <div><dt>Motivo da anulação</dt><dd>{selected.motivoAnulacao}</dd></div>}
       </dl>
       <DocumentTotals documento={selected} />
-      <EmissionReadinessMessages diagnostic={diagnostico} />
+      <EmissionReadinessMessages diagnostic={selected.estado === "RASCUNHO" ? diagnostico : null} />
       {diagnostico?.bloqueios?.length ? <FacMessage title="Bloqueios" tone="warning">{diagnostico.bloqueios.join(" ")}</FacMessage> : null}
       <div className="fac-documents-actions">
         {(selected.estado !== "RASCUNHO" || canEditDraft) && <FacButton icon={selected.estado === "RASCUNHO" ? "pi pi-pencil" : "pi pi-eye"} label={openLabel} onClick={() => onEditDraft(selected.id)} variant="primary" />}

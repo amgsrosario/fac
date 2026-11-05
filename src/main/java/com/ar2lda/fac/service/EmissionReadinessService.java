@@ -35,7 +35,9 @@ public class EmissionReadinessService {
         var blockers = new ArrayList<Motivo>();
         var warnings = new ArrayList<Motivo>();
         if (document.getEstado() != EstadoDocumentoComercial.RASCUNHO)
-            blockers.add(new Motivo("ESTADO_INCOMPATIVEL", "O documento já foi emitido ou está num estado incompatível."));
+            return new AvaliacaoEmissaoDto(clock.instant(),
+                    List.of(new Motivo("ESTADO_INCOMPATIVEL", "O documento já foi emitido ou está num estado incompatível.")),
+                    List.of(), false, document.getValorTotal(), null);
         if (document.isAnulado())
             blockers.add(new Motivo("DOCUMENTO_ANULADO", "O documento encontra-se anulado."));
         if (lines.stream().noneMatch(l -> l.getTipoLinha() == TipoLinhaDocumento.COMERCIAL))

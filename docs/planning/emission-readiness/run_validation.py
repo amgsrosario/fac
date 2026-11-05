@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 
 os.umask(0o077)
 ROOT = Path(__file__).resolve().parents[3]
-CLASSES = ['EmissionReadinessServiceTests','EmissionReadinessJourneyTests','DocumentoComercialControllerTests','GovernedFtPositiveTests']
+CLASSES = sys.argv[1:] or ['EmissionReadinessServiceTests','EmissionReadinessJourneyTests','DocumentoComercialControllerTests','GovernedFtPositiveTests']
 SOURCE = ROOT/'src/test/java/com/ar2lda/fac/fiscal/catalog/EmissionReadinessJourneyTests.java'
 STAMP = time.strftime('%Y%m%d-%H%M%S',time.gmtime())+'-'+secrets.token_hex(3)
 OUT = ROOT/'target/emission-readiness-evidence'/STAMP
