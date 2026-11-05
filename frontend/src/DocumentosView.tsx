@@ -167,6 +167,8 @@ export default function DocumentosView() {
   const navigate = useNavigate();
   const [documentos, setDocumentos] = useState<DocumentoComercial[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const selectedIdRef = useRef(selectedId);
+  selectedIdRef.current = selectedId;
   const [detailOpen, setDetailOpen] = useState(false);
   const detailTriggerRef = useRef<HTMLButtonElement>(null);
   const [linhas, setLinhas] = useState<LinhaDocumento[]>([]);
@@ -204,6 +206,8 @@ export default function DocumentosView() {
   useEffect(() => {
     setLinhas([]);
     setLineEditorOpen(false);
+    setDiagnostico(null);
+    setEmissionOpen(false);
   }, [selectedId]);
 
   useEffect(() => {
@@ -329,8 +333,10 @@ export default function DocumentosView() {
     setNotice(null);
     try {
       await recalculateDraft(selected.id);
-      setLinhas(await fetchJson<LinhaDocumento[]>(`/api/documentos-comerciais/${selected.id}/linhas`));
+      const freshLines = await fetchJson<LinhaDocumento[]>(`/api/documentos-comerciais/${selected.id}/linhas`);
       const diagnosticoAtual = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
+      if (selectedIdRef.current !== selected.id) return;
+      setLinhas(freshLines);
       setDiagnostico(diagnosticoAtual);
       setDetailOpen(false);
       setEmissionOpen(true);

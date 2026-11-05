@@ -205,6 +205,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const [notice, setNotice] = useState<string | null>(null);
   const [fiscalPreview, setFiscalPreview] = useState<{ key: string; result?: FiscalPreview; error?: string } | null>(null);
   const [recalculationWarning, setRecalculationWarning] = useState(false);
+  const loadGeneration = useRef(0);
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
   const [impressao, setImpressao] = useState<DocumentoImpressao | null>(null);
   const [anularOpen, setAnularOpen] = useState(false);
@@ -275,6 +276,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   useEffect(() => {
     loadInitial();
+    return () => { loadGeneration.current++; };
   }, [documentId]);
 
   useEffect(() => {
@@ -292,11 +294,14 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   }, [dirty]);
 
   async function loadInitial() {
+    const generation = ++loadGeneration.current;
+    setDiagnostico(null);
     setLoading(true);
     setError(null);
     setNotice(null);
     try {
       const loadedCatalogos = await loadCatalogos();
+      if (generation !== loadGeneration.current) return;
       setCatalogos(loadedCatalogos);
       if (documentId) {
         let doc = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${documentId}`);
@@ -309,6 +314,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
           requestJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${documentId}/diagnostico`),
           requestJson<DocumentoImpressao>(`/api/documentos-comerciais/${documentId}/impressao`)
         ]);
+        if (generation !== loadGeneration.current) return;
         if (doc.estado !== "RASCUNHO") {
           setNotice("Documento aberto em modo consulta. A edição fica bloqueada fora de RASCUNHO.");
         }
@@ -316,6 +322,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
           lookupSelected<Cliente>("/api/clientes/lookup", [doc.clienteId]),
           lookupSelected<Artigo>("/api/artigos/lookup", realLines.flatMap((line) => line.artigoId ? [line.artigoId] : []))
         ]);
+        if (generation !== loadGeneration.current) return;
         setCatalogos({ ...loadedCatalogos, clientes: selectedClients, artigos: selectedArticles });
         const mappedHeader = headerFromDocument(doc);
         const mappedLines = realLines
@@ -336,6 +343,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       } else {
         setStep("header");
         const parametros = await fetchOptional<ParametrosDocumentoComercial>("/api/parametros-documento-comercial");
+        if (generation !== loadGeneration.current) return;
         const { header: nextHeader, warnings } = initialiseHeader(loadedCatalogos, parametros);
         setDocumento(null);
         setRecalculationWarning(false);
@@ -352,9 +360,9 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setDirty(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível carregar o editor de rascunho.");
+      if (generation === loadGeneration.current) setError(err instanceof Error ? err.message : "Não foi possível carregar o editor de rascunho.");
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
   }
 

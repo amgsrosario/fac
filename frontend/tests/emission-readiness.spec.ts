@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-async function setup(page: Page, consumer: string, allowed: boolean, warningOnSave = false, options: {missing?: boolean; failSave?: boolean; forbidden?: boolean; delayed?: boolean} = {}) {
+async function setup(page: Page, consumer: string, allowed: boolean, warningOnSave = false, options: {missing?: boolean; failSave?: boolean; forbidden?: boolean; delayed?: boolean; newDocument?: boolean; stale?: boolean} = {}) {
   let diagCalls = 0;
   const posts: unknown[] = [];
   const session = { token:'synthetic',type:'Bearer',codigo:'TESTE',nome:'Teste',papel:'ADMINISTRADOR',
@@ -16,14 +16,18 @@ async function setup(page: Page, consumer: string, allowed: boolean, warningOnSa
     const send=(value: unknown,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(value)});
     if(path.endsWith('/diagnostico')) {
       diagCalls++;
+      if(options.stale && path.includes('/9/')) await new Promise(resolve=>setTimeout(resolve,700));
       if (options.delayed && diagCalls > 1) await new Promise(resolve => setTimeout(resolve, 250));
       if (options.missing) return send({message:'Diagnóstico sintético indisponível'},503);
       return send({referencia:'FT A/9',podeEmitir:allowed,podeAnular:false,alertas:[],bloqueios:[],
         pendente:{existe:false},totais:{coerente:true,cabecalhoValorTotal:12.3,linhasValorTotal:12.3},
         avaliacaoEmissao:{confirmacaoRecalculoNecessaria:doc.resultadoFiscal.recalculoAviso,totalApresentado:12.3,totalProjectado:15,
-          impedimentos:allowed?[]:[{codigo:'CODIGO_AT_AUSENTE',mensagem:'A série não possui código AT.'}],
+          impedimentos:allowed?[]:[{codigo:'CODIGO_AT_AUSENTE',mensagem:options.stale?(path.includes('/10/')?'Novo contexto sintético':'Antigo contexto sintético'):'A série não possui código AT.'}],
           avisos:doc.resultadoFiscal.recalculoAviso?[{codigo:'RECALCULO_POR_CONFIRMAR',mensagem:'Confirme os valores recalculados.'}]:[]}});
     }
+    if(path==='parametros-documento-comercial')return send({tipoDocumentoId:'FT',serie:'A',armazemCargaId:'1'});
+    if(path==='documentos-comerciais' && route.request().method()==='POST')return send(doc,201);
+    if(path.startsWith('documentos-comerciais/10') && !path.endsWith('/linhas') && !path.endsWith('/impressao'))return send({...doc,id:10});
     if(path.endsWith('/emitir')) {posts.push(route.request().postDataJSON());if(options.forbidden)return send({message:'Sem permissão sintética'},403);doc.estado='EMITIDO';return send(doc);}
     if(path.endsWith('/recalcular-fiscal')) return send(doc);
     if(path==='documentos-comerciais/preview-fiscal') return send({linhas:[fiscal],totais:{valorBruto:10,valorDesconto:0,valorIvaTotal:2.3,valorTotal:12.3}});
@@ -40,7 +44,7 @@ async function setup(page: Page, consumer: string, allowed: boolean, warningOnSa
       'artigos/lookup':[{codigo:'A1',descricao:'Synthetic article',pvp:10,ivaVendaId:'NORMAL',inativo:false}]};
     return send({content:catalogs[path]??[],totalElements:(catalogs[path]??[]).length,totalPages:1,number:0});
   });
-  await page.goto('/tests/emission-harness.html?consumer='+consumer);
+  await page.goto('/tests/emission-harness.html?consumer='+consumer+(options.newDocument?'&new=1':''));
   return {posts,diagnostics:()=>diagCalls};
 }
 for(const consumer of ['legacy','list','editor']) {
@@ -140,5 +144,29 @@ test('editor save failure does not request issuance',async({page})=>{
   await page.locator('tr:not(.active-line)').getByRole('textbox',{name:'Descrição da linha'}).fill('Synthetic changed');
   await page.getByRole('button',{name:'Guardar e conferir',exact:true}).click();
   await expect(page.getByText(/Falha sintética ao guardar/).first()).toBeVisible();
+  expect(state.posts).toHaveLength(0);
+});
+
+test('new editor saves before diagnosing and emitting',async({page})=>{
+  const state=await setup(page,'editor',true,false,{newDocument:true});
+  const client=page.getByRole('textbox',{name:'Cliente',exact:true});
+  await client.fill('Synthetic');
+  await page.getByRole('option',{name:/Synthetic customer/}).click();
+  await page.getByRole('button',{name:'Continuar para linhas',exact:true}).click();
+  const article=page.getByRole('textbox',{name:'Pesquisar artigo ou serviço',exact:true});
+  await article.fill('Synthetic');
+  await page.getByRole('option',{name:/Synthetic article/}).click();
+  page.on('dialog',dialog=>dialog.accept());
+  await page.getByRole('button',{name:'Guardar e conferir',exact:true}).click();
+  await expect.poll(()=>state.posts.length).toBe(1);
+  expect(state.posts[0]).toMatchObject({recalculoConfirmado:false});
+});
+test('editor discards a delayed diagnostic from the previous document',async({page})=>{
+  const state=await setup(page,'editor',false,false,{stale:true});
+  await expect.poll(()=>state.diagnostics()).toBe(1);
+  await page.getByRole('link',{name:'Outro documento sintético',exact:true}).click();
+  await expect(page.getByText('Novo contexto sintético',{exact:true})).toBeVisible();
+  await page.waitForTimeout(900);
+  await expect(page.getByText('Antigo contexto sintético',{exact:true})).toHaveCount(0);
   expect(state.posts).toHaveLength(0);
 });

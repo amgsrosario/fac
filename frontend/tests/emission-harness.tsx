@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, Link } from 'react-router-dom';
 import { FacToastProvider } from '../src/ui/fac';
 import { PrimeReactProvider } from 'primereact/api';
 import { facPrimeReactConfig } from '../src/ui/fac/theme/primeReactConfig';
@@ -16,7 +16,7 @@ const content = consumer === 'legacy' ? <DocumentosView /> : consumer === 'list'
   : <DraftDocumentEditor currentUser={session} onLogout={() => {}} />;
 createRoot(document.getElementById('root')!).render(
   <PrimeReactProvider value={facPrimeReactConfig}><FacToastProvider>
-    <MemoryRouter initialEntries={['/documentos/9']}><Routes>
+    <MemoryRouter initialEntries={[new URLSearchParams(location.search).get('new') ? '/documentos/novo' : '/documentos/9']}><Link to="/documentos/10">Outro documento sintético</Link><Routes>
       <Route path="/documentos/:id" element={content} />
     </Routes></MemoryRouter>
   </FacToastProvider></PrimeReactProvider>);
