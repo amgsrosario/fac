@@ -283,6 +283,7 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   const [sortOrder, setSortOrder] = useState<1 | -1>(-1);
   const [columnFilters, setColumnFilters] = useState({ dataEmissao: "", documento: "", cliente: "", estado: "" });
   const listRequestRef = useRef(0);
+  const detailRequestRef = useRef(0);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -389,17 +390,21 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
   }
 
   async function loadDetail(id: number) {
+    const requestId = ++detailRequestRef.current;
     setDetailLoading(true);
+    setDiagnostico(null);
     try {
       const diag = await requestJson<Diagnostico>(`/api/documentos-comerciais/${id}/diagnostico`);
+      if (requestId !== detailRequestRef.current) return;
       setLinhas([]);
       setDiagnostico(diag);
     } catch (err) {
+      if (requestId !== detailRequestRef.current) return;
       setError(err instanceof Error ? err.message : "Não foi possível carregar detalhe do documento.");
       setLinhas([]);
       setDiagnostico(null);
     } finally {
-      setDetailLoading(false);
+      if (requestId === detailRequestRef.current) setDetailLoading(false);
     }
   }
 

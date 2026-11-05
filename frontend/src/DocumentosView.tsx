@@ -332,6 +332,7 @@ export default function DocumentosView() {
       setLinhas(await fetchJson<LinhaDocumento[]>(`/api/documentos-comerciais/${selected.id}/linhas`));
       const diagnosticoAtual = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
       setDiagnostico(diagnosticoAtual);
+      setDetailOpen(false);
       setEmissionOpen(true);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível preparar a emissão.");
