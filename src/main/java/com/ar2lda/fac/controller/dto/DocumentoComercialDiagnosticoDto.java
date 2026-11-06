@@ -17,6 +17,7 @@ public record DocumentoComercialDiagnosticoDto(
         DocumentoComercialDiagnosticoPendenteDto pendente,
         DocumentoComercialDiagnosticoTotaisDto totais,
         List<String> alertas,
-        List<String> bloqueios
+        List<String> bloqueios,
+        AvaliacaoEmissaoDto avaliacaoEmissao
 ) {
 }

@@ -1,3 +1,4 @@
+import { EmissionAssessment, EmissionReadinessMessages, emissionConfirmation } from "./emissionReadiness";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Paginator } from "primereact/paginator";
 import { useNavigate } from "react-router-dom";
@@ -102,6 +103,7 @@ type Artigo = {
 };
 
 type DiagnosticoDocumento = {
+  avaliacaoEmissao?: EmissionAssessment;
   referencia: string;
   podeEmitir: boolean;
   alertas: string[];
@@ -165,6 +167,8 @@ export default function DocumentosView() {
   const navigate = useNavigate();
   const [documentos, setDocumentos] = useState<DocumentoComercial[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const selectedIdRef = useRef(selectedId);
+  selectedIdRef.current = selectedId;
   const [detailOpen, setDetailOpen] = useState(false);
   const detailTriggerRef = useRef<HTMLButtonElement>(null);
   const [linhas, setLinhas] = useState<LinhaDocumento[]>([]);
@@ -202,6 +206,8 @@ export default function DocumentosView() {
   useEffect(() => {
     setLinhas([]);
     setLineEditorOpen(false);
+    setDiagnostico(null);
+    setEmissionOpen(false);
   }, [selectedId]);
 
   useEffect(() => {
@@ -327,9 +333,12 @@ export default function DocumentosView() {
     setNotice(null);
     try {
       await recalculateDraft(selected.id);
-      setLinhas(await fetchJson<LinhaDocumento[]>(`/api/documentos-comerciais/${selected.id}/linhas`));
+      const freshLines = await fetchJson<LinhaDocumento[]>(`/api/documentos-comerciais/${selected.id}/linhas`);
       const diagnosticoAtual = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
+      if (selectedIdRef.current !== selected.id) return;
+      setLinhas(freshLines);
       setDiagnostico(diagnosticoAtual);
+      setDetailOpen(false);
       setEmissionOpen(true);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível preparar a emissão.");
@@ -340,11 +349,13 @@ export default function DocumentosView() {
 
   async function emitDocument() {
     if (!selected || !diagnostico?.podeEmitir) return;
-    if (!window.confirm(`Emitir definitivamente ${diagnostico.referencia}? Depois de emitido, o documento fica imutável.`)) return;
     setLoading(true);
     setMessage(null);
     try {
-      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, "POST", { emissorId: getAuthSession()?.codigo, recalculoConfirmado: Boolean(selected.resultadoFiscal?.recalculoAviso) });
+      const fresh = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
+      setDiagnostico(fresh);
+      if (!fresh.podeEmitir || !window.confirm(emissionConfirmation(fresh, fresh.referencia))) return;
+      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, "POST", { emissorId: getAuthSession()?.codigo, recalculoConfirmado: Boolean(fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria) });
       const diagnosticoEmitido = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
       setDocumentos((current) => current.map((item) => item.id === emitted.id ? emitted : item));
       setEmissionOpen(false);
@@ -703,6 +714,7 @@ export default function DocumentosView() {
             <div><span>Coerência dos totais</span><strong>{diagnostico.totais.coerente ? "Confirmada" : "Com diferenças"}</strong></div>
           </div>
 
+          <EmissionReadinessMessages diagnostic={diagnostico} />
           {diagnostico.bloqueios.length > 0 && <div className="fac-check-list danger"><strong>Emissão bloqueada</strong>{diagnostico.bloqueios.map((item) => <p key={item}>{item}</p>)}</div>}
           {diagnostico.alertas.length > 0 && <div className="fac-check-list warning"><strong>Alertas</strong>{diagnostico.alertas.map((item) => <p key={item}>{item}</p>)}</div>}
           {diagnostico.podeEmitir && diagnostico.alertas.length === 0 && <p className="fac-check-ok">O documento está coerente e pode ser emitido.</p>}

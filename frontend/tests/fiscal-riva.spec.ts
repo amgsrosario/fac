@@ -27,7 +27,9 @@ async function fiscalEditor(page: Page, { failed = false, emitted = false, warni
       return send(doc);
     }
     if (path === 'documentos-comerciais/9/linhas') return send([line]);
-    if (path === 'documentos-comerciais/9/diagnostico') return send({ podeEmitir: true, podeAnular: false, alertas: [], bloqueios: [] });
+    if (path === 'documentos-comerciais/9/diagnostico') return send({ podeEmitir: true, podeAnular: false, alertas: [], bloqueios: [],
+      avaliacaoEmissao: { confirmacaoRecalculoNecessaria: doc.resultadoFiscal.recalculoAviso, totalApresentado:50, totalProjectado:50,
+        impedimentos:[], avisos: doc.resultadoFiscal.recalculoAviso ? [{codigo:'RECALCULO_POR_CONFIRMAR',mensagem:'O rascunho foi recalculado. Confirma os valores.'}] : [] } });
     if (path === 'documentos-comerciais/9/impressao') return send({ documento: doc, linhas: [line] });
     if (path.startsWith('documentos-comerciais/9')) return send(doc);
     const catalogues: Record<string, unknown[]> = {
@@ -63,6 +65,7 @@ test('erro de resolução fiscal não produz fallback zero nem permite emissão'
 
 test('emitido mostra snapshot sem preview nem recálculo mutante', async ({ page }) => {
   const calls = await fiscalEditor(page, { emitted: true });
+  await expect(page.getByLabel('Condições de emissão')).toHaveCount(0);
   await expect(page.getByText(/Taxa aplicável 6%.*IVA calculado 3,00.*IVA liquidado 0,00/).first()).toBeVisible();
   await expect(page.locator('.fac-draft-total-final strong')).toHaveText(/50,00\s*€/);
   expect(calls.some((call) => call.includes('recalcular-fiscal') || call.includes('preview-fiscal'))).toBe(false);
@@ -74,15 +77,20 @@ test('aviso surgido ao guardar exige nova revisão e confirmação antes da emis
   page.on('dialog', async (dialog) => { confirmations.push(dialog.message()); await dialog.accept(); });
   await expect(page.getByText('Rascunho recalculado', { exact: true })).toHaveCount(0);
   await page.locator('tr:not(.active-line)').getByRole('textbox', { name: 'Descrição da linha' }).fill('Bens actualizados');
-  const emit = page.getByRole('button', { name: 'Emitir documento', exact: true });
+  const emit = page.getByRole('button', { name: 'Guardar e conferir', exact: true });
   await expect(emit).toBeEnabled();
   await emit.click();
-  await expect(page.getByText('Rascunho recalculado', { exact: true })).toBeVisible();
-  expect(calls.filter((call) => call === 'POST documentos-comerciais/9/emitir')).toHaveLength(0);
-  await expect(emit).toBeEnabled();
-  await emit.click();
+  await expect(page.getByText('O rascunho foi guardado e recalculado. Revê os valores apresentados e confirma novamente a emissão.', { exact: true })).toBeVisible();
+  expect(calls.filter(call => call === 'POST documentos-comerciais/9/emitir')).toHaveLength(0);
+  expect(confirmations).toHaveLength(0);
+  await expect(page.locator('.fac-draft-total-final strong')).toHaveText(/50,00/);
+  await page.getByRole('button', { name: 'Emitir documento', exact: true }).click();
   await expect.poll(() => calls.filter((call) => call === 'POST documentos-comerciais/9/emitir').length).toBe(1);
-  expect(confirmations).toHaveLength(2);
-  expect(confirmations[0]).not.toContain('recalculado');
-  expect(confirmations[1]).toContain('recalculado');
+  expect(confirmations).toHaveLength(1);
+  expect(confirmations[0]).toContain('recalculado');
+  const lastSave=calls.lastIndexOf('PUT documentos-comerciais/9/linhas/1');
+  const issue=calls.indexOf('POST documentos-comerciais/9/emitir');
+  const lastDiagnostic=calls.slice(0,issue).lastIndexOf('GET documentos-comerciais/9/diagnostico');
+  expect(lastDiagnostic).toBeGreaterThan(lastSave);
+  expect(issue).toBeGreaterThan(lastDiagnostic);
 });

@@ -70,6 +70,11 @@ public class QrFiscalPayloadBuilder {
         return payload;
     }
 
+    public void validateKnownCommercialInputs(String issuerNif, String customerNif, String customerCountry, String fiscalCode, String typeId) {
+        validator.validateKnownIdentity(requiredDigits(issuerNif, "NIF do emitente"), adquirenteNif(customerNif),
+                required(customerCountry, "País do adquirente"), required(codigoFiscal(fiscalCode, typeId), "Tipo de documento fiscal"));
+    }
+
     public String payloadVersion() {
         return QrFiscalValidator.PAYLOAD_VERSION;
     }

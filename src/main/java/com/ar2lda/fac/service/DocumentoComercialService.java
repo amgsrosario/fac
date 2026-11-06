@@ -96,6 +96,7 @@ public class DocumentoComercialService {
     private final PendenteService pendenteService;
     private final AtcudService atcudService;
     private final FiscalQrService fiscalQrService;
+    private final EmissionReadinessService emissionReadiness;
     private final LinhaDocumentoComercialService linhaDocumentoComercialService;
     private final DocumentoComercialMapper mapper;
     private final LinhaDocumentoComercialMapper linhaMapper;
@@ -205,6 +206,7 @@ public class DocumentoComercialService {
         documento.setImpresso(true);
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public DocumentoComercialDiagnosticoDto getDiagnostico(Long id) {
         DocumentoComercial documento = findDocumento(id);
         List<LinhaDocumentoComercial> linhas = linhaRepository.findByDocumentoComercialIdOrderByNumeroLinha(id);
@@ -236,10 +238,8 @@ public class DocumentoComercialService {
             alertas.add("Totais do cabecalho nao coincidem com os totais calculados pelas linhas");
         }
 
-        boolean podeEmitir = documento.getEstado() == EstadoDocumentoComercial.RASCUNHO
-                && !documento.isAnulado()
-                && linhas.stream().anyMatch(linha -> linha.getTipoLinha() == TipoLinhaDocumento.COMERCIAL)
-                && totais.coerente();
+        var avaliacao = emissionReadiness.evaluate(documento, linhas);
+        boolean podeEmitir = avaliacao.elegivel();
         boolean podeAnular = documento.getEstado() == EstadoDocumentoComercial.EMITIDO
                 && !documento.isAnulado()
                 && !temRecebimentosAtivos
@@ -258,10 +258,12 @@ public class DocumentoComercialService {
                 buildDiagnosticoPendente(pendente),
                 totais,
                 alertas,
-                bloqueios
+                bloqueios,
+                avaliacao
         );
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public String getDiagnosticoHtml(Long id) {
         DocumentoComercialImpressaoDto impressao = getImpressao(id);
         DocumentoComercialDiagnosticoDto diagnostico = getDiagnostico(id);
@@ -304,6 +306,9 @@ public class DocumentoComercialService {
         appendTotais(html, diagnostico.totais());
         appendPendente(html, diagnostico.pendente());
         appendMensagens(html, "Alertas", diagnostico.alertas());
+        appendMensagens(html, "Impedimentos de emissão", diagnostico.avaliacaoEmissao().impedimentos().stream().map(m -> m.mensagem()).toList());
+        appendMensagens(html, "Avisos de emissão", diagnostico.avaliacaoEmissao().avisos().stream().map(m -> m.mensagem()).toList());
+        appendLine(html, "Total projectado", diagnostico.avaliacaoEmissao().totalProjectado());
         appendMensagens(html, "Bloqueios", diagnostico.bloqueios());
 
         html.append("""

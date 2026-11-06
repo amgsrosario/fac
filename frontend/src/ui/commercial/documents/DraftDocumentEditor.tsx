@@ -1,3 +1,4 @@
+import { EmissionAssessment, EmissionReadinessMessages, emissionConfirmation } from "../../../emissionReadiness";
 import { KeyboardEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { InputNumber, InputNumberValueChangeEvent } from "primereact/inputnumber";
 import { useNavigate, useParams } from "react-router-dom";
@@ -65,6 +66,7 @@ type LinhaDocumento = {
 };
 
 type DiagnosticoDocumento = {
+  avaliacaoEmissao?: EmissionAssessment;
   podeEmitir: boolean;
   podeAnular: boolean;
   alertas: string[];
@@ -203,6 +205,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const [notice, setNotice] = useState<string | null>(null);
   const [fiscalPreview, setFiscalPreview] = useState<{ key: string; result?: FiscalPreview; error?: string } | null>(null);
   const [recalculationWarning, setRecalculationWarning] = useState(false);
+  const loadGeneration = useRef(0);
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
   const [impressao, setImpressao] = useState<DocumentoImpressao | null>(null);
   const [anularOpen, setAnularOpen] = useState(false);
@@ -273,6 +276,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   useEffect(() => {
     loadInitial();
+    return () => { loadGeneration.current++; };
   }, [documentId]);
 
   useEffect(() => {
@@ -290,11 +294,14 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   }, [dirty]);
 
   async function loadInitial() {
+    const generation = ++loadGeneration.current;
+    setDiagnostico(null);
     setLoading(true);
     setError(null);
     setNotice(null);
     try {
       const loadedCatalogos = await loadCatalogos();
+      if (generation !== loadGeneration.current) return;
       setCatalogos(loadedCatalogos);
       if (documentId) {
         let doc = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${documentId}`);
@@ -307,6 +314,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
           requestJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${documentId}/diagnostico`),
           requestJson<DocumentoImpressao>(`/api/documentos-comerciais/${documentId}/impressao`)
         ]);
+        if (generation !== loadGeneration.current) return;
         if (doc.estado !== "RASCUNHO") {
           setNotice("Documento aberto em modo consulta. A edição fica bloqueada fora de RASCUNHO.");
         }
@@ -314,6 +322,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
           lookupSelected<Cliente>("/api/clientes/lookup", [doc.clienteId]),
           lookupSelected<Artigo>("/api/artigos/lookup", realLines.flatMap((line) => line.artigoId ? [line.artigoId] : []))
         ]);
+        if (generation !== loadGeneration.current) return;
         setCatalogos({ ...loadedCatalogos, clientes: selectedClients, artigos: selectedArticles });
         const mappedHeader = headerFromDocument(doc);
         const mappedLines = realLines
@@ -334,6 +343,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       } else {
         setStep("header");
         const parametros = await fetchOptional<ParametrosDocumentoComercial>("/api/parametros-documento-comercial");
+        if (generation !== loadGeneration.current) return;
         const { header: nextHeader, warnings } = initialiseHeader(loadedCatalogos, parametros);
         setDocumento(null);
         setRecalculationWarning(false);
@@ -350,9 +360,9 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setDirty(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível carregar o editor de rascunho.");
+      if (generation === loadGeneration.current) setError(err instanceof Error ? err.message : "Não foi possível carregar o editor de rascunho.");
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
   }
 
@@ -675,22 +685,24 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
 
   async function emitDocument() {
     if (saving || !canEmitCurrent) return;
-    const reference = documento ? documentRef(documento) : "este documento";
-    const recalculationConfirmed = recalculationWarning;
-    if (!window.confirm(`${recalculationWarning ? "O rascunho foi recalculado pelas regras fiscais actuais. Confirma os valores apresentados antes de emitir.\n\n" : ""}Emitir definitivamente ${reference}? Depois de emitido, o documento fica imutável.`)) return;
+    const warningBeforeSave = Boolean(documento?.resultadoFiscal?.recalculoAviso || diagnostico?.avaliacaoEmissao?.confirmacaoRecalculoNecessaria);
     const requiresSave = !documento || dirty;
     const draft = requiresSave
       ? await saveDraft({ navigateAfterSave: false, notify: false })
       : documento;
     if (!draft) return;
-    if (draft.resultadoFiscal?.recalculoAviso && !recalculationConfirmed) {
-      setRecalculationWarning(true);
-      setNotice("O rascunho foi guardado e recalculado. Revê os valores apresentados e confirma novamente a emissão.");
-      return;
-    }
     setSaving(true);
     setError(null);
     try {
+      const fresh = await requestJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${draft.id}/diagnostico`);
+      setDiagnostico(fresh);
+      if (requiresSave && !warningBeforeSave && (draft.resultadoFiscal?.recalculoAviso || fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria)) {
+        setRecalculationWarning(true);
+        setNotice("O rascunho foi guardado e recalculado. Revê os valores apresentados e confirma novamente a emissão.");
+        return;
+      }
+      if (!fresh.podeEmitir || !window.confirm(emissionConfirmation(fresh, documentRef(draft)))) return;
+      const recalculationConfirmed = Boolean(fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria);
       const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${draft.id}/emitir`, { emissorId: currentUser.codigo, recalculoConfirmado: recalculationConfirmed }, "POST");
       await refreshAfterStateChange(emitted.id, "Documento emitido.");
       setRecalculationWarning(false);
@@ -793,11 +805,12 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
             {canOpenPdfCurrent && <FacButton disabled={saving} icon="pi pi-file-pdf" label="PDF" onClick={openPdf} variant="secondary" />}
             {canVoidCurrent && <FacButton disabled={saving} icon="pi pi-ban" label="Anular documento" onClick={() => setAnularOpen(true)} variant="destructive" />}
             {showSaveDraftAction && <FacButton disabled={saving || loading || !canEditCurrent} icon="pi pi-save" label={saveDraftLabel} onClick={() => void saveDraft()} variant="secondary" />}
-            {showEmitAction && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label="Emitir documento" onClick={emitDocument} variant="primary" />}
+            {showEmitAction && <FacButton disabled={saving || loading || !canEmitCurrent} icon="pi pi-check" label={!documento || dirty ? "Guardar e conferir" : "Emitir documento"} onClick={emitDocument} variant="primary" />}
           </div>
         </div>
       </header>
       {error && <FacMessage tone="error" title="Erro">{error}</FacMessage>}
+      <EmissionReadinessMessages diagnostic={dirty || !isDraft ? null : diagnostico} />
       {recalculationWarning && isDraft && <FacMessage tone="warning" title="Rascunho recalculado">As regras fiscais actuais alteraram os valores do rascunho. Revê as linhas e os totais antes da emissão.</FacMessage>}
       {previewError && isDraft && <FacMessage tone="error" title="Cálculo fiscal">{previewError}</FacMessage>}
       {notice && <div className="fac-draft-message success" role="status"><span aria-hidden="true">✓</span><span>{notice}</span></div>}

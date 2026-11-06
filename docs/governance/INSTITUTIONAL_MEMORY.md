@@ -1006,6 +1006,13 @@ O parecer incremental R1 encerrou MINOR-001 a MINOR-006 e identificou duas reser
 
 O aviso de recálculo da proposta usa `fiscalRecalculoAviso` persistido ou a activação projectada num legado pelas comparações do POST. Indicador activo exige confirmação mesmo com totais iguais; uma diferença em documento não legado com indicador inactivo não cria a exigência por si. O aviso isolado permite prosseguir para confirmação. O-40 acrescenta a recusa verificável do prefixo ATCUD: e O-41 actualiza o delta cumulativo. Confirmação incremental limitada a MINOR-007/008 pendente. A implementação funcional continua dependente dos mandatos próprios.
 
+## 2026-11-05 — podeEmitir, implementação local após PR #53
+
+Base integrada `5ec635686a15c19f2603ba26f048bc5ab8c10b26`. Mandato #46/6661589044: diagnóstico sem escritas, impedimentos/avisos e totais projectados, confirmação conforme fiscalRecalculoAviso, reavaliação dos três consumidores após gravar. POST e controlos de emissão preservados. Backend 51/51 e browser 11/11 aprovados, em commits distintos identificados em [VALIDATION](../planning/emission-readiness/VALIDATION.md); TypeScript/build/package aprovados com proveniência delimitada. Implementação local, pendente de revisão Claude e gates próprios de publicação. Sem activação, alterações às bases conservadas ou homologação fiscal.
+
+## 2026-11-06 — podeEmitir R1, três achados corrigidos localmente
+
+Parecer inicial sobre 1814d86: REQUEST CHANGES, 0 BLOCKER / 1 MAJOR / 2 MINOR. Original e sidecar iguais, SHA-256 ff8142b6757b57e5551d699b5f5462331eb4373df550b911870c7ca3273a0d61, preservados sem alteração. R1 repõe paragem após novo aviso de recálculo na gravação, limita avaliação/mensagens de emissão a rascunhos e amplia regressões, com limites documentados. Testes afectados: 14 backend em 8b5e341 e 26 browser em a431f81, todos aprovados; TypeScript/build/package aprovados, Git e códigos de saída capturados. Provas anteriores reutilizadas apenas onde aplicável, sem declarar suite integral ou ensaio no HEAD documental final. [Validação e arquivo](../planning/emission-readiness/VALIDATION.md). Confirmação incremental Claude pendente. Branch isolada, sem publicação, PR, merge, activação ou alterações às bases conservadas. POST e gates fiscais preservados.
 
 ### M4-10 — Prova comercial parcial após PR #53, 05-11-2026
 
@@ -1018,3 +1025,21 @@ Pendência operacional de acessibilidade Docker encerrada por consulta na mesma 
 Labels exactas conferidas nos runners: `ar2.mission=M410-commercial` e `ar2.mission=Emission-readiness`. Para cada uma, `docker ps -a` e `docker network ls` filtrados devolveram zero registos, com código 0. Confirmação actual, exclusivamente de leitura; não se eliminaram recursos nem repetiram testes. A nota anterior de indisponibilidade é histórica e fica superada por esta verificação.
 
 Evidência: arquivo reservado `tuuli-backups/docker-revalidation/2026-11-06/results.json`, SHA-256 `1ffc48c0c22ba061c8a8f68350b4e781133a7d8a38720259e0197469203b149f`. Relatório `2026-11-06_TUULI_Docker_revalidacao_Codex.md` em Relatorios-AR2/TUULI, com sidecar. Esta verificação não altera aprovação, âmbito dos ensaios ou gates de publicação, PR, merge e activação.
+
+## 2026-11-06 — podeEmitir R1 aprovado; preparação de publicação
+
+Claude Code: APPROVE, 0 BLOCKER / 0 MAJOR / 0 MINOR, no HEAD `7c96e5819ee2ee8c47f39363675323f611943b73`, tree `e6a227563846659c162185eecf53bf00d001ff8b`. MAJOR-001 e MINOR-001/002 encerrados pela confirmação incremental original `2026-11-06_TUULI_podeEmitir-R1_confirmacao-incremental_Claude.md`, SHA-256 `ec8905c589068024c375285ad9b509f28ca7c815b778bb3a479cabf1eb4ad4a0`, conferido com o sidecar e preservado sem alteração em Relatorios-AR2/TUULI e tuuli-backups/reviews/2026-11-06. A aprovação está limitada ao conteúdo e às provas identificadas, não autoriza publicação, merge ou activação.
+
+Após o parecer, a revalidação Docker já registada encerrou a pendência operacional: cliente/servidor acessíveis, contexto default, zero contentores/redes para `ar2.mission=M410-commercial` e `ar2.mission=Emission-readiness`. Evidência `1ffc48c0c22ba061c8a8f68350b4e781133a7d8a38720259e0197469203b149f`. O parecer conserva fielmente a indisponibilidade observada pelo revisor; a consulta posterior do executor não é uma nova revisão independente.
+
+Melhoria pendente antes de utilização produtiva (O-1/O-2): mostrar explicitamente bruto, IVA e total no diálogo final, inclusive quando o aviso era conhecido antes da gravação ou o operador está no cabeçalho. Recomendação registada, não implementada nesta missão documental; não condicionou o APPROVE recebido. Mantêm-se reservas de assinatura real, disponibilidade dinâmica da fonte, integração browser/backend real e homologação fiscal. Entrega preparada para decisão administrativa de publicação, com deltas documentais posteriores à revisão identificados no relatório conjunto.
+
+
+
+## 2026-11-06 — Reconciliação podeEmitir após integração M4-10
+
+[Registo executivo #46/6683385862](https://github.com/amgsrosario/fac/issues/46#issuecomment-6683385862): M4-10 integrada pelo PR #54, merge `41dbe8539df9626db8d941ffd688d8c2e754a420`, incluindo o HEAD autorizado `cc8041c2b3e1fd994e6fa1867c43b92d10e5b7dd`, com CI 42205131937 success. A base remota foi reconfirmada por HTTPS e incorporada por merge local na branch `codex/emission-readiness-pr53`, preservando as duas histórias. Sem merge remoto de podeEmitir.
+
+Conflitos limitados a INSTITUTIONAL_MEMORY.md e OPERATIONAL_STATE.md: preservados os registos de implementação/revisão de podeEmitir e da prova parcial M4-10, com uma única secção de revalidação Docker. O estado corrente substitui as menções históricas a revisão/publicação pendente: M4-10 está integrada; podeEmitir tem APPROVE 0/0/0 em 7c96e58 e continua local, preparada para decisão de publicação sobre novo HEAD exacto. Pareceres originais/sidecars reconferidos: M4-10 `ba7b8bd5acd76ecc0ca28d35a48af8c9108094d18420dcebc462ae52d40ce36f`; podeEmitir R1 `ec8905c589068024c375285ad9b509f28ca7c815b778bb3a479cabf1eb4ad4a0`.
+
+Código funcional de podeEmitir preservado relativamente ao HEAD revisto `7c96e5819ee2ee8c47f39363675323f611943b73`; o merge acrescenta apenas os testes/runner/documentação M4-10 já integrados, além da reconciliação documental. Não se repetiram testes nem se presume revisão independente de um novo código funcional. Relatório de entrega identifica HEAD/tree finais, base e delta do futuro PR. Mantêm-se a melhoria de bruto/IVA/total no diálogo antes de uso produtivo, os limites MockMvc/sintéticos e todos os gates fiscais, de publicação, PR, merge e activação. Bases conservadas, demo, checkout principal e restantes worktrees preservados.
