@@ -1132,3 +1132,16 @@ A proposta podeEmitir trata a confirmação de recálculo como aviso, define cá
 O parecer incremental R1 encerrou MINOR-001 a MINOR-006 e identificou duas reservas novas, documentais (0 BLOCKER, 0 MAJOR, 2 MINOR). Original `2026-11-05_TUULI_continuidade-M05-M4-02-M04-R1_confirmacao-incremental_Claude.md` conferido com o sidecar e com o digest comunicado, `8498183e33dcfa736ed59760cdbac9190b4f2ae610033961cff9971577427d3a`. A matriz passa a descrever M4-10 como prova comercial parcial, com fixture apenas na preparação e transição real para ANULADO. A reserva de homologação QR/PDF permanece.
 
 O aviso de recálculo da proposta usa `fiscalRecalculoAviso` persistido ou a activação projectada num legado pelas comparações do POST. Indicador activo exige confirmação mesmo com totais iguais; uma diferença em documento não legado com indicador inactivo não cria a exigência por si. O aviso isolado permite prosseguir para confirmação. O-40 acrescenta a recusa verificável do prefixo ATCUD: e O-41 actualiza o delta cumulativo. Confirmação incremental limitada a MINOR-007/008 pendente. A implementação funcional continua dependente dos mandatos próprios.
+
+
+### M4-10 — Prova comercial parcial após PR #53, 05-11-2026
+
+Mandato #46/6661589044. Base `5ec635686a15c19f2603ba26f048bc5ab8c10b26`. Claude Code: APPROVE, 0/0/0, limitado ao HEAD `217e89fe6ef2f60cb473fd3466867fee7af9b9ca`. Original e sidecar conferidos: SHA-256 `ba7b8bd5acd76ecc0ca28d35a48af8c9108094d18420dcebc462ae52d40ce36f`. Prova HTTP por MockMvc, com fonte sintética; não prova JAR nem emissão produtiva. Anulação pelo POST e QR preservado nas três reimpressões comerciais; apenas auditoria permitida nas tabelas comparadas. Numerador coberto, estado das sequências não demonstrado. Evidências e primeira tentativa preservadas em tuuli-backups/m4-10/2026-11-05. Sem novos ensaios neste fecho. PDF financeiro, homologação QR/PDF, assinatura real e impressão física pendentes. Entrega preparada para decisão de publicação; sem autorização implícita de push, PR, merge ou activação. [Validação](../planning/m4-10-commercial/VALIDATION.md).
+
+## 2026-11-06 — Revalidação Docker e recursos M4-10/podeEmitir
+
+Pendência operacional de acessibilidade Docker encerrada por consulta na mesma distribuição WSL Ubuntu (Ubuntu 26.04.1 LTS). `docker version`, `docker context show` e `docker info` concluíram com código 0: cliente e servidor Engine 29.8.0, Docker Desktop 4.91.0, contexto default. O sandbox recusou inicialmente o socket; a consulta autorizada fora do sandbox teve sucesso, sem alterar permissões ou configuração.
+
+Labels exactas conferidas nos runners: `ar2.mission=M410-commercial` e `ar2.mission=Emission-readiness`. Para cada uma, `docker ps -a` e `docker network ls` filtrados devolveram zero registos, com código 0. Confirmação actual, exclusivamente de leitura; não se eliminaram recursos nem repetiram testes. A nota anterior de indisponibilidade é histórica e fica superada por esta verificação.
+
+Evidência: arquivo reservado `tuuli-backups/docker-revalidation/2026-11-06/results.json`, SHA-256 `1ffc48c0c22ba061c8a8f68350b4e781133a7d8a38720259e0197469203b149f`. Relatório `2026-11-06_TUULI_Docker_revalidacao_Codex.md` em Relatorios-AR2/TUULI, com sidecar. Esta verificação não altera aprovação, âmbito dos ensaios ou gates de publicação, PR, merge e activação.
