@@ -1,7 +1,9 @@
-# Pedido de revisão independente — podeEmitir
+# Confirmação incremental Claude — podeEmitir R1
 
-Rever o delta desde 5ec635686a15c19f2603ba26f048bc5ab8c10b26 até ao HEAD final indicado no relatório externo, branch codex/emission-readiness-pr53. Conferir VALIDATION.md, contrato revisto em docs/planning/continuity-2026-11-05 e implementação real.
+Rever exclusivamente o delta desde `1814d86a19f097a6c0d5d2dbed61799253c6bdcb` até ao HEAD final do relatório R1, branch codex/emission-readiness-pr53. Parecer original e sidecar preservados: SHA-256 ff8142b6757b57e5551d699b5f5462331eb4373df550b911870c7ca3273a0d61.
 
-Prioridades: diagnóstico sem efeitos persistentes, paridade justificada com recusas verificáveis do POST, fiscalRecalculoAviso e diferença de totais, fontes ausentes/ambíguas sem assinatura, consistência JSON/HTML, reavaliação dos três consumidores após gravar, permissões e preservação dos gates. Examinar testes, XML, logs, manifestos, proveniência por commit e limites da API simulada.
+Confirmar MAJOR-001: novo aviso após gravar exige paragem, valores visíveis e nova acção antes da confirmação/POST. Confirmar MINOR-001: mensagens limitadas a rascunhos, sem projecção/avisos em emitidos/anulados. Confirmar MINOR-002: cobertura acrescentada, proveniência das execuções, limitações e exclusões honestamente delimitadas em VALIDATION.md. Examinar também o descarte de respostas antigas acrescentado nos consumidores afectados.
 
-Não assumir que 51 testes backend e 11 browser foram executados no mesmo HEAD. Confirmar a equivalência do Java e o delta posterior descrito. A suite não é integral. Emitir parecer com HEAD/tree, achados BLOCKER/MAJOR/MINOR, veredicto e SHA-256 do original. Não alterar bases, activar, publicar ou integrar. Pedido preparado para transmissão pelo PO; revisão ainda não realizada.
+Backend dirigido: 14/14 em 8b5e341; browser: 26/26, TypeScript/build/package em a431f81. Os HEADs completos, trees, códigos de saída, XML, logs e manifestos constam da validação. O delta posterior deve ser documental. Não somar repetições nem presumir execução no HEAD documental final. Reutilização dos 46+1 testes anteriores é histórica.
+
+Emitir parecer com HEAD/tree, classificação BLOCKER/MAJOR/MINOR e SHA-256 do original. Exclusivamente leitura, sem bases conservadas, activação, publicação ou merge. Pedido entregue ao PO para transmissão efectiva; não se presume activação de revisor por ficheiro/comentário.
