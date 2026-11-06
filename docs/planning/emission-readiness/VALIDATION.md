@@ -28,7 +28,7 @@ Arquivo reservado: `/home/arosario/tuuli-backups/emission-readiness/2026-11-05/`
 
 ## Limites e revisão
 
-Sem migration, alteração do POST, manifesto fiscal, assinatura real, activação ou publicação. FinancialCore continua inactivo e o legado mantém autoridade operacional. Não demonstra disponibilidade dinâmica de fornecedor, autorização fiscal, integração produtiva ou todos os erros possíveis de persistência. A revisão da entrega inicial pediu correcções (1 MAJOR e 2 MINOR). A confirmação incremental da R1 abaixo está pendente; não existe auto-aprovação.
+Sem migration, alteração do POST, manifesto fiscal, assinatura real, activação ou publicação. FinancialCore continua inactivo e o legado mantém autoridade operacional. Não demonstra disponibilidade dinâmica de fornecedor, autorização fiscal, integração produtiva ou todos os erros possíveis de persistência. A revisão da entrega inicial pediu correcções (1 MAJOR e 2 MINOR). A confirmação incremental R1 foi posteriormente aprovada pelo Claude, conforme o registo de fecho abaixo; não existe auto-aprovação.
 
 ## R1 — correcção dos três achados, concluída documentalmente em 2026-11-06
 
@@ -63,4 +63,10 @@ Parecer original `2026-11-05_TUULI_podeEmitir_revisao-independente_Claude.md`, S
 
 O-1: os códigos DADOS_QR_INVALIDOS e CALCULO_FISCAL_INVALIDO agregam causas, mantendo a mensagem concreta. O-2: TOTAIS_INCOERENTES continua protegido no POST; a projecção não inventa uma nova condição. O-4 tratado com captura de identidade/código de saída. O-5 mantém-se a limitação das fontes PrimeIcons reutilizadas de outra worktree; fidelidade visual não demonstrada. O-6 refere texto antigo M04_STATUS.md, fora do delta R1; não foi reescrito como resultado novo.
 
-Sem mudanças no POST, migrations, manifesto fiscal ou gates produtivos. Implementação R1 pronta para confirmação incremental Claude, limitada aos três achados e ao delta desde 1814d86. A entrega ainda não tem aprovação independente R1 nem autorização de publicação.
+Sem mudanças no POST, migrations, manifesto fiscal ou gates produtivos. Implementação R1 pronta para confirmação incremental Claude, limitada aos três achados e ao delta desde 1814d86. À data do pedido R1 ainda não existia aprovação independente; o resultado posterior está registado abaixo. Continua sem autorização de publicação.
+
+## Confirmação independente e observações posteriores
+
+Claude Code confirmou os três achados como encerrados, APPROVE 0/0/0 no HEAD 7c96e5819ee2ee8c47f39363675323f611943b73. Original e sidecar preservados, SHA-256 ec8905c589068024c375285ad9b509f28ca7c815b778bb3a479cabf1eb4ad4a0. A revalidação Docker posterior confirmou acessibilidade e ausência de recursos das duas labels, com evidência 1ffc48c0c22ba061c8a8f68350b4e781133a7d8a38720259e0197469203b149f; não é repetição de ensaios nem verificação independente do revisor.
+
+O-1/O-2: melhoria pendente antes de utilização produtiva — mostrar bruto, IVA e total no diálogo final, incluindo aviso já conhecido e operador no cabeçalho. Não implementada nesta entrega documental e não condicionante do veredicto. O-3/O-4: limites dos bloqueios unitários e da protecção contra respostas antigas permanecem como acima descritos. O-5: HTML do emitido mantém linha Total projectado nula, sem mudança funcional. O-6: a limitação Docker histórica e a sua revalidação estão agora explicitadas na memória, estado e neste documento.
