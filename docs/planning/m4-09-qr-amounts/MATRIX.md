@@ -1,6 +1,6 @@
 # M4-09 — Prova dirigida de montantes QR
 
-Ordem directa da Administração neste chat, 06/11/2026, AR2-GOV-03. Base remota confirmada `5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07` (PR #55). Branch/worktree `codex/m4-09-qr-amounts` / `.worktrees/m4-09-qr-amounts`. O registo documental local `df71e68d017c2ee730211c40584fc8ac5f06ef11` permanece intacto na worktree anterior; não é cherry-picked nem apresentado como integrado.
+Deliberação da Administração AR2, transmitida neste chat em 06/11/2026, AR2-GOV-03. [Texto original preservado](../../governance/sources/2026-11-06_M4-09_deliberacao-administracao.md); [deliberação R1](../../governance/sources/2026-11-06_M4-09-R1_deliberacao-administracao.md). Base remota confirmada `5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07` (PR #55). Branch/worktree `codex/m4-09-qr-amounts` / `.worktrees/m4-09-qr-amounts`. O registo documental local `df71e68d017c2ee730211c40584fc8ac5f06ef11` permanece intacto na worktree anterior; não é cherry-picked nem apresentado como integrado.
 
 ## Cobertura reutilizada, não reexecutada
 
@@ -36,3 +36,15 @@ Não se chama directamente um serviço de emissão para contornar HTTP, não se 
 ## Limites
 
 Esta prova não cobre outros regimes, taxas, isenções, retenções, territórios, não-EUR, FR/RC/RL/NC/ND, SAF-T, assinatura real, equipamento físico ou homologação QR/PDF. Não altera a regra monetária nem os controlos produtivos. Não activa FinancialCore/RC/1e. Revisão independente Claude pendente. O teste usa perfil test e fonte sintética; não confundir com percurso produtivo pelo JAR.
+
+## R1 — MINOR-001, expectativa fixada antes da execução
+
+Parecer inicial APPROVE WITH CONDITIONS, 0 BLOCKER / 0 MAJOR / 2 MINOR, sobre 09ddfd6. Original/sidecar conferidos, SHA-256 d01eb6ef1c9dad0d03d793a5dbd123ff2a6cf9ce3981677471de56f676fdcd16. Não se alteram as cinco provas anteriores.
+
+Novo caso M409-06: quantidade1 × preço1,005 = bruto cru1,005; HALF_UP fecha bruto1,01. Desconto50% sobre1,01 =0,505, fechado0,51; base0,50; IVA0,50×23%=0,115, fechado0,12; total0,62. Aplicar desconto ao bruto cru daria0,5025, fechado0,50; base0,51 e total0,63. O oráculo racional calcula esta alternativa, em vez de a aceitar por mera referência textual.
+
+| Caso novo | Bruto | Desconto | Base | IVA | Total | QR I7/I8/N/O esperado |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| M409-06 | 1.01 | 0.51 | 0.50 | 0.12 | 0.62 | 0.50 / 0.12 / 0.12 / 0.62 |
+
+As expectativas independentes ficam no mesmo recurso versionado, com os cinco casos anteriores inalterados. Para a R1, o runner fixa M409_CASE_FILTER=M409-06 e exige um único caso executado, zero ignorados. O Java filtra o MethodSource; não se repetem M409-01 a05. A nova execução e a confirmação incremental serão registadas separadamente em VALIDATION.md.

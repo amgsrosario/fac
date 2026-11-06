@@ -17,6 +17,7 @@ import xml.etree.ElementTree as ET
 os.umask(0o077)
 ROOT = Path(__file__).resolve().parents[3]
 CLASSES = ['QrAmountsJourneyTests']
+CASE_FILTER = 'M409-06'  # R1: do not repeat the five previously approved cases.
 SOURCE = ROOT/'src/test/java/com/ar2lda/fac/fiscal/catalog/QrAmountsJourneyTests.java'
 STAMP = time.strftime('%Y%m%d-%H%M%S',time.gmtime())+'-'+secrets.token_hex(3)
 OUT = ROOT/'target/m409-qr-evidence'/STAMP
@@ -39,6 +40,7 @@ assert before['branch']=='codex/m4-09-qr-amounts' and not before['status'], 'Req
 OUT.mkdir(parents=True,exist_ok=False)
 PRIVATE.mkdir(parents=True,exist_ok=False)
 record('git-before.json',before)
+record('selection.json',dict(case_filter=CASE_FILTER,expected_executed_tests=1,previous_cases_not_repeated=True))
 sp.run([sys.executable,str(Path(__file__).with_name('independent_oracles.py')),'--check'],cwd=ROOT,check=True)
 name='tuuli-m409-'+secrets.token_hex(3)
 network=name+'-isolated'
@@ -90,7 +92,7 @@ try:
     record('versions.json',dict(maven=call(['mvn','-version']),postgres=call(['docker','exec',name,'psql','-U','postgres','-d',db,'-Atc','select version()'])))
     env=os.environ.copy()
     env.update(FAC_TEST_DATASOURCE_USERNAME='postgres',FAC_TEST_DATASOURCE_PASSWORD=password,
-               FAC_JWT_SECRET=secrets.token_urlsafe(64),M409_DISPOSABLE='true',M409_EXPECTED_CLUSTER=cluster,M409_EVIDENCE=str(OUT/'persistent'))
+               FAC_JWT_SECRET=secrets.token_urlsafe(64),M409_DISPOSABLE='true',M409_EXPECTED_CLUSTER=cluster,M409_EVIDENCE=str(OUT/'persistent'),M409_CASE_FILTER=CASE_FILTER)
     summary=[]
     for index,test in enumerate(CLASSES):
         target='tuuli_m409_'+str(index)+'_test'
@@ -113,6 +115,7 @@ try:
         record('result.json',summary)
         print(json.dumps(summary[-1]),flush=True)
         assert result.returncode==0, 'Test failed: inspect private log'
+        assert counts['tests']==1 and counts['skipped']==0, 'R1 must execute only its selected case'
 
 finally:
     # Remove only resources created here, guarded by exact IDs and labels.

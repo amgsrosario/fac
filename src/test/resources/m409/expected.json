@@ -327,6 +327,49 @@
         "sumRawGrossThenRound": "0.08",
         "taxOnDocumentBaseThenRound": "0.02"
       }
+    },
+    {
+      "id": "M409-06",
+      "description": "percentage-on-closed-gross-discriminator",
+      "rate": "23",
+      "lines": [
+        {
+          "input": {
+            "quantidade": "1",
+            "precoUnitario": "1.005",
+            "tipoDesconto": "PERCENTAGEM",
+            "desconto": "50"
+          },
+          "expected": {
+            "gross": "1.01",
+            "discount": "0.51",
+            "base": "0.50",
+            "tax": "0.12",
+            "total": "0.62"
+          },
+          "calculation": {
+            "rawGross": "201/200",
+            "closedGross": "1.01",
+            "rawDiscount": "101/200",
+            "closedDiscount": "0.51",
+            "rawTax": "23/200",
+            "closedTax": "0.12"
+          }
+        }
+      ],
+      "totals": {
+        "gross": "1.01",
+        "discount": "0.51",
+        "base": "0.50",
+        "tax": "0.12",
+        "total": "0.62"
+      },
+      "discriminators": {
+        "discountOnUnclosedGross": "0.50",
+        "baseOnWrongDiscount": "0.51",
+        "taxOnWrongBase": "0.12",
+        "totalOnWrongDiscount": "0.63"
+      }
     }
   ]
 }

@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** M4-09: five committed MockMvc journeys, independent rational expected values; synthetic signer only. */
+/** M4-09: six available MockMvc journeys; R1 selects only its new case, independent rational expected values; synthetic signer only. */
 @SpringBootTest(properties={"fac.security.enabled=true","spring.jpa.show-sql=false","fac.demo.seed-on-startup=false"})
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -90,7 +90,9 @@ class QrAmountsJourneyTests {
     static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> cases() throws Exception {
         try(var stream=QrAmountsJourneyTests.class.getResourceAsStream("/m409/expected.json")) {
             var data=new ObjectMapper().readTree(java.util.Objects.requireNonNull(stream));
+            String selected=System.getenv("M409_CASE_FILTER");
             return java.util.stream.StreamSupport.stream(data.get("cases").spliterator(),false)
+                    .filter(c -> selected==null || selected.isBlank() || selected.equals(c.get("id").asText()))
                     .map(c -> org.junit.jupiter.params.provider.Arguments.of(c.get("id").asText(),c));
         }
     }
