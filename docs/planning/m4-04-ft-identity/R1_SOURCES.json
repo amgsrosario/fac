@@ -1,0 +1,49 @@
+{
+  "consulted_date": "2026-11-06",
+  "archive": "/home/arosario/tuuli-backups/m4-04/2026-11-06/20261106-182822-392888",
+  "retrieval": [
+    {
+      "url": "https://files.diariodarepublica.pt/1s/2020/08/15700/0001300015.pdf",
+      "final_url": "https://files.diariodarepublica.pt/1s/2020/08/15700/0001300015.pdf",
+      "status": 200,
+      "content_type": "application/pdf",
+      "last_modified": "Sat, 15 Feb 2025 03:55:18 GMT",
+      "etag": "\"31208c24cda0cd3e5a317ff864e19269\"",
+      "file": "dre-portaria195-2020-original.pdf",
+      "bytes": 405089,
+      "sha256": "4319c5dd00bd766e829bfad231d73e30c0d726f6726bec38d13bf42bd8edf494",
+      "retrieved_utc": "2026-11-06T18:46:58.850789+00:00",
+      "result": "obtained"
+    },
+    {
+      "url": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/questoes_frequentes/Pages/faqs-00594.aspx",
+      "final_url": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/questoes_frequentes/Pages/faqs-00594.aspx",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "last_modified": null,
+      "etag": null,
+      "file": "faq-atcud-00594.html",
+      "bytes": 147502,
+      "sha256": "9d9316b1bdaa4a774e55d7fad421268549a9c03d0d3753c2fb3e7a686a156e56",
+      "retrieved_utc": "2026-11-06T18:46:59.480993+00:00",
+      "result": "obtained"
+    }
+  ],
+  "reused": [
+    {
+      "file": "portaria195-2020.pdf",
+      "sha256": "f2f5be68ba8bbc019bc6a9b35b5f169da8640259aba1233bd9e8c7cee32fd1b8",
+      "version": "DocBaseV/2020; Portaria195/2020,13-08, art4 n1,p2/3"
+    },
+    {
+      "file": "qr-especificacoes-v1_1.pdf",
+      "sha256": "e0f1fdd24623916ef573dcda9a99de4d3cb09e6396b2c2b01807af460bc552f2",
+      "version": "AT QR v1.1, §4 campo H,p7/20"
+    }
+  ],
+  "failed_browse_reference": {
+    "url": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/questoes_frequentes/pages/faqs-00883.aspx",
+    "result": "404 no leitor web; não usado como exemplar integral. Obtida FAQ4448 na página00594 oficial."
+  },
+  "limits": "FAQ não indica versão/data individual no conteúdo consultado. Last-Modified HTTP não é data de alteração legislativa. Pesquisa não é inventário exaustivo de toda a legislação."
+}

@@ -1,6 +1,6 @@
 # M4-04 — Validação e relatório técnico
 
-06-11-2026. **Prova técnica parcial executada; revisão independente pendente.** Sem homologação ou autorização operacional.
+06-11-2026. **Prova técnica parcial executada; parecer inicial REQUEST CHANGES 0/1/2 recebido; correcção documental R1 em revisão pendente.** Sem homologação ou autorização operacional.
 
 ## Mandato, base e preparação
 
@@ -16,7 +16,7 @@ Antes de executar, [matriz de oráculos](MATRIX.md), `src/test/resources/m404/ex
 - Teste SHA-256 `e37be23f7c09471b745e94261775957bae28fc1bc293897f3b15a9d0444a34a2`.
 - Oráculo SHA-256 `5bddfa9338fc4043e41a60ee5556b863dba1c1dd92fffc0d0e1a701310500b70`.
 
-A expectativa resulta dos fundamentos N03/N04/N05 e da fixture explícita, não dos formatadores Java. Cópia expected-before-execution.json anterior aos pedidos, igual ao recurso versionado. Não se reabriram semântica FT/FR, M4-02, M4-09 ou M4-10.
+As expectativas de identidade e valor resultam dos fundamentos N03/N04/N05 e da fixture explícita, não dos formatadores Java. A forma gráfica com espaço após ATCUD: foi verificada como comportamento existente; não se apresenta agora como formato fiscal aprovado. O padrão literal de N03 e a admissibilidade do espaço são tratados separadamente na R1. Cópia expected-before-execution.json anterior aos pedidos, igual ao recurso versionado. Não se reabriram semântica FT/FR, M4-02, M4-09 ou M4-10.
 
 ## Execução exacta e resultado
 
@@ -47,7 +47,7 @@ Criação de empresa/cliente/artigo sintéticos e configuração por endpoints c
 | Número completo | GFT M404A/1 | Resposta de nova leitura e persistência coincidem; prefixo interno distinto de FT |
 | ATCUD | SYNM404A-1 | Código de validação e ATCUD persistidos; nova leitura coincidente. Código exclusivamente sintético de oito caracteres |
 | QR D/G/H | FT / GFT M404A/1 / SYNM404A-1 | Payload persistido=HTTP=QR da imagem embebida no PDF=QR descodificado da página renderizada a 300 dpi; campos comparados ao oráculo literal |
-| PDF | Mesmo número; ATCUD: SYNM404A-1; descrição configurada preservada | PDF de uma página, texto extraído e render arquivados; uma imagem QR. Rótulo visual distinguido do valor H. Identidade do documento persistido inalterada após GET PDF |
+| PDF | Mesmo número; ATCUD: SYNM404A-1; descrição configurada preservada | PDF de uma página, texto extraído e render arquivados; uma imagem QR. Valor ATCUD/H confirmado; rótulo com espaço observado, com validação fiscal pendente. Identidade do documento persistido inalterada após GET PDF |
 
 PDFBox/ZXing reutilizados da M4-10, sem alterar helpers. Inspecção visual do render confirmou os identificadores legíveis; não é impressão física, medição de equipamento ou homologação. Métricas geométricas gravadas incidentalmente pelo helper não são novos critérios certificados. Os montantes simples presentes não constituem repetição da prova monetária M4-09.
 
@@ -72,6 +72,16 @@ O suplemento distingue a transcrição posterior dos comandos de criação da wo
 
 Resultado positivo limitado à **identidade da FT diferida/EUR sintética por MockMvc, com fonte sintética**, num documento/página. FR/FT imediata, SAF-T e outras projecções não demonstradas; M4-04 completo continua parcial. Reservados não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos. Sem assinatura real, emissão positiva pelo JAR, homologação QR/PDF, comunicação AT, impressão física, activação, backfill ou alteração funcional/fiscal. Bruto/IVA/total no diálogo continua melhoria pré-produtiva pendente.
 
-Não surgiu divergência funcional. Só se executou a classe dirigida; suites anteriores reutilizadas, sem lhes atribuir um novo HEAD de execução. O commit final posterior acrescenta apenas documentação: verificar igualdade dos blobs do teste, runner e expected.json com b9ce8ea. HEAD final na entrega e no pedido externo, sem auto-referência no commit.
+Não surgiu divergência de identidade ou de valores. A menção gráfica permanece em validação fiscal, sem concluir não conformidade. Só se executou a classe dirigida; suites anteriores reutilizadas, sem lhes atribuir um novo HEAD de execução. O commit final posterior acrescenta apenas documentação: verificar igualdade dos blobs do teste, runner e expected.json com b9ce8ea. HEAD final na entrega e no pedido externo, sem auto-referência no commit.
 
-[Pedido de revisão independente](REVIEW_HANDOFF.md) preparado; Claude não está acessível como runtime/ferramenta nesta sessão. Não se declara revisão transmitida ou aprovação inexistente. Entregar ao coordenador para transmissão efectiva.
+O pedido inicial foi encaminhado pelo PO e o parecer original Claude foi recebido e conferido. A revisão R1 continua pendente; [pedido incremental](R1_REVIEW_HANDOFF.md) preparado para transmissão pela Coordenação, sem presumir activação automática do revisor.
+
+## R1 — Correcção documental, sem novo ensaio
+
+Deliberação R1 recebida e preservada integralmente, SHA-256 e24ed036b9a37c28dd1a8f4e56060811ccd247ad8fae6560a157e06975e50d93, com proveniência separada. Parecer inicial original/sidecar iguais: **55e89d39dedc2deedb001c9054321f552411c0f35d811cff7f899645b8725d87**. Mantidos sem alteração; ver [análise e tabela de tratamento](R1_ATCUD_ANALYSIS.md).
+
+Arquivo externo concluído em `/home/arosario/tuuli-backups/m4-04/2026-11-06/20261106-182822-392888/`, fora da worktree: 52 ficheiros originais/entrega/revisão conferidos, mais manifesto próprio. [Inventário e digests](R1_ARCHIVE.md). Não elimina nem altera os arquivos iniciais. Exemplar separado do acto administrativo inicial continua não recuperado; a deliberação R1 efectivamente recebida não é apresentada como reconstrução desse acto.
+
+Observações preservadas: id e sequência ambos 1 não são discriminados; recalculoConfirmado=true foi enviado com indicador false; contains não exclui outro número adicional no PDF. O render foi inspeccionado, não uma asserção de unicidade textual. Estas limitações não foram corrigidas artificialmente mediante novo ensaio. Patch/hash do delta inicial e R1 preparados; espaços editoriais corrigidos apenas nos documentos de trabalho.
+
+Resultado técnico positivo do valor ATCUD/H não alterado. A menção `ATCUD: SYNM404A-1` não é agora declarada fiscalmente homologada. Fontes oficiais apresentam padrão/exemplo sem espaço, sem esclarecimento expresso localizado sobre tolerância: **validação fiscal pendente**. Não se alteraram aplicação, expectativas executáveis, testes, runner, PDF ou evidências originais; zero testes/SQL/Docker na R1. Sem push, PR, merge ou activação. Próximo passo: confirmação independente limitada a esta correcção e análise, não homologação fiscal.

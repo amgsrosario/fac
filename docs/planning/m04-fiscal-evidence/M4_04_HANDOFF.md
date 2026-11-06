@@ -1,6 +1,6 @@
 # M4-04 — Handoff da preparação do mandato
 
-**Actualização posterior à preparação:** a ordem recebida autorizou a execução no perímetro fixado em0fcb2d6. M404-01 passou no HEAD b9ce8ea, MockMvc/assinatura sintética; revisão independente pendente. [Dossier de execução](../m4-04-ft-identity/VALIDATION.md). A proposta/minuta abaixo é preservada como preparação histórica, não como fonte administrativa original.
+**Actualização posterior à preparação:** a ordem recebida autorizou a execução no perímetro fixado em 0fcb2d6. M404-01 passou no HEAD b9ce8ea, MockMvc/assinatura sintética; revisão independente pendente. [Dossier de execução](../m4-04-ft-identity/VALIDATION.md). A proposta/minuta abaixo é preservada como preparação histórica, não como fonte administrativa original.
 
 
 06-11-2026. Estado: **proposta documental pronta para decisão administrativa; ensaios não iniciados**.
@@ -32,3 +32,7 @@ Nesta preparação: zero testes, zero SQL, zero Docker, zero alteração funcion
 Próximo passo: Administração decide a minuta. Só depois se inicia a prova; ao concluir, transmitir efectivamente a Claude o HEAD exacto, delta, fontes, expectativas fixadas, resultados e evidências, pedindo revisão limitada à identidade FT diferida/EUR. Não presumir que a existência deste handoff activa o revisor.
 
 As reservas não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos mantêm-se. Não executar publicação, integração, activação, emissão produtiva ou correcções funcionais com base neste documento.
+
+### Correcção documental M4-04 R1
+
+O valor do ATCUD e H permanecem confirmados na prova parcial. A menção impressa com espaço foi observada, não homologada pelo art.4.º: [análise normativa e limites](../m4-04-ft-identity/R1_ATCUD_ANALYSIS.md). Validação fiscal pendente, sem presumir não conformidade. Deliberação R1 preservada, arquivo externo concluído e pedido incremental preparado. Nenhuma expectativa executável, teste ou aplicação foi alterada.

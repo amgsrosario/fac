@@ -16,7 +16,7 @@ Cenário único **M404-01**; recurso versionado `src/test/resources/m404/expecte
 | Número completo | GFT M404A/1 | N05, Anexo I §4.1.4.1, código interno/série/sequência |
 | ATCUD | SYNM404A-1 | N03 art.3; oito caracteres sintéticos no código, hífen e mesma sequência |
 | QR D/G/H persistido e extraído do PDF | FT / GFT M404A/1 / SYNM404A-1 | N04 §4 D/G/H; N05 InvoiceType/InvoiceNo. G não deriva de D; H não leva rótulo ATCUD |
-| PDF | Identidade GFT M404A/1, rótulo ATCUD: SYNM404A-1 e descrição configurada preservada | N03 art.4 e critério técnico de igualdade entre representações. Descrição literal não homologada |
+| PDF | Identidade GFT M404A/1, rótulo ATCUD: SYNM404A-1 e descrição configurada preservada | Igualdade dos identificadores confirmada. O rótulo com espaço é comportamento observado, não formato fiscal homologado; N03 art.4 mostra padrão sem espaço. Validação fiscal pendente; descrição literal não homologada |
 
 [Fundamentos e hashes N03/N04/N05](../m04-fiscal-evidence/M4_04_HANDOFF.md), [proposta completa](../m04-fiscal-evidence/NEXT_INCREMENT.md). Comparação com configuração SQL, snapshots e nova leitura HTTP após emitir, payload persistido, imagem QR embebida no PDF e página renderizada a 300 dpi. PDFBox/ZXing reutilizados da M4-10; uma emissão MockMvc, não JAR.
 
@@ -30,4 +30,8 @@ Estado no commit prévio b9ce8ea: cenário e oráculo preparados antes do ensaio
 
 ## Resultado posterior — 20261106-182822-392888
 
-M404-01 aprovado (1/0/0/0), HEAD ensaiado b9ce8ea2b4d3abf91595dd679ac2a53286e1942e, limpo antes/depois. Todas as correspondências da tabela coincidiram em configuração, snapshots, leitura HTTP, QR persistido e PDF/imagem descodificada. Nenhuma divergência funcional; revisão independente pendente. [Validação exacta e arquivos](VALIDATION.md). Mantêm-se integralmente as reservas; uma prova parcial não conclui M4-04 global.
+M404-01 aprovado (1/0/0/0), HEAD ensaiado b9ce8ea2b4d3abf91595dd679ac2a53286e1942e, limpo antes/depois. As correspondências de identidade/valor coincidiram em configuração, snapshots, leitura HTTP, QR persistido e PDF/imagem descodificada. A forma gráfica com espaço foi observada, sem homologação fiscal. Sem divergência de identidade/valor; menção gráfica em validação fiscal. Parecer inicial recebido e confirmação R1 pendente. [Validação exacta e arquivos](VALIDATION.md). Mantêm-se integralmente as reservas; uma prova parcial não conclui M4-04 global.
+
+## R1 documental — menção ATCUD e arquivo
+
+Parecer inicial Claude REQUEST CHANGES 0/1/2, conferido com sidecar. O resultado favorável do valor ATCUD e H permanece confirmado; a menção impressa com espaço é matéria de **validação fiscal pendente**, sem presunção de não conformidade. [Análise oficial e limites](R1_ATCUD_ANALYSIS.md), [arquivo externo](R1_ARCHIVE.md). Teste/oráculo/runner inalterados, nenhum ensaio repetido. Revisão incremental R1 pendente.

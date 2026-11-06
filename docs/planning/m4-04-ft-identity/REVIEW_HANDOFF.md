@@ -1,6 +1,6 @@
 # Pedido Claude — revisão independente M4-04
 
-**Estado: preparado para transmissão pela Coordenação; não transmitido automaticamente.** Rever a prova parcial, não homologar fiscalidade ou reabrir M4-02/09/10.
+**Pedido inicial histórico: encaminhado pelo PO; parecer REQUEST CHANGES 0/1/2 recebido. A R1 tem [pedido próprio](R1_REVIEW_HANDOFF.md), sem novo ensaio.** Rever a prova parcial, não homologar fiscalidade ou reabrir M4-02/09/10.
 
 ## Identidade
 
