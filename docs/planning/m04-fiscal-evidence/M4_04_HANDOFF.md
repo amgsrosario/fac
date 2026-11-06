@@ -1,5 +1,8 @@
 # M4-04 — Handoff da preparação do mandato
 
+**Actualização posterior à preparação:** a ordem recebida autorizou a execução no perímetro fixado em0fcb2d6. M404-01 passou no HEAD b9ce8ea, MockMvc/assinatura sintética; revisão independente pendente. [Dossier de execução](../m4-04-ft-identity/VALIDATION.md). A proposta/minuta abaixo é preservada como preparação histórica, não como fonte administrativa original.
+
+
 06-11-2026. Estado: **proposta documental pronta para decisão administrativa; ensaios não iniciados**.
 
 ## Referência e delta

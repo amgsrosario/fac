@@ -1,6 +1,6 @@
 # M04 — Quadro reconciliado dos 17 requisitos, 06-11-2026
 
-Referência remota confirmada: `f2fa46765fbd1a2c0ab65d3978f321ef050c3424`, merge PR #56 (M4-09), conforme [#46/6690486932](https://github.com/amgsrosario/fac/issues/46#issuecomment-6690486932). Integrações anteriores preservadas: PR #54/M4-10 (`41dbe85`) e PR #55/podeEmitir (`5342255`). «Integrado» é estado Git, não homologação ou autorização operacional. Sem novos ensaios; reutilizam-se as provas nos HEADs indicados nas respectivas validações.
+Referência remota confirmada: `f2fa46765fbd1a2c0ab65d3978f321ef050c3424`, merge PR #56 (M4-09), conforme [#46/6690486932](https://github.com/amgsrosario/fac/issues/46#issuecomment-6690486932). Integrações anteriores preservadas: PR #54/M4-10 (`41dbe85`) e PR #55/podeEmitir (`5342255`). «Integrado» é estado Git, não homologação ou autorização operacional. Actualização M4-04: um novo cenário dirigido MockMvc foi executado no HEAD b9ce8ea, com revisão pendente; as provas anteriores continuam reutilizadas nos seus HEADs originais.
 
 [Fontes e matriz original](../m04-fiscal-evidence/MATRIX.md), N01–N08/E01–E06/C211. Não se infere que uma reserva significa ausência de decisão funcional; as decisões já aprovadas mantêm-se vinculativas.
 
@@ -9,7 +9,7 @@ Referência remota confirmada: `f2fa46765fbd1a2c0ab65d3978f321ef050c3424`, merge
 | M4-01 Semântica FT/FR/RC | Decisões D-CAT-2A/H1 aprovadas | Projecções fiscais e circuitos próprios não integralmente homologados | Não reabrir conceitos; prova e mandato por tipo |
 | M4-02 FT diferida | Correspondência funcional 2/1/1,false aprovada; seis critérios MockMvc com fonte sintética confirmados; entrega consolidada PR #53 | Emissão positiva pelo JAR, assinatura real e validações fiscais exteriores à correspondência | Mandato produtivo próprio; não extrapolar a prova sintética |
 | M4-03 Vínculos/imutabilidade | V25–V28/H2-03 integradas; coerência Java/SQL e histórico preservados | Definição material legítima e publicação governada das revisões | Não publicar catálogo ou reclassificar por efeito das provas |
-| M4-04 Projecção FT/FR | Fontes N04 D/G e N05; código e testes unitários identificados; captures sintéticas mostram D=FT e G com número interno | Oráculo aprovado de identidade/número/representação e correspondência entre configuração, persistência, QR, PDF e futura exportação | **Próximo incremento recomendado: prova parcial FT diferida/EUR**, sem FR/FT imediata nem SAF-T; ver proposta |
+| M4-04 Projecção FT/FR | **Prova parcial FT diferida/EUR executada; revisão pendente.** M404-01, 1 aprovado em b9ce8ea, MockMvc/fonte sintética, configuração/snapshots/número/ATCUD/QR/PDF concordantes | FR/FT imediata, outras projecções, SAF-T, assinatura real e homologação QR/PDF não demonstrados | [Pedido Claude e evidências](../m4-04-ft-identity/REVIEW_HANDOFF.md), sem reabrir M4-02/09/10 |
 | M4-05 Séries/ATCUD | Locks/concatenação/rollback e recusas já testados; podeEmitir integrado explica pré-condições conhecidas | Associação legítima emitente/série/código AT e comunicação real | Gate AT e mandato de instalação; diagnóstico não comunica séries |
 | M4-06 ATCUD multipágina | H2-05/E03, PDFs sintéticos de 1/2/4 páginas | Configuração/equipamento final e históricos sem ATCUD | Reutilizar provas; não repetir correcção entregue |
 | M4-07 Geometria QR | E03, métricas/descodificação PDF a 300 dpi e smoke ZXing | Impressão física e configuração final | Geometria ensaiada não é homologação fiscal/produtiva |
@@ -24,11 +24,11 @@ Referência remota confirmada: `f2fa46765fbd1a2c0ab65d3978f321ef050c3424`, merge
 | M4-16 Estados SAF-T/anulação | QR comercial preservado na prova parcial; estado exportado é contrato distinto da temporalidade financeira | Oráculos por tabela/estado, datas/motivos/totais e exportação | Perfil SAF-T primeiro; temporalidade FT/F01 continua reservada |
 | M4-17 Instalação/certificação | M01–M04 integradas; M05/M4-02 consolidadas no PR #53; M4-10/podeEmitir/M4-09 parciais nos PR #54–#56 | Emitente/contas/séries legítimos, assinatura real, release/revisões fiscais, auditoria final, AT e melhoria do diálogo | Integração não é prontidão comercial ou certificação; gates preservados |
 
-## Próximo incremento e sequência
+## Seguimento M4-04
 
-Recomenda-se **M4-04, identificação e projecção da FT diferida/EUR**, com lacuna, fontes, cobertura reutilizável, prova necessária, dependências e mandato proposto em [NEXT_INCREMENT.md](../m04-fiscal-evidence/NEXT_INCREMENT.md). O objectivo não é repetir M4-09/M4-10 ou reabrir D-CAT: é demonstrar a identidade fiscal e documental nos vários suportes, com um oráculo previamente fundamentado.
+A proposta [NEXT_INCREMENT.md](../m04-fiscal-evidence/NEXT_INCREMENT.md), fixada em0fcb2d6, foi autorizada por ordem posterior recebida neste chat. Foi executado apenas M404-01, com oráculos normativos/funcionais fixados antes, ID interno GFT distinto do tipo fiscal FT, PostgreSQL descartável, assinatura exclusivamente de teste e extracção QR do PDF real retornado por MockMvc. [Validação](../m4-04-ft-identity/VALIDATION.md):1/0/0/0, HEAD b9ce8ea, recurso removido, revisão independente pendente.
 
-Dependência material: o executor deve primeiro recuperar a regra/oráculo já aprovado para o número/projecção; se não estiver comprovado, apresentar o campo e alternativa exactos à validação administrativa/fiscal antes de mudar comportamento ou afirmar conformidade. Aprovação da semântica FT e da correspondência 2/1/1,false não é homologação implícita de D/G, QR/PDF ou SAF-T. Novo mandato necessário para executar a proposta; nenhum incremento iniciado aqui.
+Próximo passo é a revisão independente deste delta, não nova execução ou activação. A prova não homologa projecções ou SAF-T e não reabre decisões semânticas. Mandatos futuros permanecem necessários para os âmbitos reservados. Não se apresenta a existência de fontes como aprovação do enquadramento do emitente.
 
 ## Melhoria pré-produtiva separada
 

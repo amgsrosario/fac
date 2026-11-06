@@ -26,4 +26,8 @@ Cobertura reutilizada: M4-02 configuração/assinatura de teste; M4-09 montantes
 
 Fonte `FiscalSignatureTestConfiguration` existente, exclusivamente src/test; chave efémera sintética. Controlos normais e segurança activos; revisão FT/1 só na base descartável. Sem homologação QR/PDF, assinatura real, emissão positiva pelo JAR, SAF-T, comunicação AT ou activação. Reservados não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos; FR/RL/NC/ND excluídos. Melhorias bruto/IVA/total no diálogo e decisões D-SIGN mantidas nos mandatos próprios. Divergência funcional deverá ser reportada sem corrigir a aplicação.
 
-Estado deste commit prévio: cenário e oráculo preparados, **ainda sem resultados de execução**. Resultado posterior terá HEAD/tree/XML/logs próprios.
+Estado no commit prévio b9ce8ea: cenário e oráculo preparados antes do ensaio.
+
+## Resultado posterior — 20261106-182822-392888
+
+M404-01 aprovado (1/0/0/0), HEAD ensaiado b9ce8ea2b4d3abf91595dd679ac2a53286e1942e, limpo antes/depois. Todas as correspondências da tabela coincidiram em configuração, snapshots, leitura HTTP, QR persistido e PDF/imagem descodificada. Nenhuma divergência funcional; revisão independente pendente. [Validação exacta e arquivos](VALIDATION.md). Mantêm-se integralmente as reservas; uma prova parcial não conclui M4-04 global.

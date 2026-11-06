@@ -1,5 +1,8 @@
 # Proposta de mandato — M4-04: identidade da FT diferida/EUR
 
+**Actualização posterior à preparação:** a ordem recebida autorizou a execução no perímetro fixado em0fcb2d6. M404-01 passou no HEAD b9ce8ea, MockMvc/assinatura sintética; revisão independente pendente. [Dossier de execução](../m4-04-ft-identity/VALIDATION.md). A proposta/minuta abaixo é preservada como preparação histórica, não como fonte administrativa original.
+
+
 06-11-2026. **Preparação documental para decisão da Administração; não autoriza ensaios.** Base integrada: PR #56, `f2fa46765fbd1a2c0ab65d3978f321ef050c3424`. Preparação local após `bb5ef0ef27802db10fcddead47dfef62245883c2`, preservando o registo `df71e68`. Sem testes ou alterações funcionais nesta preparação.
 
 ## Decisões e oráculos, sem confundir autoridades
