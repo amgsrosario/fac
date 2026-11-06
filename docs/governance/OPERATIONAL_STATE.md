@@ -1174,10 +1174,22 @@ Código funcional de podeEmitir preservado relativamente ao HEAD revisto `7c96e5
 
 ## 2026-11-06 — M4-09: montantes QR da FT diferida/EUR, prova dirigida
 
-Base integrada reconfirmada 5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07 (PR #55/podeEmitir), posterior à M4-10 integrada no PR #54. Ordem directa do PO de 06/11/2026, AR2-GOV-03. Nova branch/worktree codex/m4-09-qr-amounts; registo local df71e68 preservado na worktree anterior, sem reescrita ou incorporação indevida.
+Base integrada reconfirmada 5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07 (PR #55/podeEmitir), posterior à M4-10 integrada no PR #54. Deliberação da Administração AR2 de 06/11/2026, transmitida nesta conversa, AR2-GOV-03; fonte original preservada em sources/2026-11-06_M4-09_deliberacao-administracao.md. Nova branch/worktree codex/m4-09-qr-amounts; registo local df71e68 preservado na worktree anterior, sem reescrita ou incorporação indevida.
 
 Cinco cenários MockMvc com FT/1,2/1/1,false, EUR/tributação normal e fonte FiscalSignatureTestConfiguration exclusivamente de teste: múltiplas linhas, fracções, descontos percentual/em valor e arredondamentos discriminantes. Expectativas anteriores ao ensaio por aritmética racional independente; respostas consolidadas, SQL persistido, snapshots e QR I7/I8/N/O coincidiram. HEAD ensaiado 066a98490a4db43698ef25d937cd1d16e33cd91e, tree be657782f0a1554717944320fda11ed1122d96e1, limpo antes/depois. 5 aprovados, zero falhas/erros/ignorados; nenhuma divergência funcional e nenhuma alteração da aplicação.
 
 PostgreSQL 16.3 novo/tmpfs, rede interna e proxy loopback próprios, removidos com conferência de IDs/labels; consulta posterior ar2.mission=M409-qr-amounts confirmou 0 contentores/0 redes. Arquivo tuuli-backups/m4-09/2026-11-06/20261106-124452-5cbed5, 92 ficheiros conferidos; manifesto original aa6e66af7956d00067f9baf7cf737363a55636ca56f5d9500fcfff4a78d2f5e3 e global 8ee5a6e42b2c9c51af89eb25ae242c470476318be091a1eae5939a22b6d61020. [Validação e limites](../planning/m4-09-qr-amounts/VALIDATION.md).
 
 Revisão independente Claude pendente. A prova técnica dos cinco casos não homologa QR/PDF, taxas/regimes, outros tipos/territórios/moedas ou assinatura produtiva; não demonstra JAR positivo. Não se repetiram suites anteriores. Sem src/main, migrations, manifesto, activação, emissão real, bases conservadas/demo, push, PR ou merge. Bruto/IVA/total no diálogo permanece melhoria pendente antes de utilização produtiva, não implementada aqui.
+
+## 2026-11-06 — M4-09 R1: dois MINOR tratados, confirmação pendente
+
+Parecer original Claude APPROVE WITH CONDITIONS, 0 BLOCKER/0 MAJOR/2 MINOR, sobre 09ddfd6: original e sidecar iguais, SHA-256 d01eb6ef1c9dad0d03d793a5dbd123ff2a6cf9ce3981677471de56f676fdcd16, preservados sem alteração. A prova anterior de 5 casos em 066a984 mantém-se intacta e não foi repetida.
+
+MINOR-001: M409-06 adicional, quantidade1/preço1,005/desconto50%, expectativa independente anterior ao ensaio: bruto1,01/desconto0,51/base0,50/IVA0,12/total0,62. Consolidados, persistência e QR concordantes. Execução 20261106-144506-2844e5, HEAD 1528b1f7e70eca43fb7f9da704b7e4e330e19c8c / tree 391899d11863c0bddf2df01729460bf7f912b4d8, limpo antes/depois; apenas 1 teste aprovado, zero falhas/erros/ignorados. A alternativa incorrecta daria desconto0,50/total0,63. Sem divergência funcional nem alteração da aplicação.
+
+MINOR-002: repostas nas duas linhas canónicas as reservas não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos, com proibição de generalizar. As seis expectativas disponíveis resultam de duas execuções distintas (5 anteriores e1 R1), não de nova suite integral. Arquivo R1 separado, 33 ficheiros, manifesto fc7a901527c14cc7c7a005a4e96ea220c7f07b34c051008f63fcb58eb5ee7080; consulta posterior confirmou 0 contentores/redes da label M409-qr-amounts. [Validação](../planning/m4-09-qr-amounts/VALIDATION.md).
+
+Autorização identificada como **deliberação da Administração**. Textos integrais recebidos preservados, sem reconstrução: [original](sources/2026-11-06_M4-09_deliberacao-administracao.md), SHA-256 bbdec00fa43ba1a2ff167164d438c1627b5a40e6bc32e1ea4083e238c57543d4; [R1](sources/2026-11-06_M4-09-R1_deliberacao-administracao.md), SHA-256 4d89ba3c7585ade0a7ccf13e05c2917da47a9358f617c4af403ba2196f704d0c. Proveniência em metadados separados, sem inventar referência de issue/acto externo. Não foi emitida nova ordem nem solicitada decisão administrativa adicional.
+
+Confirmação incremental Claude pendente, limitada aos dois MINOR. Sem regras novas, homologação fiscal, assinatura produtiva, JAR positivo, bases conservadas, push, PR, merge ou activação. Bruto/IVA/total no diálogo permanece melhoria pré-produtiva pendente, fora desta correcção.

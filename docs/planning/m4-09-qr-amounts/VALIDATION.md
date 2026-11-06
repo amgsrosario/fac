@@ -1,6 +1,6 @@
 # M4-09 — Validação efectiva
 
-## Identidade e execução
+## Prova inicial — identidade e execução (066a984)
 
 Base integrada: `5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07`, PR #55, reconfirmada por HTTPS. Branch `codex/m4-09-qr-amounts`, worktree `.worktrees/m4-09-qr-amounts`. O registo local anterior `df71e68d017c2ee730211c40584fc8ac5f06ef11` continua intacto na worktree emission-readiness-pr53, sem cherry-pick, rebase ou alteração.
 
@@ -42,4 +42,27 @@ O suplemento identifica verificações posteriores, versão Python e transcriç�
 
 Não homologa QR/PDF ou taxa/regime, não abrange outros territórios/regimes/tipologias/moedas, retenção/isenção, PDF físico, SAF-T ou disponibilidade de assinatura produtiva. Q/R são sintéticos; a prova visa os montantes normal/EUR. Não foram reexecutadas as classes anteriores de cobertura nem package/frontend por não existir alteração funcional. O teste compila a aplicação e a classe dirigida, mas só a classe declarada foi executada.
 
-O HEAD final do relatório externo pode acrescentar apenas documentação ao HEAD ensaiado; confirmar igualdade dos blobs do teste, runner e oráculo antes da revisão. Memória/estado/matriz actualizados. **Revisão independente Claude pendente**: não presumir aprovação por este relatório nem activação do revisor por ficheiro. Sem push, PR, merge ou activação. A melhoria bruto/IVA/total no diálogo continua pendente e não foi implementada nesta missão.
+O HEAD final do relatório externo pode acrescentar apenas documentação ao HEAD ensaiado; confirmar igualdade dos blobs do teste, runner e oráculo antes da revisão. Memória/estado/matriz actualizados. **Parecer inicial Claude: APPROVE WITH CONDITIONS, 0/0/2**, sobre 09ddfd6. A confirmação incremental R1 abaixo continua pendente: não presumir aprovação por este relatório nem activação do revisor por ficheiro. Sem push, PR, merge ou activação. A melhoria bruto/IVA/total no diálogo continua pendente e não foi implementada nesta missão.
+
+## R1 — execução adicional exclusiva de M409-06
+
+Deliberação da Administração AR2, transmitida nesta conversa; textos integrais e proveniência em [ordem original](../../governance/sources/2026-11-06_M4-09_deliberacao-administracao.md) e [ordem R1](../../governance/sources/2026-11-06_M4-09-R1_deliberacao-administracao.md). SHA-256 dos documentos arquivados: original bbdec00fa43ba1a2ff167164d438c1627b5a40e6bc32e1ea4083e238c57543d4; R1 4d89ba3c7585ade0a7ccf13e05c2917da47a9358f617c4af403ba2196f704d0c. Não se inventou identificador GitHub nem foi publicada uma ordem nova. Corrige-se a designação anterior «PO» para deliberação da Administração, preservando o texto recebido.
+
+Parecer original `2026-11-06_TUULI_M4-09_revisao-independente_Claude.md` e `.md.sha256`: conferidos, SHA-256 d01eb6ef1c9dad0d03d793a5dbd123ff2a6cf9ce3981677471de56f676fdcd16. Ambos preservados sem alteração em Relatorios-AR2/TUULI e tuuli-backups/reviews/2026-11-06/M4-09. O incidente do revisor com __pycache__ está relatado no original; não se altera nem omite esse registo.
+
+| Achado | Tratamento R1 |
+| --- | --- |
+| MINOR-001 | Caso M409-06 fixado antes da execução: quantidade1/preço1,005/desconto50%. Bruto1,01, desconto0,51, base0,50, IVA0,12, total0,62. A alternativa sobre bruto cru dá desconto0,50/base0,51/total0,63 e é calculada racionalmente no oráculo. Consolidados, persistência, snapshots e QR I7/I8/N/O conferidos por MockMvc. |
+| MINOR-002 | Repostas nas duas linhas canónicas MATRIX.md/M04_STATUS.md: **não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos**; proibição expressa de generalizar a conclusão. |
+
+HEAD ensaiado R1 **1528b1f7e70eca43fb7f9da704b7e4e330e19c8c**, tree **391899d11863c0bddf2df01729460bf7f912b4d8**, limpo antes/depois. Execução **20261106-144506-2844e5**, mesmo comando `python3 docs/planning/m4-09-qr-amounts/run_validation.py`, agora com selecção explícita M409_CASE_FILTER=M409-06 registada em selection.json. O runner exige exactamente um teste e zero ignorados. **1 aprovado, 0 falhas/erros/ignorados, código0, BUILD SUCCESS**. Os cinco casos anteriores NÃO foram executados; os seus oráculos mantêm o mesmo conteúdo. O recurso contém seis expectativas, mas isto não é uma execução de seis testes. O gerador reproduziu o recurso antes dos pedidos, sem código da aplicação.
+
+QR observado I7=0.50, I8=0.12, N=0.12, O=0.62. Teste e oráculos confirmam o desconto0,51, distinguindo-o de0,50 sem executar uma aplicação mutada. Não surgiu divergência funcional nem houve alteração src/main. Só uma tentativa R1, bem-sucedida; não há falhas ocultadas. Maven3.9.16/JDK21.0.12.1/PostgreSQL16.3, imagens existentes por digest; comandos/versões/XML/logs arquivados. Não se repetiram unidades, browser, package ou percursos não afectados.
+
+PostgreSQL novo/tmpfs e recursos isolados como na prova inicial, com novo cluster e IDs registados. Remoção conferida pelo runner e consulta posterior somente de leitura: zero contentores/redes ar2.mission=M409-qr-amounts, códigos0. O suplemento confirma que só M409-06 produziu capturas. Originais e prova inicial permanecem separados.
+
+Arquivo R1: `/home/arosario/tuuli-backups/m4-09/2026-11-06/20261106-144506-2844e5/`, 33 ficheiros original/supplement conferidos. Manifesto original 876deee36c9c9f7d60da3c338013c46d9813090ccb8c2f36f87b5b3089845984; ARCHIVE_MANIFEST.json fc7a901527c14cc7c7a005a4e96ea220c7f07b34c051008f63fcb58eb5ee7080. expected.json R1: 71ec4cbb275fde5adf2ff7b67e38c024edffeb9f5c29f8531d52a1430a7d3fad. Teste: 970b650d2e2a7fda4421111623da10713eeda577d017c92f70b4897fe621095f.
+
+A prova anterior continua: 5 aprovados em 066a984, manifesto aa6e66af…f5e3; não se soma como suite única com esta execução. As observações não condicionantes mantêm os seus limites: recalculoConfirmado=true é decisão explícita do ensaio; a prova não abrange PDF/descodificação de imagem nem valida a regra fiscal. O revisor confirmou os cálculos anteriores, não uma execução independente.
+
+Confirmação incremental Claude pendente, limitada aos dois MINOR e proveniência da deliberação. Sem homologação, generalização, assinatura produtiva, JAR positivo, activação, bases conservadas, push, PR ou merge. O HEAD final documental e equivalência ao HEAD ensaiado constam do relatório externo.

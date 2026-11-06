@@ -1,13 +1,11 @@
-# M4-09 — Pedido de revisão independente Claude Code
+# M4-09 R1 — Pedido de confirmação incremental Claude
 
-Mandato directo do PO de 06/11/2026, AR2-GOV-03. Base integrada 5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07. Branch codex/m4-09-qr-amounts; HEAD final/tree identificados no relatório externo de entrega. HEAD efectivamente ensaiado 066a98490a4db43698ef25d937cd1d16e33cd91e, tree be657782f0a1554717944320fda11ed1122d96e1, limpo antes/depois.
+Rever exclusivamente o delta desde 09ddfd6147bb8c4bf7463672fa35523ec162d57d até ao HEAD final do relatório R1, branch/worktree codex/m4-09-qr-amounts. Base integrada preservada 5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07. Parecer original e sidecar conferidos: d01eb6ef1c9dad0d03d793a5dbd123ff2a6cf9ce3981677471de56f676fdcd16, APPROVE WITH CONDITIONS 0/0/2. Não repetir a revisão global nem as cinco provas anteriores.
 
-Ler AGENTS.md, MATRIX.md, VALIDATION.md, independent_oracles.py, expected.json, QrAmountsJourneyTests e runner. Conferir:
+MINOR-001: conferir M409-06, oráculo racional fixado antes do ensaio e alternativa discriminante. Bruto1,01/desconto0,51/base0,50/IVA0,12/total0,62; regra errada sobre bruto cru daria desconto0,50/total0,63. Teste MockMvc compara consolidados, SQL/snapshots e QR I7/I8/N/O. Só o caso adicional foi executado, usando M409_CASE_FILTER; 1 aprovado/0 falhas/erros/ignorados em 1528b1f7e70eca43fb7f9da704b7e4e330e19c8c, tree391899d11863c0bddf2df01729460bf7f912b4d8, limpo antes/depois. Verificar que teste/runner/oráculos finais são os ensaiados e delta posterior só documental.
 
-1. Cobertura prévia reutilizada versus cinco cenários novos: múltiplas linhas, quantidade/preço fraccionários, descontos percentual/em valor e arredondamentos discriminantes. Sem novas regras ou alteração src/main.
-2. Independência do oráculo racional, ordem do fecho por linha conforme regra aprovada, passos exactos e expectativa fixada antes dos pedidos. Confrontar o caso05 com as alternativas de soma/arredondamento, sem tomar o código da aplicação como oráculo.
-3. Percurso exclusivamente MockMvc com segurança/controlos normais, FT/1,2/1/1,false e FiscalSignatureTestConfiguration de teste existente. Comparação de resposta consolidada, SQL persistido, snapshots e campos monetários I7/I8/N/O, sem generalizar para outros regimes.
-4. XML/log: 5 aprovados, zero falhas/erros/ignorados. Git/versões/comandos, manifests e identidade dos blobs entre ensaio e HEAD final. SQL de leitura e preparação sintética não são emissão produtiva; não houve JAR positivo.
-5. Isolamento tmpfs/rede/cluster, remoção por IDs/labels e consulta posterior 0/0; preservação de df71e68, origem, demo e outras worktrees. Não executar bases conservadas nem repetir a suite por rotina.
+MINOR-002: confirmar as reservas expressas nas duas linhas canónicas — não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos — e a proibição de generalização. A amostra sintética não fecha M4-09 integral nem homologa QR/PDF.
 
-Arquivo reservado e hashes completos em VALIDATION.md/relatório. Os originais e suplementos são distintos. Emitir APPROVE / APPROVE WITH CONDITIONS / REQUEST CHANGES, achados BLOCKER/MAJOR/MINOR com referências, HEAD/tree e SHA-256 do parecer original com sidecar. O PO encaminhará este pedido; não se presume execução independente. Sem push, PR, merge, homologação ou activação.
+Conferir a fonte da autorização como deliberação da Administração: textos originais completos e proveniência nos dois ficheiros M4-09 em docs/governance/sources, hashes em VALIDATION.md. A ordem R1 abrange o cenário sem nova decisão; não foi inventada referência de issue nem publicada ordem em nome da Administração.
+
+Conferir XML/log, selecção1, manifestos, arquivo R1 separado e consulta posterior de recursos0/0. Prova anterior intacta e reutilizada, não repetida. Não alterar aplicação, bases conservadas ou evidências; sem emissão produtiva/JAR, push, PR, merge ou activação. Emitir veredicto, estado dos dois MINOR, achados com localização, HEAD/tree e SHA-256 do parecer original com sidecar. Pedido preparado para encaminhamento efectivo pelo PO; não presume activação do revisor por ficheiro.

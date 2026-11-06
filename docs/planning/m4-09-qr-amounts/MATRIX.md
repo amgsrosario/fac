@@ -48,3 +48,7 @@ Novo caso M409-06: quantidade1 × preço1,005 = bruto cru1,005; HALF_UP fecha br
 | M409-06 | 1.01 | 0.51 | 0.50 | 0.12 | 0.62 | 0.50 / 0.12 / 0.12 / 0.62 |
 
 As expectativas independentes ficam no mesmo recurso versionado, com os cinco casos anteriores inalterados. Para a R1, o runner fixa M409_CASE_FILTER=M409-06 e exige um único caso executado, zero ignorados. O Java filtra o MethodSource; não se repetem M409-01 a05. A nova execução e a confirmação incremental serão registadas separadamente em VALIDATION.md.
+
+## Resultado R1
+
+M409-06 aprovado isoladamente em 1528b1f, execução 20261106-144506-2844e5: 1 caso, zero falhas/erros/ignorados. Desconto0,51 e QR0,50/0,12/0,12/0,62 confirmados, sem repetir as cinco provas anteriores. [Validação/proveniência completas](VALIDATION.md). Parecer inicial 0/0/2; confirmação incremental pendente. As duas linhas canónicas conservam expressamente não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos, sem generalização.
