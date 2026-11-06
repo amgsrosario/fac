@@ -16,3 +16,7 @@ Parecer inicial original conferido com sidecar, SHA-256 **55e89d39dedc2deedb001c
 Arquivo: `/home/arosario/tuuli-backups/m4-04/2026-11-06/20261106-182822-392888/`; originais em evidence-original, delivery-original e reviews; fontes e pacote desta correcção em R1. Relatório/pedido R1 também em Relatorios-AR2/TUULI, nomes próprios e sidecars. HEAD/tree e hash exacto do patch R1 constam da entrega externa, sem autorreferência no commit.
 
 Emitir APPROVE / APPROVE WITH CONDITIONS / REQUEST CHANGES, achados BLOCKER/MAJOR/MINOR, referências e limites. Esta confirmação não homologa formato fiscal ou autoriza alteração de comportamento/publicação. Guardar parecer original com SHA-256. Sem repetir ensaio, operar em bases, alterar ficheiros, push, PR, merge ou activação.
+
+## Resultado recebido e seguimento R2
+
+Claude confirmou a correcção documental R1 com APPROVE WITH CONDITIONS, 0/0/1; original e sidecar conferidos, SHA-256 cab9a4d25d25839e5664ea71b50506304a6501bedfa6c73fb7c3d7aadd9e570d. Apenas MINOR-001 continuava aberto. A transcrição integral do acto inicial foi posteriormente disponibilizada e arquivada, mantendo separados os três actos. [Pedido R2](R2_REVIEW_HANDOFF.md) limitado à sua preservação/proveniência; sem reabrir análise fiscal ou ensaio. A questão do espaço continua pendente e nenhuma alteração de comportamento foi autorizada.
