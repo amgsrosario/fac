@@ -1,0 +1,375 @@
+{
+  "rule": "HALF_UP non-negative cents per line: close gross, discount, base, tax; sum closed lines",
+  "cases": [
+    {
+      "id": "M409-01",
+      "description": "multiple-lines",
+      "rate": "23",
+      "lines": [
+        {
+          "input": {
+            "quantidade": "1",
+            "precoUnitario": "10",
+            "tipoDesconto": "VALOR",
+            "desconto": "0"
+          },
+          "expected": {
+            "gross": "10.00",
+            "discount": "0.00",
+            "base": "10.00",
+            "tax": "2.30",
+            "total": "12.30"
+          },
+          "calculation": {
+            "rawGross": "10",
+            "closedGross": "10.00",
+            "rawDiscount": "0",
+            "closedDiscount": "0.00",
+            "rawTax": "23/10",
+            "closedTax": "2.30"
+          }
+        },
+        {
+          "input": {
+            "quantidade": "2",
+            "precoUnitario": "7.5",
+            "tipoDesconto": "VALOR",
+            "desconto": "0"
+          },
+          "expected": {
+            "gross": "15.00",
+            "discount": "0.00",
+            "base": "15.00",
+            "tax": "3.45",
+            "total": "18.45"
+          },
+          "calculation": {
+            "rawGross": "15",
+            "closedGross": "15.00",
+            "rawDiscount": "0",
+            "closedDiscount": "0.00",
+            "rawTax": "69/20",
+            "closedTax": "3.45"
+          }
+        }
+      ],
+      "totals": {
+        "gross": "25.00",
+        "discount": "0.00",
+        "base": "25.00",
+        "tax": "5.75",
+        "total": "30.75"
+      }
+    },
+    {
+      "id": "M409-02",
+      "description": "fractional-six-decimals",
+      "rate": "23",
+      "lines": [
+        {
+          "input": {
+            "quantidade": "1.234567",
+            "precoUnitario": "12.345678",
+            "tipoDesconto": "VALOR",
+            "desconto": "0"
+          },
+          "expected": {
+            "gross": "15.24",
+            "discount": "0.00",
+            "base": "15.24",
+            "tax": "3.51",
+            "total": "18.75"
+          },
+          "calculation": {
+            "rawGross": "7620783325713/500000000000",
+            "closedGross": "15.24",
+            "rawDiscount": "0",
+            "closedDiscount": "0.00",
+            "rawTax": "8763/2500",
+            "closedTax": "3.51"
+          }
+        },
+        {
+          "input": {
+            "quantidade": "2.5",
+            "precoUnitario": "0.335",
+            "tipoDesconto": "VALOR",
+            "desconto": "0"
+          },
+          "expected": {
+            "gross": "0.84",
+            "discount": "0.00",
+            "base": "0.84",
+            "tax": "0.19",
+            "total": "1.03"
+          },
+          "calculation": {
+            "rawGross": "67/80",
+            "closedGross": "0.84",
+            "rawDiscount": "0",
+            "closedDiscount": "0.00",
+            "rawTax": "483/2500",
+            "closedTax": "0.19"
+          }
+        }
+      ],
+      "totals": {
+        "gross": "16.08",
+        "discount": "0.00",
+        "base": "16.08",
+        "tax": "3.70",
+        "total": "19.78"
+      }
+    },
+    {
+      "id": "M409-03",
+      "description": "percentage-discounts",
+      "rate": "23",
+      "lines": [
+        {
+          "input": {
+            "quantidade": "2.75",
+            "precoUnitario": "3.333333",
+            "tipoDesconto": "PERCENTAGEM",
+            "desconto": "12.5"
+          },
+          "expected": {
+            "gross": "9.17",
+            "discount": "1.15",
+            "base": "8.02",
+            "tax": "1.84",
+            "total": "9.86"
+          },
+          "calculation": {
+            "rawGross": "36666663/4000000",
+            "closedGross": "9.17",
+            "rawDiscount": "917/800",
+            "closedDiscount": "1.15",
+            "rawTax": "9223/5000",
+            "closedTax": "1.84"
+          }
+        },
+        {
+          "input": {
+            "quantidade": "1.2",
+            "precoUnitario": "10.005",
+            "tipoDesconto": "PERCENTAGEM",
+            "desconto": "5.555555"
+          },
+          "expected": {
+            "gross": "12.01",
+            "discount": "0.67",
+            "base": "11.34",
+            "tax": "2.61",
+            "total": "13.95"
+          },
+          "calculation": {
+            "rawGross": "6003/500",
+            "closedGross": "12.01",
+            "rawDiscount": "1334444311/2000000000",
+            "closedDiscount": "0.67",
+            "rawTax": "13041/5000",
+            "closedTax": "2.61"
+          }
+        }
+      ],
+      "totals": {
+        "gross": "21.18",
+        "discount": "1.82",
+        "base": "19.36",
+        "tax": "4.45",
+        "total": "23.81"
+      }
+    },
+    {
+      "id": "M409-04",
+      "description": "absolute-discount-half-cent",
+      "rate": "23",
+      "lines": [
+        {
+          "input": {
+            "quantidade": "1",
+            "precoUnitario": "0.335",
+            "tipoDesconto": "VALOR",
+            "desconto": "0.005"
+          },
+          "expected": {
+            "gross": "0.34",
+            "discount": "0.01",
+            "base": "0.33",
+            "tax": "0.08",
+            "total": "0.41"
+          },
+          "calculation": {
+            "rawGross": "67/200",
+            "closedGross": "0.34",
+            "rawDiscount": "1/200",
+            "closedDiscount": "0.01",
+            "rawTax": "759/10000",
+            "closedTax": "0.08"
+          }
+        },
+        {
+          "input": {
+            "quantidade": "0.333333",
+            "precoUnitario": "9.999999",
+            "tipoDesconto": "VALOR",
+            "desconto": "1.005"
+          },
+          "expected": {
+            "gross": "3.33",
+            "discount": "1.01",
+            "base": "2.32",
+            "tax": "0.53",
+            "total": "2.85"
+          },
+          "calculation": {
+            "rawGross": "3333329666667/1000000000000",
+            "closedGross": "3.33",
+            "rawDiscount": "201/200",
+            "closedDiscount": "1.01",
+            "rawTax": "667/1250",
+            "closedTax": "0.53"
+          }
+        }
+      ],
+      "totals": {
+        "gross": "3.67",
+        "discount": "1.02",
+        "base": "2.65",
+        "tax": "0.61",
+        "total": "3.26"
+      }
+    },
+    {
+      "id": "M409-05",
+      "description": "line-versus-document-rounding",
+      "rate": "23",
+      "lines": [
+        {
+          "input": {
+            "quantidade": "1",
+            "precoUnitario": "0.025",
+            "tipoDesconto": "VALOR",
+            "desconto": "0"
+          },
+          "expected": {
+            "gross": "0.03",
+            "discount": "0.00",
+            "base": "0.03",
+            "tax": "0.01",
+            "total": "0.04"
+          },
+          "calculation": {
+            "rawGross": "1/40",
+            "closedGross": "0.03",
+            "rawDiscount": "0",
+            "closedDiscount": "0.00",
+            "rawTax": "69/10000",
+            "closedTax": "0.01"
+          }
+        },
+        {
+          "input": {
+            "quantidade": "1",
+            "precoUnitario": "0.025",
+            "tipoDesconto": "VALOR",
+            "desconto": "0"
+          },
+          "expected": {
+            "gross": "0.03",
+            "discount": "0.00",
+            "base": "0.03",
+            "tax": "0.01",
+            "total": "0.04"
+          },
+          "calculation": {
+            "rawGross": "1/40",
+            "closedGross": "0.03",
+            "rawDiscount": "0",
+            "closedDiscount": "0.00",
+            "rawTax": "69/10000",
+            "closedTax": "0.01"
+          }
+        },
+        {
+          "input": {
+            "quantidade": "1",
+            "precoUnitario": "0.025",
+            "tipoDesconto": "VALOR",
+            "desconto": "0"
+          },
+          "expected": {
+            "gross": "0.03",
+            "discount": "0.00",
+            "base": "0.03",
+            "tax": "0.01",
+            "total": "0.04"
+          },
+          "calculation": {
+            "rawGross": "1/40",
+            "closedGross": "0.03",
+            "rawDiscount": "0",
+            "closedDiscount": "0.00",
+            "rawTax": "69/10000",
+            "closedTax": "0.01"
+          }
+        }
+      ],
+      "totals": {
+        "gross": "0.09",
+        "discount": "0.00",
+        "base": "0.09",
+        "tax": "0.03",
+        "total": "0.12"
+      },
+      "discriminators": {
+        "sumRawGrossThenRound": "0.08",
+        "taxOnDocumentBaseThenRound": "0.02"
+      }
+    },
+    {
+      "id": "M409-06",
+      "description": "percentage-on-closed-gross-discriminator",
+      "rate": "23",
+      "lines": [
+        {
+          "input": {
+            "quantidade": "1",
+            "precoUnitario": "1.005",
+            "tipoDesconto": "PERCENTAGEM",
+            "desconto": "50"
+          },
+          "expected": {
+            "gross": "1.01",
+            "discount": "0.51",
+            "base": "0.50",
+            "tax": "0.12",
+            "total": "0.62"
+          },
+          "calculation": {
+            "rawGross": "201/200",
+            "closedGross": "1.01",
+            "rawDiscount": "101/200",
+            "closedDiscount": "0.51",
+            "rawTax": "23/200",
+            "closedTax": "0.12"
+          }
+        }
+      ],
+      "totals": {
+        "gross": "1.01",
+        "discount": "0.51",
+        "base": "0.50",
+        "tax": "0.12",
+        "total": "0.62"
+      },
+      "discriminators": {
+        "discountOnUnclosedGross": "0.50",
+        "baseOnWrongDiscount": "0.51",
+        "taxOnWrongBase": "0.12",
+        "totalOnWrongDiscount": "0.63"
+      }
+    }
+  ]
+}
