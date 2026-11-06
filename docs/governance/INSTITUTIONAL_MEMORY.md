@@ -1013,3 +1013,11 @@ Base integrada `5ec635686a15c19f2603ba26f048bc5ab8c10b26`. Mandato #46/666158904
 ## 2026-11-06 — podeEmitir R1, três achados corrigidos localmente
 
 Parecer inicial sobre 1814d86: REQUEST CHANGES, 0 BLOCKER / 1 MAJOR / 2 MINOR. Original e sidecar iguais, SHA-256 ff8142b6757b57e5551d699b5f5462331eb4373df550b911870c7ca3273a0d61, preservados sem alteração. R1 repõe paragem após novo aviso de recálculo na gravação, limita avaliação/mensagens de emissão a rascunhos e amplia regressões, com limites documentados. Testes afectados: 14 backend em 8b5e341 e 26 browser em a431f81, todos aprovados; TypeScript/build/package aprovados, Git e códigos de saída capturados. Provas anteriores reutilizadas apenas onde aplicável, sem declarar suite integral ou ensaio no HEAD documental final. [Validação e arquivo](../planning/emission-readiness/VALIDATION.md). Confirmação incremental Claude pendente. Branch isolada, sem publicação, PR, merge, activação ou alterações às bases conservadas. POST e gates fiscais preservados.
+
+## 2026-11-06 — Revalidação Docker e recursos M4-10/podeEmitir
+
+Pendência operacional de acessibilidade Docker encerrada por consulta na mesma distribuição WSL Ubuntu (Ubuntu 26.04.1 LTS). `docker version`, `docker context show` e `docker info` concluíram com código 0: cliente e servidor Engine 29.8.0, Docker Desktop 4.91.0, contexto default. O sandbox recusou inicialmente o socket; a consulta autorizada fora do sandbox teve sucesso, sem alterar permissões ou configuração.
+
+Labels exactas conferidas nos runners: `ar2.mission=M410-commercial` e `ar2.mission=Emission-readiness`. Para cada uma, `docker ps -a` e `docker network ls` filtrados devolveram zero registos, com código 0. Confirmação actual, exclusivamente de leitura; não se eliminaram recursos nem repetiram testes. A nota anterior de indisponibilidade é histórica e fica superada por esta verificação.
+
+Evidência: arquivo reservado `tuuli-backups/docker-revalidation/2026-11-06/results.json`, SHA-256 `1ffc48c0c22ba061c8a8f68350b4e781133a7d8a38720259e0197469203b149f`. Relatório `2026-11-06_TUULI_Docker_revalidacao_Codex.md` em Relatorios-AR2/TUULI, com sidecar. Esta verificação não altera aprovação, âmbito dos ensaios ou gates de publicação, PR, merge e activação.
