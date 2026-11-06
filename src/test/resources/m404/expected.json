@@ -1,0 +1,20 @@
+{
+  "case": "M404-01",
+  "internalType": "GFT",
+  "fiscalType": "FT",
+  "series": "M404A",
+  "sequence": 1,
+  "validationCode": "SYNM404A",
+  "number": "GFT M404A/1",
+  "atcud": "SYNM404A-1",
+  "D": "FT",
+  "G": "GFT M404A/1",
+  "H": "SYNM404A-1",
+  "sources": {
+    "type": "D-CAT-2A/H1/ADR-003; N04 D; N05 InvoiceType",
+    "number": "N05 Annex I 4.1.4.1 internal type + series + sequence",
+    "atcud": "N03 arts 2-4; N04 H",
+    "pdf": "Technical identity equality; no homologation of literal heading"
+  },
+  "limits": "Synthetic signature and validation code only; no fiscal homologation or production emission"
+}
