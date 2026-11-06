@@ -1,6 +1,6 @@
 # M4-09 — Prova dirigida de montantes QR
 
-Deliberação da Administração AR2, transmitida neste chat em 06/11/2026, AR2-GOV-03. [Texto original preservado](../../governance/sources/2026-11-06_M4-09_deliberacao-administracao.md); [deliberação R1](../../governance/sources/2026-11-06_M4-09-R1_deliberacao-administracao.md). Base remota confirmada `5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07` (PR #55). Branch/worktree `codex/m4-09-qr-amounts` / `.worktrees/m4-09-qr-amounts`. O registo documental local `df71e68d017c2ee730211c40584fc8ac5f06ef11` permanece intacto na worktree anterior; não é cherry-picked nem apresentado como integrado.
+Deliberação da Administração AR2, transmitida neste chat em 06/11/2026, AR2-GOV-03. [Autorização administrativa original](../../governance/sources/2026-11-06_M4-09_autorizacao-administrativa-original.md), disponibilizada posteriormente pelo utilizador; [ordem executiva inicial](../../governance/sources/2026-11-06_M4-09_deliberacao-administracao.md) e [instrução executiva R1](../../governance/sources/2026-11-06_M4-09-R1_deliberacao-administracao.md), preservadas separadamente. Base remota confirmada `5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07` (PR #55). Branch/worktree `codex/m4-09-qr-amounts` / `.worktrees/m4-09-qr-amounts`. O registo documental local `df71e68d017c2ee730211c40584fc8ac5f06ef11` permanece intacto na worktree anterior; não é cherry-picked nem apresentado como integrado.
 
 ## Cobertura reutilizada, não reexecutada
 
@@ -57,4 +57,6 @@ M409-06 aprovado isoladamente em 1528b1f, execução 20261106-144506-2844e5: 1 c
 
 Claude confirmou MINOR-001 e MINOR-002 como encerrados, APPROVE 0/0/0 sobre a79e86d89ed60981332cfa1261a7d722bd8dc061. Novo parecer SHA-256 921303c688390d528885423dd8c7f37afada2511c2e6271af74ff0835d4bd881, conferido com sidecar e preservado. O digest d01eb6ef…cd16 corresponde ao parecer inicial.
 
-Os seis casos sintéticos resultam de duas execuções (5 + 1), não de uma suite conjunta. Mantêm-se alcance MockMvc/fonte de teste e as reservas canónicas, sem generalização. [Selecção documentada](RUNNER_SELECTION.md), sem modificar testes/runner. [Fontes e pendência administrativa](../../governance/sources/2026-11-06_M4-09_PROVENANCE.md) distinguidas das instruções executivas. Nenhum novo ensaio neste fecho; decisão de publicação ainda reservada.
+Os seis casos sintéticos resultam de duas execuções (5 + 1), não de uma suite conjunta. Mantêm-se alcance MockMvc/fonte de teste e as reservas canónicas, sem generalização. [Selecção documentada](RUNNER_SELECTION.md), sem modificar testes/runner. [Fontes e proveniência administrativa](../../governance/sources/2026-11-06_M4-09_PROVENANCE.md) distinguidas das instruções executivas. Nenhum novo ensaio neste fecho; decisão de publicação ainda reservada.
+
+Fonte administrativa original agora recebida e preservada integralmente: ficheiro SHA-256 f4fcee16cfdb52313d44316236111581625a44bbcb535dc9a21ce00f8617e57f, distinta das ordens executivas. Origem declarada: mensagem da Administração no chat Executivo TUULI AIR, sem identificador externo disponível. Pendência de exemplar encerrada, sem inventar referência.
