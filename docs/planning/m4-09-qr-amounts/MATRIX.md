@@ -17,7 +17,7 @@ Regra existente: duas casas, HALF_UP por linha, fechar bruto, desconto, base e I
 
 `independent_oracles.py` usa números racionais exactos (fractions.Fraction), quociente inteiro para cêntimos e nenhuma importação/chamada Java ou float. Para x≥0, HALF_UP em cêntimos é floor(100x+1/2). Desconto percentual parte do bruto já fechado; desconto em valor é fechado isoladamente. Base=bruto−desconto; IVA=fecho(base×23/100). Total=base+IVA; cabeçalho soma valores fechados das linhas. Não usar o serviço da aplicação para obter resultados esperados.
 
-`src/test/resources/m409/expected.json` é fixado antes do ensaio. Contém entradas, resultados esperados por linha e documento e fracções exactas dos passos intermédios. `--check` exige reprodução byte a byte. Casos 01 e 05 têm também totais literais independentes no gerador. No caso05, cada 0,025 fecha a0,03 e IVA0,0069 fecha a0,01: três linhas dão base0,09/IVA0,03/total0,12. Fechar bruto agregado daria0,08; aplicar IVA à base agregada daria0,02: ambos são discriminados e não são a regra vigente.
+`src/test/resources/m409/expected.json` é fixado antes do ensaio. Contém entradas, resultados esperados por linha e documento e fracções exactas dos passos intermédios. `--check` exige reprodução byte a byte. Casos 01 e 05 têm também totais literais independentes no gerador. No caso 05, cada 0,025 fecha a 0,03 e IVA0,0069 fecha a 0,01: três linhas dão base 0,09/IVA 0,03/total 0,12. Fechar bruto agregado daria 0,08; aplicar IVA à base agregada daria 0,02: ambos são discriminados e não são a regra vigente.
 
 | Caso | Cenário | Bruto | Desconto | Base | IVA | Total |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -41,7 +41,7 @@ Esta prova não cobre outros regimes, taxas, isenções, retenções, territóri
 
 Parecer inicial APPROVE WITH CONDITIONS, 0 BLOCKER / 0 MAJOR / 2 MINOR, sobre 09ddfd6. Original/sidecar conferidos, SHA-256 d01eb6ef1c9dad0d03d793a5dbd123ff2a6cf9ce3981677471de56f676fdcd16. Não se alteram as cinco provas anteriores.
 
-Novo caso M409-06: quantidade1 × preço1,005 = bruto cru1,005; HALF_UP fecha bruto1,01. Desconto50% sobre1,01 =0,505, fechado0,51; base0,50; IVA0,50×23%=0,115, fechado0,12; total0,62. Aplicar desconto ao bruto cru daria0,5025, fechado0,50; base0,51 e total0,63. O oráculo racional calcula esta alternativa, em vez de a aceitar por mera referência textual.
+Novo caso M409-06: quantidade 1 × preço 1,005 = bruto cru 1,005; HALF_UP fecha bruto 1,01. Desconto50% sobre 1,01 = 0,505, fechado0,51; base 0,50; IVA0,50 × 23%=0,115, fechado0,12; total 0,62. Aplicar desconto ao bruto cru daria0,5025, fechado0,50; base 0,51 e total 0,63. O oráculo racional calcula esta alternativa, em vez de a aceitar por mera referência textual.
 
 | Caso novo | Bruto | Desconto | Base | IVA | Total | QR I7/I8/N/O esperado |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
@@ -51,4 +51,10 @@ As expectativas independentes ficam no mesmo recurso versionado, com os cinco ca
 
 ## Resultado R1
 
-M409-06 aprovado isoladamente em 1528b1f, execução 20261106-144506-2844e5: 1 caso, zero falhas/erros/ignorados. Desconto0,51 e QR0,50/0,12/0,12/0,62 confirmados, sem repetir as cinco provas anteriores. [Validação/proveniência completas](VALIDATION.md). Parecer inicial 0/0/2; confirmação incremental pendente. As duas linhas canónicas conservam expressamente não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos, sem generalização.
+M409-06 aprovado isoladamente em 1528b1f, execução 20261106-144506-2844e5: 1 caso, zero falhas/erros/ignorados. Desconto0,51 e QR0,50/0,12/0,12/0,62 confirmados, sem repetir as cinco provas anteriores. [Validação/proveniência completas](VALIDATION.md). Parecer inicial 0/0/2; confirmação incremental posterior APPROVE 0/0/0 sobre a79e86d. As duas linhas canónicas conservam expressamente não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos, sem generalização.
+
+## Fecho técnico revisto e preparação documental
+
+Claude confirmou MINOR-001 e MINOR-002 como encerrados, APPROVE 0/0/0 sobre a79e86d89ed60981332cfa1261a7d722bd8dc061. Novo parecer SHA-256 921303c688390d528885423dd8c7f37afada2511c2e6271af74ff0835d4bd881, conferido com sidecar e preservado. O digest d01eb6ef…cd16 corresponde ao parecer inicial.
+
+Os seis casos sintéticos resultam de duas execuções (5 + 1), não de uma suite conjunta. Mantêm-se alcance MockMvc/fonte de teste e as reservas canónicas, sem generalização. [Selecção documentada](RUNNER_SELECTION.md), sem modificar testes/runner. [Fontes e pendência administrativa](../../governance/sources/2026-11-06_M4-09_PROVENANCE.md) distinguidas das instruções executivas. Nenhum novo ensaio neste fecho; decisão de publicação ainda reservada.

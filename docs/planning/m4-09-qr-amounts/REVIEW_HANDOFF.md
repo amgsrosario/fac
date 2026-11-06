@@ -1,11 +1,26 @@
-# M4-09 R1 — Pedido de confirmação incremental Claude
+# M4-09 — Handoff documental para decisão de publicação
 
-Rever exclusivamente o delta desde 09ddfd6147bb8c4bf7463672fa35523ec162d57d até ao HEAD final do relatório R1, branch/worktree codex/m4-09-qr-amounts. Base integrada preservada 5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07. Parecer original e sidecar conferidos: d01eb6ef1c9dad0d03d793a5dbd123ff2a6cf9ce3981677471de56f676fdcd16, APPROVE WITH CONDITIONS 0/0/2. Não repetir a revisão global nem as cinco provas anteriores.
+## Aprovação independente conferida
 
-MINOR-001: conferir M409-06, oráculo racional fixado antes do ensaio e alternativa discriminante. Bruto1,01/desconto0,51/base0,50/IVA0,12/total0,62; regra errada sobre bruto cru daria desconto0,50/total0,63. Teste MockMvc compara consolidados, SQL/snapshots e QR I7/I8/N/O. Só o caso adicional foi executado, usando M409_CASE_FILTER; 1 aprovado/0 falhas/erros/ignorados em 1528b1f7e70eca43fb7f9da704b7e4e330e19c8c, tree391899d11863c0bddf2df01729460bf7f912b4d8, limpo antes/depois. Verificar que teste/runner/oráculos finais são os ensaiados e delta posterior só documental.
+Claude Code: **APPROVE, 0 BLOCKER / 0 MAJOR / 0 MINOR**, confirmação incremental sobre `a79e86d89ed60981332cfa1261a7d722bd8dc061`, tree `305405c943d593955d6bdd680a1400445c8dfa47`. MINOR-001 e MINOR-002 encerrados.
 
-MINOR-002: confirmar as reservas expressas nas duas linhas canónicas — não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos — e a proibição de generalização. A amostra sintética não fecha M4-09 integral nem homologa QR/PDF.
+Novo original: `2026-11-06_TUULI_M4-09-R1_confirmacao-incremental_Claude.md`, SHA-256 **921303c688390d528885423dd8c7f37afada2511c2e6271af74ff0835d4bd881**, igual ao sidecar. Preservados sem alteração no arquivo de relatórios e tuuli-backups/reviews/2026-11-06/M4-09.
 
-Conferir a fonte da autorização como deliberação da Administração: textos originais completos e proveniência nos dois ficheiros M4-09 em docs/governance/sources, hashes em VALIDATION.md. A ordem R1 abrange o cenário sem nova decisão; não foi inventada referência de issue nem publicada ordem em nome da Administração.
+O hash **d01eb6ef1c9dad0d03d793a5dbd123ff2a6cf9ce3981677471de56f676fdcd16** identifica apenas o parecer inicial APPROVE WITH CONDITIONS 0/0/2 sobre 09ddfd6. Não o utilizar como digest da confirmação R1.
 
-Conferir XML/log, selecção1, manifestos, arquivo R1 separado e consulta posterior de recursos0/0. Prova anterior intacta e reutilizada, não repetida. Não alterar aplicação, bases conservadas ou evidências; sem emissão produtiva/JAR, push, PR, merge ou activação. Emitir veredicto, estado dos dois MINOR, achados com localização, HEAD/tree e SHA-256 do parecer original com sidecar. Pedido preparado para encaminhamento efectivo pelo PO; não presume activação do revisor por ficheiro.
+## Provas e limites preservados
+
+| Execução | HEAD ensaiado | Resultado |
+| --- | --- | --- |
+| 20261106-124452-5cbed5 | 066a98490a4db43698ef25d937cd1d16e33cd91e | Cinco casos aprovados; não repetidos na R1 |
+| 20261106-144506-2844e5 | 1528b1f7e70eca43fb7f9da704b7e4e330e19c8c | Só M409-06, um caso aprovado |
+
+FT diferida, EUR, tributação normal sintética de 23%, FT/1, 2/1/1,false, MockMvc e assinatura exclusivamente de teste. Não são seis testes numa execução conjunta. Não demonstra JAR positivo, PDF/imagem QR, assinatura produtiva ou correcção fiscal da regra. Mantêm-se não-EUR, isenções, não sujeição, retenção, liquidação imediata e recibos reservados; não generalizar.
+
+## Fecho posterior à revisão
+
+Mudanças apenas documentais: aprovação, limites, reservas, proveniência e espaços. Teste, runner e oráculos permanecem idênticos ao HEAD revisto/ensaiado relevante. Nenhum novo ensaio. [Selecção do runner](RUNNER_SELECTION.md): o runner actual fixa M409-06 e exige um caso; não usar o comando actual para alegar repetição histórica dos cinco nem execução conjunta dos seis.
+
+[Proveniência](../../governance/sources/2026-11-06_M4-09_PROVENANCE.md): as ordens executivas disponíveis estão integralmente preservadas e distinguem-se da autorização administrativa anterior referida, cujo exemplar autónomo ainda não foi localizado. Não se inventa texto, hash ou referência. Texto consolidado para a issue #46 preparado no dossier externo, não publicado.
+
+Dossier final identifica HEAD/tree, base, delta cumulativo e commits documentais posteriores a a79e86d. A aprovação não autoriza push, PR, merge, homologação ou activação. A melhoria bruto/IVA/total no diálogo permanece pendente em mandato próprio. Publicação depende de decisão administrativa sobre o HEAD final, com a pendência documental de proveniência explícita.
