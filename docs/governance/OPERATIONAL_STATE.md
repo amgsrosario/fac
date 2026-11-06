@@ -1,11 +1,11 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-11-04, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-11-06, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Base produtiva confirmada
 
 - Linha produtiva: `feature/visual-redesign`.
-- Base integrada actual reconfirmada em 06/11/2026: `41dbe8539df9626db8d941ffd688d8c2e754a420`, merge PR #54 (M4-10). As referências abaixo ao início da M05 são históricas.
+- Base integrada actual reconfirmada em 06/11/2026: `5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07`, merge PR #55 (podeEmitir), após PR #54/M4-10 (`41dbe8539df9626db8d941ffd688d8c2e754a420`). As referências abaixo ao início da M05 são históricas.
 - HEAD integrado confirmado no início da M05: `d17de43f714a18c7f7bb7b1fc719f71d77b4e14f`, merge do PR #52 (M04), confirmado por HTTPS/FETCH_HEAD. Checkout principal preservado; tracking origin local antigo não usado como base. Integração não significa actualização de base, deploy ou activação.
 - Este identificador é a referência confirmada neste fecho, não o hash do commit que contém este ficheiro. Registar o próprio HEAD tornaria a atualização autorreferencial; não encadear commits apenas para acompanhar esta correção documental. Para obter o HEAD remoto corrente, atualizar as referências Git e consultar `origin/feature/visual-redesign`.
 
@@ -1171,3 +1171,13 @@ Melhoria pendente antes de utilização produtiva (O-1/O-2): mostrar explicitame
 Conflitos limitados a INSTITUTIONAL_MEMORY.md e OPERATIONAL_STATE.md: preservados os registos de implementação/revisão de podeEmitir e da prova parcial M4-10, com uma única secção de revalidação Docker. O estado corrente substitui as menções históricas a revisão/publicação pendente: M4-10 está integrada; podeEmitir tem APPROVE 0/0/0 em 7c96e58 e continua local, preparada para decisão de publicação sobre novo HEAD exacto. Pareceres originais/sidecars reconferidos: M4-10 `ba7b8bd5acd76ecc0ca28d35a48af8c9108094d18420dcebc462ae52d40ce36f`; podeEmitir R1 `ec8905c589068024c375285ad9b509f28ca7c815b778bb3a479cabf1eb4ad4a0`.
 
 Código funcional de podeEmitir preservado relativamente ao HEAD revisto `7c96e5819ee2ee8c47f39363675323f611943b73`; o merge acrescenta apenas os testes/runner/documentação M4-10 já integrados, além da reconciliação documental. Não se repetiram testes nem se presume revisão independente de um novo código funcional. Relatório de entrega identifica HEAD/tree finais, base e delta do futuro PR. Mantêm-se a melhoria de bruto/IVA/total no diálogo antes de uso produtivo, os limites MockMvc/sintéticos e todos os gates fiscais, de publicação, PR, merge e activação. Bases conservadas, demo, checkout principal e restantes worktrees preservados.
+
+## 2026-11-06 — M4-09: montantes QR da FT diferida/EUR, prova dirigida
+
+Base integrada reconfirmada 5342255e329f3a2ebe6d7b5ad97e9b6f8c09cf07 (PR #55/podeEmitir), posterior à M4-10 integrada no PR #54. Ordem directa do PO de 06/11/2026, AR2-GOV-03. Nova branch/worktree codex/m4-09-qr-amounts; registo local df71e68 preservado na worktree anterior, sem reescrita ou incorporação indevida.
+
+Cinco cenários MockMvc com FT/1,2/1/1,false, EUR/tributação normal e fonte FiscalSignatureTestConfiguration exclusivamente de teste: múltiplas linhas, fracções, descontos percentual/em valor e arredondamentos discriminantes. Expectativas anteriores ao ensaio por aritmética racional independente; respostas consolidadas, SQL persistido, snapshots e QR I7/I8/N/O coincidiram. HEAD ensaiado 066a98490a4db43698ef25d937cd1d16e33cd91e, tree be657782f0a1554717944320fda11ed1122d96e1, limpo antes/depois. 5 aprovados, zero falhas/erros/ignorados; nenhuma divergência funcional e nenhuma alteração da aplicação.
+
+PostgreSQL 16.3 novo/tmpfs, rede interna e proxy loopback próprios, removidos com conferência de IDs/labels; consulta posterior ar2.mission=M409-qr-amounts confirmou 0 contentores/0 redes. Arquivo tuuli-backups/m4-09/2026-11-06/20261106-124452-5cbed5, 92 ficheiros conferidos; manifesto original aa6e66af7956d00067f9baf7cf737363a55636ca56f5d9500fcfff4a78d2f5e3 e global 8ee5a6e42b2c9c51af89eb25ae242c470476318be091a1eae5939a22b6d61020. [Validação e limites](../planning/m4-09-qr-amounts/VALIDATION.md).
+
+Revisão independente Claude pendente. A prova técnica dos cinco casos não homologa QR/PDF, taxas/regimes, outros tipos/territórios/moedas ou assinatura produtiva; não demonstra JAR positivo. Não se repetiram suites anteriores. Sem src/main, migrations, manifesto, activação, emissão real, bases conservadas/demo, push, PR ou merge. Bruto/IVA/total no diálogo permanece melhoria pendente antes de utilização produtiva, não implementada aqui.
