@@ -1,4 +1,4 @@
-# M4-09 — Handoff documental para decisão de publicação
+# M4-09 — Handoff pós-integração da prova parcial
 
 ## Aprovação independente conferida
 
@@ -24,3 +24,9 @@ Mudanças apenas documentais: aprovação, limites, reservas, proveniência e es
 [Proveniência](../../governance/sources/2026-11-06_M4-09_PROVENANCE.md): a autorização administrativa original foi posteriormente disponibilizada pelo utilizador e preservada integralmente, distinta das duas instruções executivas. Origem declarada: mensagem da Administração no chat Executivo TUULI AIR, sem identificador externo. SHA-256 do ficheiro f4fcee16cfdb52313d44316236111581625a44bbcb535dc9a21ce00f8617e57f. Não se inventa referência externa. Texto consolidado para a issue #46 preparado no dossier externo, não publicado.
 
 Dossier final identifica HEAD/tree, base, delta cumulativo e commits documentais posteriores a a79e86d. A aprovação não autoriza push, PR, merge, homologação ou activação. A melhoria bruto/IVA/total no diálogo permanece pendente em mandato próprio. Publicação depende de decisão administrativa sobre o HEAD final, com proveniência administrativa explicitada e sem identificador externo inventado.
+
+## Estado corrente — INTEGRADO pelo PR #56
+
+Em 06/11/2026, integração confirmada em feature/visual-redesign: merge f2fa46765fbd1a2c0ab65d3978f321ef050c3424, HEAD autorizado 5c5b34403cb00e0190f810209cbc29091b68653f, CI 42244362450 success, conforme #46/6690486932. A preparação de publicação acima é histórica e foi satisfeita; novas publicações continuam sujeitas aos gates próprios. Parecer 0/0/0 e fontes/hashes preservados. Sem teste, merge ou operação de base nesta actualização documental.
+
+Seis cenários em duas execuções distintas, MockMvc/fonte sintética; prova parcial integrada, não requisito M4-09 completo. Mantêm-se as reservas nomeadas e a melhoria bruto/IVA/total no diálogo antes de uso produtivo. Não reabrir os MINOR ou repetir provas concluídas. [Quadro M04](../continuity-2026-11-05/M04_STATUS.md) actualizado; [M4-04 parcial](../m04-fiscal-evidence/NEXT_INCREMENT.md) é a proposta seguinte, com oráculo e mandato prévios, não ordem de execução.

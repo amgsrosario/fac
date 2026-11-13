@@ -78,3 +78,7 @@ Mantêm-se duas execuções distintas, MockMvc/assinatura sintética e todas as 
 ### Fonte administrativa original disponibilizada após a clarificação
 
 O utilizador forneceu o texto integral «AR2 | Administração — TUULI AIR / Autorização do mandato M4-09», com origem declarada na mensagem da Administração no chat Executivo TUULI AIR, sem identificador externo disponível. Preservado em [fonte original](../../governance/sources/2026-11-06_M4-09_autorizacao-administrativa-original.md), sem alterar o corpo. SHA-256 do ficheiro com metadados f4fcee16cfdb52313d44316236111581625a44bbcb535dc9a21ce00f8617e57f; corpo 7c82c9cb974407b6ec85aea05d6b2c02611358a05e396879d97416a1d5e651d2. Não se substituem os hashes das ordens executivas anteriores. Pendência de exemplar encerrada; não se afirma autenticação externa nem autorização de publicação nesta tarefa. Nenhum teste/runner/oráculo foi alterado ou executado.
+
+## Fecho institucional pós-merge — 06-11-2026
+
+Prova parcial integrada no PR #56, merge f2fa46765fbd1a2c0ab65d3978f321ef050c3424, HEAD 5c5b34403cb00e0190f810209cbc29091b68653f, conforme #46/6690486932. CI 42244362450 success (safety/package). Parecer R1 APPROVE 0/0/0 sobre a79e86d, SHA-256 921303c688390d528885423dd8c7f37afada2511c2e6271af74ff0835d4bd881. Os estados anteriores de publicação pendente são históricos. As duas execuções, seus HEADs, arquivos e limites mantêm-se; nenhum novo teste foi executado ou atribuído ao merge. A integração não fecha M4-09 global nem autoriza activação/uso produtivo.

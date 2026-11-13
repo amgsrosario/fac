@@ -60,3 +60,7 @@ Claude confirmou MINOR-001 e MINOR-002 como encerrados, APPROVE 0/0/0 sobre a79e
 Os seis casos sintéticos resultam de duas execuções (5 + 1), não de uma suite conjunta. Mantêm-se alcance MockMvc/fonte de teste e as reservas canónicas, sem generalização. [Selecção documentada](RUNNER_SELECTION.md), sem modificar testes/runner. [Fontes e proveniência administrativa](../../governance/sources/2026-11-06_M4-09_PROVENANCE.md) distinguidas das instruções executivas. Nenhum novo ensaio neste fecho; decisão de publicação ainda reservada.
 
 Fonte administrativa original agora recebida e preservada integralmente: ficheiro SHA-256 f4fcee16cfdb52313d44316236111581625a44bbcb535dc9a21ce00f8617e57f, distinta das ordens executivas. Origem declarada: mensagem da Administração no chat Executivo TUULI AIR, sem identificador externo disponível. Pendência de exemplar encerrada, sem inventar referência.
+
+## Integração da prova parcial
+
+PR #56 integrado em f2fa46765fbd1a2c0ab65d3978f321ef050c3424, conforme #46/6690486932, em 06/11/2026. Seis cenários aprovados em duas execuções (5 + 1), parecer R1 0/0/0 sobre a79e86d; evidências e reservas preservadas. Estado «integrado» não significa requisito M4-09 global demonstrado, homologação fiscal/QR/PDF ou activação. O [quadro M04](../continuity-2026-11-05/M04_STATUS.md) deixa a prova parcial como entregue e propõe a próxima lacuna sem repetir esta missão.
