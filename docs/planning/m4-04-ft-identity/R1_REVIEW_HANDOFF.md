@@ -1,5 +1,8 @@
 # Claude — Confirmação incremental M4-04 R1, só documental
 
+> **Remissão de continuidade — 13-11-2026:** as referências abaixo à falta do acto inicial descrevem o estado documental da preparação/revisão anterior. O [acto inicial integral](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.md) foi entretanto arquivado, com [proveniência separada](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.provenance.json), e o MINOR-001 foi declarado RESOLVIDO pelo Claude R2 sobre d80ad6a, APPROVE 0/0/0 nesse âmbito. [Fecho e dossier corrente](DELIVERY.md). A análise documental foi aprovada; a questão fiscal do espaço após ATCUD: continua aberta, sem autorização de alterar a aplicação.
+
+
 **Preparado para transmissão pela Coordenação; não é aprovação ou activação automática.**
 
 Base da revisão inicial: 12c252a7bce4d2d94b854b3465ae88e3eca8133e, tree 3ec21012be0abd0e792cd2b3b799b7f127382731. Rever apenas o delta documental R1 até ao HEAD final identificado na entrega/pedido externo. HEAD ensaiado continua b9ce8ea2b4d3abf91595dd679ac2a53286e1942e: não houve novo ensaio. Branch/worktree codex/m4-04-ft-identity / /home/arosario/Projetos/fac/.worktrees/m4-04-ft-identity.

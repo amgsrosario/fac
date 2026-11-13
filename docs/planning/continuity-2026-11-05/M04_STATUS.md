@@ -1,6 +1,6 @@
-# M04 — Quadro reconciliado dos 17 requisitos, 06-11-2026
+# M04 — Quadro reconciliado dos 17 requisitos, 13-11-2026
 
-Referência remota confirmada: `f2fa46765fbd1a2c0ab65d3978f321ef050c3424`, merge PR #56 (M4-09), conforme [#46/6690486932](https://github.com/amgsrosario/fac/issues/46#issuecomment-6690486932). Integrações anteriores preservadas: PR #54/M4-10 (`41dbe85`) e PR #55/podeEmitir (`5342255`). «Integrado» é estado Git, não homologação ou autorização operacional. Actualização M4-04: um novo cenário dirigido MockMvc foi executado no HEAD b9ce8ea, com revisão pendente; as provas anteriores continuam reutilizadas nos seus HEADs originais.
+Referência remota confirmada: `f2fa46765fbd1a2c0ab65d3978f321ef050c3424`, merge PR #56 (M4-09), conforme [#46/6690486932](https://github.com/amgsrosario/fac/issues/46#issuecomment-6690486932). Integrações anteriores preservadas: PR #54/M4-10 (`41dbe85`) e PR #55/podeEmitir (`5342255`). «Integrado» é estado Git, não homologação ou autorização operacional. Actualização M4-04: um cenário dirigido MockMvc foi executado no HEAD b9ce8ea; prova parcial confirmada e fecho documental R2 recebido; as provas anteriores continuam reutilizadas nos seus HEADs originais.
 
 [Fontes e matriz original](../m04-fiscal-evidence/MATRIX.md), N01–N08/E01–E06/C211. Não se infere que uma reserva significa ausência de decisão funcional; as decisões já aprovadas mantêm-se vinculativas.
 
@@ -9,7 +9,7 @@ Referência remota confirmada: `f2fa46765fbd1a2c0ab65d3978f321ef050c3424`, merge
 | M4-01 Semântica FT/FR/RC | Decisões D-CAT-2A/H1 aprovadas | Projecções fiscais e circuitos próprios não integralmente homologados | Não reabrir conceitos; prova e mandato por tipo |
 | M4-02 FT diferida | Correspondência funcional 2/1/1,false aprovada; seis critérios MockMvc com fonte sintética confirmados; entrega consolidada PR #53 | Emissão positiva pelo JAR, assinatura real e validações fiscais exteriores à correspondência | Mandato produtivo próprio; não extrapolar a prova sintética |
 | M4-03 Vínculos/imutabilidade | V25–V28/H2-03 integradas; coerência Java/SQL e histórico preservados | Definição material legítima e publicação governada das revisões | Não publicar catálogo ou reclassificar por efeito das provas |
-| M4-04 Projecção FT/FR | **Prova parcial FT diferida/EUR executada; R1 documental pendente após parecer inicial 0/1/2.** M404-01, 1 aprovado em b9ce8ea, MockMvc/fonte sintética, configuração/snapshots/número/ATCUD/QR/PDF concordantes | **Menção ATCUD com espaço: validação fiscal pendente, sem presumir não conformidade; valor ATCUD/H favorável preservado.** FR/FT imediata, SAF-T, assinatura real e homologação QR/PDF não demonstrados | [Pedido Claude e evidências](../m4-04-ft-identity/R1_REVIEW_HANDOFF.md), sem reabrir M4-02/09/10 |
+| M4-04 Projecção FT/FR | **Prova parcial FT diferida/EUR confirmada; fecho documental R2 APPROVE 0/0/0 no MINOR-001.** M404-01, 1 aprovado em b9ce8ea, MockMvc/fonte sintética, identidade e valores concordantes entre configuração/snapshots/número/ATCUD/QR/PDF; menção gráfica excluída desta conclusão | **Menção ATCUD com espaço: validação fiscal pendente, sem presumir não conformidade; valor ATCUD/H favorável preservado.** FR/FT imediata, SAF-T, assinatura real e homologação QR/PDF não demonstrados | [Dossier para decisão de publicação](../m4-04-ft-identity/DELIVERY.md), sem reabrir M4-02/09/10 |
 | M4-05 Séries/ATCUD | Locks/concatenação/rollback e recusas já testados; podeEmitir integrado explica pré-condições conhecidas | Associação legítima emitente/série/código AT e comunicação real | Gate AT e mandato de instalação; diagnóstico não comunica séries |
 | M4-06 ATCUD multipágina | H2-05/E03, PDFs sintéticos de 1/2/4 páginas | Configuração/equipamento final e históricos sem ATCUD | Reutilizar provas; não repetir correcção entregue |
 | M4-07 Geometria QR | E03, métricas/descodificação PDF a 300 dpi e smoke ZXing | Impressão física e configuração final | Geometria ensaiada não é homologação fiscal/produtiva |
@@ -45,3 +45,7 @@ O registo local df71e68 mantém-se intacto na worktree anterior. Esta reconcilia
 ### M4-04 R1 documental
 
 Parecer inicial Claude REQUEST CHANGES 0/1/2 conferido com sidecar; fonte original preservada. [Análise da menção ATCUD](../m4-04-ft-identity/R1_ATCUD_ANALYSIS.md) separa valor/H confirmados e formato gráfico em validação fiscal. Deliberação R1 arquivada com hash/proveniência; arquivo externo concluído. Sem novo ensaio, alteração de expectativas/testes/aplicação ou homologação. Confirmação incremental pendente.
+
+### Fecho documental M4-04 — 13-11-2026
+
+MINOR-001 resolvido pelo Claude R2, APPROVE0/0/0 no âmbito dirigido; SHA-256 do original conferido com sidecar **14c26bd42f26cabeb6fc29f20851c18c782fb874ea07c1e3e1f8e21f4de749d6**. Com as resoluções R1, não restam achados documentais. [Dossier para decisão de publicação](../m4-04-ft-identity/DELIVERY.md). Prova técnica parcial confirmada é distinta da **questão fiscal do espaço após ATCUD:, aberta e reservada**. Sem nova execução ou autorização de alteração de comportamento. Originais e histórico preservados.

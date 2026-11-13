@@ -33,3 +33,9 @@ A origem do acto inicial é identificada como **mensagem da Administração nest
 Emitir veredicto independente e estado RESOLVIDO/NÃO RESOLVIDO do MINOR-001, achados eventualmente remanescentes, HEAD revisto e SHA-256 do parecer original. Não executar ensaios, SQL, Docker, alterações de ficheiros ou Git, push, PR, merge ou activação.
 
 Arquivo externo: `/home/arosario/tuuli-backups/m4-04/2026-11-06/20261106-182822-392888/R2/`. REVIEW_PRESERVATION.json preserva o parecer R1 e sidecar, digest **06392f7be2430287c03c42064bf66ae63c68e0da3bfa02514d1e3a00335e7271**. Pacote final R2 terá HEAD/tree/patch exactos e manifesto próprios, sem alterar os arquivos anteriores.
+
+## Resultado recebido — registo de 13-11-2026
+
+Parecer original Claude R2, de 06-11-2026: **APPROVE, 0 BLOCKER/0 MAJOR/0 MINOR**, exclusivamente MINOR-001. HEAD revisto d80ad6a26d5345668ef7ab2461865ce8a6754759, tree 9e1d92bad80f5650cc51a225303b1738e49056f2. SHA-256 **14c26bd42f26cabeb6fc29f20851c18c782fb874ea07c1e3e1f8e21f4de749d6**, igual ao sidecar. MINOR-001 **RESOLVIDO** quanto à preservação, proveniência declarada e separação dos actos. Com as resoluções R1 anteriores, não restam achados documentais abertos.
+
+Não houve actividade Git posterior a esse HEAD até ao início desta retoma, nem alterações locais; novas alterações desta entrega são documentais e não fazem parte do HEAD revisto. Não se infere autenticação da autoria, fidelidade verificada por terceiro ou anterioridade do acto face ao ensaio. A questão fiscal do espaço permanece aberta. [Dossier para decisão de publicação](DELIVERY.md), com limites e delta cumulativo. Nenhuma publicação ou integração executada.

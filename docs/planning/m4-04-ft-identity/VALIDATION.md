@@ -1,5 +1,8 @@
 # M4-04 — Validação e relatório técnico
 
+> **Remissão de continuidade — 13-11-2026:** as referências abaixo à falta do acto inicial descrevem o estado documental da preparação/revisão anterior. O [acto inicial integral](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.md) foi entretanto arquivado, com [proveniência separada](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.provenance.json), e o MINOR-001 foi declarado RESOLVIDO pelo Claude R2 sobre d80ad6a, APPROVE 0/0/0 nesse âmbito. [Fecho e dossier corrente](DELIVERY.md). A análise documental foi aprovada; a questão fiscal do espaço após ATCUD: continua aberta, sem autorização de alterar a aplicação.
+
+
 06-11-2026. **Prova técnica parcial executada; parecer inicial REQUEST CHANGES 0/1/2 recebido; correcção documental R1 em revisão pendente.** Sem homologação ou autorização operacional.
 
 ## Mandato, base e preparação

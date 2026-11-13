@@ -1,5 +1,8 @@
 # Pedido Claude — revisão independente M4-04
 
+> **Remissão de continuidade — 13-11-2026:** as referências abaixo à falta do acto inicial descrevem o estado documental da preparação/revisão anterior. O [acto inicial integral](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.md) foi entretanto arquivado, com [proveniência separada](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.provenance.json), e o MINOR-001 foi declarado RESOLVIDO pelo Claude R2 sobre d80ad6a, APPROVE 0/0/0 nesse âmbito. [Fecho e dossier corrente](DELIVERY.md). A análise documental foi aprovada; a questão fiscal do espaço após ATCUD: continua aberta, sem autorização de alterar a aplicação.
+
+
 **Pedido inicial histórico: encaminhado pelo PO; parecer REQUEST CHANGES 0/1/2 recebido. A R1 tem [pedido próprio](R1_REVIEW_HANDOFF.md), sem novo ensaio.** Rever a prova parcial, não homologar fiscalidade ou reabrir M4-02/09/10.
 
 ## Identidade

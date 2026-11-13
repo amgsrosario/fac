@@ -1,5 +1,8 @@
 # M4-04 — Oráculo fixado antes do ensaio
 
+> **Remissão de continuidade — 13-11-2026:** as referências abaixo à falta do acto inicial descrevem o estado documental da preparação/revisão anterior. O [acto inicial integral](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.md) foi entretanto arquivado, com [proveniência separada](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.provenance.json), e o MINOR-001 foi declarado RESOLVIDO pelo Claude R2 sobre d80ad6a, APPROVE 0/0/0 nesse âmbito. [Fecho e dossier corrente](DELIVERY.md). A análise documental foi aprovada; a questão fiscal do espaço após ATCUD: continua aberta, sem autorização de alterar a aplicação.
+
+
 Base remota integrada `f2fa46765fbd1a2c0ab65d3978f321ef050c3424`, confirmada por ls-remote HTTPS em 06/11/2026. Branch/worktree isolada `codex/m4-04-ft-identity` / `.worktrees/m4-04-ft-identity`. Proposta aprovada `0fcb2d6` preservada por cherry-pick documental, com o fecho pós-PR56 de `bb5ef0e`; nenhum código funcional alterado.
 
 [Ordem integral recebida](../../governance/sources/2026-11-06_M4-04_ordem-execucao.md), [proveniência](../../governance/sources/2026-11-06_M4-04_ordem-execucao.provenance.json). Não foi disponibilizado exemplar separado da deliberação administrativa original; não atribuir à minuta a proveniência de acto original. A ordem recebida autoriza a execução no perímetro fixado.

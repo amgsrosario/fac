@@ -1,5 +1,8 @@
 # M4-04 R1 — Menção ATCUD: análise documental para revisão
 
+> **Remissão de continuidade — 13-11-2026:** as referências abaixo à falta do acto inicial descrevem o estado documental da preparação/revisão anterior. O [acto inicial integral](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.md) foi entretanto arquivado, com [proveniência separada](../../governance/sources/2026-11-06_M4-04_autorizacao-administrativa-inicial.provenance.json), e o MINOR-001 foi declarado RESOLVIDO pelo Claude R2 sobre d80ad6a, APPROVE 0/0/0 nesse âmbito. [Fecho e dossier corrente](DELIVERY.md). A análise documental foi aprovada; a questão fiscal do espaço após ATCUD: continua aberta, sem autorização de alterar a aplicação.
+
+
 06-11-2026. **Validação fiscal da menção pendente; não se declara não conformidade nem se altera comportamento.** A conclusão favorável sobre o valor do ATCUD e o campo H permanece preservada.
 
 ## Mandato e proveniência
