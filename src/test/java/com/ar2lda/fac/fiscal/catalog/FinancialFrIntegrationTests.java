@@ -241,6 +241,7 @@ class FinancialFrIntegrationTests {
     @Test void sqlSealingImmutabilityAndNoUndocumentedReversal() throws Exception {
         long id=immediateDraft("SYNTH");var issued=issuer.issue(key(),request(id));var before=state(id);
         for(String sql:List.of("update financial_immediate_invoice set received=1 where document_id="+id,
+            "truncate financial_immediate_invoice",
             "delete from financial_immediate_invoice where document_id="+id,
             "update documento_comercial set liquidado=false where id="+id,
             "update documento_comercial set data_emissao='2026-11-04' where id="+id,

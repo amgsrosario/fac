@@ -49,6 +49,10 @@ public class FinancialFrIssuer {
     public Issued issue(String key, Request request) {
         // Never accept an actor supplied by a payload, even if legacy security is disabled.
         permissions.require(PermissaoFuncional.DOCUMENTO_EMITIR);
+        var authentication=org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        require(authentication!=null && authentication.isAuthenticated()
+                && !(authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken),
+                "Authenticated active issuer required");
         var actor=users.currentUserOrNull();
         require(actor!=null && !actor.isInativo(), "Authenticated active issuer required");
         require(key!=null && !key.isBlank() && key.length()<=120, "Invalid FR request key");
