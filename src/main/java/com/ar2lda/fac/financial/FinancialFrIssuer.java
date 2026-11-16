@@ -78,6 +78,11 @@ public class FinancialFrIssuer {
                 .orElseThrow(()->new BadRequestException("Unknown FR draft"));
         if (document.getEstado()!=EstadoDocumentoComercial.RASCUNHO)
             throw new ConflictException("FR requires an unissued draft");
+        // The signature source must see the final payment/quittance identity.
+        // These changes remain uncommitted and are rolled back with any later refusal.
+        document.setMPagamento(payments.findById(request.paymentMethod())
+                .orElseThrow(()->new BadRequestException("Unknown FR payment method")));
+        document.setLiquidado(true);
         // The ordinary issuer locks the type before reading/revalidating its configuration.
         emission.emitir(document.getId(),new DocumentoComercialEmitirDto(actor.getCodigo(),request.recalculationConfirmed()));
         entities.flush();
@@ -86,10 +91,6 @@ public class FinancialFrIssuer {
         require("FT".equals(type.getCodigoFiscal()) && type.isLiquidacaoImediata()
                 && "EUR".equals(document.getMoeda().getId()), "FR requires internal FT/immediate, EUR");
         require(document.getValorTotal().compareTo(cash)==0, "FR must receive the full invoice total");
-        document.setMPagamento(payments.findById(request.paymentMethod())
-                .orElseThrow(()->new BadRequestException("Unknown FR payment method")));
-        document.setLiquidado(true);
-        entities.flush();
         var scope=new FinancialCore.Scope(Empresa.EMPRESA_ID,document.getCliente().getId(),"EUR");
         var position=core.create(scope,"FR_ORIGIN:"+document.getId(), FinancialCore.Nature.DEBT,
                 "DOCUMENTO_COMERCIAL:"+document.getId(),document.getNumeroDocumentoCompleto(),cash,actor.getCodigo());

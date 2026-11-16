@@ -46,7 +46,7 @@ class FinancialFrIntegrationTests {
     @Autowired com.ar2lda.fac.financial.FinancialCore core;
     @Autowired com.ar2lda.fac.financial.FinancialQueries queries;
     @Autowired org.springframework.transaction.support.TransactionTemplate tx;
-    @Autowired FiscalSignatureTestConfiguration.TestSource signer;
+    @org.springframework.boot.test.mock.mockito.SpyBean FiscalSignatureTestConfiguration.TestSource signer;
     @Autowired JdbcTemplate db;
     @Autowired MockMvc http;
     @Autowired ObjectMapper json;
@@ -148,7 +148,12 @@ class FinancialFrIntegrationTests {
 
     @Test void oneDocumentFullCashZeroResidualAndHistoricalDates() throws Exception {
         long id=immediateDraft("SYNTH");long receipts=count("documento_financeiro"),pending=count("pendente");
+        org.mockito.Mockito.clearInvocations(signer);
         var result=issuer.issue(key(),request(id));
+        var signed=org.mockito.ArgumentCaptor.forClass(com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto.class);
+        org.mockito.Mockito.verify(signer).commercial(signed.capture());
+        assertThat(signed.getValue().documento().mPagamentoId()).isEqualTo("M3P");
+        assertThat(signed.getValue().documento().liquidado()).isTrue();
         assertThat(result.documentId()).isEqualTo(id);
         assertThat(db.queryForMap("select estado,liquidado,valor_total from documento_comercial where id=?",id))
             .containsEntry("estado","EMITIDO").containsEntry("liquidado",true);
