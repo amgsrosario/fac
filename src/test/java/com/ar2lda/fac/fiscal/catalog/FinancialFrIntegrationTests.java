@@ -122,6 +122,10 @@ class FinancialFrIntegrationTests {
             """)).andExpect(status().isCreated());
         db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('IFR','SYNTH','No fiscal validity',0,'SYNFR','2026-01-01'),('IFR','NOAT','Negative',0,null,null)");
     }
+    @BeforeEach void isolatedCustomer() {
+        customer=db.queryForObject("select nextval('cliente_id_seq')",Long.class);
+        db.update("insert into cliente(id,nome,morada,id_codpostal,nif,id_moeda,id_riva,id_transporte,id_pais) values(?,'Synthetic FR','Rua','1000-010',?,'EUR','CON','M3T','PT')",customer,Long.toString(900000000+customer));
+    }
     @BeforeEach void authenticate() {
         org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
             new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("M3ADMIN","",List.of(
