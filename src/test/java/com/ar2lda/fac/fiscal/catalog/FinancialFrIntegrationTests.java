@@ -129,8 +129,9 @@ class FinancialFrIntegrationTests {
     }
     @AfterEach void clear() {org.springframework.security.core.context.SecurityContextHolder.clearContext();}
     long immediateDraft(String series) throws Exception {
-        return body(http.perform(auth(post("/documentos-comerciais"),admin).contentType(MediaType.APPLICATION_JSON)
+        long created=body(http.perform(auth(post("/documentos-comerciais"),admin).contentType(MediaType.APPLICATION_JSON)
             .content(draft(series,"M3ART",1).replace("GFT","IFR"))).andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        authenticate();return created;
     }
     java.math.BigDecimal money(String s){return new java.math.BigDecimal(s);}
     com.ar2lda.fac.financial.FinancialFrIssuer.Request request(long id) {
@@ -194,7 +195,7 @@ class FinancialFrIntegrationTests {
         assertThatThrownBy(()->issuer.issue(key(),wrong)).hasMessageContaining("full invoice");noSideEffects(other,beforeOther);
     }
     @Test void deferredFtCannotEnterImmediatePath() throws Exception {
-        long id=create("SYNTH",admin);var before=state(id);
+        long id=create("SYNTH",admin);authenticate();var before=state(id);
         assertThatThrownBy(()->issuer.issue(key(),request(id))).hasMessageContaining("FT/immediate");noSideEffects(id,before);
     }
     @Test void faultsDuringSettlementAndBindingRollBackWholeAct() throws Exception {
