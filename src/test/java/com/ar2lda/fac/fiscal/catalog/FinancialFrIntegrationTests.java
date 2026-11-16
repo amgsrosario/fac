@@ -245,4 +245,30 @@ class FinancialFrIntegrationTests {
         db.update("update documento_comercial set impresso=true where id=?",id);
         assertThat(db.queryForObject("select impresso from documento_comercial where id=?",Boolean.class,id)).isTrue();
     }
+    @Test void sqlImmediateOriginCannotCommitWithoutCompleteAct() throws Exception {
+        long id=immediateDraft("SYNTH");
+        http.perform(auth(post(doc(id)+"/emitir"),admin).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
+        authenticate();var before=state(id);
+        assertThatThrownBy(()->tx.execute(ignored->{
+            var position=core.create(scope(),key(),com.ar2lda.fac.financial.FinancialCore.Nature.DEBT,
+                "DOCUMENTO_COMERCIAL:"+id,"Synthetic incomplete act",money("12.30"),"M3ADMIN");
+            db.update("insert into financial_document_origin(document_id,position_id) values(?,?)",id,position.id());
+            return null;
+        })).isInstanceOf(RuntimeException.class).hasStackTraceContaining("complete FR act");
+        noSideEffects(id,before);
+    }
+    @Test void linkedFrDoesNotPermitLegacyPendingOrReclassification() throws Exception {
+        long id=immediateDraft("SYNTH");issuer.issue(key(),request(id));
+        long ft=create("SYNTH",admin);
+        http.perform(auth(post(doc(ft)+"/emitir"),admin).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
+        var before=state(id);
+        assertThatThrownBy(()->db.update("update pendente set id_documento_comercial=? where id_documento_comercial=?",id,ft))
+            .isInstanceOf(org.springframework.dao.DataAccessException.class).hasStackTraceContaining("legacy pending");
+        assertThatThrownBy(()->db.update("update tipodocumento set liquidacao_imediata=false where id='IFR'"))
+            .isInstanceOf(org.springframework.dao.DataAccessException.class);
+        noSideEffects(id,before);
+    }
+
 }
