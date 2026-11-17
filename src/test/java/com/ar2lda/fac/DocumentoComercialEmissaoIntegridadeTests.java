@@ -776,7 +776,16 @@ class DocumentoComercialEmissaoIntegridadeTests {
         com.ar2lda.fac.testinfra.TestDatabaseSafetyValidator.validate(testEnvironment.getActiveProfiles(),
                 jdbcTemplate.queryForObject("select current_database()", String.class),
                 testEnvironment.getProperty("fac.test-database.destructive-operations-enabled", Boolean.class, false));
-        jdbcTemplate.execute("truncate financial_receipt_reversal,financial_receipt_line,financial_receipt,financial_document_origin,financial_allocation,financial_component,financial_position,financial_operation");
+        // V30 adds a restrictive FK and a TRUNCATE seal. This legacy fixture must
+        // never contain FR acts. Reset only its empty FR table in the disposable DB.
+        if (jdbcTemplate.queryForObject("select count(*) from financial_immediate_invoice", Long.class) != 0)
+            throw new IllegalStateException("Legacy fixture contains unexpected FR acts");
+        jdbcTemplate.execute("alter table financial_immediate_invoice disable trigger financial_immediate_invoice_no_truncate");
+        try {
+            jdbcTemplate.execute("truncate financial_immediate_invoice,financial_receipt_reversal,financial_receipt_line,financial_receipt,financial_document_origin,financial_allocation,financial_component,financial_position,financial_operation");
+        } finally {
+            jdbcTemplate.execute("alter table financial_immediate_invoice enable trigger financial_immediate_invoice_no_truncate");
+        }
         reset(financialCore);
         for (String type : fixtureTypes) cleanupDocumentsForType(type);
         fixtureTypes.clear();
