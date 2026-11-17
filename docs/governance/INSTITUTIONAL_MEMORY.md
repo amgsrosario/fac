@@ -2,6 +2,19 @@
 
 Fonte canónica das decisões duradouras do projeto. O estado corrente encontra-se em [OPERATIONAL_STATE.md](OPERATIONAL_STATE.md); o histórico detalhado permanece no Git. Decisões novas exigem fundamento e autorização dentro do âmbito aplicável.
 
+## FR/EUR — acto único interno, inicialmente inactivo
+
+Mandato recebido neste chat, preservado em [AUTHORIZATION.md](../planning/fr-eur-inactive/AUTHORIZATION.md): FR/EUR com facturação e quitação integral no mesmo documento, sem RC fiscal artificial; recebimento único, saldo zero, vínculos/datas históricos, repetição/concorrência/rollback e preservação FT/RC. Base de execução integrada `f15388d` (PR #57); a branch documental anterior e o checkout principal foram preservados.
+
+**Implementação:** serviço interno sob perfil experimental `fr-inactive-lab`, ausente por omissão e sem consumidores operacionais. V30 aditiva liga o acto comercial ao FinancialCore existente; datas derivadas do documento único, sem Data Valor autónoma editável. Exige autenticação/permissão e mantém os controlos normais. V1–V29 inalteradas; nenhum backfill, configuração publicada ou segundo ledger.
+
+**Prova:** código/testes `678e3f3bf4fb85835ec2c17437375f56d7bdef3c`, tree `8047edf7d9cde975d2e741920655a4d9604caa30`: 61 aprovados, 0 falhas/erros/ignorados. Evidências anteriores FT/RC/consultas/upgrade e 46 controller reutilizadas com os respectivos HEADs; não constituem uma suite única. Package aprovado. Cinco execuções, falhas de desenvolvimento incluídas, arquivadas e verificadas; recursos descartáveis removidos. Ver [VALIDATION.md](../planning/fr-eur-inactive/VALIDATION.md).
+
+**Revisão:** Claude pendente, pedido [REVIEW_HANDOFF.md](../planning/fr-eur-inactive/REVIEW_HANDOFF.md) preparado para transmissão efectiva pelo titular; não existe aprovação independente presumida. **Integração:** nenhuma, commits apenas locais. **Ponto 2 — Circuito comercial:** implementação, prova, revisão e integração discriminadas em [REPORT.md](../planning/fr-eur-inactive/REPORT.md).
+
+Arquivo reservado FR-EUR-Inactivo/2026-11-17, em Relatorios-AR2/TUULI: 185 ficheiros copiados sem alterar originais; manifesto global SHA-256 `7bb09a00ae72457b889c213e6692a68bd17a91a9a0302f8b985c94bb2d0447a8`. Não foi activado FinancialCore, catálogo, FR/RC/RL ou Fatia 1e. Sem assinatura produtiva, emissão positiva pelo JAR, homologação externa FR/QR/PDF/SAF-T ou certificação. Anulação FR requer acto próprio e não é implementada por arrasto. Mantêm-se todos os gates, a questão do espaço após `ATCUD:` e a melhoria pré-produtiva de bruto/IVA/total no diálogo final.
+
+
 ## Identidade e propósito
 
 TUULI AIR é a aplicação de faturação do universo TUULI, desenvolvida no repositório historicamente denominado FAC. Destina-se a micro e pequenas empresas, profissionais independentes e organizações que necessitam de emitir documentos comerciais e fiscais, acompanhar recebimentos e consultar informação operacional. Deve resolver estas necessidades sem se transformar num ERP generalista.
