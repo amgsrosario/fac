@@ -1,6 +1,6 @@
 # FR/EUR — preparação da identidade e projecção fiscal
 
-17/11/2026. **Plano técnico proposto, sem implementação ou homologação.** Base integrada `e6973910e1652dea85acdc9e0848c7683c34e6d5` (PR #58), tree `e83c31aa9858f9dff51df798591a4aa94528850e`. Branch documental `codex/fr-eur-identity-plan`. Ordem: preparação autónoma recebida neste chat; implementação requer mandato específico. Revisão independente pendente.
+17/11/2026. **Plano técnico proposto, sem implementação ou homologação.** Base integrada `e6973910e1652dea85acdc9e0848c7683c34e6d5` (PR #58), tree `e83c31aa9858f9dff51df798591a4aa94528850e`. Branch documental `codex/fr-eur-identity-plan`. Ordem: [preparação autónoma recebida neste chat](AUTHORIZATION.md); implementação requer mandato específico. Revisão independente pendente.
 
 ## 1. Estado e fundamentos
 

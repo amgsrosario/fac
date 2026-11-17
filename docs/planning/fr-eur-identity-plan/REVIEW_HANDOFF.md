@@ -8,7 +8,7 @@ Repositório amgsrosario/fac; branch codex/fr-eur-identity-plan; worktree /home/
 
 ## Fontes directamente consultáveis
 
-Ler AGENTS.md e memória/estado, PLAN.md, TEST_PLAN.md, SOURCES.md, SOURCE_REGISTER.json e OFFICIAL_SOURCES.json. Conferir as decisões originais H1/D-CAT, o parecer FR anterior (SHA-256 46c8904275d9bb17b908a1ee3dfd80f3f1ad4054a8c209a031910a59eff8a9a1) e o código dos componentes citados. Documentos locais M4-12 em 0337ff1 são propostas não integradas, não decisões canónicas novas.
+Ler a ordem original em AUTHORIZATION.md, AGENTS.md e memória/estado, PLAN.md, TEST_PLAN.md, SOURCES.md, SOURCE_REGISTER.json e OFFICIAL_SOURCES.json. Conferir as decisões originais H1/D-CAT, o parecer FR anterior (SHA-256 46c8904275d9bb17b908a1ee3dfd80f3f1ad4054a8c209a031910a59eff8a9a1) e o código dos componentes citados. Documentos locais M4-12 em 0337ff1 são propostas não integradas, não decisões canónicas novas.
 
 Arquivo previsto para conferência: Relatorios-AR2/TUULI/Arquivo-Reservado/FR-EUR-Identidade/Preparacao-2026-11-17. O relatório de entrega identifica o manifesto, o HEAD final e as fontes oficiais reutilizadas/evidências de merge. Não houve ensaios de aplicação, SQL, Docker, emissão ou alteração funcional nesta missão.
 

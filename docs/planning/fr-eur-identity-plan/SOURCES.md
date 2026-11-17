@@ -6,6 +6,7 @@
 
 | ID | Fonte directamente consultada | Alcance / limite |
 | --- | --- | --- |
+| D00 | [Ordem original de preparação](AUTHORIZATION.md), recebida neste chat | Apenas preparação, revisão independente e registo de merge; implementação fiscal e anulação fora deste mandato |
 | D01 | docs/governance/INSTITUTIONAL_MEMORY.md, D-CAT-2A, §§Facturação e limites; ADR-003; fonte original H1.1 em docs/governance/sources/2026-10-23_D-CAT-2-H1.1_ordem-recebida.md | FT/FR partilham tipologia interna FT; FR quita na emissão. Híbrido e revisões imutáveis aprovados; não homologa projecção externa por cópia do código interno |
 | D02 | docs/fiscal/catalog/H1_1_FT_SPEC.md §§1–2; D-CAT-2_MATRIX.md | Exclusão de FR na primeira fatia governada, não cancelamento do produto. A matriz de 22/10 é um registo histórico; reservas entretanto superadas não são reabertas |
 | D03 | docs/planning/fr-eur-inactive/AUTHORIZATION.md, MANDATE_CLARIFICATION_2026-11-17.md, REVIEW_CLOSEOUT.md; original Claude no arquivo | Aprovação do corte económico interno 0/0/0. Original/sidecar SHA-256 46c8904275d9bb17b908a1ee3dfd80f3f1ad4054a8c209a031910a59eff8a9a1; identidade/projecção externa FR e anulação reservadas. Este novo plano ainda não foi revisto |
