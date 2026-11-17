@@ -1,0 +1,160 @@
+[
+  {
+    "path": "AGENTS.md",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "04c0cd68cfca7381882a4ccef5830a5b96ccca6257ec7e021cfbf5172e8840b8"
+  },
+  {
+    "path": "docs/governance/INSTITUTIONAL_MEMORY.md",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "466c3b0edfd6d9190a63eeb3e811503aa96d955f8814860c585cb99e48a583b4"
+  },
+  {
+    "path": "docs/governance/OPERATIONAL_STATE.md",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "364b652b759465289399b7c520cb86af7762fa4b474aabc670439f40ef29a53d"
+  },
+  {
+    "path": "docs/governance/decisions/ADR-003-fiscal-catalog.md",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "636b170408bc7367a3dc22fcfe259918ac8a2be904a522e17352f4a35d56d504"
+  },
+  {
+    "path": "docs/governance/sources/2026-10-23_D-CAT-2-H1.1_ordem-recebida.md",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "8eed0d8bfae8d06420712d6ae54fc65a3214040fccdad66830b4d472d3545051"
+  },
+  {
+    "path": "docs/fiscal/catalog/D-CAT-2_MATRIX.md",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "34eb627207989ab9eff5f64523cbfbf58514171da9f7fb115cf08268fc2ad6d5"
+  },
+  {
+    "path": "docs/fiscal/catalog/H1_1_FT_SPEC.md",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "576ed961df3c7f8093a16c8c54040ffc9c6692082fb04a196f0adab4ddc2771c"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/fiscal/catalog/FiscalCatalog.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "ff44995245d1e869a5d5d4845f7a2285897ea88417bf563ce5dbb1935f2eba2d"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/fiscal/catalog/FtDeferredSemantics.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "ddad96e363c7685d69facad90980c291cb064d52bfb28e1b4a92a745e855b2c3"
+  },
+  {
+    "path": "src/main/resources/fiscal/catalog.json",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "05d5530ab16c2b8fa0211d9088af25b44c5519ff8c38864fccf7cadf0183b0f1"
+  },
+  {
+    "path": "src/main/resources/db/migration/V28__governed_ft_configuration_contract.sql",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "dce8503489f52257263972eaba1c4a04a0ba9e1abf10946a82e9401315355ad7"
+  },
+  {
+    "path": "src/main/resources/db/migration/V30__inactive_immediate_invoice.sql",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "7cd0e7d13bcd3eb0c2fee43ad1eff8bbde4f51978ed8c0df5fc084d145e8f753"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/financial/FinancialFrIssuer.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "893a694614cfb8d8404f27f34b55e7b102a81572c4a6bb7b673584b91fc0d51c"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/service/TipoDocumentoService.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "d1b8e56e43d469dcbdc71042716e372d406ec1c933f6a09e0205d74522bc9b13"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/service/DocumentoComercialService.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "4cf152ac22f151db4e2866db8153542c6253b6afc8e19496da47c8a4a6829689"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/model/DocumentoComercial.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "1e80c6a17cf413aca6951c8a529c1d7b705d75823cb7c2c3ce412204130e17ac"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/mapper/DocumentoComercialMapper.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "fbf425e0bcabf2615ea0311c9e33bb3e6da2b1c2fcd83a67147b5095e3f9db18"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/model/Serie.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "e80457873b8855844daeb09747fde6344259fefc0c0e4ef0f4a147138c71ba04"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/service/SerieService.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "d39090160053c5d7da959a2dedce6aed21fb6154091e30cc0a6cce8660c26abf"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/service/AtcudService.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "5248df3a77b25f19d4916b0d4f96ce4dea8c902b9b5cd0ebf3be0f96c60151b2"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/service/QrFiscalPayloadBuilder.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "b1be6fd93a0770241f4ed5c7b05f5eaadee09b30202ae37a8b4aab78fe7af4b9"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/service/DocumentoComercialPdfService.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "5d65cec98b729c2755a1c0b749e18ca3e90597829dc1f105478bbc021106e0c0"
+  },
+  {
+    "path": "src/main/java/com/ar2lda/fac/service/FiscalDocumentSignatureSource.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "ffdc3036922b42329bd67c95cea832907132d73d85823e63b53388a1fe67d363"
+  },
+  {
+    "path": "docs/planning/m04-fiscal-evidence/SAFT_CONTRACT.md",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "3c9688002f0c24508cef246b86720baea0442294e1c1ef3524ee7ee607151fd4"
+  },
+  {
+    "path": "docs/fiscal/h2-06/PROPOSAL.md",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "f525224d0d63b3b98f22d71b6f509d50740b25d7090fb860310571c3cd6a08fc"
+  },
+  {
+    "path": "src/test/java/com/ar2lda/fac/fiscal/catalog/FinancialFrIntegrationTests.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "35596b7702027bf60197e6d9911b94d8d65090102cbd2de22846227a6e3e3cdb"
+  },
+  {
+    "path": "src/test/java/com/ar2lda/fac/fiscal/catalog/FtIdentityJourneyTests.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "e37be23f7c09471b745e94261775957bae28fc1bc293897f3b15a9d0444a34a2"
+  },
+  {
+    "path": "src/test/java/com/ar2lda/fac/testinfra/PdfQrInspection.java",
+    "ref": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+    "sha256": "7341f885069ed69f53da4767bada0d4703a9d5da560449b0d1e702eac3f6d385"
+  },
+  {
+    "path": "docs/planning/m04-fiscal-evidence/SAFT_PROFILE_DECISIONS.md",
+    "ref": "0337ff127380207a2e9ecd81b1dfa74ac6bcf8f1",
+    "sha256": "5e826feb0812b2435512557a126a252085be71ccd4607d4b7d00ade5227d3be7",
+    "status": "Documento local n\u00e3o integrado, proposta com decis\u00f5es P12 reservadas; n\u00e3o nova autoriza\u00e7\u00e3o"
+  },
+  {
+    "path": "docs/planning/m04-fiscal-evidence/SAFT_FIELD_MAP.md",
+    "ref": "0337ff127380207a2e9ecd81b1dfa74ac6bcf8f1",
+    "sha256": "edd7ef53174b9d51a84000909d1d3f37bf3472a28c08b00149f5002b8ebb1d4a",
+    "status": "Documento local n\u00e3o integrado, proposta com decis\u00f5es P12 reservadas; n\u00e3o nova autoriza\u00e7\u00e3o"
+  },
+  {
+    "path": "docs/planning/m04-fiscal-evidence/M4_12_R1_CORRECTIONS.md",
+    "ref": "0337ff127380207a2e9ecd81b1dfa74ac6bcf8f1",
+    "sha256": "a20193e1b90a7c177da10dd5b1287439628813c178a227992dfb94e7e29fdd90",
+    "status": "Documento local n\u00e3o integrado, proposta com decis\u00f5es P12 reservadas; n\u00e3o nova autoriza\u00e7\u00e3o"
+  }
+]

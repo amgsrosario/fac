@@ -18,13 +18,13 @@ Clarificação administrativa de 17/11/2026: [mandato confirmado](MANDATE_CLARIF
 | Implementação | FR/EUR interna implementada; CASH_IN único; residual zero; replay/concorrência/rollback; não exposta a consumidores operacionais |
 | Prova | 61 testes sobre o código final; provas anteriores FT/RC/consultas/upgrade reutilizadas com HEADs e limites discriminados; package aprovado |
 | Revisão independente | Claude APPROVE, 0/0/0: `68c85f0` e delta documental `d1401b7` conferidos; revisão só de leitura, sem execução própria de testes |
-| Integração | Nenhuma; commits locais; sem push/PR/merge |
+| Integração | PR #58 integrado em e6973910e1652dea85acdc9e0848c7683c34e6d5, head b8b0c0f; 4ad1edf documental posterior continua local na branch anterior; sem activação |
 | Activação e fiscalidade | Nenhuma; catálogo não publicado; projecção fiscal FR e restantes gates reservados |
 
 O estado “implementada” não significa circuito comercial habilitado nem produto fiscalmente homologado. A impressão/projecção fiscal FR e a anulação FR não foram implementadas por arrasto. Os circuitos operacionais FT/RC permanecem os existentes.
 
 ## 3 — Próximo passo concreto
 
-Submeter à Administração o [dossier de fecho](REVIEW_CLOSEOUT.md) para decisão de integração exclusivamente inactiva, no SHA completo que vier a autorizar. Publicação e integração não foram executadas. Não iniciar outro incremento.
+Integração concluída pelo PR #58 em e697391, preservando a inactividade e gates. A ordem posterior autoriza apenas [preparar o plano de identidade/projecção FR](../fr-eur-identity-plan/PLAN.md) e revisão independente. Não implementar antes de mandato específico; anulação em incremento próprio. O dossier mantém o seu contexto histórico de preparação anterior ao merge.
 
 Cronologia preservada: implementação em 16/11, antes da clarificação de 17/11 que levantou expressamente a suspensão e regularizou este incremento. Observações O-1 a O-6 discriminadas no dossier; sem alterações de produto.
