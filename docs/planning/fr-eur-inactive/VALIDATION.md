@@ -63,6 +63,6 @@ Arquivo: `Relatorios-AR2/TUULI/Arquivo-Reservado/FR-EUR-Inactivo/2026-11-17`. Fo
 
 ## Revisão e limites
 
-Revisão independente Claude **pendente**, sem aprovação presumida. Não há runtime/canal Claude disponível nesta sessão; o pedido está em REVIEW_HANDOFF.md para transmissão efectiva pelo titular. A fase de execução não substitui o parecer técnico e de fidelidade funcional.
+À data dos ensaios, a revisão estava pendente. Posteriormente, o PO transmitiu o pedido e Claude emitiu **APPROVE, 0/0/0**, em 17/11/2026, sobre `68c85f0`, conferindo o posterior documental `d1401b7`. O revisor não executou testes; leu código, XML, hashes e proveniência. Original/sidecar conferidos: SHA-256 `46c8904275d9bb17b908a1ee3dfd80f3f1ad4054a8c209a031910a59eff8a9a1`. Ver REVIEW_CLOSEOUT.md. Este fecho documental não altera as provas nem as transforma em homologação fiscal ou autorização de integração.
 
 Sem endpoint/consumidor operacional, publicação fiscal, integração, push, PR, activação ou levantamento de gates. A projecção externa FR, QR/PDF/SAF-T, assinatura produtiva, certificação, anulação FR e activação financeira permanecem fora desta entrega. Mantêm-se a questão do espaço após `ATCUD:` e a melhoria pré-produtiva de bruto/IVA/total no diálogo final. Não generalizar para não-EUR, isenções, não sujeição, retenção, outros recebimentos ou liquidação parcial.

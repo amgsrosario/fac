@@ -1,6 +1,6 @@
 # Pedido de revisão independente — FR/EUR inicialmente inactivo
 
-Executor: Codex Desktop. Revisor solicitado: Claude Code. Sem parecer emitido nesta sessão.
+Executor: Codex Desktop. **Pedido histórico já atendido:** o PO transmitiu-o ao Claude, que emitiu APPROVE, 0/0/0, sobre `68c85f0`, conferindo `d1401b7`. Original e sidecar conferidos; fonte e âmbito em [REVIEW_CLOSEOUT.md](REVIEW_CLOSEOUT.md). As instruções abaixo preservam o pedido e não representam uma revisão ainda pendente.
 
 ## Identificação e perímetro
 
@@ -31,4 +31,4 @@ Arquivo reservado: `Relatorios-AR2/TUULI/Arquivo-Reservado/FR-EUR-Inactivo/2026-
 
 Parecer APROVADO / APROVADO COM RESERVAS / DEVOLVER PARA CORRECÇÃO, achados BLOCKER/MAJOR/MINOR com ficheiro/linha, identificação do HEAD/tree efectivamente revistos e SHA-256 do original com sidecar. Separar fidelidade ao mandato, integridade técnica e gates produtivos ainda reservados.
 
-Revisão só de leitura. Não repetir testes válidos sem risco concreto; não alterar código, bases, worktrees, activar, publicar ou integrar. O pedido deve ser efectivamente transmitido ao Claude pelo titular; a existência deste ficheiro não activa um revisor.
+Revisão só de leitura. Não repetir testes válidos sem risco concreto; não alterar código, bases, worktrees, activar, publicar ou integrar. O pedido foi efectivamente transmitido pelo PO, conforme identificação no parecer. A existência de um ficheiro ou comentário, isoladamente, não activa um revisor.
