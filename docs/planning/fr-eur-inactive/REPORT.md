@@ -8,6 +8,8 @@ Branch `codex/fr-eur-inactive`; worktree isolada `fr-eur-inactive`; base integra
 
 Implementação: serviço interno FinancialFrIssuer, vínculo imutável V30 no ledger existente, associação comercial nas consultas e data financeira derivada da factura única. Expectativas, contrato e limites em [DESIGN.md](DESIGN.md); resultados e hashes em [VALIDATION.md](VALIDATION.md). As migrations anteriores permanecem intactas.
 
+Clarificação administrativa de 17/11/2026: [mandato confirmado](MANDATE_CLARIFICATION_2026-11-17.md), suspensão levantada apenas para este incremento. FR é implementação em falta do produto aprovado; não se reabrem decisões nem se levantam os restantes bloqueios. Código e evidências anteriores mantidos, sem novos ensaios.
+
 ## 2 — Circuito comercial
 
 | Dimensão | Estado e alcance |

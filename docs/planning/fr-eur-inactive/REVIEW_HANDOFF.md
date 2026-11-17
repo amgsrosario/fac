@@ -8,6 +8,8 @@ Base `f15388d0ac926cc39082869e898d5ef9998059f7` (PR #57). Branch `codex/fr-eur-i
 
 Ler directamente AUTHORIZATION.md (ordem original recebida neste chat), D-CAT-2A/H1 nas fontes canónicas, ADR-002, DESIGN.md e VALIDATION.md. Não inferir homologação fiscal de uma prova sintética.
 
+Fonte adicional vinculativa: `MANDATE_CLARIFICATION_2026-11-17.md`. A Administração confirma FR como implementação em falta do produto aprovado e levanta a suspensão apenas para este incremento; todos os restantes gates permanecem. A clarificação é documental e não altera o código ensaiado.
+
 ## Conferência técnica
 
 1. Um documento comercial constitui e quita a dívida na mesma transacção, com recebimento integral único, posição residual zero e nenhum RC/Pendente artificial.
