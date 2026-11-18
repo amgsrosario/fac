@@ -269,6 +269,8 @@ class ProjectedFrIntegrationTests {
             "truncate financial_immediate_invoice",
             "delete from financial_immediate_invoice where document_id="+id,
             "update documento_comercial set liquidado=false where id="+id,
+            "update documento_comercial set projection_external_type='FT' where id="+id,
+            "update documento_comercial set projection_revision=1 where id="+id,
             "update documento_comercial set data_emissao='2026-11-04' where id="+id,
             "update financial_position set available=original where id="+issued.positionId(),
             "insert into financial_component(operation_id,kind,amount) values("+issued.settlementId()+",'DISCOUNT',1)")) {
@@ -376,6 +378,30 @@ class ProjectedFrIntegrationTests {
         long second=immediateDraft("SEQFR");issuer.issueProjected(key(),request(second));
         assertThat(db.queryForObject("select numero_documento_completo from documento_comercial where id=?",String.class,second)).isEqualTo("FRE SEQFR/2");
         assertThat(db.queryForObject("select atcud from documento_comercial where id=?",String.class,second)).isEqualTo("SEQFR001-2");
+    }
+
+    @Test void removedConfigurationDoesNotReleaseItsFiscalCode() throws Exception {
+        authenticate();configurations.create(config("TMP"));
+        db.update("delete from tipodocumento where id='TMP'");
+        http.perform(auth(post("/tipos-documento"),admin).contentType(MediaType.APPLICATION_JSON).content("""
+            {"id":"TMP","descricao":"Reuse as FT","codigoFiscal":"FT","areaGestao":2,"entidade":1,"sinalContabilistico":1,"liquidacaoImediata":true}
+            """)).andExpect(status().isConflict());
+        assertThatThrownBy(()->db.update("insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,liquidacao_imediata) values('TMP','Unknown',3,1,2,false)"))
+            .hasStackTraceContaining("known external fiscal identity");
+        assertThat(db.queryForObject("select external_type from fiscal_type_identity where internal_code='TMP'",String.class)).isEqualTo("FR");
+    }
+    @Test void staleRepeatableReadSeriesWriterCannotValidateAnOldSnapshot() throws Exception {
+        authenticate();configurations.create(config("RRA"));configurations.create(config("RRB"));
+        try(var stale=db.getDataSource().getConnection()) {
+            stale.setAutoCommit(false);stale.setTransactionIsolation(java.sql.Connection.TRANSACTION_REPEATABLE_READ);
+            try(var statement=stale.createStatement()) {
+                statement.executeQuery("select count(*) from serie").close();
+                db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('RRA','RRSER','First',0,'RRSER001','2026-01-01')");
+                assertThatThrownBy(()->statement.executeUpdate("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('RRB','RRSER','Stale',0,'RRSER002','2026-01-01')"))
+                    .isInstanceOf(java.sql.SQLException.class).satisfies(e->assertThat(((java.sql.SQLException)e).getSQLState()).isEqualTo("40001"));
+            } finally {stale.rollback();}
+        }
+        assertThat(db.queryForObject("select count(*) from serie where serie='RRSER'",Long.class)).isEqualTo(1);
     }
 
 }

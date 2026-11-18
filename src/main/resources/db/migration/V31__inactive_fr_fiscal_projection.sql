@@ -128,7 +128,8 @@ BEGIN
  END IF;
  external_code:=CASE WHEN d->>'schemaVersion'='2' THEN 'FR' ELSE NEW.codigo_fiscal END;
  IF d->>'schemaVersion'='2' THEN PERFORM fiscal_claim_identity(NEW.id,external_code,true);
- ELSIF external_code IS NOT NULL AND EXISTS(SELECT 1 FROM fiscal_type_identity WHERE internal_code=NEW.id) THEN
+ ELSIF EXISTS(SELECT 1 FROM fiscal_type_identity WHERE internal_code=NEW.id) THEN
+  IF external_code IS NULL THEN RAISE EXCEPTION 'Internal code already has a known external fiscal identity'; END IF;
   PERFORM fiscal_claim_identity(NEW.id,external_code,false);
  END IF;
  RETURN NEW;

@@ -30,6 +30,7 @@ public class TipoDocumentoService {
     private final TipoDocumentoMapper mapper;
     private final EntityManager entityManager;
     private final FiscalCatalog fiscalCatalog;
+    private final com.ar2lda.fac.fiscal.catalog.FiscalTypeIdentity fiscalIdentity;
 
     /** Serialize configuration edits and first emission before reading fiscal attributes or numbering. */
     @Transactional(propagation = Propagation.MANDATORY)
@@ -46,6 +47,7 @@ public class TipoDocumentoService {
             throw new ConflictException("Tipo de documento já existe: " + dto.id());
         }
         TipoDocumento entity = mapper.fromCreateDTO(dto);
+        fiscalIdentity.requireCompatibleCode(entity.getId(),entity.getCodigoFiscal());
         if ("FT".equals(entity.getCodigoFiscal()) && dto.liquidacaoImediata() == null)
             throw new BadRequestException("A modalidade de liquidação da FT deve ser explícita");
         if (deferredFt(entity.getCodigoFiscal(), entity.isLiquidacaoImediata())) {
@@ -91,6 +93,7 @@ public class TipoDocumentoService {
         } else if (classificationChanged && deferredFt(fiscal, dto.liquidacaoImediata())) {
             throw new ConflictException("A conversão exige uma nova configuração FT governada; o vínculo não pode ser acrescentado por alteração");
         }
+        fiscalIdentity.requireCompatibleCode(existing.getId(), existing.getFiscalCatalogCode()!=null && fiscalCatalog.frForType(existing.getId()).isPresent()?"FR":fiscal);
         mapper.applyUpdate(dto, existing);
         repository.saveAndFlush(existing);
     }

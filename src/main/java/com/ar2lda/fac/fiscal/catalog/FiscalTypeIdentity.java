@@ -12,6 +12,11 @@ public class FiscalTypeIdentity {
     private final JdbcTemplate db;
     public FiscalTypeIdentity(JdbcTemplate db){this.db=db;}
     @Transactional(propagation=Propagation.MANDATORY)
+    public void requireCompatibleCode(String code,String external) {
+        var known=db.queryForList("select external_type from fiscal_type_identity where internal_code=?",String.class,code);
+        if(known.stream().anyMatch(t->!t.equals(external)))throw new com.ar2lda.fac.exception.ConflictException("Internal code already identifies a different external fiscal type");
+    }
+    @Transactional(propagation=Propagation.MANDATORY)
     public void requireNewFrCode(String code){
         db.queryForList("select pg_advisory_xact_lock(hashtextextended(?,0))","FISCAL_CODE:"+code);
         var known=db.queryForList("select external_type from fiscal_type_identity where internal_code=?",String.class,code);
