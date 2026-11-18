@@ -242,8 +242,12 @@ class FinancialReceiptIntegrationTests {
 
     @Test void financialDebtLinkDoesNotAuthoriseOtherDocumentTypes() {
         var d=debt("10");
-        db.update("update documento_comercial set tipo_documento_codigo_fiscal='ND' where id=?",d.document());
-        assertThatThrownBy(()->issuer.issue(key(),request(d,"1"))).isInstanceOf(RuntimeException.class).hasMessageContaining("Only FT");
+        // Deliberate inconsistent-history fixture must never escape this negative test.
+        new org.springframework.transaction.support.TransactionTemplate(tx).executeWithoutResult(status->{
+            db.update("update documento_comercial set tipo_documento_codigo_fiscal='ND' where id=?",d.document());
+            assertThatThrownBy(()->issuer.issue(key(),request(d,"1"))).isInstanceOf(RuntimeException.class).hasMessageContaining("Only FT");
+            status.setRollbackOnly();
+        });
         assertThat(numerator()).isZero();assertThat(queries.position(scope(),d.position()).residual()).isEqualByComparingTo("10");
     }
 

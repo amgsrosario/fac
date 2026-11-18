@@ -25,11 +25,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** One committed request journey. No enclosing test transaction. Synthetic signer only. */
 @SpringBootTest(properties={"fac.security.enabled=true","spring.jpa.show-sql=false","fac.demo.seed-on-startup=false"})
 @AutoConfigureMockMvc
-@org.springframework.test.context.ActiveProfiles({"test","fr-inactive-lab"})
+@org.springframework.test.context.ActiveProfiles({"test","fr-inactive-lab","fr-projection-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @EnabledIfEnvironmentVariable(named="M03_DISPOSABLE",matches="true")
-@Import({ProjectedFrIntegrationTests.CatalogFixture.class, FiscalSignatureTestConfiguration.class})
+@Import({ProjectedFrIntegrationTests.CatalogFixture.class, FiscalSignatureTestConfiguration.class, ProjectedFrIntegrationTests.TestEndpoint.class})
 class ProjectedFrIntegrationTests {
     static final String DEFINITION = """
         {"schemaVersion":1,"fiscalCode":"FT","revision":1,"semantics":{"allowedConfigurations":[
@@ -45,6 +45,16 @@ class ProjectedFrIntegrationTests {
                 + ","+FR_DEFINITION+"],\"creationBindings\":{\"ftDeferred\":{\"fiscalCode\":\"FT\",\"revision\":1},\"frImmediate\":{\"fiscalCode\":\"FT\",\"revision\":9000100}}}";
             return new FiscalCatalog(db,new ByteArrayResource(manifest.getBytes(StandardCharsets.UTF_8)));
         }
+    }
+    @org.springframework.web.bind.annotation.RestController
+    @org.springframework.context.annotation.Profile("fr-projection-test")
+    static class TestEndpoint {
+        private final com.ar2lda.fac.financial.FinancialFrIssuer issuer;
+        TestEndpoint(com.ar2lda.fac.financial.FinancialFrIssuer issuer){this.issuer=issuer;}
+        @org.springframework.web.bind.annotation.PostMapping("/_test/fr-emission/{key}")
+        @org.springframework.security.access.prepost.PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EMITIR)")
+        com.ar2lda.fac.financial.FinancialFrIssuer.Issued issue(@org.springframework.web.bind.annotation.PathVariable String key,
+            @org.springframework.web.bind.annotation.RequestBody com.ar2lda.fac.financial.FinancialFrIssuer.Request request){return issuer.issueProjected(key,request);}
     }
     @Autowired com.ar2lda.fac.financial.FinancialFrIssuer issuer;
     @Autowired com.ar2lda.fac.financial.FinancialCore core;
@@ -157,11 +167,17 @@ class ProjectedFrIntegrationTests {
     @Test @Order(1) void oneDocumentFullCashZeroResidualAndHistoricalDates() throws Exception {
         long id=immediateDraft("SYNTH");long receipts=count("documento_financeiro"),pending=count("pendente");
         org.mockito.Mockito.clearInvocations(signer);
-        var result=issuer.issueProjected(key(),request(id));
+        String httpKey=key();
+        MvcResult issuedHttp=http.perform(auth(post("/_test/fr-emission/"+httpKey),admin).contentType(MediaType.APPLICATION_JSON)
+            .content(json.writeValueAsString(request(id)))).andExpect(status().isOk()).andReturn();
+        record("projected-fr-committed-response",body(issuedHttp));
+        var result=json.readValue(issuedHttp.getResponse().getContentAsByteArray(),com.ar2lda.fac.financial.FinancialFrIssuer.Issued.class);
+        authenticate();
         var signed=org.mockito.ArgumentCaptor.forClass(com.ar2lda.fac.controller.dto.DocumentoComercialImpressaoDto.class);
         org.mockito.Mockito.verify(signer).commercial(signed.capture());
         assertThat(signed.getValue().documento().mPagamentoId()).isEqualTo("M3P");
         assertThat(signed.getValue().documento().liquidado()).isTrue();
+        assertThat(signed.getValue().documento().fiscalProjection().externalType()).isEqualTo("FR");
         assertThat(result.documentId()).isEqualTo(id);
         var identity=db.queryForMap("select projection_external_type,projection_catalog_code,projection_revision,tipo_documento_codigo_fiscal,numero_documento_completo,atcud,qr_payload from documento_comercial where id=?",id);
         assertThat(identity).containsEntry("projection_external_type","FR").containsEntry("projection_catalog_code","FT").containsEntry("tipo_documento_codigo_fiscal","FT");

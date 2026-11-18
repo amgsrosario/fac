@@ -27,4 +27,10 @@ class FrProjectionContractTests {
         assertThatThrownBy(()->new FiscalProjectionDto("FR","FT",null,"Fatura-recibo")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(()->new FiscalProjectionDto("FT","FT",1L,"Fatura")).isInstanceOf(IllegalArgumentException.class);
     }
+    @Test void experimentalBeansAreAbsentWithoutTheProfile() {
+        new org.springframework.boot.test.context.runner.ApplicationContextRunner()
+            .withUserConfiguration(GovernedFrConfiguration.class,com.ar2lda.fac.financial.FinancialFrIssuer.class)
+            .run(context->{assertThat(context).doesNotHaveBean(GovernedFrConfiguration.class);assertThat(context).doesNotHaveBean(com.ar2lda.fac.financial.FinancialFrIssuer.class);});
+    }
+
 }
