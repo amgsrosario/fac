@@ -10,7 +10,7 @@ import javax.sql.DataSource;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestPropertySource(properties="spring.flyway.target=31")
-class ProjectedFrV32UpgradeTests extends ProjectedFrIntegrationTests {
+class ProjectedFrV32UpgradeTests extends ProjectedFrFixture {
     @Autowired DataSource source;
 
     @Test void existingFrSurvivesUpgradeAndCanBeCorrected() throws Exception {

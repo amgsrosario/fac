@@ -8,16 +8,16 @@ import static org.assertj.core.api.Assertions.*;
 class FrProjectionContractTests {
     final ObjectMapper json=new ObjectMapper();
     @Test void explicitFrTupleDoesNotBecomeDeferredFt()throws Exception {
-        var d=json.readTree(ProjectedFrIntegrationTests.FR_DEFINITION);
+        var d=json.readTree(ProjectedFrFixture.FR_DEFINITION);
         assertThat(FrFiscalSemantics.permits(d,"FT",2,1,1,true)).isTrue();
         assertThat(FrFiscalSemantics.permits(d,"FT",2,1,1,false)).isFalse();
         assertThat(FrFiscalSemantics.permits(d,"FR",2,1,1,true)).isFalse();
     }
     @Test void malformedOrAmbiguousProjectionFailsClosed()throws Exception {
-        for(String source:new String[]{ProjectedFrIntegrationTests.FR_DEFINITION.replace("Fatura-recibo","Fatura"),
-            ProjectedFrIntegrationTests.FR_DEFINITION.replace("\"externalType\":\"FR\"","\"externalType\":\"FT\""),
-            ProjectedFrIntegrationTests.FR_DEFINITION.replace("\"schemaVersion\":2","\"schemaVersion\":4294967298"),
-            ProjectedFrIntegrationTests.FR_DEFINITION.replace("\"liquidacaoImediata\":true","\"liquidacaoImediata\":false")}) {
+        for(String source:new String[]{ProjectedFrFixture.FR_DEFINITION.replace("Fatura-recibo","Fatura"),
+            ProjectedFrFixture.FR_DEFINITION.replace("\"externalType\":\"FR\"","\"externalType\":\"FT\""),
+            ProjectedFrFixture.FR_DEFINITION.replace("\"schemaVersion\":2","\"schemaVersion\":4294967298"),
+            ProjectedFrFixture.FR_DEFINITION.replace("\"liquidacaoImediata\":true","\"liquidacaoImediata\":false")}) {
             var d=json.readTree(source);assertThatThrownBy(()->FrFiscalSemantics.validate(d)).isInstanceOf(IllegalStateException.class);
         }
     }
