@@ -29,8 +29,8 @@ class FrProjectionContractTests {
     }
     @Test void experimentalBeansAreAbsentWithoutTheProfile() {
         new org.springframework.boot.test.context.runner.ApplicationContextRunner()
-            .withUserConfiguration(GovernedFrConfiguration.class,com.ar2lda.fac.financial.FinancialFrIssuer.class)
-            .run(context->{assertThat(context).doesNotHaveBean(GovernedFrConfiguration.class);assertThat(context).doesNotHaveBean(com.ar2lda.fac.financial.FinancialFrIssuer.class);});
+            .withUserConfiguration(GovernedFrConfiguration.class,com.ar2lda.fac.financial.FinancialFrIssuer.class,com.ar2lda.fac.financial.FinancialFrCorrection.class)
+            .run(context->{assertThat(context).doesNotHaveBean(com.ar2lda.fac.financial.FinancialFrCorrection.class);assertThat(context).doesNotHaveBean(GovernedFrConfiguration.class);assertThat(context).doesNotHaveBean(com.ar2lda.fac.financial.FinancialFrIssuer.class);});
     }
 
 }

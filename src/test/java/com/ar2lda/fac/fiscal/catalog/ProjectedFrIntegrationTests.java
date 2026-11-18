@@ -58,6 +58,7 @@ class ProjectedFrIntegrationTests {
             @org.springframework.web.bind.annotation.RequestBody com.ar2lda.fac.financial.FinancialFrIssuer.Request request){return issuer.issueProjected(key,request);}
     }
     @Autowired com.ar2lda.fac.financial.FinancialFrIssuer issuer;
+    @Autowired com.ar2lda.fac.financial.FinancialFrCorrection correction;
     @Autowired com.ar2lda.fac.financial.FinancialCore core;
     @Autowired GovernedFrConfiguration configurations;
     @Autowired com.ar2lda.fac.service.DocumentoComercialService commercial;
@@ -148,6 +149,7 @@ class ProjectedFrIntegrationTests {
     @BeforeEach void authenticate() {
         org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
             new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("M3ADMIN","",List.of(
+                new org.springframework.security.core.authority.SimpleGrantedAuthority("DOCUMENTO_ANULAR"),
                 new org.springframework.security.core.authority.SimpleGrantedAuthority("DOCUMENTO_EMITIR"),new org.springframework.security.core.authority.SimpleGrantedAuthority("CONFIGURACAO_GERIR"))));
     }
     @AfterEach void clear() {org.springframework.security.core.context.SecurityContextHolder.clearContext();}
@@ -448,4 +450,76 @@ class ProjectedFrIntegrationTests {
         assertThat(db.queryForObject("select count(*) from serie where serie='RRSER'",Long.class)).isEqualTo(1);
     }
 
+
+    @Test void correctionKeepsFourDistinctMovementsAndNoDisbursement() throws Exception {
+        long id = immediateDraft("SYNTH");
+        var issued = issuer.issueProjected(key(),request(id));
+        var original = state(id);
+        long cashOut = db.queryForObject("select count(*) from financial_component where kind='CASH_OUT'",Long.class);
+        long documents = count("documento_financeiro");
+        assertThatThrownBy(() -> correction.voidInvoice(id,"Emissão indevida"))
+            .isInstanceOf(com.ar2lda.fac.exception.ConflictException.class);
+        assertThatThrownBy(() -> correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",false))
+            .isInstanceOf(com.ar2lda.fac.exception.BadRequestException.class);
+        noSideEffects(id,original);
+
+        tx.executeWithoutResult(status -> {
+            correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true);
+            status.setRollbackOnly();
+        });
+        noSideEffects(id,original);
+        long receiptVoid = correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true);
+        assertThat(correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true)).isEqualTo(receiptVoid);
+        assertThat(queries.position(scope(),issued.positionId()).residual()).isEqualByComparingTo("12.30");
+        assertThatThrownBy(() -> queries.balanceAt(scope(),java.time.LocalDate.of(2026,11,3)))
+            .hasMessageContaining("TUULI-FIN-TIME-001");
+
+        var beforeInvoiceVoid = state(id);
+        tx.executeWithoutResult(status -> {
+            correction.voidInvoice(id,"Emissão indevida");
+            status.setRollbackOnly();
+        });
+        noSideEffects(id,beforeInvoiceVoid);
+        long invoiceVoid = correction.voidInvoice(id,"Emissão indevida");
+        assertThat(correction.voidInvoice(id,"Emissão indevida")).isEqualTo(invoiceVoid);
+        assertThat(queries.position(scope(),issued.positionId()).state())
+            .isEqualTo(com.ar2lda.fac.financial.FinancialQueries.State.CANCELLED);
+        assertThat(db.queryForMap("select estado,projection_external_type from documento_comercial where id=?",id))
+            .containsEntry("estado","ANULADO").containsEntry("projection_external_type","FR");
+        assertThat(db.queryForObject("select count(*) from financial_component where kind='CASH_OUT'",Long.class)).isEqualTo(cashOut);
+        assertThat(count("documento_financeiro")).isEqualTo(documents);
+        var movements=correction.statement(id);
+        assertThat(movements.stream().map(m -> m.kind().name())).containsExactly("INVOICE","RECEIPT","RECEIPT_VOID","INVOICE_VOID");
+        assertThat(movements.get(2).operation().reverseOfOperationId()).isEqualTo(issued.settlementId());
+        assertThat(movements.get(2).operation().components()).isEmpty();
+        assertThat(movements.get(2).operation().recordedAt()).isNotNull();
+        assertThat(movements.get(2).operation().actor()).isEqualTo("M3ADMIN");
+        assertThat(movements.get(2).operation().reason()).isEqualTo("Sem entrada de fundos");
+        assertThat(movements.get(2).operation().financialEffectDate()).isEmpty();
+        record("fr-correction-"+id,movements);
+    }
+
+    @Test void concurrentCorrectionsReturnOneOperationPerAct() throws Exception {
+        long id=immediateDraft("SYNTH");
+        issuer.issueProjected(key(),request(id));
+        for (boolean receipt : List.of(true,false)) {
+            var start=new java.util.concurrent.CountDownLatch(1);
+            try(var pool=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+                java.util.concurrent.Callable<Long> attempt=() -> {
+                    authenticate();
+                    try {
+                        start.await();
+                        return receipt ? correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true)
+                                       : correction.voidInvoice(id,"Emissão indevida");
+                    } finally { clear(); }
+                };
+                var first=pool.submit(attempt);
+                var second=pool.submit(attempt);
+                start.countDown();
+                assertThat(first.get(20,java.util.concurrent.TimeUnit.SECONDS))
+                    .isEqualTo(second.get(20,java.util.concurrent.TimeUnit.SECONDS));
+            }
+        }
+        assertThat(correction.statement(id)).hasSize(4);
+    }
 }

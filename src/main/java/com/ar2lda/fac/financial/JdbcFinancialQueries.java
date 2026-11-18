@@ -117,8 +117,8 @@ public class JdbcFinancialQueries implements FinancialQueries {
                    c.id as component_id,c.kind as component_kind,c.amount,c.reversed,c.reverse_of as reverse_component
             from financial_operation op
             left join financial_operation r on r.reverse_of=op.id
-            left join financial_immediate_invoice fr on fr.operation_id=op.id
-            left join financial_position p on p.creation_id=op.id or p.id=fr.position_id
+            left join financial_immediate_invoice fr on fr.operation_id=coalesce(op.reverse_of,op.id)
+            left join financial_position p on p.creation_id=coalesce(op.reverse_of,op.id) or p.id=fr.position_id
             left join financial_document_origin o on o.position_id=p.id
             left join documento_comercial d on d.id=o.document_id
             left join financial_operation_effect temporal on temporal.id=op.id

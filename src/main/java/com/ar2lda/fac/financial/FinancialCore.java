@@ -119,6 +119,15 @@ public class FinancialCore {
     }
     @Transactional
     public long reverse(Scope s,String key,long original,String reason,String actor) {
+        return reverse(s,key,original,reason,actor,false);
+    }
+
+    // Called only by the inactive FR act, inside its document-locking transaction.
+    long voidFrReceipt(Scope s,long documentId,long original,String reason,String actor) {
+        return reverse(s,"FR_VOID_RECEIPT:"+documentId,original,reason,actor,true);
+    }
+
+    private long reverse(Scope s,String key,long original,String reason,String actor,boolean noFundsReceived) {
         scope(s); text(reason,500);
         String payload="REVERSE:"+original+":"+reason;
         Long old=replay(s,key,payload); if(old!=null) return old;
@@ -154,6 +163,7 @@ public class FinancialCore {
             db.update("insert into financial_allocation(operation_id,position_id,empresa_id,cliente_id,moeda_id,amount,effect,reverse_of) values(?,?,?,?,?,?,'RESTORE',?)",op,id,s.empresa(),s.cliente(),s.moeda(),amount,a.get("id"));
             db.update("update financial_position set available=available+? where id=?",amount,id);
         }
+        if (noFundsReceived) return op;
         for(var c:db.queryForList("select * from financial_component where operation_id=? order by id",original)) {
             String kind=(String)c.get("kind");
             if(kind.equals("CASH_IN")) kind="CASH_OUT"; else if(kind.equals("CASH_OUT")) kind="CASH_IN";
