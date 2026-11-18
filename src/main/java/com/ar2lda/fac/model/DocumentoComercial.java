@@ -483,6 +483,16 @@ public class DocumentoComercial {
         return qrPayload != null && !qrPayload.isBlank();
     }
 
+    @Column(name="projection_external_type",length=2) private String projectionExternalType;
+    @Column(name="projection_catalog_code",length=2) private String projectionCatalogCode;
+    @Column(name="projection_revision") private Long projectionRevision;
+    @Column(name="projection_label",length=50) private String projectionLabel;
+
+    public void consolidateFrProjection(long revision,String label) {
+        if(fiscalSnapshotVersion!=null || projectionExternalType!=null)throw new IllegalStateException("Projection already consolidated");
+        projectionExternalType="FR";projectionCatalogCode="FT";projectionRevision=revision;projectionLabel=label;
+    }
+
     public void consolidarSnapshotFiscal(Empresa empresa, Serie serieUtilizada) {
         if (fiscalSnapshotVersion != null) {
             throw new IllegalStateException("O snapshot fiscal do documento comercial já foi consolidado");

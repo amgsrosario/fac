@@ -41,7 +41,7 @@ public class QrFiscalPayloadBuilder {
         add(fields, "A", requiredDigits(empresa.nif(), "NIF do emitente"));
         add(fields, "B", adquirenteNif(documento.clienteNif()));
         add(fields, "C", required(documento.clientePais(), "País do adquirente"));
-        add(fields, "D", required(codigoFiscal(documento.tipoDocumentoCodigoFiscal(), documento.tipoDocumentoId()), "Tipo de documento fiscal"));
+        add(fields, "D", required(documento.fiscalProjection()==null ? codigoFiscal(documento.tipoDocumentoCodigoFiscal(), documento.tipoDocumentoId()) : documento.fiscalProjection().externalType(), "Tipo de documento fiscal"));
         add(fields, "E", "N");
         add(fields, "F", documento.dataEmissao().format(QR_DATE));
         add(fields, "G", required(documento.numeroDocumentoCompleto(), "Número completo do documento"));

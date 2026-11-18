@@ -156,13 +156,13 @@ public class DocumentoComercialPdfService {
                 <div class="first-page-atcud">%s</div>
                 <div class="continuation-header"><table><tr>
                   <td class="continuation-company"><strong>%s</strong><br />NIF %s</td>
-                  <td class="continuation-document"><span class="continuation-label">Continuação</span><br /><strong>%s - %s %s/%s</strong><br />Data %s</td>
+                  <td class="continuation-document"><span class="continuation-label">Continuação</span><br /><strong>%s - %s</strong><br />Data %s</td>
                   <td class="continuation-client"><strong>%s</strong><br />NIF %s<br /><span class="continuation-page"></span></td>
                 </tr></table><div>%s</div></div>
                 %s
                 <table class="top"><tr>
                   <td class="company">%s%s</td>
-                  <td class="doc-title"><h1>%s</h1><strong>%s %s/%s</strong><br /><span class="muted">Emitido em %s</span><br /><span class="muted">Vencimento %s</span></td>
+                  <td class="doc-title"><h1>%s</h1><strong>%s</strong><br /><span class="muted">Emitido em %s</span><br /><span class="muted">Vencimento %s</span></td>
                 </tr></table>
 
                 <div class="box"><div class="section-title">Cliente</div><table class="info"><tr>
@@ -170,6 +170,7 @@ public class DocumentoComercialPdfService {
                   <td><strong>Condicoes</strong><br />Moeda: %s<br />Regime IVA: %s<br />Modo / prazo: %s / %s</td>
                 </tr></table></div>
 
+                %s
                 <table class="lines">
                   <thead><tr><th>#</th><th>Artigo</th><th>Descricao</th><th class="number">Qtd.</th><th class="number">Preco</th><th class="number">Desc.</th><th class="number">IVA</th><th class="number">Liquido</th></tr></thead>
                   <tbody>%s</tbody>
@@ -193,16 +194,17 @@ public class DocumentoComercialPdfService {
                 </body></html>
                 """.formatted(
                 demoLabel(documento.qrPayload()), atcudLabel(documento.atcud()),
-                esc(empresa.nome()), esc(empresa.nif()), esc(documento.tipoDocumentoDescricao()),
-                esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(), date(documento.dataEmissao()),
+                esc(empresa.nome()), esc(empresa.nif()), esc(documento.fiscalProjection()==null?documento.tipoDocumentoDescricao():documento.fiscalProjection().documentLabel()),
+                esc(displayNumber(documento)), date(documento.dataEmissao()),
                 esc(documento.clienteNome()), esc(documento.clienteNif()), atcudLabel(documento.atcud()),
                 anulada,
                 logo(empresa), companyHeader(empresa),
-                esc(documento.tipoDocumentoDescricao()), esc(documento.tipoDocumentoId()), esc(documento.serie()), documento.numeroDocumento(),
+                esc(documento.fiscalProjection()==null?documento.tipoDocumentoDescricao():documento.fiscalProjection().documentLabel()), esc(displayNumber(documento)),
                 date(documento.dataEmissao()), date(documento.dataVencimento()),
                 esc(documento.clienteNome()), esc(documento.clienteNif()), address(documento.clienteMorada(), documento.clienteMorada1()),
                 esc(joinPostal(documento.clienteCodPostal(), documento.clienteLocalidade())),
                 esc(documento.moedaCodigo()), esc(documento.regimeIvaCodigo()), value(documento.mPagamentoId()), esc(documento.pPagamentoId()),
+                documento.fiscalProjection()==null ? "" : "<div class=\"box\"><strong>Quitação integral</strong><br />Recebido: " + money(documento.valorTotal()) + " EUR; Saldo em aberto: 0,00 EUR</div>",
                 linhas,
                 money(documento.valorIsento()), money(documento.valorSujeitoReduzida()), money(documento.valorIvaReduzida()),
                 money(documento.valorSujeitoIntermedia()), money(documento.valorIvaIntermedia()), money(documento.valorSujeitoNormal()), money(documento.valorIvaNormal()),
@@ -294,6 +296,10 @@ public class DocumentoComercialPdfService {
                 + "</td><td><strong>Descarga</strong><br />" + date(d.dataDescarga()) + " " + time(d.horaDescarga()) + "<br />"
                 + address(d.descargaMorada(), d.descargaMorada1()) + "<br />" + esc(joinPostal(d.descargaCodPostal(), d.descargaLocalidade()))
                 + "<br />Matricula: " + esc(d.matricula()) + "</td></tr></table></div>";
+    }
+
+    private String displayNumber(DocumentoComercialDto d) {
+        return d.fiscalProjection()==null ? d.tipoDocumentoId()+" "+d.serie()+"/"+d.numeroDocumento() : d.numeroDocumentoCompleto();
     }
 
     private String atcudLabel(String atcud) { return hasText(atcud) ? "ATCUD: " + esc(atcud) : ""; }

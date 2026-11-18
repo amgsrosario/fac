@@ -46,7 +46,12 @@ public class FinancialFrIssuer {
     }
 
     @Transactional
-    public Issued issue(String key, Request request) {
+    public Issued issue(String key, Request request) { return issueAct(key,request,false); }
+
+    @Transactional
+    public Issued issueProjected(String key,Request request) { return issueAct(key,request,true); }
+
+    private Issued issueAct(String key,Request request,boolean projected) {
         // Never accept an actor supplied by a payload, even if legacy security is disabled.
         permissions.require(PermissaoFuncional.DOCUMENTO_EMITIR);
         var authentication=org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
@@ -65,10 +70,10 @@ public class FinancialFrIssuer {
                 "Payment method and reference required");
         var cash=request.received().setScale(2);
         db.queryForList("select pg_advisory_xact_lock(hashtextextended(?,0))", "FR_REQUEST:1:"+key);
-        var previous=db.queryForList("select * from financial_immediate_invoice where empresa_id=1 and request_key=?",key);
+        var previous=db.queryForList("select f.*,d.projection_external_type from financial_immediate_invoice f join documento_comercial d on d.id=f.document_id where f.empresa_id=1 and f.request_key=?",key);
         if (!previous.isEmpty()) {
             var row=previous.getFirst();
-            require(((Number)row.get("document_id")).longValue()==request.draftId()
+            require(projected==(row.get("projection_external_type")!=null) && ((Number)row.get("document_id")).longValue()==request.draftId()
                     && ((BigDecimal)row.get("received")).compareTo(cash)==0
                     && request.paymentMethod().equals(row.get("payment_method"))
                     && request.paymentReference().equals(row.get("payment_reference"))
@@ -88,7 +93,9 @@ public class FinancialFrIssuer {
                 .orElseThrow(()->new BadRequestException("Unknown FR payment method")));
         document.setLiquidado(true);
         // The ordinary issuer locks the type before reading/revalidating its configuration.
-        emission.emitir(document.getId(),new DocumentoComercialEmitirDto(actor.getCodigo(),request.recalculationConfirmed()));
+        var emissionRequest=new DocumentoComercialEmitirDto(actor.getCodigo(),request.recalculationConfirmed());
+        if(projected)emission.emitirFrProjectado(document.getId(),emissionRequest);
+        else emission.emitir(document.getId(),emissionRequest);
         entities.flush();
         entities.refresh(document);
         var type=document.getTipoDocumento();
