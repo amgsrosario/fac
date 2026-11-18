@@ -490,6 +490,7 @@ class ProjectedFrIntegrationTests {
         assertThat(count("documento_financeiro")).isEqualTo(documents);
         var movements=correction.statement(id);
         assertThat(movements.stream().map(m -> m.kind().name())).containsExactly("INVOICE","RECEIPT","RECEIPT_VOID","INVOICE_VOID");
+        assertThat(movements.stream().map(m -> m.debtDelta().toPlainString())).containsExactly("12.30","-12.30","12.30","-12.30");
         assertThat(movements.get(2).operation().reverseOfOperationId()).isEqualTo(issued.settlementId());
         assertThat(movements.get(2).operation().components()).isEmpty();
         assertThat(movements.get(2).operation().recordedAt()).isNotNull();

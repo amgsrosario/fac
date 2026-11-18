@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /** Internal correction of a synthetic or erroneous FR receipt, without a cash disbursement. */
@@ -20,9 +21,9 @@ import java.util.List;
 @Profile("fr-inactive-lab")
 public class FinancialFrCorrection {
     public enum MovementKind { INVOICE, RECEIPT, RECEIPT_VOID, INVOICE_VOID }
-    public record Movement(MovementKind kind, FinancialQueries.OperationView operation) {}
+    public record Movement(MovementKind kind, BigDecimal debtDelta, FinancialQueries.OperationView operation) {}
 
-    private record Act(long creation, long settlement, FinancialCore.Scope scope) {}
+    private record Act(long creation, long settlement, BigDecimal amount, FinancialCore.Scope scope) {}
     private final JdbcTemplate db;
     private final FinancialCore core;
     private final FinancialQueries queries;
@@ -73,22 +74,22 @@ public class FinancialFrCorrection {
         var act = act(document, false);
         var invoice = queries.operation(act.scope(), act.creation());
         var receipt = queries.operation(act.scope(), act.settlement());
-        var movements = new java.util.ArrayList<>(List.of(new Movement(MovementKind.INVOICE, invoice),
-                new Movement(MovementKind.RECEIPT, receipt)));
-        if (receipt.reversedByOperationId() != null) movements.add(new Movement(MovementKind.RECEIPT_VOID,
+        var movements = new java.util.ArrayList<>(List.of(new Movement(MovementKind.INVOICE, act.amount(), invoice),
+                new Movement(MovementKind.RECEIPT, act.amount().negate(), receipt)));
+        if (receipt.reversedByOperationId() != null) movements.add(new Movement(MovementKind.RECEIPT_VOID, act.amount(),
                 queries.operation(act.scope(), receipt.reversedByOperationId())));
-        if (invoice.reversedByOperationId() != null) movements.add(new Movement(MovementKind.INVOICE_VOID,
+        if (invoice.reversedByOperationId() != null) movements.add(new Movement(MovementKind.INVOICE_VOID, act.amount().negate(),
                 queries.operation(act.scope(), invoice.reversedByOperationId())));
         return List.copyOf(movements);
     }
 
     private Act act(long document, boolean lock) {
         var rows = db.query("""
-            select p.creation_id,f.operation_id,f.empresa_id,f.cliente_id,f.moeda_id
+            select p.creation_id,f.operation_id,f.empresa_id,f.cliente_id,f.moeda_id,f.received
             from financial_immediate_invoice f join financial_position p on p.id=f.position_id
             join documento_comercial d on d.id=f.document_id
             where d.id=? and d.projection_external_type='FR' and d.estado in ('EMITIDO','ANULADO')
-            """ + (lock ? " for update of d" : ""), (rs, row) -> new Act(rs.getLong(1),rs.getLong(2),
+            """ + (lock ? " for update of d" : ""), (rs, row) -> new Act(rs.getLong(1),rs.getLong(2),rs.getBigDecimal(6),
                 new FinancialCore.Scope(rs.getLong(3),rs.getLong(4),rs.getString(5))), document);
         if (rows.isEmpty()) throw new BadRequestException("FR governada desconhecida");
         return rows.getFirst();
