@@ -44,3 +44,7 @@ Claude Code aprovou a implementação R1 com **0 BLOCKER / 0 MAJOR / 0 MINOR** s
 Arquivo reservado em `Relatorios-AR2/TUULI/Arquivo-Reservado/FR-EUR-Projeccao/2026-11-18/R1`. As execuções `20261118-125206-88e97d` e `20261118-142658-dec609` foram copiadas integralmente. Verificação no destino por tamanho e SHA-256 com 26/26 e 57/57 entradas válidas, respectivamente. Manifestos idênticos aos originais, SHA-256 `e6d01e772ad9dc49029ba15ff923960db72cab7a072bd03418257ee09ebb819c` e `92363c5fec79d735c4a5c5993912e14666612ba50b65e259d2c7a6d0ed1343ef`.
 
 Parecer original `2026-11-18_TUULI_FR-EUR_identidade-implementacao-R1_confirmacao-incremental_Claude.md` e sidecar preservados e conferidos no destino. SHA-256 do parecer `9e6f98728ce37edff8ef164169af3c1c356a78d25248ec1c02c8fdf73adc76b7`. FR/EUR permanece inactiva e **C6 aberto**. A integração da identidade/projecção aguarda decisão administrativa. O presente registo documental é posterior ao HEAD revisto.
+
+## Ponto 2 — correcção da quitação FR/EUR
+
+A branch local `codex/fr-eur-correction` reutiliza o SETTLE como recibo interno. O extracto discrimina factura, quitação e as duas correcções. A V32 exige a correcção da quitação antes da anulação da FR. A correcção por fundos nunca recebidos é auditada e não cria saída de tesouraria. As consultas históricas afectadas recusam o cálculo até ser definida a data de efeito. 150 testes aprovados em PostgreSQL descartável, incluindo FR, FT e RC. FR/EUR inactiva, C6 aberto e revisão independente pendente. [Provas e pedido de revisão](CORRECTION_REVIEW_HANDOFF.md).

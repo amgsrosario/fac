@@ -2,6 +2,10 @@
 
 Fonte canónica do estado corrente. Atualização: 2026-11-18, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
+## FR/EUR — correcção da quitação, implementação local
+
+Sobre o merge `7008ad8` (PR #59), a V32 local reutiliza o SETTLE como recibo interno. A correcção auditada da quitação sem fundos recebidos precede a anulação da factura. O extracto separa os quatro movimentos e as consultas históricas afectadas recusam o cálculo enquanto a data de efeito estiver pendente. 150 testes aprovados sobre `bc863be`, incluindo regressões FT/RC. Revisão Claude pendente. FR/EUR inactiva e C6 aberto. [Evidências e limites](../planning/fr-eur-inactive/CORRECTION_REVIEW_HANDOFF.md).
+
 ## FR/EUR — identidade/projecção implementada localmente, inactiva (18/11/2026)
 
 O mandato técnico posterior autoriza a implementação do plano `36c6aadf45ec4bd54a6c937b9cb8e997f6e92197`. Branch/worktree isolada `codex/fr-eur-fiscal-identity`; base integrada `e697391` (PR #58), sequência documental do plano preservada. [Entrega](../planning/fr-eur-fiscal-identity/IMPLEMENTATION.md), [validação](../planning/fr-eur-fiscal-identity/VALIDATION.md) e [matriz I01–I17](../planning/fr-eur-fiscal-identity/TEST_MATRIX.md).
