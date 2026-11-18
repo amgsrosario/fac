@@ -7,6 +7,7 @@
 | ID | Fonte directamente consultada | Alcance / limite |
 | --- | --- | --- |
 | D00 | [Ordem original de preparação](AUTHORIZATION.md), recebida neste chat | Apenas preparação, revisão independente e registo de merge; implementação fiscal e anulação fora deste mandato |
+| R01 | Parecer Claude original de 18/11/2026, sobre 3c30ddb, original/sidecar conferidos: SHA-256 f2be85ea98f5974d928bd58a14532fbfa440ee38750859fa10c795b422df9ab2 | APPROVE WITH CONDITIONS 0/0/2. MINOR-001: N01 código interno único por tipo externo em toda a história e entre tabelas; MINOR-002: manter FT imediata sem vínculo e C6 ou obter decisão separada para restrição. Confirmação R1 pendente |
 | D01 | docs/governance/INSTITUTIONAL_MEMORY.md, D-CAT-2A, §§Facturação e limites; ADR-003; fonte original H1.1 em docs/governance/sources/2026-10-23_D-CAT-2-H1.1_ordem-recebida.md | FT/FR partilham tipologia interna FT; FR quita na emissão. Híbrido e revisões imutáveis aprovados; não homologa projecção externa por cópia do código interno |
 | D02 | docs/fiscal/catalog/H1_1_FT_SPEC.md §§1–2; D-CAT-2_MATRIX.md | Exclusão de FR na primeira fatia governada, não cancelamento do produto. A matriz de 22/10 é um registo histórico; reservas entretanto superadas não são reabertas |
 | D03 | docs/planning/fr-eur-inactive/AUTHORIZATION.md, MANDATE_CLARIFICATION_2026-11-17.md, REVIEW_CLOSEOUT.md; original Claude no arquivo | Aprovação do corte económico interno 0/0/0. Original/sidecar SHA-256 46c8904275d9bb17b908a1ee3dfd80f3f1ad4054a8c209a031910a59eff8a9a1; identidade/projecção externa FR e anulação reservadas. Este novo plano ainda não foi revisto |
@@ -33,7 +34,7 @@ Caminhos C02–C07 abreviam src/main/java/com/ar2lda/fac/ excepto os resources e
 
 ## Fontes oficiais reutilizadas e conferência actual
 
-- **N01:** [Portaria 302/2016](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_302_2016.pdf), Anexo I §§4.1.4.1, .8 e .20.6. InvoiceType admite FR; InvoiceNo é uma identificação distinta. O grupo de pagamento da factura tem fonte própria.
+- **N01:** [Portaria 302/2016](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_302_2016.pdf), Anexo I §§4.1.4.1, .8 e .20.6. InvoiceType admite FR; InvoiceNo é uma identificação distinta. O mesmo código interno não pode identificar diferentes tipos externos, incluindo entre tabelas e ao longo do histórico. O grupo de pagamento da factura tem fonte própria.
 - **N02:** [AT, especificações QR v1.1, Outubro 2020](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/Regras_mecanismos_comunicacao/Comunicacao_de_series_ATCUD/Codigo_barras_bidimensional/Documents/Especificacoes_Tecnicas_Codigo_QR.pdf), tabela D/G/H, páginas físicas PDF 7–8. Não confundir o exemplo FT com uma regra de preenchimento universal.
 - **N03:** [Portaria 195/2020](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_195_2020.pdf), arts.2–4, série/tipo, sequencial e ATCUD. Nenhuma dispensa transitória é usada como alternativa ao valor real.
 

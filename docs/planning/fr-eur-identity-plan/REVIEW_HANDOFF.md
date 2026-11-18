@@ -1,6 +1,6 @@
 # Pedido de revisão independente — preparação do próximo incremento FR/EUR
 
-Executor: Codex Desktop. Revisor: Claude Code. **Revisão pendente**, sem aprovação presumida. O pedido anterior da FR económica foi atendido e não deve ser repetido.
+Executor: Codex Desktop. Revisor: Claude Code. **Pedido inicial atendido:** Claude emitiu APPROVE WITH CONDITIONS, 0/0/2, em 18/11/2026, sobre 3c30ddb. A confirmação da R1 está pendente, limitada aos dois achados em R1_REVIEW_HANDOFF.md; as instruções seguintes preservam o pedido inicial, sem declarar aprovação da correcção. O pedido anterior da FR económica foi atendido e não deve ser repetido.
 
 ## Base e perímetro
 

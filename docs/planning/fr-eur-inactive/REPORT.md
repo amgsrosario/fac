@@ -28,3 +28,7 @@ O estado “implementada” não significa circuito comercial habilitado nem pro
 Integração concluída pelo PR #58 em e697391, preservando a inactividade e gates. A ordem posterior autoriza apenas [preparar o plano de identidade/projecção FR](../fr-eur-identity-plan/PLAN.md) e revisão independente. Não implementar antes de mandato específico; anulação em incremento próprio. O dossier mantém o seu contexto histórico de preparação anterior ao merge.
 
 Cronologia preservada: implementação em 16/11, antes da clarificação de 17/11 que levantou expressamente a suspensão e regularizou este incremento. Observações O-1 a O-6 discriminadas no dossier; sem alterações de produto.
+
+## Actualização documental R1 — 18/11/2026
+
+**Ponto 2:** núcleo FR/EUR integrado e inactivo; identidade/projecção fiscal em preparação. O plano recebeu APPROVE WITH CONDITIONS (0/0/2) sobre 3c30ddb; R1 apenas documental, sem testes ou alterações funcionais. Código interno deve manter um único tipo externo em todo o histórico, também entre tabelas. A FT imediata sem vínculo mantém o caminho legado (novas e existentes), com emissão ordinária potencial sem quitação: **C6 aberto**; restrição adicional só por decisão administrativa separada. [Confirmação incremental Claude pendente](../fr-eur-identity-plan/R1_REVIEW_HANDOFF.md).
