@@ -33,6 +33,7 @@ public class DocumentoComercialPdfService {
     private final DocumentoComercialService documentoService;
     private final QrCodeImageService qrCodeImageService;
     private final AuditoriaService auditoriaService;
+    private final org.springframework.jdbc.core.JdbcTemplate db;
 
     @Value("${fac.demo.enabled:false}")
     private boolean demoEnabled;
@@ -71,6 +72,18 @@ public class DocumentoComercialPdfService {
         } catch (Exception exception) {
             throw new IllegalStateException("Nao foi possivel gerar o PDF do documento", exception);
         }
+    }
+
+    private String quittance(DocumentoComercialDto documento) {
+        if (documento.fiscalProjection() == null) return "";
+        boolean voided = Boolean.TRUE.equals(db.queryForObject("""
+            select exists(select 1 from financial_immediate_invoice f
+                join financial_operation r on r.reverse_of=f.operation_id
+                where f.document_id=?)
+            """, Boolean.class, documento.id()));
+        String current = voided ? "<br /><strong>Estado actual: quitação anulada</strong>" : "";
+        return "<div class=\"box\"><strong>Quitação integral na emissão</strong><br />Recebido na emissão: "
+                + money(documento.valorTotal()) + " EUR; Saldo na emissão: 0,00 EUR" + current + "</div>";
     }
 
     private String buildHtml(DocumentoComercialImpressaoDto impressao) {
@@ -204,7 +217,7 @@ public class DocumentoComercialPdfService {
                 esc(documento.clienteNome()), esc(documento.clienteNif()), address(documento.clienteMorada(), documento.clienteMorada1()),
                 esc(joinPostal(documento.clienteCodPostal(), documento.clienteLocalidade())),
                 esc(documento.moedaCodigo()), esc(documento.regimeIvaCodigo()), value(documento.mPagamentoId()), esc(documento.pPagamentoId()),
-                documento.fiscalProjection()==null ? "" : "<div class=\"box\"><strong>Quitação integral</strong><br />Recebido: " + money(documento.valorTotal()) + " EUR; Saldo em aberto: 0,00 EUR</div>",
+                quittance(documento),
                 linhas,
                 money(documento.valorIsento()), money(documento.valorSujeitoReduzida()), money(documento.valorIvaReduzida()),
                 money(documento.valorSujeitoIntermedia()), money(documento.valorIvaIntermedia()), money(documento.valorSujeitoNormal()), money(documento.valorIvaNormal()),

@@ -457,29 +457,50 @@ class ProjectedFrIntegrationTests {
         var original = state(id);
         long cashOut = db.queryForObject("select count(*) from financial_component where kind='CASH_OUT'",Long.class);
         long documents = count("documento_financeiro");
+        var fiscal = correctionIdentity(id);
+        assertCorrectionPdf(id, fiscal, false, false);
+        http.perform(auth(post(doc(id)+"/anular"),admin).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"motivo\":\"Emissão indevida\"}")).andExpect(status().isConflict());
+        authenticate();
         assertThatThrownBy(() -> correction.voidInvoice(id,"Emissão indevida"))
             .isInstanceOf(com.ar2lda.fac.exception.ConflictException.class);
         assertThatThrownBy(() -> correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",false))
             .isInstanceOf(com.ar2lda.fac.exception.BadRequestException.class);
         noSideEffects(id,original);
+        assertThat(correctionAudit(id,"FALHA")).isEqualTo(2);
+        assertThat(correctionAudit(id,"SUCESSO")).isZero();
 
         tx.executeWithoutResult(status -> {
             correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true);
             status.setRollbackOnly();
         });
         noSideEffects(id,original);
+        assertThat(correctionAudit(id,"SUCESSO")).isZero();
         long receiptVoid = correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true);
         assertThat(correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true)).isEqualTo(receiptVoid);
+        assertThatThrownBy(() -> correction.voidReceiptForFundsNeverReceived(id,"Motivo diferente",true))
+            .hasMessageContaining("Idempotency key reused");
+        assertCorrectionPdf(id,fiscal,true,false);
+        authenticate();
+        assertThat(correction.statement(id).stream().map(m -> m.kind().name()))
+            .containsExactly("INVOICE","RECEIPT","RECEIPT_VOID");
+        http.perform(auth(post(doc(id)+"/anular"),admin).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"motivo\":\"Emissão indevida\"}")).andExpect(status().isConflict());
+        authenticate();
         assertThat(queries.position(scope(),issued.positionId()).residual()).isEqualByComparingTo("12.30");
         assertThatThrownBy(() -> queries.balanceAt(scope(),java.time.LocalDate.of(2026,11,3)))
             .hasMessageContaining("TUULI-FIN-TIME-001");
 
+        Long other = db.queryForObject("select id from cliente where id<>? order by id limit 1",Long.class,customer);
+        assertThat(queries.balanceAt(new com.ar2lda.fac.financial.FinancialCore.Scope(1,other,"EUR"),
+            java.time.LocalDate.of(2026,11,3)).netDebt()).isGreaterThanOrEqualTo(java.math.BigDecimal.ZERO);
         var beforeInvoiceVoid = state(id);
         tx.executeWithoutResult(status -> {
             correction.voidInvoice(id,"Emissão indevida");
             status.setRollbackOnly();
         });
         noSideEffects(id,beforeInvoiceVoid);
+        assertThat(correctionAudit(id,"SUCESSO")).isEqualTo(1);
         long invoiceVoid = correction.voidInvoice(id,"Emissão indevida");
         assertThat(correction.voidInvoice(id,"Emissão indevida")).isEqualTo(invoiceVoid);
         assertThat(queries.position(scope(),issued.positionId()).state())
@@ -488,6 +509,13 @@ class ProjectedFrIntegrationTests {
             .containsEntry("estado","ANULADO").containsEntry("projection_external_type","FR");
         assertThat(db.queryForObject("select count(*) from financial_component where kind='CASH_OUT'",Long.class)).isEqualTo(cashOut);
         assertThat(count("documento_financeiro")).isEqualTo(documents);
+        assertThatThrownBy(() -> correction.voidInvoice(id,"Outro motivo de anulação"))
+            .hasMessageContaining("Idempotency key reused");
+        assertThat(correctionAudit(id,"SUCESSO")).isEqualTo(2);
+        assertThat(correctionAudit(id,"FALHA")).isEqualTo(4);
+        assertThat(correctionIdentity(id)).isEqualTo(fiscal);
+        assertCorrectionPdf(id,fiscal,true,true);
+        authenticate();
         var movements=correction.statement(id);
         assertThat(movements.stream().map(m -> m.kind().name())).containsExactly("INVOICE","RECEIPT","RECEIPT_VOID","INVOICE_VOID");
         assertThat(movements.stream().map(m -> m.debtDelta().toPlainString())).containsExactly("12.30","-12.30","12.30","-12.30");
@@ -522,5 +550,47 @@ class ProjectedFrIntegrationTests {
             }
         }
         assertThat(correction.statement(id)).hasSize(4);
+    }
+
+    private long correctionAudit(long id,String result) {
+        return db.queryForObject("""
+            select count(*) from auditoria_evento where entidade_tipo in ('FR_QUITACAO','FR_FACTURA')
+              and entidade_id=? and resultado=?
+            """,Long.class,Long.toString(id),result);
+    }
+
+    java.util.Map<String,Object> correctionIdentity(long id) {
+        return db.queryForMap("""
+            select numero_documento_completo,atcud,qr_payload,projection_external_type,
+                projection_catalog_code,projection_revision,projection_label from documento_comercial where id=?
+            """,id);
+    }
+
+    private void assertCorrectionPdf(long id,java.util.Map<String,Object> fiscal,boolean receiptVoided,boolean invoiceVoided) throws Exception {
+        var bytes=http.perform(auth(get(doc(id)+"/pdf"),admin)).andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsByteArray();
+        try(var pdf=org.apache.pdfbox.Loader.loadPDF(bytes)) {
+            String text=new org.apache.pdfbox.text.PDFTextStripper().getText(pdf);
+            assertThat(text).contains("Quitação integral na emissão",fiscal.get("atcud").toString(),
+                fiscal.get("numero_documento_completo").toString());
+            assertThat(text.contains("Estado actual: quitação anulada")).isEqualTo(receiptVoided);
+            assertThat(text.contains("DOCUMENTO ANULADO")).isEqualTo(invoiceVoided);
+            assertThat(com.ar2lda.fac.testinfra.PdfQrInspection.inspect(pdf.getPage(0)))
+                .anySatisfy(qr -> assertThat(qr.payload()).isEqualTo(fiscal.get("qr_payload")));
+        }
+    }
+
+    @Test void v32RejectsDirectWritesOutsideCorrectionAct() throws Exception {
+        long id=immediateDraft("SYNTH");
+        var issued=issuer.issueProjected(key(),request(id));
+        var original=state(id);
+        assertThatThrownBy(() -> db.update("update documento_comercial set estado='ANULADO',anulado=true where id=?",id))
+            .hasStackTraceContaining("Immediate invoice identity is immutable");
+        long creation=queries.position(scope(),issued.positionId()).creationOperationId();
+        assertThatThrownBy(() -> core.reverse(scope(),"FR_VOID_INVOICE:"+id,creation,"Emissão indevida","M3ADMIN"))
+            .hasStackTraceContaining("Immediate invoice reversal requires an approved documentary act");
+        assertThatThrownBy(() -> core.reverse(scope(),"FR_VOID_RECEIPT:"+id,issued.settlementId(),"Sem entrada de fundos","M3ADMIN"))
+            .hasStackTraceContaining("FR receipt correction cannot create a cash movement");
+        noSideEffects(id,original);
     }
 }

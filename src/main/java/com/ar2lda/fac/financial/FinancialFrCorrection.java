@@ -4,6 +4,11 @@ import com.ar2lda.fac.exception.BadRequestException;
 import com.ar2lda.fac.exception.ConflictException;
 import com.ar2lda.fac.model.PermissaoFuncional;
 import com.ar2lda.fac.model.Utilizador;
+import com.ar2lda.fac.model.ResultadoAuditoria;
+import com.ar2lda.fac.model.TipoAuditoriaEvento;
+import com.ar2lda.fac.service.AuditoriaService;
+import com.ar2lda.fac.service.AuditoriaIsoladaService;
+import org.springframework.security.access.AccessDeniedException;
 import com.ar2lda.fac.security.FunctionalAuthorization;
 import com.ar2lda.fac.service.CurrentUserService;
 import org.springframework.context.annotation.Profile;
@@ -30,42 +35,77 @@ public class FinancialFrCorrection {
     private final FunctionalAuthorization permissions;
     private final CurrentUserService users;
 
+    private final AuditoriaService audit;
+    private final AuditoriaIsoladaService isolatedAudit;
+
     public FinancialFrCorrection(JdbcTemplate db, FinancialCore core, FinancialQueries queries,
-                                 FunctionalAuthorization permissions, CurrentUserService users) {
+                                 FunctionalAuthorization permissions, CurrentUserService users,
+                                 AuditoriaService audit, AuditoriaIsoladaService isolatedAudit) {
         this.db = db;
         this.core = core;
         this.queries = queries;
         this.permissions = permissions;
         this.users = users;
+        this.audit = audit;
+        this.isolatedAudit = isolatedAudit;
     }
 
     /** Explicit operator attestation that the recorded receipt never occurred. */
     @Transactional
     public long voidReceiptForFundsNeverReceived(long document, String reason, boolean fundsNeverReceived) {
-        var actor = authorisedActor(PermissaoFuncional.DOCUMENTO_ANULAR);
-        if (!fundsNeverReceived) throw new BadRequestException("Confirme que os fundos nunca foram recebidos");
-        var act = act(document, true);
-        return core.voidFrReceipt(act.scope(), document, act.settlement(), reason(reason), actor.getCodigo());
+        return audited(document, "QUITACAO", actor -> {
+            if (!fundsNeverReceived) throw new BadRequestException("Confirme que os fundos nunca foram recebidos");
+            var act = act(document, true);
+            boolean replay = reversalExists(act.settlement(), "FR_VOID_RECEIPT:" + document);
+            long reversal = core.voidFrReceipt(act.scope(), document, act.settlement(), reason(reason), actor.getCodigo());
+            return new AuditResult(reversal, !replay);
+        });
     }
 
     @Transactional
     public long voidInvoice(long document, String reason) {
-        var actor = authorisedActor(PermissaoFuncional.DOCUMENTO_ANULAR);
-        var act = act(document, true);
-        if (!Boolean.TRUE.equals(db.queryForObject("""
+        return audited(document, "FACTURA", actor -> {
+            var act = act(document, true);
+            if (!reversalExists(act.settlement(), "FR_VOID_RECEIPT:" + document)) {
+                throw new ConflictException("Anule primeiro a quitação associada à FR");
+            }
+            String justification = reason(reason);
+            long reversal = core.reverse(act.scope(), "FR_VOID_INVOICE:" + document, act.creation(),
+                    justification, actor.getCodigo());
+            int updated = db.update("""
+                update documento_comercial d set estado='ANULADO', anulado=true, motivo_anulacao=?,
+                    data_hora_anulacao=r.created_at, anulado_por_utilizador_id=?, anulado_por_nome=?
+                from financial_operation r where d.id=? and d.estado='EMITIDO' and r.id=?
+                """, justification, actor.getCodigo(), actor.getNome(), document, reversal);
+            return new AuditResult(reversal, updated == 1);
+        });
+    }
+
+    private boolean reversalExists(long original, String key) {
+        return Boolean.TRUE.equals(db.queryForObject("""
             select exists(select 1 from financial_operation where reverse_of=? and request_key=?)
-            """, Boolean.class, act.settlement(), "FR_VOID_RECEIPT:" + document))) {
-            throw new ConflictException("Anule primeiro a quitação associada à FR");
+            """, Boolean.class, original, key));
+    }
+
+    private record AuditResult(long operation, boolean fresh) {}
+
+    private long audited(long document, String kind, java.util.function.Function<Utilizador, AuditResult> action) {
+        Utilizador actor = null;
+        try {
+            actor = authorisedActor(PermissaoFuncional.DOCUMENTO_ANULAR);
+            var result = action.apply(actor);
+            if (result.fresh()) {
+                audit.registarComo(TipoAuditoriaEvento.DOCUMENTO_ANULADO, "FR_" + kind, document, actor,
+                        ResultadoAuditoria.SUCESSO, null, "Anulação de " + kind + " da FR",
+                        "{\"versao\":1,\"operacao\":" + result.operation() + "}");
+            }
+            return result.operation();
+        } catch (AccessDeniedException | ConflictException | BadRequestException denied) {
+            isolatedAudit.registar(TipoAuditoriaEvento.TENTATIVA_ANULACAO_NEGADA, "FR_" + kind, document,
+                    actor != null ? actor : users.currentUserOrNull(), ResultadoAuditoria.FALHA, null,
+                    denied.getMessage(), "{\"versao\":1}");
+            throw denied;
         }
-        String justification = reason(reason);
-        long reversal = core.reverse(act.scope(), "FR_VOID_INVOICE:" + document, act.creation(),
-                justification, actor.getCodigo());
-        db.update("""
-            update documento_comercial d set estado='ANULADO', anulado=true, motivo_anulacao=?,
-                data_hora_anulacao=r.created_at, anulado_por_utilizador_id=?, anulado_por_nome=?
-            from financial_operation r where d.id=? and d.estado='EMITIDO' and r.id=?
-            """, justification, actor.getCodigo(), actor.getNome(), document, reversal);
-        return reversal;
     }
 
     @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
