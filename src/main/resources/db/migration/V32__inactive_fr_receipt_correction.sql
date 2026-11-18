@@ -120,3 +120,65 @@ END $$;
 CREATE CONSTRAINT TRIGGER financial_fr_void_document_complete AFTER INSERT ON financial_operation
  DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION financial_fr_void_document_complete();
 
+
+CREATE OR REPLACE FUNCTION financial_circuit_identity_lock() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE debt_id bigint; immediate_document bigint; immediate_position bigint;
+BEGIN
+ -- Only the new explicit immediate act can replace the V22 shared pending identity.
+ -- Its completion is mandatory at commit (see deferred checks below).
+ IF TG_TABLE_NAME='financial_document_origin' THEN
+   immediate_document:=NEW.document_id; immediate_position:=NEW.position_id;
+ ELSIF TG_TABLE_NAME='financial_allocation' THEN
+   SELECT document_id INTO immediate_document FROM financial_document_origin WHERE position_id=NEW.position_id;
+   immediate_position:=NEW.position_id;
+ END IF;
+ IF EXISTS(SELECT 1 FROM documento_comercial d JOIN tipodocumento t ON t.id=d.id_tipo_documento
+           WHERE d.id=immediate_document AND t.codigo_fiscal='FT' AND t.liquidacao_imediata) THEN
+   PERFORM id FROM documento_comercial WHERE id=immediate_document FOR UPDATE;
+   PERFORM id FROM financial_position WHERE id=immediate_position FOR UPDATE;
+   IF TG_TABLE_NAME='financial_allocation' THEN
+     IF NEW.effect='RESTORE' AND EXISTS (
+       SELECT 1 FROM financial_immediate_invoice f JOIN financial_operation r
+         ON r.id=NEW.operation_id AND r.reverse_of=f.operation_id
+       WHERE f.position_id=immediate_position AND f.document_id=immediate_document
+         AND r.request_key='FR_VOID_RECEIPT:'||f.document_id)
+     THEN RETURN NEW; END IF;
+   END IF;
+   IF NOT EXISTS(SELECT 1 FROM financial_position p JOIN financial_operation op ON op.id=p.creation_id
+                 WHERE p.id=immediate_position AND op.created_tx=txid_current())
+   THEN RAISE EXCEPTION 'Immediate invoice must be originated and settled atomically'; END IF;
+   UPDATE financial_position SET available=available WHERE id=immediate_position;
+   RETURN NEW;
+ END IF;
+ IF TG_TABLE_NAME='linha_documento_financeiro' THEN
+   IF TG_OP='INSERT' THEN
+     PERFORM financial_circuit_touch(NEW.id_pendente);
+   ELSE
+     FOR debt_id IN SELECT id FROM pendente WHERE id IN (OLD.id_pendente,NEW.id_pendente) ORDER BY id
+     LOOP PERFORM financial_circuit_touch(debt_id); END LOOP;
+   END IF;
+ ELSIF TG_TABLE_NAME='financial_allocation' THEN
+   -- Serialize discovery against a concurrent documentary association.
+   PERFORM id FROM financial_position WHERE id=NEW.position_id FOR UPDATE;
+   IF EXISTS(SELECT 1 FROM financial_document_origin WHERE position_id=NEW.position_id)
+   AND NOT EXISTS(SELECT 1 FROM financial_document_origin o JOIN pendente p ON p.id_documento_comercial=o.document_id WHERE o.position_id=NEW.position_id)
+   THEN RAISE EXCEPTION 'Shared documentary debt identity is required'; END IF;
+   FOR debt_id IN SELECT p.id FROM pendente p JOIN financial_document_origin o ON o.document_id=p.id_documento_comercial
+     WHERE o.position_id=NEW.position_id ORDER BY p.id
+   LOOP PERFORM financial_circuit_touch(debt_id); END LOOP;
+ ELSIF TG_TABLE_NAME='financial_document_origin' THEN
+   PERFORM id FROM financial_position WHERE id=NEW.position_id FOR UPDATE;
+   -- A row lock alone leaves an old RR snapshot usable after an origin-first
+   -- commit. Publish a row version without changing the financial amount.
+   UPDATE financial_position SET available=available WHERE id=NEW.position_id;
+   IF NOT EXISTS(SELECT 1 FROM pendente WHERE id_documento_comercial=NEW.document_id)
+   THEN RAISE EXCEPTION 'Shared documentary debt identity is required'; END IF;
+   FOR debt_id IN SELECT id FROM pendente WHERE id_documento_comercial=NEW.document_id ORDER BY id
+   LOOP PERFORM financial_circuit_touch(debt_id); END LOOP;
+ ELSE
+   FOR debt_id IN SELECT DISTINCT id_pendente FROM linha_documento_financeiro
+     WHERE id_documento_financeiro=NEW.id ORDER BY id_pendente
+   LOOP PERFORM financial_circuit_touch(debt_id); END LOOP;
+ END IF;
+ RETURN NEW;
+END $$;
