@@ -1,0 +1,265 @@
+{
+  "integrated_base": "e6973910e1652dea85acdc9e0848c7683c34e6d5",
+  "approved_plan": "36c6aadf45ec4bd54a6c937b9cb8e997f6e92197",
+  "code_test_head": "15fd59aff0c093bb01c657e72bbcd9c125766bf7",
+  "code_test_tree": "46518855141fe40c60b29855318439754afc8242",
+  "branch": "codex/fr-eur-fiscal-identity",
+  "selected_test_cases": 342,
+  "single_full_suite": false,
+  "selected_results": [
+    {
+      "phase": "20261118-113606-8c4c4b",
+      "test": "ProjectedFrIntegrationTests",
+      "exit_code": 0,
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-112838-169578",
+      "test": "ProjectedFrMigrationTests",
+      "exit_code": 0,
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-113606-8c4c4b",
+      "test": "FrProjectionContractTests",
+      "exit_code": 0,
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-112838-169578",
+      "test": "FiscalCatalogTests",
+      "exit_code": 0,
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-112838-169578",
+      "test": "FiscalCatalogInitializationTests",
+      "exit_code": 0,
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-112838-169578",
+      "test": "FinancialFrIntegrationTests",
+      "exit_code": 0,
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-112838-169578",
+      "test": "FinancialFrIsolationTests",
+      "exit_code": 0,
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-112838-169578",
+      "test": "FinancialQueriesIntegrationTests",
+      "exit_code": 0,
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-113606-8c4c4b",
+      "test": "FinancialReceiptIntegrationTests",
+      "exit_code": 0,
+      "tests": 80,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-113606-8c4c4b",
+      "test": "ReceiptPayloadCompatibilityTests",
+      "exit_code": 0,
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-113606-8c4c4b",
+      "test": "GovernedFtControllerTests",
+      "exit_code": 0,
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "GovernedFtPersistenceTests",
+      "exit_code": 0,
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "TipoDocumentoControllerTests",
+      "exit_code": 0,
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "DocumentoComercialControllerTests",
+      "exit_code": 0,
+      "tests": 46,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "DocumentoComercialEmissaoIntegridadeTests",
+      "exit_code": 0,
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "PermissionMatrixIntegrationTests",
+      "exit_code": 0,
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "CommercialReprintJourneyTests",
+      "exit_code": 0,
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "AtcudServiceTests",
+      "exit_code": 0,
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "DocumentoComercialAnulacaoTests",
+      "exit_code": 0,
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "QrFiscalPayloadBuilderTests",
+      "exit_code": 0,
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "FiscalQrIdentityTests",
+      "exit_code": 0,
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "DocumentoComercialPdfServiceTests",
+      "exit_code": 0,
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "test": "DocumentoFinanceiroPdfServiceTests",
+      "exit_code": 0,
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "phases": [
+    {
+      "phase": "20261118-112313-0854e6",
+      "manifest_sha256": "9b750a38a80ece40d451da2ac697aefdfc0c7739f01c3378abbcef57d69a0b4b",
+      "head": "703327cbe8575b2f3204bb489aeb90041d1c88a4"
+    },
+    {
+      "phase": "20261118-112556-defff8",
+      "manifest_sha256": "71ecf80c01f0d81eab6a3f0d99d518847bcd3eb2bb0620debc5bc5984b99df9f",
+      "head": "6f12f6ce85fb120c762bbe9e3c4f16a8db635041"
+    },
+    {
+      "phase": "20261118-112838-169578",
+      "manifest_sha256": "73429192b0fe5e6bee0a263868e50685ff378c26e2c53d73f6c86c9011d66d34",
+      "head": "1bbc5fd1a126fd295c15a88ef9f8c3aa09866e21"
+    },
+    {
+      "phase": "20261118-113606-8c4c4b",
+      "manifest_sha256": "8ba25101ccd5d204ff7bdb7698f9561f73480981e8558b1c6e87adad2ff6910d",
+      "head": "84570d6db3fcf647bdd4d5da9ff766ac2d34ab6d"
+    },
+    {
+      "phase": "20261118-113912-4081cc",
+      "manifest_sha256": "24e763f152d846a93ce44b0388670967c7d55abced54587da6cf2dbe6836e015",
+      "head": "84570d6db3fcf647bdd4d5da9ff766ac2d34ab6d"
+    },
+    {
+      "phase": "20261118-114208-8f7d23",
+      "manifest_sha256": "d5b514048ec6dd504cd1d44c2f59e5d10178544ab535b48d5f3dc0d4d27a6039",
+      "head": "15fd59aff0c093bb01c657e72bbcd9c125766bf7"
+    },
+    {
+      "phase": "package-15fd59a",
+      "manifest_sha256": "11d7773dfd7846663f9443fa9aaab36963aa66253549c509f8020287af5bc8c5",
+      "head": "15fd59aff0c093bb01c657e72bbcd9c125766bf7"
+    }
+  ],
+  "jar": {
+    "path": "target/fac-0.0.1-SNAPSHOT.jar",
+    "bytes": 82557639,
+    "sha256": "ed26205ad60545a9d3429abc9e0b1dc8a0dcbbf6280d00ccb405146f55a15661"
+  },
+  "independent_review": "PENDING",
+  "production_activation": false,
+  "archive": "Relatorios-AR2/TUULI/Arquivo-Reservado/FR-EUR-Projeccao/2026-11-18",
+  "archive_manifest_sha256": "b6ac845e6eee75cd4aa57b5d4126517475807530580c3d11f8f94b1cf532283b",
+  "archive_files": 306
+}

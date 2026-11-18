@@ -2,6 +2,16 @@
 
 Fonte canónica das decisões duradouras do projeto. O estado corrente encontra-se em [OPERATIONAL_STATE.md](OPERATIONAL_STATE.md); o histórico detalhado permanece no Git. Decisões novas exigem fundamento e autorização dentro do âmbito aplicável.
 
+## FR/EUR — identidade/projecção implementada localmente, inactiva (18/11/2026)
+
+O mandato técnico posterior autoriza a implementação do plano `36c6aadf45ec4bd54a6c937b9cb8e997f6e92197`. Branch/worktree isolada `codex/fr-eur-fiscal-identity`; base integrada `e697391` (PR #58), sequência documental do plano preservada. [Entrega](../planning/fr-eur-fiscal-identity/IMPLEMENTATION.md), [validação](../planning/fr-eur-fiscal-identity/VALIDATION.md) e [matriz I01–I17](../planning/fr-eur-fiscal-identity/TEST_MATRIX.md).
+
+**Implementação:** V31 aditiva; revisão v2 FT/especialização FR, identidade externa persistida, código interno historicamente estável entre tabelas, série própria, número/ATCUD/QR/PDF coerentes e quitação única no acto V30. Serviços internos sob `fr-inactive-lab`, sem consumidor operacional; manifesto produtivo vazio. V1–V30 intactas, sem backfill/reclassificação. Código funcional `1bbc5fd`; código/testes finais `15fd59aff0c093bb01c657e72bbcd9c125766bf7`, tree `46518855141fe40c60b29855318439754afc8242`; commits posteriores da entrega são documentais.
+
+**Prova:** 342 casos aprovados, 0 falhas/erros/ignorados nos resultados seleccionados de 23 classes, distribuídos por fases/HEADs (não suite única). Inclui MockMvc com fonte sintética, PDF real/QR descodificado, numeração, quitação/histórico, replay/concorrência/rollback, FT/RC, ATCUD, anulação/reimpressão comercial existente e migrations. Package aprovado sem testes. Tentativas falhadas e duplicado interrompido preservados separadamente; recursos descartáveis removidos. I04(b) é **preservação do legado**: nova FT imediata sem vínculo mantém D=FT sem quitação; **C6 ABERTO**.
+
+**Revisão/integração:** revisão Claude desta implementação pendente; [pedido pronto](../planning/fr-eur-fiscal-identity/REVIEW_HANDOFF.md). Aprovações anteriores não aprovam o novo código. Nenhum push/PR/merge/activação. [SAF-T e decisões P12](../planning/fr-eur-fiscal-identity/INDEPENDENT_FISCAL_WORK.md): apenas mapeamento, sem exportador/XML. Anulação FR em incremento próprio; assinatura produtiva, emissão positiva pelo JAR, homologação/certificação e gates de activação mantidos. Permanecem abertas a questão do espaço após `ATCUD:` e a melhoria bruto/IVA/total no diálogo final. O registo anterior abaixo é histórico da preparação e não revoga este mandato posterior.
+
 ## FR/EUR — acto único interno, inicialmente inactivo
 
 Mandato recebido neste chat, preservado em [AUTHORIZATION.md](../planning/fr-eur-inactive/AUTHORIZATION.md): FR/EUR com facturação e quitação integral no mesmo documento, sem RC fiscal artificial; recebimento único, saldo zero, vínculos/datas históricos, repetição/concorrência/rollback e preservação FT/RC. Base de execução integrada `f15388d` (PR #57); a branch documental anterior e o checkout principal foram preservados.
