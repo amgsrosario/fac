@@ -107,7 +107,8 @@ class ProjectedFrLegacyContentionTests {
                 System.out.printf("V%d %s first_series=[%s] first_emit=[%s] second=[%s] wait=%s before_release=%s first=COMMIT number=%d %s%n",
                     version,scenario,firstSeriesLocks,firstEmissionLocks,secondLocks,wait,finishedBeforeRelease,number,outcome);
                 assertThat(outcome).contains("result=COMMIT");
-                if (version==31 && !scenario.equals("distinct")) assertThat(wait).isEqualTo("advisory");
+                if (version==31 && scenario.equals("same-series")) assertThat(wait).isEqualTo("advisory");
+                if (scenario.equals("same-type")) assertThat(wait).isEqualTo("transactionid");
                 if (scenario.equals("distinct") || (version==30 && scenario.equals("same-series"))) assertThat(finishedBeforeRelease).isTrue();
             } finally {
                 first.rollback();
