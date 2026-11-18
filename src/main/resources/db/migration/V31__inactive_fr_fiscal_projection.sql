@@ -226,3 +226,6 @@ BEGIN
  RETURN NEW;
 END $$;
 CREATE TRIGGER fiscal_fr_series_guard AFTER INSERT OR UPDATE ON serie FOR EACH ROW EXECUTE FUNCTION fiscal_fr_series_guard();
+CREATE INDEX fiscal_commercial_historical_code ON documento_comercial((coalesce(tipo_documento_codigo,id_tipo_documento)))
+ WHERE estado IN('EMITIDO','ANULADO') OR momento_emissao IS NOT NULL;
+CREATE INDEX fiscal_financial_historical_code ON documento_financeiro(id_tipo_documento);

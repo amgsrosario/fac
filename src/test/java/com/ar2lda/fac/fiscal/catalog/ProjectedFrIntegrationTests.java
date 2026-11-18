@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @org.springframework.test.context.ActiveProfiles({"test","fr-inactive-lab"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @EnabledIfEnvironmentVariable(named="M03_DISPOSABLE",matches="true")
 @Import({ProjectedFrIntegrationTests.CatalogFixture.class, FiscalSignatureTestConfiguration.class})
 class ProjectedFrIntegrationTests {
@@ -82,6 +83,7 @@ class ProjectedFrIntegrationTests {
         http.perform(auth(post("/artigos"),admin).contentType(MediaType.APPLICATION_JSON).content(article(true))).andExpect(status().isCreated());
 
         db.update("insert into fiscal_catalog_revision values('FT',1,?::jsonb)", DEFINITION);
+        db.update("insert into fiscal_catalog_revision values('FT',9000100,?::jsonb)",FR_DEFINITION);
         http.perform(auth(post("/tipos-documento"),admin).contentType(MediaType.APPLICATION_JSON).content("""
             {"id":"GFT","descricao":"Synthetic governed FT","codigoFiscal":"FT","areaGestao":2,"entidade":1,"sinalContabilistico":1,"liquidacaoImediata":false}
             """)).andExpect(status().isCreated());
@@ -121,7 +123,6 @@ class ProjectedFrIntegrationTests {
     }
 
     @BeforeAll void immediateConfiguration() throws Exception {
-        db.update("insert into fiscal_catalog_revision values('FT',9000100,?::jsonb)",FR_DEFINITION);
         authenticate();
         configurations.create(config("FRE"));
         db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('FRE','TESTFR','No fiscal validity',0,'TESTFR01','2026-01-01'),('FRE','FRNOAT','Negative',0,null,null)");
@@ -141,7 +142,7 @@ class ProjectedFrIntegrationTests {
     @AfterEach void clear() {org.springframework.security.core.context.SecurityContextHolder.clearContext();}
     long immediateDraft(String series) throws Exception {
         long created=body(http.perform(auth(post("/documentos-comerciais"),admin).contentType(MediaType.APPLICATION_JSON)
-            .content(draft(series.equals("SYNTH")?"TESTFR":"FRNOAT","M3ART",1).replace("GFT","FRE"))).andExpect(status().isCreated()).andReturn()).get("id").asLong();
+            .content(draft(series.equals("SYNTH")?"TESTFR":series.equals("NOAT")?"FRNOAT":series,"M3ART",1).replace("GFT","FRE"))).andExpect(status().isCreated()).andReturn()).get("id").asLong();
         authenticate();return created;
     }
     java.math.BigDecimal money(String s){return new java.math.BigDecimal(s);}
@@ -153,7 +154,7 @@ class ProjectedFrIntegrationTests {
     long count(String table){return db.queryForObject("select count(*) from "+table,Long.class);}
     void noSideEffects(long id,Map<String,Object> before){assertThat(state(id)).isEqualTo(before);}
 
-    @Test void oneDocumentFullCashZeroResidualAndHistoricalDates() throws Exception {
+    @Test @Order(1) void oneDocumentFullCashZeroResidualAndHistoricalDates() throws Exception {
         long id=immediateDraft("SYNTH");long receipts=count("documento_financeiro"),pending=count("pendente");
         org.mockito.Mockito.clearInvocations(signer);
         var result=issuer.issueProjected(key(),request(id));
@@ -164,7 +165,8 @@ class ProjectedFrIntegrationTests {
         assertThat(result.documentId()).isEqualTo(id);
         var identity=db.queryForMap("select projection_external_type,projection_catalog_code,projection_revision,tipo_documento_codigo_fiscal,numero_documento_completo,atcud,qr_payload from documento_comercial where id=?",id);
         assertThat(identity).containsEntry("projection_external_type","FR").containsEntry("projection_catalog_code","FT").containsEntry("tipo_documento_codigo_fiscal","FT");
-        String number=(String)identity.get("numero_documento_completo");assertThat(number).startsWith("FRE TESTFR/");
+        String number=(String)identity.get("numero_documento_completo");assertThat(number).isEqualTo("FRE TESTFR/1");
+        assertThat(identity).containsEntry("atcud","TESTFR01-1");
         assertThat((String)identity.get("qr_payload")).contains("*D:FR*").contains("*G:"+number+"*").contains("*H:"+identity.get("atcud")+"*");
         var response=http.perform(auth(get(doc(id)+"/pdf"),admin)).andExpect(status().isOk()).andReturn().getResponse();
         byte[] pdf=response.getContentAsByteArray();
@@ -332,6 +334,48 @@ class ProjectedFrIntegrationTests {
         assertThatThrownBy(()->db.update("update tipodocumento set liquidacao_imediata=false where id='FRB'")).isInstanceOf(org.springframework.dao.DataAccessException.class);
         assertThatThrownBy(()->db.update("update fiscal_catalog_revision set definition=definition where fiscal_code='FT' and revision=9000100")).isInstanceOf(org.springframework.dao.DataAccessException.class);
         assertThatThrownBy(()->db.update("delete from fiscal_type_identity where internal_code='FRB'")).isInstanceOf(org.springframework.dao.DataAccessException.class);
+    }
+
+    @Test void financialDocumentHistoryPreventsCrossTableCodeReuse() throws Exception {
+        http.perform(auth(post("/tipos-documento"),admin).contentType(MediaType.APPLICATION_JSON).content("""
+            {"id":"HRC","descricao":"Synthetic RC","codigoFiscal":"RC","areaGestao":3,"entidade":1,"sinalContabilistico":2,"liquidacaoImediata":false}
+            """)).andExpect(status().isCreated());
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('HRC','HISTRC','Synthetic',0,'HISTRC01','2026-01-01')");
+        long invoice=create("SYNTH",admin);
+        http.perform(auth(post(doc(invoice)+"/emitir"),admin).contentType(MediaType.APPLICATION_JSON).content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
+        long pending=db.queryForObject("select id from pendente where id_documento_comercial=?",Long.class,invoice);
+        String payload="{\"tipoDocumentoId\":\"HRC\",\"serie\":\"HISTRC\",\"dataEmissao\":\"2026-11-18\",\"dataValor\":\"2026-11-18\",\"clienteId\":"+customer+",\"moedaId\":\"EUR\",\"mPagamentoId\":\"M3P\",\"emissorId\":\"M3ADMIN\",\"linhas\":[{\"pendenteId\":"+pending+",\"valorALiquidar\":12.30,\"descontoPercentual\":0,\"descontoValor\":0}]}";
+        http.perform(auth(post("/documentos-financeiros"),admin).contentType(MediaType.APPLICATION_JSON).content(payload)).andExpect(status().isCreated());
+        authenticate();var attempt=config("HRC");
+        assertThatThrownBy(()->configurations.create(attempt)).hasMessageContaining("different external");
+        assertThatThrownBy(()->db.execute("select fiscal_claim_identity('HRC','FR',true)")).isInstanceOf(org.springframework.dao.DataAccessException.class);
+        assertThat(db.queryForObject("select external_type from fiscal_type_identity where internal_code='HRC'",String.class)).isEqualTo("RC");
+    }
+    @Test void sequenceAndMultipagePdfReprintsKeepOneFinancialAct() throws Exception {
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('FRE','SEQFR','Synthetic',0,'SEQFR001','2026-01-01')");
+        long id=immediateDraft("SEQFR");
+        for(int i=0;i<45;i++)http.perform(auth(post(doc(id)+"/linhas"),admin).contentType(MediaType.APPLICATION_JSON).content(line("M3ART",1,10))).andExpect(status().isCreated());
+        authenticate();var req=new com.ar2lda.fac.financial.FinancialFrIssuer.Request(id,money("565.80"),"M3P","Long synthetic invoice",false);
+        issuer.issueProjected(key(),req);
+        long operations=count("financial_operation"),cash=count("financial_component");long numerator=db.queryForObject("select numerador from serie where id_tipo_documento='FRE' and serie='SEQFR'",Long.class);
+        for(int n=0;n<2;n++){
+            byte[] pdf=http.perform(auth(get(doc(id)+"/pdf"),admin)).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+            try(var printed=org.apache.pdfbox.Loader.loadPDF(pdf)){
+                assertThat(printed.getNumberOfPages()).isGreaterThan(1);
+                var stripper=new org.apache.pdfbox.text.PDFTextStripper();
+                for(int page=1;page<=printed.getNumberOfPages();page++){
+                    stripper.setStartPage(page);stripper.setEndPage(page);assertThat(stripper.getText(printed)).contains("SEQFR001-1");
+                }
+                var codes=new ArrayList<com.ar2lda.fac.testinfra.PdfQrInspection.Qr>();for(var page:printed.getPages())codes.addAll(com.ar2lda.fac.testinfra.PdfQrInspection.inspect(page));
+                assertThat(codes).isNotEmpty();for(var qr:codes){assertThat(qr.payload()).contains("*D:FR*","*G:FRE SEQFR/1*","*H:SEQFR001-1*");assertThat(qr.widthMm()).isGreaterThanOrEqualTo(30);assertThat(qr.minBorderMm()).isGreaterThanOrEqualTo(2.49);}
+            }
+            Files.write(Path.of(System.getenv("M402_EVIDENCE"),"multipage-fr-"+n+".pdf"),pdf);
+        }
+        assertThat(count("financial_operation")).isEqualTo(operations);assertThat(count("financial_component")).isEqualTo(cash);
+        assertThat(db.queryForObject("select numerador from serie where id_tipo_documento='FRE' and serie='SEQFR'",Long.class)).isEqualTo(numerator);
+        long second=immediateDraft("SEQFR");issuer.issueProjected(key(),request(second));
+        assertThat(db.queryForObject("select numero_documento_completo from documento_comercial where id=?",String.class,second)).isEqualTo("FRE SEQFR/2");
+        assertThat(db.queryForObject("select atcud from documento_comercial where id=?",String.class,second)).isEqualTo("SEQFR001-2");
     }
 
 }
