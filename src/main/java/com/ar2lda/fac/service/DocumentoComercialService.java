@@ -86,6 +86,7 @@ public class DocumentoComercialService {
     private final MoedaRepository moedaRepository;
     private final RIvaRepository rIvaRepository;
     private final MPagamentoRepository mPagamentoRepository;
+    private final com.ar2lda.fac.fiscal.catalog.FiscalCatalog fiscalCatalog;
     private final PPagamentoRepository pPagamentoRepository;
     private final TransporteRepository transporteRepository;
     private final LinhaDocumentoComercialRepository linhaRepository;
@@ -353,10 +354,22 @@ public class DocumentoComercialService {
     }
 
     @Transactional
-    public DocumentoComercialDto emitir(Long id, DocumentoComercialEmitirDto dto) {
+    public DocumentoComercialDto emitir(Long id, DocumentoComercialEmitirDto dto) { return emit(id,dto,false); }
+
+    /** Internal FR act only; not exposed by a controller. SQL requires complete V30 act at commit. */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public DocumentoComercialDto emitirFrProjectado(Long id, DocumentoComercialEmitirDto dto) { return emit(id,dto,true); }
+
+    private DocumentoComercialDto emit(Long id, DocumentoComercialEmitirDto dto,boolean immediateAct) {
         DocumentoComercial documento = findDocumentoForUpdate(id);
         validateRascunho(documento);
         documento.setTipoDocumento(tipoDocumentoService.lockConfiguration(documento.getTipoDocumento().getId()));
+        var projection=fiscalCatalog.frForType(documento.getTipoDocumento().getId());
+        if(projection.isPresent()!=immediateAct)throw new ConflictException("Projected FR requires its explicit governed quittance act");
+        if(immediateAct) {
+            var revision=projection.orElseThrow();
+            documento.consolidateFrProjection(revision.key().revision(),revision.definition().path("semantics").path("documentLabel").asText());
+        }
         validateNaoAnulado(documento);
         validateTemLinhas(documento);
         validateDataEmissao(documento);

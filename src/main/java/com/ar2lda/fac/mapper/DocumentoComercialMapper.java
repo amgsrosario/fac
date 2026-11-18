@@ -96,7 +96,9 @@ public interface DocumentoComercialMapper {
                 e.getTaxaCambio(),
                 e.getRegimeIvaCodigo(), e.getFiscalMotorVersion() == null ? null : new com.ar2lda.fac.controller.dto.ResultadoFiscalDocumentoDto(
                     e.getFiscalMotorVersion(), e.getFiscalMercado(), e.getFiscalTratamentoLiquidacao(), e.getFiscalFundamento(),
-                    e.getFiscalMIsencaoCodigo(), e.getFiscalJurisdicao(), e.getFiscalTerritorioFiscal(), e.isFiscalRecalculoAviso())
+                    e.getFiscalMIsencaoCodigo(), e.getFiscalJurisdicao(), e.getFiscalTerritorioFiscal(), e.isFiscalRecalculoAviso()),
+                e.getProjectionExternalType()==null ? null : new com.ar2lda.fac.controller.dto.FiscalProjectionDto(
+                    e.getProjectionExternalType(),e.getProjectionCatalogCode(),e.getProjectionRevision(),e.getProjectionLabel())
         );
     }
 }

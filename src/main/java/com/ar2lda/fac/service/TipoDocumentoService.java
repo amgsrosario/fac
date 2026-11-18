@@ -106,7 +106,9 @@ public class TipoDocumentoService {
     private static void validateTuple(FiscalCatalog.Revision revision, String code, Integer area, Integer entity,
                                       Integer sign, boolean immediate) {
         final boolean permitted;
-        try { permitted = FtDeferredSemantics.permits(revision.definition(), code, area, entity, sign, immediate); }
+        try { permitted = revision.definition().path("schemaVersion").intValue()==2
+                ? com.ar2lda.fac.fiscal.catalog.FrFiscalSemantics.permits(revision.definition(),code,area,entity,sign,immediate)
+                : FtDeferredSemantics.permits(revision.definition(), code, area, entity, sign, immediate); }
         catch (IllegalStateException error) { throw unavailable(); }
         if (!permitted) throw new BadRequestException("Configuração incompatível com a revisão fiscal governada");
     }

@@ -36,7 +36,7 @@ public final class FiscalCatalog {
     }
 
     /** Parse only on use: an inactive catalog cannot prevent legacy bean initialization. */
-    private record Manifest(Map<Key, JsonNode> revisions, Optional<Key> ftDeferred) { }
+    private record Manifest(Map<Key, JsonNode> revisions, Optional<Key> ftDeferred, Optional<Key> frImmediate) { }
 
     private Manifest loadManifest() {
         try (var input = source.getInputStream()) {
@@ -58,30 +58,32 @@ public final class FiscalCatalog {
                         || entry.path("revision").longValue() <= 0 || !entry.path("semantics").isObject()
                         || !entry.path("schemaVersion").isIntegralNumber()
                         || !entry.path("schemaVersion").canConvertToInt()
-                        || entry.path("schemaVersion").intValue() != 1) {
+                        || (entry.path("schemaVersion").intValue() != 1 && entry.path("schemaVersion").intValue() != 2)) {
                     throw new IllegalStateException("Invalid fiscal catalog revision");
                 }
-                if ("FT".equals(entry.path("fiscalCode").textValue())) FtDeferredSemantics.configurations(entry);
+                if (entry.path("schemaVersion").intValue()==2) FrFiscalSemantics.validate(entry);
+                else if ("FT".equals(entry.path("fiscalCode").textValue())) FtDeferredSemantics.configurations(entry);
                 Key key = new Key(entry.path("fiscalCode").textValue(), entry.path("revision").longValue());
                 if (definitions.putIfAbsent(key, entry.deepCopy()) != null) {
                     throw new IllegalStateException("Duplicate fiscal catalog revision");
                 }
             }
-            Optional<Key> creation = Optional.empty();
-            if (manifest.has("creationBindings")) {
-                var bindings = manifest.get("creationBindings");
-                FtDeferredSemantics.fields(bindings, Set.of("ftDeferred"));
-                var key = bindings.get("ftDeferred");
-                FtDeferredSemantics.fields(key, Set.of("fiscalCode", "revision"));
-                if (!key.path("fiscalCode").isTextual() || !"FT".equals(key.path("fiscalCode").textValue())
-                        || !key.path("revision").isIntegralNumber() || !key.path("revision").canConvertToLong()
-                        || key.path("revision").longValue() <= 0)
-                    throw new IllegalStateException("Invalid governed FT creation binding");
-                var selected = new Key("FT", key.path("revision").longValue());
-                if (!definitions.containsKey(selected)) throw new IllegalStateException("FT creation binding is absent from manifest revisions");
-                creation = Optional.of(selected);
+            Optional<Key> creation=Optional.empty(), immediate=Optional.empty();
+            if(manifest.has("creationBindings")) {
+                var bindings=manifest.get("creationBindings");
+                if(!bindings.isObject() || bindings.isEmpty())throw new IllegalStateException("Invalid creation bindings");
+                var names=bindings.fieldNames();
+                while(names.hasNext()) {
+                    String name=names.next();if(!Set.of("ftDeferred","frImmediate").contains(name))throw new IllegalStateException("Unknown creation binding");
+                    var key=bindings.get(name);FtDeferredSemantics.fields(key,Set.of("fiscalCode","revision"));
+                    if(!"FT".equals(key.path("fiscalCode").asText())||!key.path("revision").isIntegralNumber()
+                        ||!key.path("revision").canConvertToLong()||key.path("revision").longValue()<=0)throw new IllegalStateException("Invalid creation binding");
+                    var selected=new Key("FT",key.path("revision").longValue());var definition=definitions.get(selected);
+                    if(definition==null || definition.path("schemaVersion").intValue()!=(name.equals("frImmediate")?2:1))throw new IllegalStateException("Creation binding has incompatible semantics");
+                    if(name.equals("frImmediate"))immediate=Optional.of(selected);else creation=Optional.of(selected);
+                }
             }
-            return new Manifest(Map.copyOf(definitions), creation);
+            return new Manifest(Map.copyOf(definitions),creation,immediate);
         } catch (IOException e) {
             throw new IllegalStateException("Cannot read fiscal catalog manifest", e);
         }
@@ -96,6 +98,17 @@ public final class FiscalCatalog {
         var actual = verifiedRevisions(manifest);
         return actual.get(manifest.ftDeferred().orElseThrow(() ->
                 new IllegalStateException("Governed FT creation is blocked: approved creation binding unavailable")));
+    }
+
+    public Revision frImmediateCreation() {
+        var manifest=loadManifest();var actual=verifiedRevisions(manifest);
+        return actual.get(manifest.frImmediate().orElseThrow(()->new IllegalStateException("Governed FR creation binding unavailable")));
+    }
+
+    /** Existing v1/unbound consumers do not start using the inactive catalog by accident. */
+    public Optional<Revision> frForType(String typeId) {
+        Boolean projected=db.queryForObject("select exists(select 1 from tipodocumento t join fiscal_catalog_revision r on r.fiscal_code=t.fiscal_catalog_code and r.revision=t.fiscal_catalog_revision where t.id=? and r.definition->>'schemaVersion'='2')",Boolean.class,typeId);
+        return Boolean.TRUE.equals(projected)?forType(typeId):Optional.empty();
     }
 
     public Revision revision(String code, long revision) {
