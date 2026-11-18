@@ -239,7 +239,8 @@ class ProjectedFrIntegrationTests {
     }
     @Test void missingAtCodeAndCashMismatchRollBack() throws Exception {
         long id=immediateDraft("NOAT");var before=state(id);
-        assertThatThrownBy(()->issuer.issueProjected(key(),request(id))).isInstanceOf(RuntimeException.class);noSideEffects(id,before);
+        assertThatThrownBy(()->issuer.issueProjected(key(),request(id))).isInstanceOf(com.ar2lda.fac.exception.BadRequestException.class)
+            .hasMessage("A série selecionada não possui código de validação atribuído pela AT.");noSideEffects(id,before);
         long other=immediateDraft("SYNTH");var beforeOther=state(other);
         var wrong=new com.ar2lda.fac.financial.FinancialFrIssuer.Request(other,money("12.29"),"M3P","Synthetic",false);
         assertThatThrownBy(()->issuer.issueProjected(key(),wrong)).hasMessageContaining("full invoice");noSideEffects(other,beforeOther);
@@ -336,6 +337,15 @@ class ProjectedFrIntegrationTests {
         assertThat(db.queryForObject("select liquidado from documento_comercial where id=?",Boolean.class,id)).isFalse();
         assertThat(count("financial_immediate_invoice")).isEqualTo(acts);assertThat(count("financial_component")).isEqualTo(cash);assertThat(count("financial_position")).isEqualTo(debts);
         record("I04b-C6-OPEN",state(id));
+        var before=state(id);
+        assertThatThrownBy(()->db.update("""
+            update tipodocumento set fiscal_catalog_code='FT', fiscal_catalog_revision=9000100
+            where id='C6F'
+            """)).isInstanceOf(org.springframework.dao.DataAccessException.class)
+            .hasStackTraceContaining("ERROR: Internal code already identifies a different external fiscal type")
+            .hasStackTraceContaining("fiscal_claim_identity");
+        assertThat(db.queryForObject("select fiscal_catalog_revision from tipodocumento where id='C6F'",Long.class)).isNull();
+        noSideEffects(id,before);
     }
     @Test void historicalInternalCodeCannotBeReclassifiedInJavaOrSql() throws Exception {
         long id=create("SYNTH",admin);

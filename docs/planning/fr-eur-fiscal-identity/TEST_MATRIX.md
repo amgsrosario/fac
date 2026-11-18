@@ -4,7 +4,7 @@ Referência: `36c6aad` TEST_PLAN.md, I01–I17. Nomes abaixo são métodos de Pr
 
 | Critério | Prova e limite |
 | --- | --- |
-| I01 | FrProjectionContractTests: beans de criação/emissão ausentes por omissão; manifesto produtivo igual à base. Não representa ensaio de instalação comercial |
+| I01 | FrProjectionContractTests: beans de criação/emissão ausentes por omissão; comparação Git confirma manifesto produtivo igual à base. Não representa ensaio de instalação comercial |
 | I02/I03 | catalogueTupleAndAliasSeriesAreProtected, linkedFrDoesNotPermitLegacyPendingOrReclassification, GovernedFtPersistenceTests e FiscalCatalogTests; revisão e materialidade protegidas Java/SQL |
 | I04(a) | ordinaryGovernedEmissionAndSqlIncompleteProjectionAreRefused: percurso ordinário e commit sem acto integral recusados |
 | I04(b) | i04bNewUnboundImmediateFtRetainsLegacyWithoutQuittance: FT nova sem vínculo mantém D=FT e ausência de acto FR/CASH_IN. C6 ABERTO |
