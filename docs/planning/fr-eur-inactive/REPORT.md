@@ -48,3 +48,5 @@ Parecer original `2026-11-18_TUULI_FR-EUR_identidade-implementacao-R1_confirmaca
 ## Ponto 2 — correcção da quitação FR/EUR
 
 A branch local `codex/fr-eur-correction` reutiliza o SETTLE como recibo interno. O extracto discrimina factura, quitação e as duas correcções. A V32 exige a correcção da quitação antes da anulação da FR. A correcção por fundos nunca recebidos é auditada e não cria saída de tesouraria. As consultas históricas afectadas recusam o cálculo até ser definida a data de efeito. 150 testes aprovados em PostgreSQL descartável, incluindo FR, FT e RC. FR/EUR inactiva, C6 aberto e revisão independente pendente. [Provas e pedido de revisão](CORRECTION_REVIEW_HANDOFF.md).
+
+**R1 da correcção da quitação:** decisão e proveniência arquivadas, auditoria de sucesso e recusa implementada, estado intermédio reflectido no extracto e PDF, identidade fiscal preservada e upgrade V31→V32 demonstrado com FR existente. 225 testes aprovados em 12 classes. [Pedido incremental e arquivo](CORRECTION_R1_REVIEW_HANDOFF.md).
