@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnabledIfEnvironmentVariable(named="M03_DISPOSABLE",matches="true")
 @Import({ProjectedFrIntegrationTests.CatalogFixture.class, FiscalSignatureTestConfiguration.class, ProjectedFrIntegrationTests.TestEndpoint.class})
 class ProjectedFrIntegrationTests {
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactionManager;
     static final String DEFINITION = """
         {"schemaVersion":1,"fiscalCode":"FT","revision":1,"semantics":{"allowedConfigurations":[
         {"codigoFiscal":"FT","areaGestao":2,"entidade":1,"sinalContabilistico":1,"liquidacaoImediata":false}]}}
@@ -338,11 +339,18 @@ class ProjectedFrIntegrationTests {
         assertThat(count("financial_immediate_invoice")).isEqualTo(acts);assertThat(count("financial_component")).isEqualTo(cash);assertThat(count("financial_position")).isEqualTo(debts);
         record("I04b-C6-OPEN",state(id));
         var before=state(id);
-        assertThatThrownBy(()->db.update("""
+        String bindFr = """
             update tipodocumento set fiscal_catalog_code='FT', fiscal_catalog_revision=9000100
             where id='C6F'
-            """)).isInstanceOf(org.springframework.dao.DataAccessException.class)
-            .hasStackTraceContaining("ERROR: Internal code already identifies a different external fiscal type")
+            """;
+        assertThatThrownBy(()->db.update(bindFr)).hasStackTraceContaining("Fiscal catalog binding is immutable");
+        // V27 runs first. Isolate the independent V31 guard in a transaction that never commits.
+        assertThatThrownBy(()->new org.springframework.transaction.support.TransactionTemplate(
+            transactionManager).executeWithoutResult(status -> {
+                db.execute("alter table tipodocumento disable trigger fiscal_catalog_binding_immutable");
+                db.update(bindFr);
+                status.setRollbackOnly();
+            })).hasStackTraceContaining("ERROR: Internal code already identifies a different external fiscal type")
             .hasStackTraceContaining("fiscal_claim_identity");
         assertThat(db.queryForObject("select fiscal_catalog_revision from tipodocumento where id='C6F'",Long.class)).isNull();
         noSideEffects(id,before);
