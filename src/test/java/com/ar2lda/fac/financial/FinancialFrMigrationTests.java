@@ -24,8 +24,8 @@ class FinancialFrMigrationTests {
                     s.execute("update riva set nome='FR preserved master' where id='CON'");
                 }
                 var flyway=Flyway.configure().dataSource(destination,user,password).cleanDisabled(true).load();
-                assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);flyway.validate();
-                assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("30");
+                assertThat(flyway.migrate().migrationsExecuted).isEqualTo(3);flyway.validate();
+                assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("32");
                 assertThat(flyway.migrate().migrationsExecuted).isZero();
                 try(var c=DriverManager.getConnection(destination,user,password);var s=c.createStatement();var r=s.executeQuery(
                     "select nome,(select count(*) from financial_immediate_invoice),(select count(*) from financial_operation),"+

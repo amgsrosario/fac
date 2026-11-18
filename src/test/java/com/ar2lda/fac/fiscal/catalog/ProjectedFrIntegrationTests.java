@@ -575,8 +575,9 @@ class ProjectedFrIntegrationTests {
                 fiscal.get("numero_documento_completo").toString());
             assertThat(text.contains("Estado actual: quitação anulada")).isEqualTo(receiptVoided);
             assertThat(text.contains("DOCUMENTO ANULADO")).isEqualTo(invoiceVoided);
-            assertThat(com.ar2lda.fac.testinfra.PdfQrInspection.inspect(pdf.getPage(0)))
-                .anySatisfy(qr -> assertThat(qr.payload()).isEqualTo(fiscal.get("qr_payload")));
+            var codes=new ArrayList<com.ar2lda.fac.testinfra.PdfQrInspection.Qr>();
+            for (var page:pdf.getPages()) codes.addAll(com.ar2lda.fac.testinfra.PdfQrInspection.inspect(page));
+            assertThat(codes).anySatisfy(qr -> assertThat(qr.payload()).isEqualTo(fiscal.get("qr_payload")));
         }
     }
 
@@ -587,10 +588,26 @@ class ProjectedFrIntegrationTests {
         assertThatThrownBy(() -> db.update("update documento_comercial set estado='ANULADO',anulado=true where id=?",id))
             .hasStackTraceContaining("Immediate invoice identity is immutable");
         long creation=queries.position(scope(),issued.positionId()).creationOperationId();
-        assertThatThrownBy(() -> core.reverse(scope(),"FR_VOID_INVOICE:"+id,creation,"Emissão indevida","M3ADMIN"))
+        assertThatThrownBy(() -> db.update("""
+            insert into financial_operation(empresa_id,cliente_id,moeda_id,request_key,request_payload,kind,actor,reason,reverse_of)
+            select empresa_id,cliente_id,moeda_id,?,'Direct test','REVERSE','M3ADMIN','Emissão indevida',id
+            from financial_operation where id=?
+            ""","FR_VOID_INVOICE:"+id,creation))
             .hasStackTraceContaining("Immediate invoice reversal requires an approved documentary act");
         assertThatThrownBy(() -> core.reverse(scope(),"FR_VOID_RECEIPT:"+id,issued.settlementId(),"Sem entrada de fundos","M3ADMIN"))
             .hasStackTraceContaining("FR receipt correction cannot create a cash movement");
-        noSideEffects(id,original);
+        Long allocation=db.queryForObject("select id from financial_allocation where operation_id=?",Long.class,issued.settlementId());
+        assertThatThrownBy(() -> db.update("""
+            insert into financial_allocation(operation_id,position_id,empresa_id,cliente_id,moeda_id,amount,effect,reverse_of)
+            select ?,position_id,empresa_id,cliente_id,moeda_id,amount,'RESTORE',id
+            from financial_allocation where id=?
+            """,creation,allocation)).isInstanceOf(org.springframework.dao.DataAccessException.class);
+        correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true);
+        var afterReceipt=state(id);
+        assertThatThrownBy(() -> tx.executeWithoutResult(status -> {
+            correction.voidInvoice(id,"Emissão indevida");
+            db.update("update documento_comercial set atcud='TAMPER01-1' where id=?",id);
+        })).hasStackTraceContaining("Immediate invoice identity is immutable");
+        noSideEffects(id,afterReceipt);
     }
 }
