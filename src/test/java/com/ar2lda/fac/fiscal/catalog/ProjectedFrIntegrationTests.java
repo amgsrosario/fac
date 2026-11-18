@@ -367,6 +367,16 @@ class ProjectedFrIntegrationTests {
     @Test void catalogueTupleAndAliasSeriesAreProtected() throws Exception {
         authenticate();configurations.create(config("FRB"));
         assertThatThrownBy(()->db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('FRB','TESTFR','Duplicate',0,'TESTFR02','2026-01-01')")).hasStackTraceContaining("collides");
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador) values('FRB','FRBNEW','Synthetic',0)");
+        assertThatThrownBy(()->db.update("""
+            update serie set numerador=1,codigo_at='TESTFR01',data_codigo_at='2026-01-01'
+            where id_tipo_documento='FRB' and serie='FRBNEW'
+            """)).hasStackTraceContaining("collides");
+        assertThatThrownBy(()->db.update("""
+            update serie set numerador=1,serie='FRBOTHER'
+            where id_tipo_documento='FRB' and serie='FRBNEW'
+            """)).hasStackTraceContaining("Governed FR series key is immutable");
+        assertThat(db.queryForObject("select numerador from serie where id_tipo_documento='FRB' and serie='FRBNEW'",Long.class)).isZero();
         assertThatThrownBy(()->db.update("update tipodocumento set liquidacao_imediata=false where id='FRB'")).isInstanceOf(org.springframework.dao.DataAccessException.class);
         assertThatThrownBy(()->db.update("update fiscal_catalog_revision set definition=definition where fiscal_code='FT' and revision=9000100")).isInstanceOf(org.springframework.dao.DataAccessException.class);
         assertThatThrownBy(()->db.update("delete from fiscal_type_identity where internal_code='FRB'")).isInstanceOf(org.springframework.dao.DataAccessException.class);

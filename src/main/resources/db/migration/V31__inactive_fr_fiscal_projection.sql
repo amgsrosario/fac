@@ -198,6 +198,13 @@ CREATE TRIGGER fiscal_fr_series_no_truncate BEFORE TRUNCATE ON fiscal_fr_series 
 CREATE FUNCTION fiscal_fr_series_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE governed boolean; existing fiscal_fr_series;
 BEGIN
+ -- Number allocation already locks its own series row. It cannot change the fiscal reservation.
+ IF TG_OP='UPDATE' THEN
+  IF NEW.numerador IS DISTINCT FROM OLD.numerador
+   AND ROW(NEW.id_tipo_documento,NEW.serie,NEW.nome,NEW.codigo_at,NEW.data_codigo_at)
+    IS NOT DISTINCT FROM ROW(OLD.id_tipo_documento,OLD.serie,OLD.nome,OLD.codigo_at,OLD.data_codigo_at)
+  THEN RETURN NEW; END IF;
+ END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('FISCAL_SERIES:'||NEW.serie,0));
  PERFORM fiscal_identity_touch('SERIES:'||NEW.serie);
  IF NEW.codigo_at IS NOT NULL THEN

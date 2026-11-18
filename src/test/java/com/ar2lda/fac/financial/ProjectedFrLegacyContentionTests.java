@@ -66,6 +66,8 @@ class ProjectedFrLegacyContentionTests {
             int a = pid(first), b = pid(second);
             first.setAutoCommit(false);
             second.setAutoCommit(false);
+            int expectedFirst = counter(monitor,"LFA","SHARED")+1;
+            int expectedSecond = counter(monitor,type,series)+1;
             int number = advance(first,"LFA","SHARED");
             String firstSeriesLocks = advisory(monitor,a);
             emit(first,"LFA","SHARED",number);
@@ -106,10 +108,17 @@ class ProjectedFrLegacyContentionTests {
                 String outcome = result.get(8,TimeUnit.SECONDS);
                 System.out.printf("V%d %s first_series=[%s] first_emit=[%s] second=[%s] wait=%s before_release=%s first=COMMIT number=%d %s%n",
                     version,scenario,firstSeriesLocks,firstEmissionLocks,secondLocks,wait,finishedBeforeRelease,number,outcome);
-                assertThat(outcome).contains("result=COMMIT");
-                if (version==31 && scenario.equals("same-series")) assertThat(wait).isEqualTo("advisory");
-                if (scenario.equals("same-type")) assertThat(wait).isEqualTo("transactionid");
-                if (scenario.equals("distinct") || (version==30 && scenario.equals("same-series"))) assertThat(finishedBeforeRelease).isTrue();
+                assertThat(outcome).endsWith("result=COMMIT number="+expectedSecond);
+                assertThat(number).isEqualTo(expectedFirst);
+                verifyCommitted(monitor,"LFA","SHARED",expectedFirst);
+                verifyCommitted(monitor,type,series,expectedSecond);
+                assertThat(firstSeriesLocks).isEmpty();
+                if (scenario.equals("same-type")) {
+                    assertThat(wait).isEqualTo("transactionid");
+                } else {
+                    assertThat(wait).isEmpty();
+                    assertThat(finishedBeforeRelease).isTrue();
+                }
             } finally {
                 first.rollback();
             }
@@ -141,6 +150,27 @@ class ProjectedFrLegacyContentionTests {
             var locks = new java.util.ArrayList<String>();
             while(r.next()) locks.add(r.getString(1)+":"+r.getBoolean(2));
             return locks.stream().collect(Collectors.joining(","));
+        }
+    }
+
+    private static int counter(Connection c,String type,String series) throws SQLException {
+        try (var s=c.prepareStatement("select numerador from serie where id_tipo_documento=? and serie=?")) {
+            s.setString(1,type);
+            s.setString(2,series);
+            try(var r=s.executeQuery()) {r.next();return r.getInt(1);}
+        }
+    }
+
+    private static void verifyCommitted(Connection c,String type,String series,int number) throws SQLException {
+        assertThat(counter(c,type,series)).isEqualTo(number);
+        try (var s=c.prepareStatement("""
+            select count(*) from documento_comercial
+            where id_tipo_documento=? and serie=? and numero_documento=? and estado='EMITIDO'
+            """)) {
+            s.setString(1,type);
+            s.setString(2,series);
+            s.setInt(3,number);
+            try(var r=s.executeQuery()) {r.next();assertThat(r.getInt(1)).isOne();}
         }
     }
 
