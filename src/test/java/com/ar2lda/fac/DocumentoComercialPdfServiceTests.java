@@ -55,7 +55,7 @@ class DocumentoComercialPdfServiceTests {
         pdfService = new DocumentoComercialPdfService(
                 documentoService,
                 new QrCodeImageService(),
-                mock(AuditoriaService.class)
+                mock(AuditoriaService.class), mock(org.springframework.jdbc.core.JdbcTemplate.class)
         );
     }
 

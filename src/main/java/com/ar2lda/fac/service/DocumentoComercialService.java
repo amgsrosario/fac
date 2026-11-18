@@ -428,6 +428,10 @@ public class DocumentoComercialService {
         try {
             authorization.require(PermissaoFuncional.DOCUMENTO_ANULAR);
             validatePodeAnular(documento);
+            if ("FR".equals(documento.getProjectionExternalType())) {
+                throw new ConflictException("A FR exige o circuito próprio de anulação");
+            }
+
             if (motivo.length() < 5 || motivo.length() > 500) {
                 throw new BadRequestException("Motivo da anulacao deve ter entre 5 e 500 caracteres");
             }

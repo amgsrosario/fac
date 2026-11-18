@@ -1,170 +1,18 @@
 package com.ar2lda.fac.fiscal.catalog;
 
-import com.fasterxml.jackson.databind.*;
-import com.ar2lda.fac.testinfra.FiscalSignatureTestConfiguration;
-import com.ar2lda.fac.fiscal.catalog.FiscalCatalog;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.*;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.web.servlet.*;
 import org.springframework.http.MediaType;
-import java.nio.charset.StandardCharsets;
+import org.springframework.test.web.servlet.MvcResult;
+
 import java.nio.file.*;
 import java.util.*;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** One committed request journey. No enclosing test transaction. Synthetic signer only. */
-@SpringBootTest(properties={"fac.security.enabled=true","spring.jpa.show-sql=false","fac.demo.seed-on-startup=false"})
-@AutoConfigureMockMvc
-@org.springframework.test.context.ActiveProfiles({"test","fr-inactive-lab","fr-projection-test"})
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@EnabledIfEnvironmentVariable(named="M03_DISPOSABLE",matches="true")
-@Import({ProjectedFrIntegrationTests.CatalogFixture.class, FiscalSignatureTestConfiguration.class, ProjectedFrIntegrationTests.TestEndpoint.class})
-class ProjectedFrIntegrationTests {
-    @Autowired org.springframework.transaction.PlatformTransactionManager transactionManager;
-    static final String DEFINITION = """
-        {"schemaVersion":1,"fiscalCode":"FT","revision":1,"semantics":{"allowedConfigurations":[
-        {"codigoFiscal":"FT","areaGestao":2,"entidade":1,"sinalContabilistico":1,"liquidacaoImediata":false}]}}
-        """;
-    static final String FR_DEFINITION="""
-        {"schemaVersion":2,"fiscalCode":"FT","revision":9000100,"semantics":{"specialization":"FR","externalType":"FR","documentLabel":"Fatura-recibo","allowedConfigurations":[{"codigoFiscal":"FT","areaGestao":2,"entidade":1,"sinalContabilistico":1,"liquidacaoImediata":true}]}}
-        """;
-    @TestConfiguration
-    static class CatalogFixture {
-        @Bean @Primary FiscalCatalog governedFixture(JdbcTemplate db) {
-            String manifest = "{\"schemaVersion\":1,\"revisions\":[" + DEFINITION
-                + ","+FR_DEFINITION+"],\"creationBindings\":{\"ftDeferred\":{\"fiscalCode\":\"FT\",\"revision\":1},\"frImmediate\":{\"fiscalCode\":\"FT\",\"revision\":9000100}}}";
-            return new FiscalCatalog(db,new ByteArrayResource(manifest.getBytes(StandardCharsets.UTF_8)));
-        }
-    }
-    @org.springframework.web.bind.annotation.RestController
-    @org.springframework.context.annotation.Profile("fr-projection-test")
-    static class TestEndpoint {
-        private final com.ar2lda.fac.financial.FinancialFrIssuer issuer;
-        TestEndpoint(com.ar2lda.fac.financial.FinancialFrIssuer issuer){this.issuer=issuer;}
-        @org.springframework.web.bind.annotation.PostMapping("/_test/fr-emission/{key}")
-        @org.springframework.security.access.prepost.PreAuthorize("@functionalAuthorization.has(T(com.ar2lda.fac.model.PermissaoFuncional).DOCUMENTO_EMITIR)")
-        com.ar2lda.fac.financial.FinancialFrIssuer.Issued issue(@org.springframework.web.bind.annotation.PathVariable String key,
-            @org.springframework.web.bind.annotation.RequestBody com.ar2lda.fac.financial.FinancialFrIssuer.Request request){return issuer.issueProjected(key,request);}
-    }
-    @Autowired com.ar2lda.fac.financial.FinancialFrIssuer issuer;
-    @Autowired com.ar2lda.fac.financial.FinancialCore core;
-    @Autowired GovernedFrConfiguration configurations;
-    @Autowired com.ar2lda.fac.service.DocumentoComercialService commercial;
-    @Autowired com.ar2lda.fac.financial.FinancialQueries queries;
-    @Autowired org.springframework.transaction.support.TransactionTemplate tx;
-    @org.springframework.boot.test.mock.mockito.SpyBean FiscalSignatureTestConfiguration.TestSource signer;
-    @Autowired JdbcTemplate db;
-    @Autowired MockMvc http;
-    @Autowired ObjectMapper json;
-    @Autowired PasswordEncoder encoder;
-    String admin;
-    long customer,family;
-    JsonNode body(MvcResult r) throws Exception {return json.readTree(r.getResponse().getContentAsByteArray());}
-    org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder auth(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder r,String token){return r.header("Authorization","Bearer "+token);}
-    String login(String code) throws Exception {
-        return body(http.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
-            .content("{\"username\":\""+code+"\",\"password\":\"Journey8!Fixture\"}"))
-            .andExpect(status().isOk()).andReturn()).get("token").asText();
-    }
-    @BeforeAll void fixture() throws Exception {
-        assertThat(db.queryForObject("select current_database()",String.class)).startsWith("tuuli_fr_").endsWith("_test");
-        assertThat(db.queryForObject("select system_identifier::text from pg_control_system()",String.class)).isEqualTo(System.getenv("M03_EXPECTED_CLUSTER"));
-        db.update("insert into codpostal(id,nome) values('1000-010','Sintetico') on conflict do nothing");
-        db.update("insert into transporte(id,nome) values('M3T','Sintetico')");
-        db.update("insert into armazem(id,nome,morada,id_codpostal,localidade,id_pais) values('M3A','Sintetico','Rua Teste','1000-010','Sintetico','PT')");
-        db.update("insert into mpagamento(id,nome) values('M3P','Sintetico')");
-        family=db.queryForObject("insert into familia(descricao) values('Familia sintetica M03') returning id",Long.class);
-        for(var row:List.of(new String[]{"M3ADMIN","ADMINISTRADOR"},new String[]{"M3OPER","OPERADOR"},new String[]{"M3READ","CONSULTA"})) {
-            db.update("insert into utilizador(codigo,nome,email,password_hash,inativo,papel) values(?,?,?,?,false,?)",row[0],"Synthetic",row[0].toLowerCase()+"@example.test",encoder.encode("Journey8!Fixture"),row[1]);
-        }
-        admin=login("M3ADMIN");
-        http.perform(auth(post("/empresa"),admin).contentType(MediaType.APPLICATION_JSON).content(company("Empresa sintetica M03"))).andExpect(status().isCreated());
-        customer=body(http.perform(auth(post("/clientes"),admin).contentType(MediaType.APPLICATION_JSON).content(client("Cliente sintetico M03"))).andExpect(status().isCreated()).andReturn()).get("id").asLong();
-        http.perform(auth(post("/artigos"),admin).contentType(MediaType.APPLICATION_JSON).content(article(true))).andExpect(status().isCreated());
-
-        db.update("insert into fiscal_catalog_revision values('FT',1,?::jsonb)", DEFINITION);
-        db.update("insert into fiscal_catalog_revision values('FT',9000100,?::jsonb)",FR_DEFINITION);
-        http.perform(auth(post("/tipos-documento"),admin).contentType(MediaType.APPLICATION_JSON).content("""
-            {"id":"GFT","descricao":"Synthetic governed FT","codigoFiscal":"FT","areaGestao":2,"entidade":1,"sinalContabilistico":1,"liquidacaoImediata":false}
-            """)).andExpect(status().isCreated());
-        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('GFT','SYNTH','MockMvc only',0,'SYNM402','2026-01-01'),('GFT','NOAT','Negative',0,null,null)");
-    }
-    String company(String name){return """
-        {"nome":"%s","nif":"509999999","morada":"Rua Teste","codPostalId":"1000-010","localidade":"Sintetico","paisId":"PT","capitalSocial":0,"matriculaRegistoComercial":"CRC SYNTH","cae":"62010","descricaoCae":"Sintetico","email":"company@example.test"}
-        """.formatted(name);}
-    String client(String name){return """
-        {"nome":"%s","morada":"Rua Teste","localidade":"Sintetico","nif":"509123456","email":"client@example.test","retencao":false,"inativo":false,"codPostalId":"1000-010","paisId":"PT","moedaId":"EUR","rivaId":"CON","transporteId":"M3T"}
-        """.formatted(name);}
-    String article(boolean create){return """
-        {%s"descricao":"Artigo sintetico M03","tipoArtigo":"SERVICO","unidade":"UN","familiaId":%d,"ivaCompraId":"NORMAL","ivaVendaId":"NORMAL","pvp":10,"inativo":false,"retencao":false}
-        """.formatted(create?"\"codigo\":\"M3ART\",":"",family);}
-    String line(String item,int quantity,int price){return "{\"artigoId\":\""+item+"\",\"quantidade\":"+quantity+",\"precoUnitario\":"+price+",\"tipoDesconto\":\"VALOR\",\"desconto\":0,\"tipoTaxaIvaId\":\"NORMAL\"}";}
-    String draft(String series,String item,int quantity){return """
-        {"documento":{"tipoDocumentoId":"GFT","serie":"%s","dataEmissao":"2026-11-03","clienteId":%d,"armazemCargaId":"M3A","moedaId":"EUR","rivaId":"CON","pPagamentoId":"P30","transporteId":"M3T"},"linha":%s}
-        """.formatted(series,customer,line(item,quantity,10));}
-    long create(String series,String token) throws Exception {return body(http.perform(auth(post("/documentos-comerciais"),token).contentType(MediaType.APPLICATION_JSON).content(draft(series,"M3ART",1))).andExpect(status().isCreated()).andReturn()).get("id").asLong();}
-    String doc(long id){return "/documentos-comerciais/"+id;}
-
-    Map<String,Object> state(long id) {
-        Map<String,Object> result = new LinkedHashMap<>();
-        result.put("document",db.queryForMap("select estado,valor_total,numero_documento,atcud,qr_payload from documento_comercial where id=?",id));
-        result.put("pending",db.queryForList("select id_cliente,valor_documento,valor_pendente from pendente where id_documento_comercial=?",id));
-        result.put("positions",db.queryForList("select cliente_id,nature,original,available,cancelled from financial_position order by id"));
-        result.put("series",db.queryForList("select serie,numerador from serie order by serie"));
-        for (String table:List.of("financial_operation","financial_document_origin","financial_receipt","financial_allocation","financial_component","documento_financeiro","linha_documento_financeiro")) {
-            result.put(table,db.queryForList("select * from "+table));
-        }
-        return result;
-    }
-    void record(String name,Object value) throws Exception {
-        Path dir=Path.of(System.getenv("M402_EVIDENCE"));
-        Files.createDirectories(dir);
-        json.writerWithDefaultPrettyPrinter().writeValue(dir.resolve(name+".json").toFile(),value);
-    }
-
-    @BeforeAll void immediateConfiguration() throws Exception {
-        authenticate();
-        configurations.create(config("FRE"));
-        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('FRE','TESTFR','No fiscal validity',0,'TESTFR01','2026-01-01'),('FRE','FRNOAT','Negative',0,null,null)");
-    }
-    com.ar2lda.fac.controller.dto.TipoDocumentoCreateDto config(String id) throws Exception {
-        return json.readValue("{\"id\":\""+id+"\",\"descricao\":\"Not a fiscal title\",\"codigoFiscal\":\"FT\",\"areaGestao\":2,\"entidade\":1,\"sinalContabilistico\":1,\"liquidacaoImediata\":true}",com.ar2lda.fac.controller.dto.TipoDocumentoCreateDto.class);
-    }
-    @BeforeEach void isolatedCustomer() {
-        customer=db.queryForObject("select nextval('cliente_id_seq')",Long.class);
-        db.update("insert into cliente(id,nome,morada,id_codpostal,nif,id_moeda,id_riva,id_transporte,id_pais) values(?,'Synthetic FR','Rua','1000-010',?,'EUR','CON','M3T','PT')",customer,Long.toString(900000000+customer));
-    }
-    @BeforeEach void authenticate() {
-        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
-            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("M3ADMIN","",List.of(
-                new org.springframework.security.core.authority.SimpleGrantedAuthority("DOCUMENTO_EMITIR"),new org.springframework.security.core.authority.SimpleGrantedAuthority("CONFIGURACAO_GERIR"))));
-    }
-    @AfterEach void clear() {org.springframework.security.core.context.SecurityContextHolder.clearContext();}
-    long immediateDraft(String series) throws Exception {
-        long created=body(http.perform(auth(post("/documentos-comerciais"),admin).contentType(MediaType.APPLICATION_JSON)
-            .content(draft(series.equals("SYNTH")?"TESTFR":series.equals("NOAT")?"FRNOAT":series,"M3ART",1).replace("GFT","FRE"))).andExpect(status().isCreated()).andReturn()).get("id").asLong();
-        authenticate();return created;
-    }
-    java.math.BigDecimal money(String s){return new java.math.BigDecimal(s);}
-    com.ar2lda.fac.financial.FinancialFrIssuer.Request request(long id) {
-        return new com.ar2lda.fac.financial.FinancialFrIssuer.Request(id,money("12.30"),"M3P","Synthetic cash declaration",false);
-    }
-    com.ar2lda.fac.financial.FinancialCore.Scope scope(){return new com.ar2lda.fac.financial.FinancialCore.Scope(1,customer,"EUR");}
-    String key(){return UUID.randomUUID().toString();}
-    long count(String table){return db.queryForObject("select count(*) from "+table,Long.class);}
-    void noSideEffects(long id,Map<String,Object> before){assertThat(state(id)).isEqualTo(before);}
-
+class ProjectedFrIntegrationTests extends ProjectedFrFixture {
     @Test @Order(1) void oneDocumentFullCashZeroResidualAndHistoricalDates() throws Exception {
         long id=immediateDraft("SYNTH");long receipts=count("documento_financeiro"),pending=count("pendente");
         org.mockito.Mockito.clearInvocations(signer);
@@ -448,4 +296,166 @@ class ProjectedFrIntegrationTests {
         assertThat(db.queryForObject("select count(*) from serie where serie='RRSER'",Long.class)).isEqualTo(1);
     }
 
+
+    @Test void correctionKeepsFourDistinctMovementsAndNoDisbursement() throws Exception {
+        long id = immediateDraft("SYNTH");
+        var issued = issuer.issueProjected(key(),request(id));
+        var original = state(id);
+        long cashOut = db.queryForObject("select count(*) from financial_component where kind='CASH_OUT'",Long.class);
+        long documents = count("documento_financeiro");
+        var fiscal = correctionIdentity(id);
+        assertCorrectionPdf(id, fiscal, false, false);
+        http.perform(auth(post(doc(id)+"/anular"),admin).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"motivo\":\"Emissão indevida\"}")).andExpect(status().isConflict());
+        authenticate();
+        assertThatThrownBy(() -> correction.voidInvoice(id,"Emissão indevida"))
+            .isInstanceOf(com.ar2lda.fac.exception.ConflictException.class);
+        assertThatThrownBy(() -> correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",false))
+            .isInstanceOf(com.ar2lda.fac.exception.BadRequestException.class);
+        noSideEffects(id,original);
+        assertThat(correctionAudit(id,"FALHA")).isEqualTo(2);
+        assertThat(correctionAudit(id,"SUCESSO")).isZero();
+
+        tx.executeWithoutResult(status -> {
+            correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true);
+            status.setRollbackOnly();
+        });
+        noSideEffects(id,original);
+        assertThat(correctionAudit(id,"SUCESSO")).isZero();
+        long receiptVoid = correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true);
+        assertThat(correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true)).isEqualTo(receiptVoid);
+        assertThatThrownBy(() -> correction.voidReceiptForFundsNeverReceived(id,"Motivo diferente",true))
+            .hasMessageContaining("Idempotency key reused");
+        assertCorrectionPdf(id,fiscal,true,false);
+        authenticate();
+        assertThat(correction.statement(id).stream().map(m -> m.kind().name()))
+            .containsExactly("INVOICE","RECEIPT","RECEIPT_VOID");
+        http.perform(auth(post(doc(id)+"/anular"),admin).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"motivo\":\"Emissão indevida\"}")).andExpect(status().isConflict());
+        authenticate();
+        assertThat(queries.position(scope(),issued.positionId()).residual()).isEqualByComparingTo("12.30");
+        assertThatThrownBy(() -> queries.balanceAt(scope(),java.time.LocalDate.of(2026,11,3)))
+            .hasMessageContaining("TUULI-FIN-TIME-001");
+
+        Long other = db.queryForObject("select id from cliente where id<>? order by id limit 1",Long.class,customer);
+        assertThat(queries.balanceAt(new com.ar2lda.fac.financial.FinancialCore.Scope(1,other,"EUR"),
+            java.time.LocalDate.of(2026,11,3)).netDebt()).isGreaterThanOrEqualTo(java.math.BigDecimal.ZERO);
+        var beforeInvoiceVoid = state(id);
+        tx.executeWithoutResult(status -> {
+            correction.voidInvoice(id,"Emissão indevida");
+            status.setRollbackOnly();
+        });
+        noSideEffects(id,beforeInvoiceVoid);
+        assertThat(correctionAudit(id,"SUCESSO")).isEqualTo(1);
+        long invoiceVoid = correction.voidInvoice(id,"Emissão indevida");
+        assertThat(correction.voidInvoice(id,"Emissão indevida")).isEqualTo(invoiceVoid);
+        assertThat(queries.position(scope(),issued.positionId()).state())
+            .isEqualTo(com.ar2lda.fac.financial.FinancialQueries.State.CANCELLED);
+        assertThat(db.queryForMap("select estado,projection_external_type from documento_comercial where id=?",id))
+            .containsEntry("estado","ANULADO").containsEntry("projection_external_type","FR");
+        assertThat(db.queryForObject("select count(*) from financial_component where kind='CASH_OUT'",Long.class)).isEqualTo(cashOut);
+        assertThat(count("documento_financeiro")).isEqualTo(documents);
+        assertThatThrownBy(() -> correction.voidInvoice(id,"Outro motivo de anulação"))
+            .hasMessageContaining("Idempotency key reused");
+        assertThat(correctionAudit(id,"SUCESSO")).isEqualTo(2);
+        assertThat(correctionAudit(id,"FALHA")).isEqualTo(4);
+        assertThat(correctionIdentity(id)).isEqualTo(fiscal);
+        assertCorrectionPdf(id,fiscal,true,true);
+        authenticate();
+        var movements=correction.statement(id);
+        assertThat(movements.stream().map(m -> m.kind().name())).containsExactly("INVOICE","RECEIPT","RECEIPT_VOID","INVOICE_VOID");
+        assertThat(movements.stream().map(m -> m.debtDelta().toPlainString())).containsExactly("12.30","-12.30","12.30","-12.30");
+        assertThat(movements.get(2).operation().reverseOfOperationId()).isEqualTo(issued.settlementId());
+        assertThat(movements.get(2).operation().components()).isEmpty();
+        assertThat(movements.get(2).operation().recordedAt()).isNotNull();
+        assertThat(movements.get(2).operation().actor()).isEqualTo("M3ADMIN");
+        assertThat(movements.get(2).operation().reason()).isEqualTo("Sem entrada de fundos");
+        assertThat(movements.get(2).operation().financialEffectDate()).isEmpty();
+        record("fr-correction-"+id,movements);
+    }
+
+    @Test void concurrentCorrectionsReturnOneOperationPerAct() throws Exception {
+        long id=immediateDraft("SYNTH");
+        issuer.issueProjected(key(),request(id));
+        for (boolean receipt : List.of(true,false)) {
+            var start=new java.util.concurrent.CountDownLatch(1);
+            try(var pool=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+                java.util.concurrent.Callable<Long> attempt=() -> {
+                    authenticate();
+                    try {
+                        start.await();
+                        return receipt ? correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true)
+                                       : correction.voidInvoice(id,"Emissão indevida");
+                    } finally { clear(); }
+                };
+                var first=pool.submit(attempt);
+                var second=pool.submit(attempt);
+                start.countDown();
+                assertThat(first.get(20,java.util.concurrent.TimeUnit.SECONDS))
+                    .isEqualTo(second.get(20,java.util.concurrent.TimeUnit.SECONDS));
+            }
+        }
+        assertThat(correction.statement(id)).hasSize(4);
+    }
+
+    private long correctionAudit(long id,String result) {
+        return db.queryForObject("""
+            select count(*) from auditoria_evento where entidade_tipo in ('FR_QUITACAO','FR_FACTURA')
+              and entidade_id=? and resultado=?
+            """,Long.class,Long.toString(id),result);
+    }
+
+    private void assertCorrectionPdf(long id,java.util.Map<String,Object> fiscal,boolean receiptVoided,boolean invoiceVoided) throws Exception {
+        var bytes=http.perform(auth(get(doc(id)+"/pdf"),admin)).andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsByteArray();
+        try(var pdf=org.apache.pdfbox.Loader.loadPDF(bytes)) {
+            String text=new org.apache.pdfbox.text.PDFTextStripper().getText(pdf);
+            assertThat(text).contains("Quitação integral na emissão",fiscal.get("atcud").toString(),
+                fiscal.get("numero_documento_completo").toString());
+            assertThat(text.contains("Estado actual: quitação anulada")).isEqualTo(receiptVoided);
+            assertThat(text.contains("DOCUMENTO ANULADO")).isEqualTo(invoiceVoided);
+            var codes=new ArrayList<com.ar2lda.fac.testinfra.PdfQrInspection.Qr>();
+            for (var page:pdf.getPages()) codes.addAll(com.ar2lda.fac.testinfra.PdfQrInspection.inspect(page));
+            assertThat(codes).anySatisfy(qr -> assertThat(qr.payload()).isEqualTo(fiscal.get("qr_payload")));
+        }
+    }
+
+    @Test void v32RejectsDirectWritesOutsideCorrectionAct() throws Exception {
+        long id=immediateDraft("SYNTH");
+        var issued=issuer.issueProjected(key(),request(id));
+        var original=state(id);
+        assertThatThrownBy(() -> db.update("update documento_comercial set estado='ANULADO',anulado=true where id=?",id))
+            .hasStackTraceContaining("Immediate invoice identity is immutable");
+        long creation=queries.position(scope(),issued.positionId()).creationOperationId();
+        assertThatThrownBy(() -> db.update("""
+            insert into financial_operation(empresa_id,cliente_id,moeda_id,request_key,request_payload,kind,actor,reason,reverse_of)
+            select empresa_id,cliente_id,moeda_id,?,'Direct test','REVERSE','M3ADMIN','Emissão indevida',id
+            from financial_operation where id=?
+            ""","FR_VOID_INVOICE:"+id,creation))
+            .hasStackTraceContaining("Immediate invoice reversal requires an approved documentary act");
+        assertThatThrownBy(() -> core.reverse(scope(),"FR_VOID_RECEIPT:"+id,issued.settlementId(),"Sem entrada de fundos","M3ADMIN"))
+            .hasStackTraceContaining("FR receipt correction cannot create a cash movement");
+        // Issue and attempt the invalid append in the same transaction so the
+        // append and origination guards let the V32 position guard decide.
+        long fresh=immediateDraft("SYNTH");
+        var freshBefore=state(fresh);
+        assertThatThrownBy(() -> tx.executeWithoutResult(status -> {
+            var freshAct=issuer.issueProjected(key(),request(fresh));
+            long wrongOperation=queries.position(scope(),freshAct.positionId()).creationOperationId();
+            db.update("""
+                insert into financial_allocation(operation_id,position_id,empresa_id,cliente_id,moeda_id,amount,effect,reverse_of)
+                select ?,position_id,empresa_id,cliente_id,moeda_id,amount,'RESTORE',id
+                from financial_allocation where operation_id=?
+                """,wrongOperation,freshAct.settlementId());
+        })).isInstanceOf(org.springframework.dao.DataAccessException.class)
+            .hasStackTraceContaining("Immediate invoice position is sealed");
+        noSideEffects(fresh,freshBefore);
+        correction.voidReceiptForFundsNeverReceived(id,"Sem entrada de fundos",true);
+        var afterReceipt=state(id);
+        assertThatThrownBy(() -> tx.executeWithoutResult(status -> {
+            correction.voidInvoice(id,"Emissão indevida");
+            db.update("update documento_comercial set atcud='TAMPER01-1' where id=?",id);
+        })).hasStackTraceContaining("Immediate invoice identity is immutable");
+        noSideEffects(id,afterReceipt);
+    }
 }

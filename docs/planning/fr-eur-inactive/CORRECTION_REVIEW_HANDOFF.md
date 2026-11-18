@@ -1,0 +1,17 @@
+# FR/EUR — correcção de quitação e anulação da factura
+
+Base `7008ad8ebdc56967b6403888c0e868a06d0ce802` (PR #59). Branch `codex/fr-eur-correction`. Código e testes `bc863beb45fd6937d9732b6aa029d61e27dbfabf`, tree `baeacf57d680f0f392f010a1d46f81601d13edd7`. Rever o delta a partir da base e as evidências abaixo.
+
+O acto de emissão mantém a factura e o SETTLE como registo do recibo interno e associa-os na mesma transacção. A correcção usa dois actos transaccionais. Primeiro, um utilizador autenticado e autorizado confirma expressamente que nunca recebeu os fundos e indica o motivo. A reversão da quitação repõe a afectação e liga-se ao SETTLE original. O motivo, utilizador e instante são persistidos na operação. A dívida fica restabelecida entre os dois actos. Depois, a anulação da factura neutraliza essa dívida e marca a FR como ANULADO, conservando os dados de emissão, número, ATCUD e identidade fiscal.
+
+O extracto interno apresenta quatro lançamentos com variações de dívida +12,30 / −12,30 / +12,30 / −12,30 EUR no caso ensaiado. Conserva o CASH_IN original no histórico, assinalado pela operação que o reverte. A correcção da quitação não cria componente monetária nem documento financeiro autónomo. A declaração do operador fica associada ao tipo de acto, sem inferência de ausência de fundos por dados da factura. A verificação externa de tesouraria e a devolução de fundos efectivamente recebidos ficam fora do circuito.
+
+A V32 mantém as regras gerais de reversão e acrescenta excepções específicas para as operações ligadas a FR projectada. A consistência diferida exige anulação do documento para confirmar a reversão da dívida. O bloqueio da linha da FR ordena os dois actos e a unicidade de reverse_of impede duplicação. As consultas correntes mostram os efeitos persistidos. A consulta histórica afectada recusa o cálculo com TUULI-FIN-TIME-001 por falta de data aprovada. A data técnica de registo é preservada.
+
+O adaptador só existe sob fr-inactive-lab e não tem endpoint operacional. C6 aberto. Claude Code deve rever em particular as excepções SQL, a identificação do acto de correcção, o controlo de autorização, a separação no extracto, a recusa enquanto o recibo está activo e a recusa histórica limitada aos âmbitos afectados. Confirmar concorrência, repetição e rollback de ambos os actos na evidência. O pedido fica disponível para encaminhamento, pois esta sessão não tem canal Claude Code.
+
+## Evidência
+
+150 testes aprovados em cinco classes. Projecção FR 21, contrato do perfil 4, recebimentos 80, FT governada 19 e integridade comercial 26. Zero falhas, erros e ignorados. A prova inclui o extracto antes e depois de ambos os actos, recusa com quitação activa, repetição concorrente e rollback explícito de cada acto. O resultado está fixado ao commit e à tree acima.
+
+Arquivo reservado TUULI em `FR-EUR-Correccao/2026-11-18/20261118-180531-6a4488`, 45/45 ficheiros verificados por tamanho e SHA-256. Manifesto SHA-256 `e41fccf0a89dcda290167f8a5e18a8c49af1cc46be399ef03987a847c60d0a8f`, com logs, XML, comandos, runner adaptado ao iniciador WSL, leitura dos movimentos e remoção de contentores, redes e segredo efémero. O primeiro ensaio PostgreSQL encontrou duas recusas da guarda de originação. O commit b9629c3 delimitou a excepção à reposição do SETTLE original. Logs da tentativa preservados localmente em `target/fr-projection-evidence/20261118-180057-ffea0e`. A interoperabilidade WSL interrompeu a limpeza automática dessa tentativa e a remoção foi completada por IDs e labels verificados, antes da repetição.
