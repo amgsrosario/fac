@@ -122,7 +122,8 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
             var fiscal=correctionIdentity(id);
             assertThat(xml).contains(fiscal.get("numero_documento_completo").toString(),fiscal.get("atcud").toString());
         }
-        Files.write(Path.of(System.getenv("M402_EVIDENCE"),"SAF-T-SYNTHETIC.xml"),result.xml());
+        Path evidenceDirectory=Files.createDirectories(Path.of(System.getenv("M402_EVIDENCE")));
+        Files.write(evidenceDirectory.resolve("SAF-T-SYNTHETIC.xml"),result.xml());
         assertThatThrownBy(() -> validate(xml.replace("<InvoiceType>FT</InvoiceType>","<InvoiceType>ZZ</InvoiceType>")
                 .getBytes(StandardCharsets.UTF_8))).isInstanceOf(AssertionError.class);
         // Schema accepts a wrong aggregate. Content reconciliation is an independent obligation.
@@ -157,6 +158,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
     }
 
     @Test @Order(2) void usesOneSnapshotAcrossConcurrentCommittedEmission() throws Exception {
+        db.update("update cliente set localidade='Lisboa' where id=?",customer);
         long next = create("SYNTH",admin);
         var inventoryDone = new CountDownLatch(1);
         var committed = new CountDownLatch(1);
