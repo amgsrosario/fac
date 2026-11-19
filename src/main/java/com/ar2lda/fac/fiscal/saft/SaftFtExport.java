@@ -32,9 +32,10 @@ public class SaftFtExport {
     public record Installation(LocalDate start, LocalDate end, LocalDate generated, ZoneId zone,
                                String taxEntity, String companyId, String producerTaxId, String productId,
                                String version, int certificate, Map<String,String> enabledTypes,
-                               boolean supplierRequired) {
+                               Set<String> disabledTypes, boolean supplierRequired) {
         public Installation {
             enabledTypes = Map.copyOf(enabledTypes);
+            disabledTypes = Set.copyOf(disabledTypes);
         }
     }
 
@@ -79,6 +80,12 @@ public class SaftFtExport {
         check(!installation.enabledTypes().isEmpty(), "Enabled documentary types required");
         installation.enabledTypes().forEach((code,type) ->
                 check("FT".equals(type), "Enabled type without coverage: " + code + "/" + type));
+        var coveredConfiguration = new HashSet<>(installation.enabledTypes().keySet());
+        check(Collections.disjoint(coveredConfiguration,installation.disabledTypes()),
+                "Type cannot be both enabled and disabled");
+        coveredConfiguration.addAll(installation.disabledTypes());
+        check(coveredConfiguration.equals(new HashSet<>(db.queryForList("select id from tipodocumento",String.class))),
+                "Configured documentary types differ from the installation inventory");
         var configuredFt = db.queryForList("""
                 select id from tipodocumento
                 where codigo_fiscal='FT' and not liquidacao_imediata and fiscal_catalog_revision is not null
@@ -152,6 +159,8 @@ public class SaftFtExport {
             Element item = invoice(sales,invoice,installation,signature,number,customerId);
             BigDecimal net = BigDecimal.ZERO;
             BigDecimal tax = BigDecimal.ZERO;
+            BigDecimal discount = BigDecimal.ZERO;
+            BigDecimal gross = BigDecimal.ZERO;
             Set<Long> lineNumbers = new HashSet<>();
             for (var row : invoiceLines) {
                 long lineNumber = id(row,"numero_linha");
@@ -163,7 +172,11 @@ public class SaftFtExport {
                 writeLine(item,row,facts,products,rates);
                 net = net.add(amount);
                 tax = tax.add(vat);
+                discount = discount.add(decimal(row,"valor_desconto"));
+                gross = gross.add(decimal(row,"valor_bruto"));
             }
+            same(discount,decimal(invoice,"valor_desconto"),number + ": unapportioned discount");
+            same(gross,decimal(invoice,"valor_bruto"),number + ": gross before discounts mismatch");
             same(tax,decimal(invoice,"valor_iva_total"),number + ": TaxPayable mismatch");
             same(tax.add(net),decimal(invoice,"valor_total"),number + ": GrossTotal mismatch");
             var totals = node(item,"DocumentTotals");
@@ -256,7 +269,13 @@ public class SaftFtExport {
                 "Unsupported fiscal line: " + row.get("id"));
         check(Set.of("P","S").contains(facts.productType()) && present(facts.productNumberCode()),
                 "Product classification/number missing: " + code);
-        check(Set.of("NOR","INT","RED").contains(facts.taxCode()),"TaxCode missing or unsupported: " + code);
+        String taxCode = switch (required(row,"tipo_taxa_iva_codigo")) {
+            case "NORMAL" -> "NOR";
+            case "INTERMEDIA" -> "INT";
+            case "REDUZIDA" -> "RED";
+            default -> throw new Refusal("Unsupported consolidated tax category: " + code);
+        };
+        check(taxCode.equals(facts.taxCode()),"TaxCode missing or inconsistent: " + code);
         var q = decimal(row,"quantidade");
         var net = decimal(row,"base_tributavel");
         var vat = decimal(row,"valor_imposto");

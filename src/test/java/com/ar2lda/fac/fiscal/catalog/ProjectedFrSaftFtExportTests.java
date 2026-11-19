@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.LongPredicate;
 
+import static com.ar2lda.fac.fiscal.saft.SaftFtExport.NAMESPACE;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,7 +32,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
     private static final LocalDate DAY = LocalDate.of(2026,11,3);
     private static final Installation INSTALLATION = new Installation(DAY.withDayOfYear(1),DAY,DAY,
             ZoneId.of("Europe/Lisbon"),"Global","CRC SYNTH","509999999","TUULI/Synthetic","0.0.1",1234,
-            Map.of("GFT","FT"),false);
+            Map.of("GFT","FT"),java.util.Set.of("FRE"),false);
 
     private record SignedFixture(String number, Signature signature) {}
     private final Map<Long,SignedFixture> signed = new ConcurrentHashMap<>();
@@ -197,8 +198,15 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         assertThatThrownBy(() -> exporter.export(INSTALLATION,withoutHash,this::validate)).hasMessageContaining("Hash/HashControl");
         var i=INSTALLATION;
         var supplier=new Installation(i.start(),i.end(),i.generated(),i.zone(),i.taxEntity(),i.companyId(),
-                i.producerTaxId(),i.productId(),i.version(),i.certificate(),i.enabledTypes(),true);
+                i.producerTaxId(),i.productId(),i.version(),i.certificate(),i.enabledTypes(),i.disabledTypes(),true);
         assertThatThrownBy(() -> exporter.export(supplier,withoutDate,this::validate)).hasMessageContaining("Supplier");
+        var uncovered=new Installation(i.start(),i.end(),i.generated(),i.zone(),i.taxEntity(),i.companyId(),
+                i.producerTaxId(),i.productId(),i.version(),i.certificate(),Map.of("GFT","FT","FRE","FR"),java.util.Set.of(),false);
+        assertThatThrownBy(() -> exporter.export(uncovered,withoutDate,this::validate)).hasMessageContaining("Enabled type without coverage: FRE/FR");
+        assertThatThrownBy(() -> exporter.export(INSTALLATION,evidence(id -> {
+            db.update("update empresa set nome=nome where id=1");
+            return true;
+        },true,true),this::validate)).hasStackTraceContaining("read-only transaction");
         long fr=immediateDraft("SYNTH");
         issuer.issueProjected(key(),request(fr));
         assertThatThrownBy(() -> exporter.export(INSTALLATION,withoutDate,this::validate))
