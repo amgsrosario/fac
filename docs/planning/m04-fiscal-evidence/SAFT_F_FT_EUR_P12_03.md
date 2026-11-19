@@ -2,6 +2,8 @@
 
 Continuação do inventário P12 R1 no arquivo reservado TUULI, SHA-256 `ea95cb9bfec3be23ab7603ce2ad4dacdad9a7aa4f12106113a52d3d187fdc5c8`. A nova decisão F/FT-EUR resolve o perfil de referência e o primeiro incremento, sem confirmar instalação, release comercial ou certificação.
 
+**Deliberação P12-01/P12-02.** Arquivo reservado TUULI, `M04-SAFT-Consolidacao/2026-11-19/2026-11-19_P12-01-P12-02_deliberacao-Administracao.md`. SHA-256 conferido com sidecar `459dc80ea41ce04ee204aa6bf57d862ce77be328f3dbc08f02922c63d156af33`. A distinção entre ensaio e entrega é especificada na minuta do executor.
+
 | Elemento | Evidência consultada | Comprovativo em falta e responsável | Ensaio / entrega |
 | --- | --- | --- | --- |
 | Emitente e instalação | Relatório #38 de 27/10/2026, inventário e restauro isolado. A base preparada tinha zero tipos e séries. M05 usa identidade sintética. | Ficha oficial do emitente e identificação da instalação/estabelecimento, centralização e exercício. Emitente e responsável fiscal, com validação administrativa. | Valores de ensaio isolados e identificados como sintéticos são suficientes na prova. A entrega requer fontes reais. |

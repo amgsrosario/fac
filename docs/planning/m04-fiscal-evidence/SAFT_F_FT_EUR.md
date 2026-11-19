@@ -2,6 +2,8 @@
 
 Base PR #61, merge `a68c4d5f911cadc68acba926fa4ffcc89f3d1247`. Fonte da deliberação: ordem da Administração disponibilizada nesta conversa em 19/11/2026, sem identificador externo. A Administração confirmou facturação própria, sem contabilidade estatutária integrada nem facturação por terceiros. Fixou F como perfil de referência, sujeito a confirmação de conformidade legal, e FT/EUR como primeiro incremento do exportador. A deliberação autoriza este contrato documental. As operações efectivamente habilitadas no arranque e a autorização de implementação têm gates próprios.
 
+**Registo integral da decisão.** Arquivo reservado TUULI, `M04-SAFT-Consolidacao/2026-11-19/2026-11-19_P12-01-P12-02_deliberacao-Administracao.md`. SHA-256 conferido com sidecar `459dc80ea41ce04ee204aa6bf57d862ce77be328f3dbc08f02922c63d156af33`. O perfil de referência e o primeiro incremento decorrem da deliberação. O mapeamento, os oráculos e o controlo de extracção são especificações do executor para revisão.
+
 ## Fontes campo a campo e critérios
 
 O [mapa R1](SAFT_FIELD_MAP.md) §§1–5.2 é parte normativa do contrato técnico: cada linha identifica origem persistida/derivada ou lacuna e respectiva regra. [N05 e N07](M4_12_SOURCES.json) fixam conteúdo e XSD; a [R1 monetária](M4_12_R1_CORRECTIONS.md) fixa os oráculos de preço e desconto. A tabela abaixo acrescenta a prova de aceitação para as linhas do mapa, agrupadas por oráculo. Campo condicional só pode ser omitido após determinar a sua inaplicabilidade. Uma ausência nunca substitui essa determinação.
@@ -24,17 +26,34 @@ O [mapa R1](SAFT_FIELD_MAP.md) §§1–5.2 é parte normativa do contrato técni
 
 O [inventário P12-03](SAFT_F_FT_EUR_P12_03.md) separa a prova sintética das condições comerciais.
 
+## Matriz de tabelas do perfil F
+
+Fonte: cópia N05 arquivada, SHA-256 `7ef94dfc0d1e8677f5c705abe301148e1cdedfb7a4305634259be095ca37a0d0`. Anexo I, notas gerais alíneas f) e i). A enumeração e distinção relativas à extracção parcelar constam da alínea i), [pp. 5–6](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_302_2016.pdf#page=5). A alínea f), p. 4, discrimina as tabelas por natureza e aplicabilidade. A referência à alínea i) não autoriza extracção mensal no incremento.
+
+| Tabelas | Aplicabilidade para facturação própria |
+| --- | --- |
+| Header, Customer, TaxTable | Fontes e critérios no mapa R1. |
+| Product, SalesInvoices | Abrangidos no incremento FT/EUR, com fontes e critérios acima. |
+| Supplier | Incluir quando exigível. A origem legítima dos fornecedores ainda não está demonstrada. Verificar a condição no inventário efectivo da instalação. |
+| MovementOfGoods, WorkingDocuments, Payments | Incluir quando aplicáveis ao perímetro efectivo. O incremento cobre SalesInvoices FT/EUR. |
+| GeneralLedgerAccounts, GeneralLedgerEntries | Excluídos do perfil F desta instalação de facturação própria sem contabilidade estatutária integrada. |
+
 ## Controlo de completude e recusa
 
 O futuro exportador recebe um manifesto aprovado da instalação com perfil, exercício, estabelecimento e lista efectiva de operações/tipos/famílias habilitados. A autorização de FT/EUR é âmbito do primeiro incremento e não prova que FT/EUR esgote a operação real. Cruzar o manifesto com a configuração efectiva, incluindo todos os caminhos de emissão. Um tipo habilitado sem cobertura impede declarar entrega fiscal completa, mesmo sem ocorrências.
 
 No mesmo snapshot transaccional read-only, inventariar o universo emitido do período/estabelecimento **antes** de filtrar FT/EUR. Consultar fontes comerciais e financeiras, incluindo anulados, e cada origem adicional habilitada ou histórica que o inventário da instalação indicar. Distinguir movimentos internos de documentos: o SETTLE associado à FR não cria Payments. Classificar por identidade persistida, incluindo desconhecidos e não-EUR, e reconciliar por família, identidade e estado com o conjunto de saída. Exigir correspondência exacta entre documentos elegíveis e linhas de cabeçalho exportadas, referências de mestre resolvidas e totais de controlo recalculados.
 
+Se Supplier for exigível e faltar uma fonte legítima, recusar a entrega fiscal e identificar Supplier, a condição de exigibilidade e a fonte em falta no diagnóstico, mesmo quando todas as FT estiverem cobertas. Testar este caso especificamente.
+
 Um documento emitido sem cobertura (por exemplo, RC/RG ou FR no lote FT/EUR), uma origem não inventariável ou um campo obrigatório por comprovar bloqueia a entrega integral. Emitir diagnóstico com família/tipo, identidade verificável do documento, campo/condição, causa e contagens discriminadas. Não publicar ficheiro fiscal parcial. Ensaiar também um documento fora do período, para verificar o limite da recusa, e evento concorrente durante a extracção, para provar a mesma fronteira de snapshot.
 
 ## Minuta de mandato executável
 
-- **Objectivo:** implementar uma extracção interna e read-only de F/FT diferida EUR, com selecção auditável, diagnóstico e validação. Trabalhar em branch isolada a partir da referência integrada confirmada depois da aprovação. O perímetro real e P12 aplicáveis continuam pré-condições do mandato. O desenho de fontes não autoriza novas escritas fiscais.
+- **Objectivo:** implementar uma extracção interna e read-only de F/FT diferida EUR, com selecção auditável, diagnóstico e validação. Trabalhar em branch isolada a partir da referência integrada confirmada depois da aprovação. O desenho de fontes não autoriza novas escritas fiscais.
+- **Pré-condições do ensaio descartável:** contrato aprovado, mandato de implementação, base integrada confirmada e dados sintéticos.
+- **Pré-condições da entrega comercial:** operações efectivamente habilitadas confirmadas, comprovativos P12-03, D-SIGN, fonte legítima para TaxPointDate e conformidade legal do perfil F confirmada. A falta destes comprovativos comerciais não bloqueia o ensaio sintético autorizado.
+- **Snapshot (O-1):** executar inventário, extracção e reconciliação numa única transacção PostgreSQL `REPEATABLE READ`, só de leitura. No teste concorrente, a transacção A realiza o inventário e sinaliza a transacção B, que confirma um documento elegível antes de A iniciar a extracção. A deve excluir o documento novo de ambas as leituras e manter identidades, contagens e totais reconciliados. Uma nova transacção deve ver o documento confirmado, comprovando que a ausência em A decorre do snapshot partilhado.
 - **Ambiente:** PostgreSQL descartável e identidades/assinatura exclusivamente sintéticas. Produzir somente ficheiros de ensaio rotulados. Fixar N07 por SHA-256, namespace e versão; usar validador compatível com XSD 1.1 e oráculos independentes para as regras N05. Registar versão, comandos, commit, logs e hashes, remover recursos próprios.
 - **Aceitação:** reutilizar [A12-01–16](SAFT_ACCEPTANCE.md). Validar documentos positivos, XSD inválido e XML estruturalmente válido mas semanticamente incoerente. Confrontar número/ATCUD, clientes/produtos/impostos, estados, linhas e montantes persistidos e apurados independentemente. Contar anulados, excluir os estados previstos das somas e preservar elementos originais. Testar fonte obrigatória em falta, família emitida sem cobertura, tipo habilitado sem cobertura, assinatura divergente, concorrência e consistência dos totais.
 - **Ausência de escritas:** transacção de extracção explicitamente read-only. Demonstrar por estado antes/depois das tabelas, ledger, auditoria documental e numeradores e por tentativa de escrita recusada. Nenhum endpoint público ou consumidor novo nesta fase. A prova de autorização e isolamento é parte da aceitação.
