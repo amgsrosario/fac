@@ -1,12 +1,16 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-11-18, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-11-19, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
-## FR/EUR — correcção da quitação, implementação local
+## M04 — contrato SAF-T consolidado para decisão P12
 
-Sobre o merge `7008ad8` (PR #59), a V32 local reutiliza o SETTLE como recibo interno. A correcção auditada da quitação sem fundos recebidos precede a anulação da factura. O extracto separa os quatro movimentos e as consultas históricas afectadas recusam o cálculo enquanto a data de efeito estiver pendente. 150 testes aprovados sobre `bc863be`, incluindo regressões FT/RC. Revisão Claude pendente. FR/EUR inactiva e C6 aberto. [Evidências e limites](../planning/fr-eur-inactive/CORRECTION_REVIEW_HANDOFF.md).
+A [consolidação M4-12 a M4-16](../planning/m04-fiscal-evidence/SAFT_CONSOLIDATION.md) retoma a R1 revista em `7efda5c` sobre a base integrada `e0b15a7`. Reutiliza evidências e aguarda revisão independente do delta.
 
-A R1 regista a decisão administrativa, completa a auditoria e distingue no PDF a quitação da emissão do seu estado actual. 225 testes aprovados sobre `7505860`, incluindo upgrade V31→V32 com FR emitida, guardas SQL e regressões FT/RC. [Confirmação incremental pendente](../planning/fr-eur-inactive/CORRECTION_R1_REVIEW_HANDOFF.md).
+**Caminho crítico:** confirmar a natureza/perfil P12-01 e as operações da instalação P12-02, comprovar identidade, release e enquadramento de certificação em P12-03, fechar as fontes obrigatórias das famílias aplicáveis e, sob mandato próprio, implementar e validar o exportador. Permanecem impeditivos o exportador ainda inexistente, a falta de prova da fonte produtiva de assinatura e versão histórica da chave e a falta de comprovação dos dados/configuração fiscal do release e da instalação. Assinatura produtiva, comunicação AT, homologação e activação ficam reservadas. Podem avançar autonomamente a preparação documental de fontes, a rastreabilidade e os critérios de aceitação, dentro dos mandatos vigentes.
+
+## FR/EUR — correcção da quitação integrada e inactiva
+
+[PR #60](https://github.com/amgsrosario/fac/pull/60), merge `e0b15a7a1a7c2c46604463d97c55380884c0dac2`. HEAD aprovado `466e45ed9a01279351154ad535055a7d3a50f90e`, Claude APPROVE 0/0/0, 23 testes R2 e 27/27 ficheiros conferidos. [CI aprovado](https://github.com/amgsrosario/fac/actions/runs/44375068662). A contrapartida sem saída de tesouraria precede a anulação da FR. FR/EUR permanece inactiva, C6 aberto e data de efeito pendente nas consultas históricas afectadas. [Evidências R2](../planning/fr-eur-inactive/CORRECTION_R2_REVIEW_HANDOFF.md).
 
 ## FR/EUR — identidade/projecção implementada localmente, inactiva (18/11/2026)
 

@@ -62,3 +62,7 @@ Lacunas de assinatura integral durável/versão da chave, TaxPointDate, regimes,
 [Correcções e fundamentos](M4_12_R1_CORRECTIONS.md): UnitPrice é derivado líquido de descontos efectivos de linha e cabeçalho e sem impostos; não é cópia de precoUnitario. Critérios de precisão, divisão periódica e TaxBase constam da R1, para confirmação independente. Descontos já aplicados afectam os líquidos e Line/SettlementAmount; SettlementDiscount/SettlementAmount documental refere acordos futuros, sem alterar GrossTotal actual. Não há fonte dedicada demonstrada desses acordos. PaymentTerms tem origem candidata própria, distinta de desconto/recebimento.
 
 P12-01/02/03 continuam pendentes no alcance aplicável, incluindo certificação expressa e famílias obrigatórias. Correcções propostas não são aprovação independente nem fecho do contrato. Sem implementação ou ensaios.
+
+## Consolidação sobre o PR #60
+
+O [delta M4-12 a M4-16](SAFT_CONSOLIDATION.md) complementa o mapa R1 e regista as fontes e lacunas após V31/V32. [P12](SAFT_PROFILE_DECISIONS.md#consolidação-de-19112026--factos-e-escolhas-remanescentes) mantém o fecho condicionado. As provas existentes sustentam as origens, sem validar um ficheiro SAF-T.
