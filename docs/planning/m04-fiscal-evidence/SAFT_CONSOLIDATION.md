@@ -40,6 +40,22 @@ N05 §§4.1.4.4–5 e correspondentes §§4.2/4.3, N07, N08 e dossier H2-06/H2-0
 
 ## M4-16 — estado actual e preservação documental
 
-SalesInvoices inclui os documentos dos estados A e F na contagem quando aplicáveis e exclui-os dos totais de controlo nos termos do §4.1. WorkingDocuments e Payments excluem A dos respectivos totais de controlo. MovementOfGoods segue o critério próprio de §4.2 para contagem e soma de quantidades. Rascunho interno sem emissão fica de fora. Testar a sequência com estados por família e distinguir controlo da tabela de totais históricos do documento preservado.
+SalesInvoices inclui os documentos dos estados A e F na contagem quando aplicáveis e exclui-os dos totais de controlo nos termos do §4.1. Para WorkingDocuments e Payments aplica-se o quadro abaixo. MovementOfGoods segue o critério próprio de §4.2 para contagem e soma de quantidades. Rascunho interno sem emissão fica de fora. Testar a sequência com estados por família e distinguir controlo da tabela de totais históricos do documento preservado.
+
+
+### Contagem e totais conferidos na cópia N05
+
+Conferência visual do exemplar AT DocBaseV/2016, 105 páginas, SHA-256 `7ef94dfc0d1e8677f5c705abe301148e1cdedfb7a4305634259be095ca37a0d0`. Os fragmentos exactos que identificam os estados são «(WorkStatus) seja do tipo “A”» e «(PaymentStatus) seja do tipo “A”». O verbo nas linhas de contagem é «incluindo» e nas quatro linhas de totais é «excluindo». Os índices e páginas abaixo permitem conferir cada ocorrência.
+
+| Família e campo | Página e parágrafo da cópia N05 | Contagem ou soma |
+| --- | --- | --- |
+| WorkingDocuments / NumberOfEntries | [p. 44, §4.3.1](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_302_2016.pdf#page=44) | Conta todos os documentos da selecção, incluindo WorkStatus A e F. |
+| WorkingDocuments / TotalDebit | [p. 45, §4.3.2](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_302_2016.pdf#page=45) | Soma DebitAmount (§4.3.4.14.13), excluindo A. F contribui. |
+| WorkingDocuments / TotalCredit | p. 45, §4.3.3 | Soma CreditAmount (§4.3.4.14.14), excluindo A. F contribui. |
+| Payments / NumberOfEntries | [p. 54, §4.4.1](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_302_2016.pdf#page=54) | Conta os recibos emitidos seleccionados, incluindo PaymentStatus A. |
+| Payments / TotalDebit | p. 54, §4.4.2 | Soma DebitAmount (§4.4.4.14.4), excluindo A. |
+| Payments / TotalCredit | p. 54, §4.4.3 | Soma CreditAmount (§4.4.4.14.5), excluindo A. |
+
+**WorkStatus F é contado e contribui para ambos os totais conforme os montantes das suas linhas.** A exclusão A/F de SalesInvoices não se transfere para WorkingDocuments. O estado F aparece em §4.3.4.3.1, p. 45. Payments usa os estados próprios, com N e A em §4.4.4.9.1, p. 55.
 
 FR activa no sentido documental continua emitida entre os dois actos, com quitação interna anulada e estado fiscal da factura preservado. Só a anulação documental V32 origina InvoiceStatus A. Usar a data, motivo e actor da transição documentada, sem reescrever identidade, assinatura, ATCUD ou QR. O estado técnico da quitação não fabrica PaymentStatus A nem fecha a data de efeito financeiro, ainda pendente nas consultas históricas afectadas.

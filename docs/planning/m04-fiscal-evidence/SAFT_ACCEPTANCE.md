@@ -21,6 +21,15 @@
 | A12-15 | Autorização/empresa/período e protecção do ficheiro financeiro; sem endpoint público não autorizado; cancelamento não altera dados | Testes de permissões/isolation e gestão dos artefactos próprios no futuro mandato; nenhuma conta/dado real nos ensaios |
 | A12-16 | Relatório acompanha versão do esquema, release, origens, selecção, contagens, erros e hashes; revisão independente do HEAD exacto | Sem declarar novo resultado em commit apenas documental; CI mínimo não prova o contrato fiscal completo |
 
+### Oráculos adicionais de contagem e totalização por família
+
+Detalhe normativo e páginas em [SAFT_CONSOLIDATION.md](SAFT_CONSOLIDATION.md). Preparar dados sintéticos com débitos e créditos distintos em linhas próprias.
+
+- **WorkingDocuments (§§4.3.1–3):** com N a débito/crédito 10/1, F a 20/2 e A a 40/4, esperar NumberOfEntries 3, TotalDebit 30 e TotalCredit 3. O caso deve falhar se F for omitido da contagem ou de qualquer soma.
+- **Payments (§§4.4.1–3):** com N a débito/crédito 10/1 e A a 40/4, esperar NumberOfEntries 2, TotalDebit 10 e TotalCredit 1. O caso deve falhar se A desaparecer da contagem ou contribuir para qualquer soma.
+
+Estes valores são oráculos futuros. Conferir também que os documentos anulados conservam os valores originais. A exclusão afecta os totais de controlo.
+
 ## Menor sequência proposta, sem a executar
 
 1. Decidir/rever perfil e contrato, resolver inputs obrigatórios ou delimitar casos recusados de forma legítima. Não escolher data/regime por conveniência nem alterar mestres existentes.
