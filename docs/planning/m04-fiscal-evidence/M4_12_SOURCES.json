@@ -1,0 +1,133 @@
+{
+  "date": "2026-11-13",
+  "starting_head": "1e79e878ef459958bc7ec8d5c9b3cf9c94e379c6",
+  "integrated_base": "f15388d0ac926cc39082869e898d5ef9998059f7",
+  "branch": "codex/m04-continuity-post-m404",
+  "nature": "Read-only documentary mapping; no SQL, tests, XML export, validator installation or activation",
+  "reused_sources": [
+    {
+      "id": "N05",
+      "file": "/home/arosario/tuuli-backups/h2-04/2026-10-28-sources/portaria302-2016.pdf",
+      "sha256": "7ef94dfc0d1e8677f5c705abe301148e1cdedfb7a4305634259be095ca37a0d0",
+      "version": "Portaria302/2016, exemplar AT DocBaseV/2016, 105 páginas; capa refere Rectificação2-A/2017",
+      "sections": [
+        "Anexo I notas gerais a-i",
+        "1.1-1.22",
+        "2.2/2.4/2.5",
+        "4.1.1-4.1.4"
+      ],
+      "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Portaria_302_2016.pdf"
+    },
+    {
+      "id": "N07",
+      "file": "/home/arosario/tuuli-backups/m04/2026-11-04/saftpt1.04_01.xsd",
+      "sha256": "292c0ab4611e3f5a0cdf2abb4e62d9bd41254dc2e76a1fae4d35a8b132d79350",
+      "version": "1.04_01",
+      "url": "https://info.portaldasfinancas.gov.pt/apps/saft-pt04/saftpt1.04_01.xsd",
+      "first_retrieved": "2026-11-04"
+    }
+  ],
+  "official_text_consultation": "Passagens N05 conferidas no leitor web oficial em13-11-2026; não se afirma identidade byte a byte de novo download, pois foram reutilizados os originais arquivados",
+  "code": [
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/Empresa.java",
+      "sha256": "8d96cf7473eb1bc7594b26e3ae1efe1e6dcefeb5e781a624f9494f0fcdb3141b"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/Cliente.java",
+      "sha256": "8bb0990704151d29ca16120655c54f3f3570dd483ae6dd4f0c778ab4d849266c"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/Artigo.java",
+      "sha256": "1adec822c38f6f83714c368431d33dd86370af3a00b5a4fa48a11451f17cd8ae"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/TipoArtigo.java",
+      "sha256": "94515ba509f0fea8a702ae11e2a7886a1324246972c456f380a65cc151da772d"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/DocumentoComercial.java",
+      "sha256": "1e80c6a17cf413aca6951c8a529c1d7b705d75823cb7c2c3ce412204130e17ac"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/LinhaDocumentoComercial.java",
+      "sha256": "06ff920bddc20f0d3d0289fc3d9a8a488bb65836e0e050db300ac7146e139b99"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/RIvaTaxa.java",
+      "sha256": "368d494ae7de11ca881a5f3e45d8d8178df9fa01ba44b48c3fa680c675b121a1"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/TaxaIvaTerritorial.java",
+      "sha256": "e60d00cdec1357ee94c369adaec177c29d2ba650244ab29ed66fff91c95ad7e6"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/TipoTaxaIva.java",
+      "sha256": "0e917899b1f59547744130b3e13e2280d7e11d00b4064e18dae447d944caf866"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/IvaSaft.java",
+      "sha256": "38d9b5ee93c60f286ce55e087445d96e392a042fdb2aea947a1e78560c1b12f9"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/model/Pais.java",
+      "sha256": "b282b03399400a62e23f0be61b1b01de9daf4a815fce7319286eed79e14f8cd5"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/service/FiscalDocumentSignatureSource.java",
+      "sha256": "ffdc3036922b42329bd67c95cea832907132d73d85823e63b53388a1fe67d363"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/service/FiscalQrIdentity.java",
+      "sha256": "1b06da754107e549e9b54132cd62bb1afd068646774b379c5d5aa18be8257c06"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/service/FiscalQrService.java",
+      "sha256": "62776478796dbf5a600742620b619fac0115466cd610c89fff6c0c6eb2040b9b"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/service/DocumentoComercialService.java",
+      "sha256": "4cf152ac22f151db4e2866db8153542c6253b6afc8e19496da47c8a4a6829689"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/repository/DocumentoComercialRepository.java",
+      "sha256": "1d353f0857fc5d4f09793ec093fe44059292533eb5f4877c9a1cef1c8a08e5a4"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/repository/LinhaDocumentoComercialRepository.java",
+      "sha256": "924715990325fa2f1098ab0e1ce5ebbb1ff38674da5a4ee07a64f9f65035c996"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/repository/ClienteRepository.java",
+      "sha256": "c5abbfd33d550c9a01f8651d9a1174bb3629703dd9d670ab5dc0be60d67bdc1d"
+    },
+    {
+      "file": "src/main/java/com/ar2lda/fac/repository/ArtigoRepository.java",
+      "sha256": "8e651564e723fe117568606ae9ca9665be0c048b2e95a7dafff433852c1a9d65"
+    }
+  ],
+  "limits": "No database content verified; field availability means model/persistence capability. Legal applicability, profile and reserved decisions not homologated. No proof that sources cover all subsequent legal changes.",
+  "R1": {
+    "date": "2026-11-13",
+    "startCommit": "dd44be99cf30f7e7746efd5bc8ad79f630cc85cd",
+    "review": "2026-11-13_TUULI_M4-12_revisao-independente_Claude.md",
+    "reviewSha256": "32dd54ce0fe3adcc80350aac99bcd695db857a2b65ef472045429eba3501b047",
+    "additionalReadOnlyCode": [
+      {
+        "path": "src/main/java/com/ar2lda/fac/service/MotorMonetario.java",
+        "sha256": "7d77251c3b048d9881b3124161ce0b3cff8b8f68f9c4e092137f83b51ea9222c"
+      },
+      {
+        "path": "src/main/java/com/ar2lda/fac/service/LinhaDocumentoComercialService.java",
+        "sha256": "be8751469031bafb8ae89805abe65672e8647c78ebc8c3792b79cae96997e185"
+      }
+    ],
+    "sourceSections": [
+      "N05 4.1.4.19.7/8/18",
+      "N05 4.1.4.20.5.1/2/3/4",
+      "N05 1.13,4.1.4.4/5,nota i)",
+      "N07 UnitPrice/SAFmonetaryType"
+    ],
+    "scope": "Documentary only; no XML, tests, SQL, Docker or implementation"
+  }
+}
