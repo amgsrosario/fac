@@ -33,33 +33,50 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
             ZoneId.of("Europe/Lisbon"),"Global","CRC SYNTH","509999999","TUULI/Synthetic","0.0.1",1234,
             Map.of("GFT","FT"),false);
 
+    private record SignedFixture(String number, Signature signature) {}
+    private final Map<Long,SignedFixture> signed = new ConcurrentHashMap<>();
+    private final java.security.KeyPair key = syntheticKey();
+
+    private static java.security.KeyPair syntheticKey() {
+        try {
+            var generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(1024);
+            return generator.generateKeyPair();
+        } catch (java.security.GeneralSecurityException e) { throw new IllegalStateException(e); }
+    }
+
+    // Capture a separate synthetic archival proof at emission, never regenerate it during export.
+    private void captureSignature(long id) throws Exception {
+        var number=correctionIdentity(id).get("numero_documento_completo").toString();
+        var signing=java.security.Signature.getInstance("SHA256withRSA");
+        signing.initSign(key.getPrivate());
+        signing.update(number.getBytes(StandardCharsets.UTF_8));
+        signed.put(id,new SignedFixture(number,new Signature(Base64.getEncoder().encodeToString(signing.sign()),"1")));
+    }
+
     private long issueFt(boolean voided) throws Exception {
         db.update("update cliente set localidade='Lisboa' where id=?",customer);
         long id = create("SYNTH",admin);
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType("application/json")
                 .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
+        captureSignature(id);
         if (voided) http.perform(auth(post(doc(id)+"/anular"),admin).contentType("application/json")
                 .content("{\"motivo\":\"Anulacao sintetica\"}")).andExpect(status().isOk());
         return id;
     }
 
     private Evidence evidence(LongPredicate check, boolean date, boolean hash) throws Exception {
-        var generator = KeyPairGenerator.getInstance("RSA");
-        generator.initialize(1024);
-        var keys = generator.generateKeyPair();
         return new Evidence() {
             public Signature signature(long id,String number) {
                 if (!hash) return null;
+                var stored=signed.get(id);
+                if (stored==null || !stored.number().equals(number)) return null;
                 try {
-                    byte[] message=number.getBytes(StandardCharsets.UTF_8);
                     var sig=java.security.Signature.getInstance("SHA256withRSA");
-                    sig.initSign(keys.getPrivate());
-                    sig.update(message);
-                    byte[] bytes=sig.sign();
-                    sig.initVerify(keys.getPublic());
-                    sig.update(message);
-                    assertThat(sig.verify(bytes)).isTrue();
-                    return new Signature(Base64.getEncoder().encodeToString(bytes),"1");
+                    sig.initVerify(key.getPublic());
+                    sig.update(number.getBytes(StandardCharsets.UTF_8));
+                    assertThat(sig.verify(Base64.getDecoder().decode(stored.signature().hash()))).isTrue();
+                    return stored.signature();
                 } catch (java.security.GeneralSecurityException e) { throw new IllegalStateException(e); }
             }
             public LineFacts line(long id,long line) { return new LineFacts(date?DAY.minusDays(1):null,"NOR","S","M3ART"); }
@@ -96,7 +113,10 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         assertThat(xml).contains("<NumberOfEntries>2</NumberOfEntries>",
                 "<InvoiceStatus>A</InvoiceStatus>","<InvoiceStatus>N</InvoiceStatus>",
                 "<TaxPointDate>2026-11-02</TaxPointDate>","<ProductCode>M3ART</ProductCode>",
-                "<CustomerID>"+customer+"</CustomerID>").doesNotContain("<Payments>");
+                "<CustomerID>"+customer+"</CustomerID>","<HashControl>1</HashControl>")
+                .doesNotContain("<Payments>");
+        assertThat(xml).contains(signed.get(normal).signature().hash(),signed.get(annulled).signature().hash());
+        verifyContent(result.xml(),2,"10",customer);
         for (long id: new long[]{normal,annulled}) {
             var fiscal=correctionIdentity(id);
             assertThat(xml).contains(fiscal.get("numero_documento_completo").toString(),fiscal.get("atcud").toString());
@@ -105,8 +125,34 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         assertThatThrownBy(() -> validate(xml.replace("<InvoiceType>FT</InvoiceType>","<InvoiceType>ZZ</InvoiceType>")
                 .getBytes(StandardCharsets.UTF_8))).isInstanceOf(AssertionError.class);
         // Schema accepts a wrong aggregate. Content reconciliation is an independent obligation.
-        validate(xml.replaceFirst("<TotalCredit>[^<]+</TotalCredit>","<TotalCredit>999</TotalCredit>")
-                .getBytes(StandardCharsets.UTF_8));
+        var invalidContent=xml.replaceFirst("<TotalCredit>[^<]+</TotalCredit>","<TotalCredit>999</TotalCredit>")
+                .getBytes(StandardCharsets.UTF_8);
+        validate(invalidContent);
+        assertThatThrownBy(() -> verifyContent(invalidContent,2,"10",customer)).isInstanceOf(AssertionError.class);
+    }
+
+    private static void verifyContent(byte[] xml,int invoices,String credit,long customer) throws Exception {
+        var parser=javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        parser.setNamespaceAware(true);
+        parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);
+        var document=parser.newDocumentBuilder().parse(new java.io.ByteArrayInputStream(xml));
+        assertThat(document.getElementsByTagNameNS(NAMESPACE,"Invoice").getLength()).isEqualTo(invoices);
+        assertThat(document.getElementsByTagNameNS(NAMESPACE,"Customer").getLength()).isOne();
+        assertThat(document.getElementsByTagNameNS(NAMESPACE,"Product").getLength()).isOne();
+        assertThat(document.getElementsByTagNameNS(NAMESPACE,"TaxTableEntry").getLength()).isOne();
+        for (String field: new String[]{"CustomerID","ProductCode","TaxCode"}) {
+            var nodes=document.getElementsByTagNameNS(NAMESPACE,field);
+            String expected=switch(field) { case "CustomerID" -> Long.toString(customer); case "ProductCode" -> "M3ART"; default -> "NOR"; };
+            for (int n=0;n<nodes.getLength();n++) assertThat(nodes.item(n).getTextContent()).isEqualTo(expected);
+        }
+        assertThat(new java.math.BigDecimal(document.getElementsByTagNameNS(NAMESPACE,"TotalCredit").item(0).getTextContent()))
+                .isEqualByComparingTo(credit);
+        for (var entry:Map.of("NetTotal","10","GrossTotal","12.30","TaxPayable","2.30","UnitPrice","10").entrySet()) {
+            var nodes=document.getElementsByTagNameNS(NAMESPACE,entry.getKey());
+            assertThat(nodes.getLength()).isEqualTo(invoices);
+            for (int n=0;n<nodes.getLength();n++)
+                assertThat(new java.math.BigDecimal(nodes.item(n).getTextContent())).isEqualByComparingTo(entry.getValue());
+        }
     }
 
     @Test @Order(2) void usesOneSnapshotAcrossConcurrentCommittedEmission() throws Exception {
@@ -119,6 +165,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
                 try {
                     http.perform(auth(post(doc(next)+"/emitir"),admin).contentType("application/json")
                             .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
+                    captureSignature(next);
                 } finally { committed.countDown(); }
                 return null;
             });
