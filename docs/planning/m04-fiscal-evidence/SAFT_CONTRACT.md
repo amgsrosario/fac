@@ -66,3 +66,7 @@ P12-01/02/03 continuam pendentes no alcance aplicável, incluindo certificação
 ## Consolidação sobre o PR #60
 
 O [delta M4-12 a M4-16](SAFT_CONSOLIDATION.md) complementa o mapa R1 e regista as fontes e lacunas após V31/V32. [P12](SAFT_PROFILE_DECISIONS.md#consolidação-de-19112026--factos-e-escolhas-remanescentes) mantém o fecho condicionado. As provas existentes sustentam as origens, sem validar um ficheiro SAF-T.
+
+## Perfil de referência decidido
+
+O [contrato F/FT-EUR](SAFT_F_FT_EUR.md) consolida o mapa revisto, a regra de completude e os oráculos para o mandato de implementação. F é o perfil de referência para facturação própria e FT/EUR é o primeiro incremento. O [inventário P12-03](SAFT_F_FT_EUR_P12_03.md) identifica comprovativos comerciais ainda pendentes.

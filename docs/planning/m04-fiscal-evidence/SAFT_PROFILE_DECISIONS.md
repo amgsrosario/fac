@@ -71,3 +71,7 @@ P12-03 deve registar expressamente a conclusão comprovada sobre certificação 
 **Dossier mínimo por obter em P12-03.** Identificação autorizada do emitente, estabelecimento/centralização e período, identificação do produtor/programa, SHA Git e SHA-256 do binário de release, enquadramento e obrigação de certificação validados, prova do estado e do número de certificado quando aplicável e correspondência desse acto com o release. Seguir depois a fonte de assinatura integral e versão histórica de chave do dossier D-SIGN. Os materiais de teste e os valores QR Q/R não preenchem estas lacunas.
 
 Fontes consultadas: N05 Anexo I notas gerais e §§1.4/1.13, N07, [M05 VALIDATION](../m05-isolated-pilot/VALIDATION.md), [D-SIGN/H2-08](../../fiscal/h2-08/DECISIONS.md), [correcção FR R2](../fr-eur-inactive/CORRECTION_R2_REVIEW_HANDOFF.md) e registos do estado operacional. Nenhuma escolha P12 foi ratificada neste delta.
+
+## Deliberação F / FT-EUR
+
+A Administração confirmou a facturação própria, sem contabilidade estatutária integrada nem facturação por terceiros. F fica como perfil de referência sujeito a confirmação de conformidade legal. FT/EUR delimita o primeiro incremento. A lista de operações efectivamente habilitadas na instalação continua a ser necessária para provar a completude. [Contrato e minuta](SAFT_F_FT_EUR.md) e [inventário P12-03](SAFT_F_FT_EUR_P12_03.md).
