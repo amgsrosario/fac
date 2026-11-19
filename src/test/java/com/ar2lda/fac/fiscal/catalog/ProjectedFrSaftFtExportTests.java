@@ -31,7 +31,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
     @Autowired SaftFtExport exporter;
     private static final LocalDate DAY = LocalDate.of(2026,11,3);
     private static final Installation INSTALLATION = new Installation(DAY.withDayOfYear(1),DAY,DAY,
-            ZoneId.of("Europe/Lisbon"),"Global","CRC SYNTH","509999999","TUULI/Synthetic","0.0.1",1234,
+            ZoneId.of("Europe/Lisbon"),"Global","CRC 123","509999999","TUULI/Synthetic","0.0.1",1234,
             Map.of("GFT","FT"),java.util.Set.of("FRE"),false);
 
     private record SignedFixture(String number, Signature signature) {}
@@ -191,7 +191,32 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         }
     }
 
-    @Test @Order(3) void refusesMissingEvidenceAndUnsupportedDocumentsBeforeFiltering() throws Exception {
+    @Test @Order(3) void discountedLineExportsNetUnitPriceAndKeepsCentTotals() throws Exception {
+        db.update("update cliente set localidade='Lisboa' where id=?",customer);
+        String discounted=line("M3ART",3,1).replace("\"desconto\":0","\"desconto\":2");
+        long id=body(http.perform(auth(post("/documentos-comerciais"),admin).contentType("application/json")
+                .content(draft("SYNTH","M3ART",1).replace(line("M3ART",1,10),discounted)))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        http.perform(auth(post(doc(id)+"/emitir"),admin).contentType("application/json")
+                .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
+        captureSignature(id);
+        var result=exporter.export(INSTALLATION,evidence(doc -> true,true,true),this::validate);
+        assertThat(result.count()).isEqualTo(4);
+        assertThat(result.totalCredit()).isEqualByComparingTo("21");
+        var parser=javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        parser.setNamespaceAware(true);
+        parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);
+        var document=parser.newDocumentBuilder().parse(new java.io.ByteArrayInputStream(result.xml()));
+        var invoice=(org.w3c.dom.Element)document.getElementsByTagNameNS(NAMESPACE,"Invoice").item(3);
+        for (var entry:Map.of("UnitPrice","0.333333333333","CreditAmount","1","SettlementAmount","2",
+                "NetTotal","1","TaxPayable","0.23","GrossTotal","1.23").entrySet()) {
+            assertThat(new java.math.BigDecimal(invoice.getElementsByTagNameNS(NAMESPACE,entry.getKey()).item(0).getTextContent()))
+                    .isEqualByComparingTo(entry.getValue());
+        }
+        Files.write(Path.of(System.getenv("M402_EVIDENCE"),"SAF-T-discount-SYNTHETIC.xml"),result.xml());
+    }
+
+    @Test @Order(4) void refusesMissingEvidenceAndUnsupportedDocumentsBeforeFiltering() throws Exception {
         var withoutDate=evidence(id -> true,false,true);
         var withoutHash=evidence(id -> true,true,false);
         assertThatThrownBy(() -> exporter.export(INSTALLATION,withoutDate,this::validate)).hasMessageContaining("TaxPointDate");

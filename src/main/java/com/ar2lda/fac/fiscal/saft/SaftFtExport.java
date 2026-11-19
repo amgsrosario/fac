@@ -293,7 +293,7 @@ public class SaftFtExport {
         value(line,"ProductDescription",description);
         value(line,"Quantity",q);
         value(line,"UnitOfMeasure",required(row,"unidade"));
-        value(line,"UnitPrice",net.divide(q,6,RoundingMode.HALF_UP).stripTrailingZeros());
+        value(line,"UnitPrice",unitPrice(net,q));
         value(line,"TaxPointDate",facts.taxPointDate());
         value(line,"Description",description);
         value(line,"CreditAmount",net);
@@ -303,6 +303,14 @@ public class SaftFtExport {
         value(tax,"TaxCode",facts.taxCode());
         value(tax,"TaxPercentage",rate);
         if (discount.signum()>0) value(line,"SettlementAmount",discount);
+    }
+
+    private static BigDecimal unitPrice(BigDecimal net,BigDecimal quantity) {
+        try {
+            return net.divide(quantity).stripTrailingZeros();
+        } catch (ArithmeticException periodic) {
+            return net.divide(quantity,12,RoundingMode.HALF_UP).stripTrailingZeros();
+        }
     }
 
     private static void masters(Element master,Map<String,Customer> customers,Map<String,Product> products,Map<String,BigDecimal> rates) {
