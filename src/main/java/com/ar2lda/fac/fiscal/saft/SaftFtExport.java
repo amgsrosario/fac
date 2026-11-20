@@ -40,11 +40,15 @@ public class SaftFtExport {
     }
 
     public record Signature(String hash, String keyVersion) {}
-    public record LineFacts(LocalDate taxPointDate, String taxCode, String productType, String productNumberCode) {}
+    public record LineFacts(LocalDate taxPointDate, String taxCode, String productType, String productNumberCode, BigDecimal headerDiscountShare) {}
 
     /** The caller supplies explicit synthetic evidence in this increment. No lookup defaults. */
     public interface Evidence {
         Signature signature(long invoice, String number);
+        /** Resolve the documented historical key version independently of the candidate. */
+        boolean matchesHistoricalKeyVersion(long invoice, String number, String candidate);
+        /** Verify the candidate against the original signed payload and the historical public key. */
+        boolean verifiesHash(long invoice, String number, Signature candidate);
         LineFacts line(long invoice, long line);
         boolean isOwnNormalVatInvoice(long invoice);
     }
@@ -154,6 +158,9 @@ public class SaftFtExport {
             check(signature != null && present(signature.hash()) && present(signature.keyVersion()),
                     number + ": Hash/HashControl source missing");
             check(!"0".equals(signature.hash()) && !"0".equals(signature.keyVersion()),number + ": placeholder signature");
+            check(evidence.matchesHistoricalKeyVersion(id,number,signature.keyVersion()),
+                    number + ": HashControl does not match the historical key version");
+            check(evidence.verifiesHash(id,number,signature),number + ": Hash does not verify against original evidence");
             List<Map<String,Object>> invoiceLines = byInvoice.getOrDefault(id,List.of());
             check(!invoiceLines.isEmpty(),number + ": no lines");
             Element item = invoice(sales,invoice,installation,signature,number,customerId);
@@ -172,7 +179,7 @@ public class SaftFtExport {
                 writeLine(item,row,facts,products,rates);
                 net = net.add(amount);
                 tax = tax.add(vat);
-                discount = discount.add(decimal(row,"valor_desconto"));
+                discount = discount.add(decimal(row,"valor_desconto")).add(headerShare(facts));
                 gross = gross.add(decimal(row,"valor_bruto"));
             }
             same(discount,decimal(invoice,"valor_desconto"),number + ": unapportioned discount");
@@ -235,12 +242,13 @@ public class SaftFtExport {
     private static Element invoice(Element sales,Map<String,Object> r,Installation i,Signature s,String number,String customerId) {
         boolean voided = "ANULADO".equals(r.get("estado"));
         check(voided == Boolean.TRUE.equals(r.get("anulado")),number + ": inconsistent document status");
+        String systemEntry = timestamp(r,"momento_emissao",i,"SystemEntryDate",number);
         var inv = node(sales,"Invoice");
         value(inv,"InvoiceNo",number);
         value(inv,"ATCUD",required(r,"atcud"));
         var status = node(inv,"DocumentStatus");
         value(status,"InvoiceStatus",voided ? "A" : "N");
-        value(status,"InvoiceStatusDate",timestamp(r,voided ? "data_hora_anulacao" : "momento_emissao",i.zone()));
+        value(status,"InvoiceStatusDate",timestamp(r,voided ? "data_hora_anulacao" : "momento_emissao",i,"InvoiceStatusDate",number));
         if (voided) value(status,"Reason",required(r,"motivo_anulacao"));
         value(status,"SourceID",required(r,voided ? "anulado_por_utilizador_id" : "id_emissor"));
         value(status,"SourceBilling","P");
@@ -253,7 +261,7 @@ public class SaftFtExport {
         value(regimes,"CashVATSchemeIndicator",0);
         value(regimes,"ThirdPartiesBillingIndicator",0);
         value(inv,"SourceID",required(r,"id_emissor"));
-        value(inv,"SystemEntryDate",timestamp(r,"momento_emissao",i.zone()));
+        value(inv,"SystemEntryDate",systemEntry);
         value(inv,"CustomerID",customerId);
         return inv;
     }
@@ -280,7 +288,7 @@ public class SaftFtExport {
         var net = decimal(row,"base_tributavel");
         var vat = decimal(row,"valor_imposto");
         var rate = decimal(row,"percentagem_iva");
-        var discount = decimal(row,"valor_desconto");
+        var discount = decimal(row,"valor_desconto").add(headerShare(facts));
         check(q.signum()>0 && net.signum()>=0 && rate.signum()>0 && discount.signum()>=0,"Invalid fiscal line amounts");
         same(net,decimal(row,"valor_bruto").subtract(discount),"Discount reconciliation: " + code);
         same(net.add(vat),decimal(row,"total_linha"),"Line gross reconciliation: " + code);
@@ -303,6 +311,12 @@ public class SaftFtExport {
         value(tax,"TaxCode",facts.taxCode());
         value(tax,"TaxPercentage",rate);
         if (discount.signum()>0) value(line,"SettlementAmount",discount);
+    }
+
+    private static BigDecimal headerShare(LineFacts facts) {
+        BigDecimal share = facts.headerDiscountShare();
+        check(share == null || share.signum() >= 0,"Invalid header discount allocation");
+        return share == null ? BigDecimal.ZERO : share;
     }
 
     private static BigDecimal unitPrice(BigDecimal net,BigDecimal quantity) {
@@ -398,9 +412,10 @@ public class SaftFtExport {
         check(value!=null && present(value.toString()),field + ": source missing");
         return value.toString();
     }
-    private static String timestamp(Map<String,Object> r,String field,ZoneId zone) {
+    private static String timestamp(Map<String,Object> r,String field,Installation i,String xmlField,String number) {
         check(r.get(field) instanceof Timestamp,field + ": timestamp source missing");
-        var local = ((Timestamp)r.get(field)).toInstant().atZone(zone).toLocalDateTime().truncatedTo(ChronoUnit.SECONDS);
+        var local = ((Timestamp)r.get(field)).toInstant().atZone(i.zone()).toLocalDateTime().truncatedTo(ChronoUnit.SECONDS);
+        check(!local.toLocalDate().isAfter(i.generated()),number + ": " + xmlField + " after DateCreated");
         return java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").format(local);
     }
     private static <T> void consistent(Map<String,T> map,String key,T candidate,String field) {

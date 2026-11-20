@@ -30,6 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
     @Autowired SaftFtExport exporter;
     private static final LocalDate DAY = LocalDate.of(2026,11,3);
+    private static final String EMISSION = "2026-11-03T09:12:00";
+    private static final String ANNULMENT = "2026-11-03T17:45:00";
+    private static final String REASON = "Anulacao sintetica";
+    private final Map<Long,java.math.BigDecimal> headerShares = new ConcurrentHashMap<>();
     private static final Installation INSTALLATION = new Installation(DAY.withDayOfYear(1),DAY,DAY,
             ZoneId.of("Europe/Lisbon"),"Global","CRC 123","509999999","TUULI/Synthetic","0.0.1",1234,
             Map.of("GFT","FT"),java.util.Set.of("FRE"),false);
@@ -48,6 +52,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
 
     // Capture a separate synthetic archival proof at emission, never regenerate it during export.
     private void captureSignature(long id) throws Exception {
+        db.update("update documento_comercial set momento_emissao=?::timestamptz where id=?",EMISSION+"+00:00",id);
         var number=correctionIdentity(id).get("numero_documento_completo").toString();
         var signing=java.security.Signature.getInstance("SHA256withRSA");
         signing.initSign(key.getPrivate());
@@ -61,26 +66,46 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType("application/json")
                 .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
         captureSignature(id);
-        if (voided) http.perform(auth(post(doc(id)+"/anular"),admin).contentType("application/json")
-                .content("{\"motivo\":\"Anulacao sintetica\"}")).andExpect(status().isOk());
+        if (voided) {
+            db.update("""
+                insert into utilizador(codigo,nome,email,password_hash,inativo,papel)
+                select 'M3VOID','Synthetic reviewer','void@example.test',password_hash,false,papel
+                from utilizador where codigo='M3ADMIN'
+                """);
+            http.perform(auth(post(doc(id)+"/anular"),login("M3VOID")).contentType("application/json")
+                    .content("{\"motivo\":\""+REASON+"\"}")).andExpect(status().isOk());
+            db.update("update documento_comercial set data_hora_anulacao=?::timestamptz where id=?",ANNULMENT+"+00:00",id);
+        }
         return id;
     }
 
     private Evidence evidence(LongPredicate check, boolean date, boolean hash) throws Exception {
+        return evidence(check,date,hash,java.util.function.UnaryOperator.identity());
+    }
+
+    private Evidence evidence(LongPredicate check,boolean date,boolean hash,java.util.function.UnaryOperator<Signature> candidate) {
         return new Evidence() {
             public Signature signature(long id,String number) {
                 if (!hash) return null;
                 var stored=signed.get(id);
                 if (stored==null || !stored.number().equals(number)) return null;
-                try {
-                    var sig=java.security.Signature.getInstance("SHA256withRSA");
-                    sig.initVerify(key.getPublic());
-                    sig.update(number.getBytes(StandardCharsets.UTF_8));
-                    assertThat(sig.verify(Base64.getDecoder().decode(stored.signature().hash()))).isTrue();
-                    return stored.signature();
-                } catch (java.security.GeneralSecurityException e) { throw new IllegalStateException(e); }
+                return candidate.apply(stored.signature());
             }
-            public LineFacts line(long id,long line) { return new LineFacts(date?DAY.minusDays(1):null,"NOR","S","M3ART"); }
+            public boolean matchesHistoricalKeyVersion(long id,String number,String version) {
+                var stored=signed.get(id);
+                return stored!=null && stored.number().equals(number) && stored.signature().keyVersion().equals(version);
+            }
+            public boolean verifiesHash(long id,String number,Signature value) {
+                try {
+                    var verifier=java.security.Signature.getInstance("SHA256withRSA");
+                    verifier.initVerify(key.getPublic());
+                    verifier.update(number.getBytes(StandardCharsets.UTF_8));
+                    return verifier.verify(Base64.getDecoder().decode(value.hash()));
+                } catch (java.security.GeneralSecurityException | IllegalArgumentException e) { return false; }
+            }
+            public LineFacts line(long id,long line) {
+                return new LineFacts(date?DAY.minusDays(1):null,"NOR","S","M3ART",headerShares.get(line));
+            }
             public boolean isOwnNormalVatInvoice(long id) { return check.test(id); }
         };
     }
@@ -93,6 +118,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
             String output=new String(p.getInputStream().readAllBytes(),StandardCharsets.UTF_8);
             assertThat(p.waitFor()).as(output).isZero();
             assertThat(output).contains("PASS: XSD 1.1");
+            System.out.print(output);
         } catch (Exception e) { throw new IllegalStateException(e); }
     }
 
@@ -118,6 +144,12 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
                 .doesNotContain("<Payments>");
         assertThat(xml).contains(signed.get(normal).signature().hash(),signed.get(annulled).signature().hash());
         verifyContent(result.xml(),2,"10",customer);
+        assertThat(xml).contains("<SystemEntryDate>"+EMISSION+"</SystemEntryDate>",
+                "<InvoiceStatusDate>"+ANNULMENT+"</InvoiceStatusDate>");
+        var statusStart=xml.indexOf("<InvoiceStatus>A</InvoiceStatus>");
+        assertThat(xml.substring(statusStart,xml.indexOf("</DocumentStatus>",statusStart)))
+            .contains("<SourceID>M3VOID</SourceID>","<InvoiceStatusDate>"+ANNULMENT+"</InvoiceStatusDate>",
+                    "<Reason>"+REASON+"</Reason>");
         for (long id: new long[]{normal,annulled}) {
             var fiscal=correctionIdentity(id);
             assertThat(xml).contains(fiscal.get("numero_documento_completo").toString(),fiscal.get("atcud").toString());
@@ -218,7 +250,67 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         Files.write(Path.of(System.getenv("M402_EVIDENCE"),"SAF-T-discount-SYNTHETIC.xml"),result.xml());
     }
 
-    @Test @Order(4) void refusesMissingEvidenceAndUnsupportedDocumentsBeforeFiltering() throws Exception {
+    @Test @Order(4) void refusesDivergentHashAndKeyBeforeValidatorAndRejectsFutureDates() throws Exception {
+        Validator mustNotRun = xml -> fail("XML reached the validator");
+        var badHash=evidence(id -> true,true,true,s -> new Signature(
+                (s.hash().startsWith("A") ? "B" : "A")+s.hash().substring(1),s.keyVersion()));
+        assertThatThrownBy(() -> exporter.export(INSTALLATION,badHash,mustNotRun)).hasMessageContaining("Hash does not verify");
+        var badKey=evidence(id -> true,true,true,s -> new Signature(s.hash(),"2"));
+        assertThatThrownBy(() -> exporter.export(INSTALLATION,badKey,mustNotRun)).hasMessageContaining("HashControl does not match");
+        long normal=db.queryForObject("select min(id) from documento_comercial where estado='EMITIDO'",Long.class);
+        long cancelled=db.queryForObject("select min(id) from documento_comercial where estado='ANULADO'",Long.class);
+        var good=evidence(id -> true,true,true);
+        db.update("update documento_comercial set momento_emissao='2026-11-04T00:00:00Z' where id=?",normal);
+        try {
+            assertThatThrownBy(() -> exporter.export(INSTALLATION,good,mustNotRun)).hasMessageContaining("SystemEntryDate after DateCreated");
+        } finally { db.update("update documento_comercial set momento_emissao=?::timestamptz where id=?",EMISSION+"+00:00",normal); }
+        db.update("update documento_comercial set data_hora_anulacao='2026-11-04T00:00:00Z' where id=?",cancelled);
+        try {
+            assertThatThrownBy(() -> exporter.export(INSTALLATION,good,mustNotRun)).hasMessageContaining("InvoiceStatusDate after DateCreated");
+        } finally { db.update("update documento_comercial set data_hora_anulacao=?::timestamptz where id=?",ANNULMENT+"+00:00",cancelled); }
+    }
+
+    @Test @Order(5) void preservesDocumentOutsidePeriodWithoutIncludingIt() throws Exception {
+        db.update("update cliente set localidade='Lisboa' where id=?",customer);
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('GFT','OUTSIDE','Synthetic',0,'OUTSID01','2026-01-01')");
+        long id=body(http.perform(auth(post("/documentos-comerciais"),admin).contentType("application/json")
+                .content(draft("OUTSIDE","M3ART",1).replace("2026-11-03","2026-11-04")))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        http.perform(auth(post(doc(id)+"/emitir"),admin).contentType("application/json")
+                .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
+        var result=exporter.export(INSTALLATION,evidence(doc -> true,true,true),this::validate);
+        assertThat(result.count()).isEqualTo(4);
+        assertThat(new String(result.xml(),StandardCharsets.UTF_8))
+                .doesNotContain(correctionIdentity(id).get("numero_documento_completo").toString());
+    }
+
+    @Test @Order(6) void reconcilesExplicitHeaderShareAndRefusesUnallocatedDiscount() throws Exception {
+        // Fixture of a historical consolidation with a proven 2 EUR header allocation.
+        db.update("update cliente set localidade='Lisboa' where id=?",customer);
+        db.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('GFT','SHARE','Synthetic',0,'SHARE001','2026-01-01')");
+        String discounted=line("M3ART",3,10).replace("\"desconto\":0","\"desconto\":3");
+        long id=body(http.perform(auth(post("/documentos-comerciais"),admin).contentType("application/json")
+                .content(draft("SYNTH","M3ART",1).replace("SYNTH","SHARE").replace(line("M3ART",1,10),discounted)))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        http.perform(auth(post(doc(id)+"/emitir"),admin).contentType("application/json")
+                .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
+        captureSignature(id);
+        long lineId=db.queryForObject("select id from linha_documento_comercial where id_documento_comercial=?",Long.class,id);
+        db.update("update documento_comercial set valor_desconto=5 where id=?",id);
+        assertThatThrownBy(() -> exporter.export(INSTALLATION,evidence(doc -> true,true,true),xml -> fail("Unexpected XML")))
+                .hasMessageContaining("unapportioned discount");
+        db.update("update linha_documento_comercial set base_tributavel=25,valor_imposto=5.75,total_linha=30.75 where id=?",lineId);
+        db.update("update documento_comercial set valor_iva_total=5.75,valor_total=30.75 where id=?",id);
+        headerShares.put(lineId,new java.math.BigDecimal("2.00"));
+        var result=exporter.export(INSTALLATION,evidence(doc -> true,true,true),this::validate);
+        assertThat(result.count()).isEqualTo(5);
+        assertThat(result.totalCredit()).isEqualByComparingTo("46");
+        assertThat(new String(result.xml(),StandardCharsets.UTF_8)).contains("<UnitPrice>8.333333333333</UnitPrice>",
+                "<SettlementAmount>5.000000</SettlementAmount>");
+        Files.write(Path.of(System.getenv("M402_EVIDENCE"),"SAF-T-header-share-SYNTHETIC.xml"),result.xml());
+    }
+
+    @Test @Order(7) void refusesMissingEvidenceAndUnsupportedDocumentsBeforeFiltering() throws Exception {
         var withoutDate=evidence(id -> true,false,true);
         var withoutHash=evidence(id -> true,true,false);
         assertThatThrownBy(() -> exporter.export(INSTALLATION,withoutDate,this::validate)).hasMessageContaining("TaxPointDate");
