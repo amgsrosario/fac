@@ -120,6 +120,7 @@ public class DocumentoComercialService {
         documento.setEstado(EstadoDocumentoComercial.RASCUNHO);
         documento.setFiscalMotorVersion(MotorFiscalService.VERSION);
         documento.setDataEmissao(dto.dataEmissao());
+        documento.setDataPrestacao(dto.dataPrestacao());
         documento.setCliente(cliente);
 
         applyEditableFields(documento, cliente, dto.moradaEnvioId(), dto.armazemCargaId(), dto.moedaId(),
@@ -332,6 +333,7 @@ public class DocumentoComercialService {
         DocumentoComercial documento = findDocumentoForUpdate(id);
         validateRascunho(documento);
         documento.setDataEmissao(dto.dataEmissao());
+        documento.setDataPrestacao(dto.dataPrestacao());
         applyEditableFields(documento, documento.getCliente(), dto.moradaEnvioId(), dto.armazemCargaId(), dto.moedaId(),
                 dto.rivaId(), dto.mPagamentoId(), dto.pPagamentoId(), dto.transporteId(), dto.dataCarga(),
                 dto.horaCarga(), dto.matricula(), dto.dataDescarga(), dto.horaDescarga(), dto.peso(),

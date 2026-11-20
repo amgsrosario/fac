@@ -2,11 +2,12 @@ import { test, expect, Page } from '@playwright/test';
 async function setup(page: Page, consumer: string, allowed: boolean, warningOnSave = false, options: {missing?: boolean; failSave?: boolean; forbidden?: boolean; delayed?: boolean; newDocument?: boolean; stale?: boolean} = {}) {
   let diagCalls = 0;
   const posts: unknown[] = [];
+  const savedDates: (string | null)[] = [];
   const session = { token:'synthetic',type:'Bearer',codigo:'TESTE',nome:'Teste',papel:'ADMINISTRADOR',
     permissoes:['DOCUMENTO_CONSULTAR','DOCUMENTO_EDITAR_RASCUNHO','DOCUMENTO_EMITIR','DOCUMENTO_CRIAR','DOCUMENTO_OBTER_PDF'] };
   await page.addInitScript(value => localStorage.setItem('fac.auth.session',JSON.stringify(value)),session);
   const doc = { id:9,tipoDocumentoId:'FT',tipoDocumentoDescricao:'Fatura',serie:'A',estado:'RASCUNHO',
-    dataEmissao:'2026-11-05',clienteId:1,clienteNome:'Synthetic customer',clienteNif:'509123456',
+    dataPrestacao:null as string | null,dataEmissao:'2026-11-05',clienteId:1,clienteNome:'Synthetic customer',clienteNif:'509123456',
     armazemCargaId:'1',moedaId:'EUR',rivaId:'CON',valorBruto:10,valorDesconto:0,valorIvaTotal:2.3,valorTotal:12.3,
     resultadoFiscal:{recalculoAviso:false} };
   const fiscal={valorBruto:10,valorDesconto:0,baseTributavel:10,taxaAplicavel:23,ivaCalculado:2.3,ivaLiquidado:2.3,totalLinha:12.3,tratamentoLiquidacao:'NORMAL'};
@@ -34,6 +35,11 @@ async function setup(page: Page, consumer: string, allowed: boolean, warningOnSa
     if(path.endsWith('/linhas/1') && route.request().method()==='PUT') {if(options.failSave)return send({message:'Falha sintética ao guardar'},400);doc.resultadoFiscal.recalculoAviso=warningOnSave; return send(line);}
     if(path.endsWith('/linhas')) return send([line]);
     if(path.endsWith('/impressao')) return send({documento:doc,linhas:[line]});
+    if(path==='documentos-comerciais/9' && route.request().method()==='PUT') {
+      doc.dataPrestacao=route.request().postDataJSON().dataPrestacao;
+      savedDates.push(doc.dataPrestacao);
+      return route.fulfill({status:204});
+    }
     if(path.startsWith('documentos-comerciais/9')) return send(doc);
     if(path==='documentos-comerciais' || path==='documentos-comerciais/resumos') return send({content:[doc],totalElements:1,totalPages:1,number:0});
     const catalogs: Record<string,unknown[]>={
@@ -45,7 +51,7 @@ async function setup(page: Page, consumer: string, allowed: boolean, warningOnSa
     return send({content:catalogs[path]??[],totalElements:(catalogs[path]??[]).length,totalPages:1,number:0});
   });
   await page.goto('/tests/emission-harness.html?consumer='+consumer+(options.newDocument?'&new=1':''));
-  return {posts,diagnostics:()=>diagCalls};
+  return {posts,savedDates,diagnostics:()=>diagCalls};
 }
 for(const consumer of ['legacy','list','editor']) {
   test(consumer+' shows known blocker and prevents issuance',async({page})=>{
@@ -169,4 +175,21 @@ test('editor discards a delayed diagnostic from the previous document',async({pa
   await page.waitForTimeout(900);
   await expect(page.getByText('Antigo contexto sintético',{exact:true})).toHaveCount(0);
   expect(state.posts).toHaveLength(0);
+});
+
+
+test('draft service date survives reload and clears as explicit null', async ({page}) => {
+  const state = await setup(page, 'editor', true);
+  const date = page.getByLabel('Data de prestação', {exact:true});
+  const save = page.getByRole('button', {name:'Guardar alterações', exact:true});
+  await date.fill('2026-11-07');
+  await save.click();
+  await expect.poll(() => state.savedDates).toEqual(['2026-11-07']);
+  await page.reload();
+  await expect(date).toHaveValue('2026-11-07');
+  await date.fill('');
+  await save.click();
+  await expect.poll(() => state.savedDates).toEqual(['2026-11-07', null]);
+  await page.reload();
+  await expect(date).toHaveValue('');
 });

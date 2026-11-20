@@ -86,10 +86,19 @@ class DocumentTypeImmutabilityTests {
             String financeBefore=db.queryForObject("select to_jsonb(d)::text from documento_financeiro d where id=?",String.class,financial);
             String commercialBefore=db.queryForObject("select to_jsonb(d)::text from documento_comercial d where id=?",String.class,commercial);
             var flyway=org.flywaydb.core.Flyway.configure().dataSource(url,user,password).load();
-            assertThat(flyway.migrate().migrationsExecuted).isEqualTo(5);
+            assertThat(flyway.migrate().migrationsExecuted).isEqualTo(9);
+            assertThat(db.queryForObject("""
+                    select num_nonnulls(projection_external_type, projection_catalog_code,
+                        projection_revision, projection_label, data_prestacao)
+                    from documento_comercial where id=?
+                    """, Integer.class, commercial)).isZero();
             assertThat(db.queryForObject("select configuracao_bloqueada from tipodocumento where id=?",Boolean.class,type)).isTrue();
             assertThat(db.queryForObject("select to_jsonb(d)::text from documento_financeiro d where id=?",String.class,financial)).isEqualTo(financeBefore);
-            assertThat(db.queryForObject("select to_jsonb(d)::text from documento_comercial d where id=?",String.class,commercial)).isEqualTo(commercialBefore);
+            assertThat(db.queryForObject("""
+                    select (to_jsonb(d) - array['projection_external_type', 'projection_catalog_code',
+                        'projection_revision', 'projection_label', 'data_prestacao']) = cast(? as jsonb)
+                    from documento_comercial d where id=?
+                    """, Boolean.class, commercialBefore, commercial)).isTrue();
             assertThatThrownBy(()->db.update("update tipodocumento set codigo_fiscal='NC' where id=?",type)).hasMessageContaining("bloqueada");
             assertThat(flyway.migrate().migrationsExecuted).isZero();
             flyway.validate();

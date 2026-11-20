@@ -172,6 +172,10 @@ public class DocumentoComercial {
     @Setter
     private LocalDate dataEmissao;
 
+    @Column(name = "data_prestacao")
+    @Setter
+    private LocalDate dataPrestacao;
+
     @Column(nullable = false)
     @Setter
     private LocalDate dataVencimento;

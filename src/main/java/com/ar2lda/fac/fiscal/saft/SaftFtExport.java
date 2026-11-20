@@ -40,7 +40,7 @@ public class SaftFtExport {
     }
 
     public record Signature(String hash, String keyVersion) {}
-    public record LineFacts(LocalDate taxPointDate, String taxCode, String productType, String productNumberCode, BigDecimal headerDiscountShare) {}
+    public record LineFacts(String taxCode, String productType, String productNumberCode, BigDecimal headerDiscountShare) {}
 
     /** The caller supplies explicit synthetic evidence in this increment. No lookup defaults. */
     public interface Evidence {
@@ -173,10 +173,12 @@ public class SaftFtExport {
                 long lineNumber = id(row,"numero_linha");
                 check(lineNumbers.add(lineNumber),number + ": duplicate LineNumber " + lineNumber);
                 var facts = evidence.line(id,id(row,"id"));
-                check(facts != null && facts.taxPointDate()!=null,number + ": TaxPointDate missing on line " + lineNumber);
+                check(facts != null,number + ": Line fiscal evidence missing on line " + lineNumber);
+                var taxPointDate = resolveTaxPointDate(invoice, row);
+                check(taxPointDate != null,number + ": TaxPointDate missing on line " + lineNumber);
                 BigDecimal amount = decimal(row,"base_tributavel");
                 BigDecimal vat = decimal(row,"valor_imposto");
-                writeLine(item,row,facts,products,rates);
+                writeLine(item,row,facts,taxPointDate,products,rates);
                 net = net.add(amount);
                 tax = tax.add(vat);
                 discount = discount.add(decimal(row,"valor_desconto")).add(headerShare(facts));
@@ -269,7 +271,7 @@ public class SaftFtExport {
     private record Customer(String nif,String name,String address,String city,String postal,String country) {}
     private record Product(String type,String description,String number) {}
 
-    private static void writeLine(Element invoice,Map<String,Object> row,LineFacts facts,
+    private static void writeLine(Element invoice,Map<String,Object> row,LineFacts facts,LocalDate taxPointDate,
                                   Map<String,Product> products,Map<String,BigDecimal> rates) {
         String code = required(row,"artigo_codigo");
         String description = required(row,"descricao");
@@ -302,7 +304,7 @@ public class SaftFtExport {
         value(line,"Quantity",q);
         value(line,"UnitOfMeasure",required(row,"unidade"));
         value(line,"UnitPrice",unitPrice(net,q));
-        value(line,"TaxPointDate",facts.taxPointDate());
+        value(line,"TaxPointDate",taxPointDate);
         value(line,"Description",description);
         value(line,"CreditAmount",net);
         var tax = node(line,"Tax");
@@ -311,6 +313,17 @@ public class SaftFtExport {
         value(tax,"TaxCode",facts.taxCode());
         value(tax,"TaxPercentage",rate);
         if (discount.signum()>0) value(line,"SettlementAmount",discount);
+    }
+
+    private static LocalDate resolveTaxPointDate(Map<String,Object> invoice, Map<String,Object> line) {
+        // The line query has no data_prestacao column until a line-level source is authorised.
+        Object value = line.get("data_prestacao");
+        if (value == null) value = invoice.get("data_prestacao");
+        if (value == null) value = invoice.get("data_emissao");
+        if (value == null || value instanceof LocalDate) return (LocalDate) value;
+        if (value instanceof java.sql.Date date) return date.toLocalDate();
+        throw new Refusal("TaxPointDate source has unexpected type " + value.getClass().getName()
+                + " for invoice " + invoice.get("id") + ", line " + line.get("id"));
     }
 
     private static BigDecimal headerShare(LineFacts facts) {

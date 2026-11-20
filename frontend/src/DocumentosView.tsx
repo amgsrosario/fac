@@ -36,6 +36,7 @@ type DocumentoComercial = {
   numeroDocumento: number | null;
   estado: string;
   dataEmissao: string;
+  dataPrestacao?: string | null;
   dataVencimento?: string;
   clienteId: number;
   clienteNome: string;
@@ -125,6 +126,7 @@ type DraftForm = {
   tipoDocumentoId: string;
   serie: string;
   dataEmissao: string;
+  dataPrestacao: string;
   clienteId: string;
   armazemCargaId: string;
   observacoes: string;
@@ -149,6 +151,7 @@ const emptyDraftForm: DraftForm = {
   tipoDocumentoId: "",
   serie: "",
   dataEmissao: todayIso(),
+  dataPrestacao: "",
   clienteId: "",
   armazemCargaId: "",
   observacoes: ""
@@ -450,6 +453,7 @@ export default function DocumentosView() {
           tipoDocumentoId: draftForm.tipoDocumentoId,
           serie: draftForm.serie,
           dataEmissao: draftForm.dataEmissao,
+          dataPrestacao: draftForm.dataPrestacao || null,
           clienteId: Number(draftForm.clienteId),
           moradaEnvioId: null,
           armazemCargaId: draftForm.armazemCargaId,
@@ -553,6 +557,7 @@ export default function DocumentosView() {
             </select>
           </Field>
           <Field label="Data de emissão"><input onChange={(event) => changeDraft("dataEmissao", event.target.value)} type="date" value={draftForm.dataEmissao} /></Field>
+          <Field label="Data de prestação"><input onChange={(event) => changeDraft("dataPrestacao", event.target.value)} type="date" value={draftForm.dataPrestacao} /></Field>
           <Field label="Cliente">
             <select ref={newDocumentClientRef} onChange={(event) => changeDraft("clienteId", event.target.value)} value={draftForm.clienteId}>
               <option value="">Selecionar</option>

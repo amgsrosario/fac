@@ -74,6 +74,13 @@ public class DocumentoComercialPdfService {
         }
     }
 
+    private String serviceDate(DocumentoComercialDto documento) {
+        if (documento.dataPrestacao() == null || documento.dataPrestacao().equals(documento.dataEmissao())) {
+            return "";
+        }
+        return "<br /><span class=\"muted\">Data de prestação " + date(documento.dataPrestacao()) + "</span>";
+    }
+
     private String quittance(DocumentoComercialDto documento) {
         if (documento.fiscalProjection() == null) return "";
         boolean voided = Boolean.TRUE.equals(db.queryForObject("""
@@ -175,7 +182,7 @@ public class DocumentoComercialPdfService {
                 %s
                 <table class="top"><tr>
                   <td class="company">%s%s</td>
-                  <td class="doc-title"><h1>%s</h1><strong>%s</strong><br /><span class="muted">Emitido em %s</span><br /><span class="muted">Vencimento %s</span></td>
+                  <td class="doc-title"><h1>%s</h1><strong>%s</strong><br /><span class="muted">Emitido em %s</span><br /><span class="muted">Vencimento %s</span>%s</td>
                 </tr></table>
 
                 <div class="box"><div class="section-title">Cliente</div><table class="info"><tr>
@@ -213,7 +220,7 @@ public class DocumentoComercialPdfService {
                 anulada,
                 logo(empresa), companyHeader(empresa),
                 esc(documento.fiscalProjection()==null?documento.tipoDocumentoDescricao():documento.fiscalProjection().documentLabel()), esc(displayNumber(documento)),
-                date(documento.dataEmissao()), date(documento.dataVencimento()),
+                date(documento.dataEmissao()), date(documento.dataVencimento()), serviceDate(documento),
                 esc(documento.clienteNome()), esc(documento.clienteNif()), address(documento.clienteMorada(), documento.clienteMorada1()),
                 esc(joinPostal(documento.clienteCodPostal(), documento.clienteLocalidade())),
                 esc(documento.moedaCodigo()), esc(documento.regimeIvaCodigo()), value(documento.mPagamentoId()), esc(documento.pPagamentoId()),
