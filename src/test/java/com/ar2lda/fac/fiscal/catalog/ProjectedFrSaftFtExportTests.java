@@ -383,6 +383,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
     }
 
     private long issueChronologyFixture(LocalDate day) throws Exception {
+        db.update("update cliente set localidade='Lisboa' where id=?", customer);
         var series = "R2-" + day.getMonthValue();
         db.update("""
                 insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at)
