@@ -10,6 +10,7 @@ import re
 import secrets
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -46,8 +47,12 @@ def git_identity():
                 status=call(["git", "status", "--porcelain=v1", "--untracked-files=all"]))
 
 
-def source(test):
+def source(test, ambiguities=None):
     matches = sorted((ROOT / "src/test/java").rglob(test + ".java"))
+    if len(matches) > 1 and ambiguities is not None:
+        ambiguities[test] = [
+            dict(path=path.relative_to(ROOT).as_posix(), sha256=sha(path)) for path in matches
+        ]
     require(len(matches) == 1, f"Class {test}: {len(matches)} matching sources")
     relative = matches[0].relative_to(ROOT).as_posix()
     subprocess.run(["git", "ls-files", "--error-unmatch", "--", relative], cwd=ROOT,
@@ -161,11 +166,9 @@ def run_class(options, docker, postgres, cluster, binding, test, index, expected
     database = f"{options.db_prefix}{index}_test"
     docker.run("exec", postgres, "createdb", "-U", "postgres", database)
     (stage / "persistent").mkdir()
-    reports = stage / "surefire"
     command = [options.maven, "-o", "-B", "-Dspring.profiles.active=test",
-               f"-Dtest={selected['qualified_class']}", f"-Dsurefire.reportsDirectory={reports}", "test"]
-    # Surefire's default reports path may be fixed by its plugin version; clear only
-    # the exact report for this class before running it to exclude stale results.
+               f"-Dtest={selected['qualified_class']}", "test"]
+    # Remove the exact default report before execution to exclude stale proof.
     old_report = ROOT / "target/surefire-reports" / f"TEST-{selected['qualified_class']}.xml"
     old_report.unlink(missing_ok=True)
     env = {key: os.environ[key] for key in ALLOWED_ENV if key in os.environ}
@@ -175,12 +178,21 @@ def run_class(options, docker, postgres, cluster, binding, test, index, expected
                M402_EVIDENCE=str(stage / "persistent"))
     save(stage / "command.json", command)
     with (stage / "test.log").open("w") as log:
-        status = subprocess.run(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT).returncode
+        process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=log,
+                                   stderr=subprocess.STDOUT, start_new_session=True)
+        try:
+            status = process.wait()
+        except BaseException:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+            raise
     after = git_identity()
     save(stage / "git-after.json", dict(**after, source=source(test)))
-    report = reports / old_report.name
-    if not report.is_file() and old_report.is_file():
-        report = stage / old_report.name
+    report = stage / old_report.name
+    if old_report.is_file():
         shutil.copy2(old_report, report)
     results = dict(test=test, exit_code=status, source=selected)
     if report.is_file():
@@ -205,6 +217,7 @@ def main():
     parser.add_argument("--db-prefix", required=True)
     parser.add_argument("--docker-command", default="docker")
     parser.add_argument("--maven", default="mvn")
+    parser.add_argument("--docker-wrapper-source", type=str)
     parser.add_argument("classes", nargs="+")
     options = parser.parse_args()
     os.umask(0o077)
@@ -214,7 +227,11 @@ def main():
     password, jwt = secrets.token_urlsafe(48), secrets.token_urlsafe(64)
     errors = []
     docker = None
-    expected = dict(sources={})
+    expected = dict(sources={}, ambiguous_sources={})
+    states = dict.fromkeys(options.classes, "not_executed")
+    completed = set()
+    result = "FAIL"
+    active = None
     try:
         require(all(re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", s) for s in (options.mission, options.docker_label)),
                 "Invalid mission or Docker label")
@@ -224,11 +241,21 @@ def main():
                 "Classes must be distinct simple Java class names")
         expected["git"] = git_identity()
         save(out / "git-before.json", expected["git"])
-        require(expected["git"]["branch"] == options.branch and not expected["git"]["status"],
-                "Expected branch and clean worktree required before Docker")
+        require(expected["git"]["branch"] == options.branch, "Wrong branch before Docker")
+        require(not expected["git"]["status"], "Dirty worktree before Docker")
         for test in options.classes:
-            expected["sources"][test] = source(test)
-        docker = Docker(shlex.split(options.docker_command), options.docker_label, stamp)
+            expected["sources"][test] = source(test, expected["ambiguous_sources"])
+        docker_command = shlex.split(options.docker_command)
+        if options.docker_wrapper_source:
+            wrapper = Path(options.docker_wrapper_source).resolve(strict=True)
+            require(any(Path(part).resolve() == wrapper for part in docker_command),
+                    "Declared Docker wrapper not in Docker command")
+            digest = sha(wrapper)
+            archived = out / "docker-wrapper-source"
+            shutil.copy2(wrapper, archived)
+            require(sha(archived) == digest, "Docker wrapper source copy mismatch")
+            expected["docker_wrapper"] = dict(path=str(wrapper), sha256=digest, archived=archived.name)
+        docker = Docker(docker_command, options.docker_label, stamp)
         with tempfile.TemporaryDirectory(prefix="tuuli-evidence-") as tmp:
             postgres, cluster, binding = start_database(docker, "tuuli-evidence-" + stamp,
                                                         options.db_prefix + "control_test", password, Path(tmp))
@@ -237,24 +264,35 @@ def main():
                                          postgres=docker.run("exec", postgres, "postgres", "--version"),
                                          maven=call([options.maven, "-version"])))
         for index, test in enumerate(options.classes):
+            active = test
             try:
                 run_class(options, docker, postgres, cluster, binding, test, index, expected, out, password, jwt)
             except Exception as exc:
+                states[test] = "failed"
                 errors.append(str(exc))
-    except Exception as exc:
-        errors.append(str(exc))
+            else:
+                states[test] = "completed"
+                completed.add(test)
+            active = None
+    except BaseException as exc:
+        if active is not None:
+            states[active] = "failed"
+        errors.append(f"{type(exc).__name__}: {exc}".rstrip(": "))
     finally:
         if docker:
-            disposal = docker.dispose()
-            save(out / "disposal.json", disposal)
-            if disposal["errors"] or any(disposal["remaining"].values()):
-                errors.append("Disposable resources could not be verified as removed")
+            try:
+                disposal = docker.dispose()
+                save(out / "disposal.json", disposal)
+                if disposal["errors"] or any(disposal["remaining"].values()):
+                    errors.append("Disposable resources could not be verified as removed")
+            except BaseException as exc:
+                errors.append(f"Cleanup: {type(exc).__name__}: {exc}")
         try:
             after = git_identity()
             save(out / "git-after.json", after)
             require(after == expected.get("git"), "Git identity changed or could not be established")
-        except Exception as exc:
-            errors.append(str(exc))
+        except BaseException as exc:
+            errors.append(f"Final Git check: {type(exc).__name__}: {exc}")
         shutil.copy2(__file__, out / "run_validation.py")
         for path in list(out.rglob("*")):
             if path.is_symlink():
@@ -268,16 +306,18 @@ def main():
         runtime = dict(executable=sys.executable, version=sys.version, optimize=sys.flags.optimize,
                        libraries={d.metadata["Name"]: d.version for d in importlib.metadata.distributions()
                                   if d.metadata.get("Name", "").lower() in {"xmlschema", "elementpath"}})
-        result = "FAIL" if errors else "PASS"
+        if not errors and completed == set(options.classes):
+            result = "PASS"
         files = [dict(path=p.relative_to(out).as_posix(), bytes=p.stat().st_size, sha256=sha(p))
                  for p in sorted(out.rglob("*")) if p.is_file()]
         manifest = out / "MANIFEST_SHA256.json"
         save(manifest, dict(result=result, errors=errors, arguments=vars(options), runtime=runtime,
+                            classes=[dict(name=name, state=states[name]) for name in options.classes],
                             **expected, files=files))
         digest = sha(manifest)
         manifest.with_suffix(".json.sha256").write_text(f"{digest}  {manifest.name}\n")
         print(json.dumps(dict(result=result, errors=errors, manifest=str(manifest), sha256=digest)))
-    return 1 if errors else 0
+    return 0 if result == "PASS" else 1
 
 
 if __name__ == "__main__":
