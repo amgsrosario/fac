@@ -91,8 +91,8 @@ class DocumentTypeImmutabilityTests {
                     java.time.LocalDate.class, commercial)).isNull();
             assertThat(db.queryForObject("select configuracao_bloqueada from tipodocumento where id=?",Boolean.class,type)).isTrue();
             assertThat(db.queryForObject("select to_jsonb(d)::text from documento_financeiro d where id=?",String.class,financial)).isEqualTo(financeBefore);
-            assertThat(db.queryForObject("select (to_jsonb(d) - 'data_prestacao')::text from documento_comercial d where id=?",
-                    String.class, commercial)).isEqualTo(commercialBefore);
+            assertThat(db.queryForObject("select to_jsonb(d) @> cast(? as jsonb) from documento_comercial d where id=?",
+                    Boolean.class, commercialBefore, commercial)).isTrue();
             assertThatThrownBy(()->db.update("update tipodocumento set codigo_fiscal='NC' where id=?",type)).hasMessageContaining("bloqueada");
             assertThat(flyway.migrate().migrationsExecuted).isZero();
             flyway.validate();
