@@ -84,6 +84,11 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
     }
 
     private Evidence evidence(LongPredicate check,boolean date,boolean hash,java.util.function.UnaryOperator<Signature> candidate) {
+        return evidence(check, date, hash, candidate, DAY.minusDays(1));
+    }
+
+    private Evidence evidence(LongPredicate check, boolean date, boolean hash,
+                              java.util.function.UnaryOperator<Signature> candidate, LocalDate taxPointDate) {
         return new Evidence() {
             public Signature signature(long id,String number) {
                 if (!hash) return null;
@@ -104,7 +109,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
                 } catch (java.security.GeneralSecurityException | IllegalArgumentException e) { return false; }
             }
             public LineFacts line(long id,long line) {
-                return new LineFacts(date?DAY.minusDays(1):null,"NOR","S","M3ART",headerShares.get(line));
+                return new LineFacts(date?taxPointDate:null,"NOR","S","M3ART",headerShares.get(line));
             }
             public boolean isOwnNormalVatInvoice(long id) { return check.test(id); }
         };
@@ -330,5 +335,102 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         issuer.issueProjected(key(),request(fr));
         assertThatThrownBy(() -> exporter.export(INSTALLATION,withoutDate,this::validate))
                 .hasMessageContaining("Document without coverage").hasMessageContaining("id="+fr).hasMessageContaining("type=FR");
+    }
+
+    @Test @Order(8) void acceptsWinterSystemEntryAtLastSecondOfGenerationDate() throws Exception {
+        var generated = LocalDate.of(2026, 11, 3);
+        var invoiceDate = generated.minusDays(1);
+        var id = issueChronologyFixture(invoiceDate);
+        var installation = chronologyInstallation(invoiceDate, generated);
+        setEntryInstant(id, "2026-11-03T23:59:59Z");
+
+        assertChronologyXml(installation, id, "SystemEntryDate", "2026-11-03T23:59:59", "winter-entry");
+        record("saft-r2-runtime", Map.of("jvmZone", ZoneId.systemDefault().getId(),
+                "postgresZone", db.queryForObject("show timezone", String.class)));
+    }
+
+    @Test @Order(9) void checksSummerSystemEntryAtLisbonMidnight() throws Exception {
+        var day = LocalDate.of(2026, 7, 3);
+        var id = issueChronologyFixture(day);
+        var installation = chronologyInstallation(day, day);
+        setEntryInstant(id, "2026-07-03T22:59:59Z");
+        assertChronologyXml(installation, id, "SystemEntryDate", "2026-07-03T23:59:59", "summer-entry");
+
+        setEntryInstant(id, "2026-07-03T23:00:00Z");
+        try {
+            assertThatThrownBy(() -> exporter.export(installation, chronologyEvidence(day),
+                    xml -> fail("Rejected SystemEntryDate reached the validator")))
+                    .hasMessageContaining("SystemEntryDate after DateCreated");
+        } finally {
+            setEntryInstant(id, "2026-07-03T22:59:59Z");
+        }
+    }
+
+    @Test @Order(10) void checksSummerAnnulmentAtLisbonMidnight() throws Exception {
+        var day = LocalDate.of(2026, 7, 3);
+        var id = issueChronologyFixture(day);
+        var installation = chronologyInstallation(day, day);
+        http.perform(auth(post(doc(id) + "/anular"), login("M3VOID")).contentType("application/json")
+                .content("{\"motivo\":\"" + REASON + "\"}")).andExpect(status().isOk());
+        setEntryInstant(id, "2026-07-03T21:00:00Z");
+        setAnnulmentInstant(id, "2026-07-03T22:59:59Z");
+        assertChronologyXml(installation, id, "InvoiceStatusDate", "2026-07-03T23:59:59", "summer-status");
+
+        setAnnulmentInstant(id, "2026-07-03T23:00:00Z");
+        assertThatThrownBy(() -> exporter.export(installation, chronologyEvidence(day),
+                xml -> fail("Rejected InvoiceStatusDate reached the validator")))
+                .hasMessageContaining("InvoiceStatusDate after DateCreated");
+    }
+
+    private long issueChronologyFixture(LocalDate day) throws Exception {
+        var series = "R2-" + day.getMonthValue();
+        db.update("""
+                insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at)
+                values ('GFT',?,'Synthetic R2',0,?,'2026-01-01') on conflict do nothing
+                """, series, "R2SAFT" + day.getMonthValue());
+        long id = body(http.perform(auth(post("/documentos-comerciais"), admin).contentType("application/json")
+                .content(draft(series, "M3ART", 1).replace("2026-11-03", day.toString())))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        http.perform(auth(post(doc(id) + "/emitir"), admin).contentType("application/json")
+                .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
+        captureSignature(id);
+        return id;
+    }
+
+    private static Installation chronologyInstallation(LocalDate day, LocalDate generated) {
+        var i = INSTALLATION;
+        return new Installation(day, day, generated, i.zone(), i.taxEntity(), i.companyId(),
+                i.producerTaxId(), i.productId(), i.version(), i.certificate(),
+                i.enabledTypes(), i.disabledTypes(), false);
+    }
+
+    private Evidence chronologyEvidence(LocalDate day) {
+        return evidence(id -> true, true, true, java.util.function.UnaryOperator.identity(), day);
+    }
+
+    private void setEntryInstant(long id, String instant) {
+        db.update("update documento_comercial set momento_emissao=? where id=?",
+                java.time.OffsetDateTime.parse(instant), id);
+    }
+
+    private void setAnnulmentInstant(long id, String instant) {
+        db.update("update documento_comercial set data_hora_anulacao=? where id=?",
+                java.time.OffsetDateTime.parse(instant), id);
+    }
+
+    private void assertChronologyXml(Installation installation, long id, String field,
+                                     String expected, String proof) throws Exception {
+        var result = exporter.export(installation, chronologyEvidence(installation.end()), this::validate);
+        var xml = new String(result.xml(), StandardCharsets.UTF_8);
+        var number = correctionIdentity(id).get("numero_documento_completo").toString();
+        assertThat(xml).contains("<DateCreated>" + installation.generated() + "</DateCreated>");
+        var start = xml.indexOf("<InvoiceNo>" + number + "</InvoiceNo>");
+        assertThat(start).as("Exported invoice %s", number).isNotNegative();
+        var invoice = xml.substring(start, xml.indexOf("</Invoice>", start));
+        if ("InvoiceStatusDate".equals(field)) {
+            assertThat(invoice).contains("<InvoiceStatus>A</InvoiceStatus>");
+        }
+        assertThat(invoice).contains("<" + field + ">" + expected + "</" + field + ">");
+        Files.write(Path.of(System.getenv("M402_EVIDENCE"), "SAFT-R2-" + proof + ".xml"), result.xml());
     }
 }

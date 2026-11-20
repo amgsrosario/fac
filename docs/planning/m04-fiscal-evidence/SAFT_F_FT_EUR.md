@@ -58,3 +58,9 @@ Um documento emitido sem cobertura (por exemplo, RC/RG ou FR no lote FT/EUR), um
 - **Aceitação:** reutilizar [A12-01–16](SAFT_ACCEPTANCE.md). Validar documentos positivos, XSD inválido e XML estruturalmente válido mas semanticamente incoerente. Confrontar número/ATCUD, clientes/produtos/impostos, estados, linhas e montantes persistidos e apurados independentemente. Contar anulados, excluir os estados previstos das somas e preservar elementos originais. Testar fonte obrigatória em falta, família emitida sem cobertura, tipo habilitado sem cobertura, assinatura divergente, concorrência e consistência dos totais.
 - **Ausência de escritas:** transacção de extracção explicitamente read-only. Demonstrar por estado antes/depois das tabelas, ledger, auditoria documental e numeradores e por tentativa de escrita recusada. Nenhum endpoint público ou consumidor novo nesta fase. A prova de autorização e isolamento é parte da aceitação.
 - **Fecho:** revisão Claude do commit exacto e do manifesto de resultados. Integração por gate humano. Release comercial, assinatura produtiva, AT, homologação e activação requerem autorizações e dados próprios.
+
+## Cronologia e fuso da instalação
+
+A validação de `SystemEntryDate` e `InvoiceStatusDate` compara datas civis depois de converter cada instante para o fuso da instalação. `DateCreated` representa uma data. Por isso, um registo ocorrido na mesma data local pode ser aceite mesmo que seja posterior à hora de geração. A Administração aceitou esta limitação na deliberação de 20/11/2026 na issue #46.
+
+A comparação à granularidade do instante fica fora do mandato. Só será considerada se houver um registo fiável do instante da geração e um risco concreto que justifique essa comparação. A prova R2 usa a fronteira de meia-noite de Verão em Europe/Lisbon, quando os dois instantes ainda pertencem à mesma data em UTC.
