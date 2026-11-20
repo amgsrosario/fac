@@ -27,6 +27,7 @@ type DocumentoComercial = {
   numeroDocumentoCompleto?: string | null;
   estado: EstadoDocumento;
   dataEmissao: string;
+  dataPrestacao?: string | null;
   clienteId: number;
   armazemCargaId?: string | null;
   moedaId?: string | null;
@@ -107,6 +108,7 @@ type HeaderState = {
   tipoDocumentoId: string;
   serie: string;
   dataEmissao: string;
+  dataPrestacao: string;
   clienteId: string;
   armazemCargaId: string;
   moedaId: string;
@@ -153,6 +155,7 @@ const emptyHeader: HeaderState = {
   tipoDocumentoId: "",
   serie: "",
   dataEmissao: today(),
+  dataPrestacao: "",
   clienteId: "",
   armazemCargaId: "",
   moedaId: "",
@@ -904,6 +907,7 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
           <FacSelect disabled={readOnly} label="Tipo" onChange={(value) => onUpdate({ tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={header.tipoDocumentoId} />
           <FacSelect disabled={readOnly} label="Série" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
           <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
+          <FacInputText disabled={readOnly} label="Data de prestação" onChange={(event) => onUpdate({ dataPrestacao: event.target.value })} type="date" value={header.dataPrestacao} />
           <EntityLookupField<Cliente>
             clearable={false}
             columns={clienteLookupColumns}
@@ -1448,6 +1452,7 @@ function headerFromDocument(documento: DocumentoComercial): HeaderState {
     tipoDocumentoId: documento.tipoDocumentoId,
     serie: documento.serie,
     dataEmissao: documento.dataEmissao,
+    dataPrestacao: documento.dataPrestacao ?? "",
     clienteId: String(documento.clienteId),
     armazemCargaId: documento.armazemCargaId ? String(documento.armazemCargaId) : "",
     moedaId: documento.moedaId ?? "",
@@ -1527,6 +1532,7 @@ function applyArticleToLine(line: EditorLine, artigo?: Artigo): EditorLine {
 function headerPayload(header: HeaderState) {
   return {
     dataEmissao: header.dataEmissao,
+    dataPrestacao: header.dataPrestacao || null,
     armazemCargaId: header.armazemCargaId,
     moedaId: nullable(header.moedaId),
     rivaId: nullable(header.rivaId),

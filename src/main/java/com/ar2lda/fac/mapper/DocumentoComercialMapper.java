@@ -98,7 +98,8 @@ public interface DocumentoComercialMapper {
                     e.getFiscalMotorVersion(), e.getFiscalMercado(), e.getFiscalTratamentoLiquidacao(), e.getFiscalFundamento(),
                     e.getFiscalMIsencaoCodigo(), e.getFiscalJurisdicao(), e.getFiscalTerritorioFiscal(), e.isFiscalRecalculoAviso()),
                 e.getProjectionExternalType()==null ? null : new com.ar2lda.fac.controller.dto.FiscalProjectionDto(
-                    e.getProjectionExternalType(),e.getProjectionCatalogCode(),e.getProjectionRevision(),e.getProjectionLabel())
+                    e.getProjectionExternalType(),e.getProjectionCatalogCode(),e.getProjectionRevision(),e.getProjectionLabel()),
+                e.getDataPrestacao()
         );
     }
 }

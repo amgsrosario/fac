@@ -62,7 +62,11 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
 
     private long issueFt(boolean voided) throws Exception {
         db.update("update cliente set localidade='Lisboa' where id=?",customer);
-        long id = create("SYNTH",admin);
+        var payload = (com.fasterxml.jackson.databind.node.ObjectNode) json.readTree(draft("SYNTH","M3ART",1));
+        ((com.fasterxml.jackson.databind.node.ObjectNode) payload.get("documento"))
+                .put("dataPrestacao", "2026-11-02");
+        long id = body(http.perform(auth(post("/documentos-comerciais"),admin).contentType("application/json")
+                .content(payload.toString())).andExpect(status().isCreated()).andReturn()).get("id").asLong();
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType("application/json")
                 .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
         captureSignature(id);
@@ -79,16 +83,11 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         return id;
     }
 
-    private Evidence evidence(LongPredicate check, boolean date, boolean hash) throws Exception {
-        return evidence(check,date,hash,java.util.function.UnaryOperator.identity());
+    private Evidence evidence(LongPredicate check, boolean hash) throws Exception {
+        return evidence(check,hash,java.util.function.UnaryOperator.identity());
     }
 
-    private Evidence evidence(LongPredicate check,boolean date,boolean hash,java.util.function.UnaryOperator<Signature> candidate) {
-        return evidence(check, date, hash, candidate, DAY.minusDays(1));
-    }
-
-    private Evidence evidence(LongPredicate check, boolean date, boolean hash,
-                              java.util.function.UnaryOperator<Signature> candidate, LocalDate taxPointDate) {
+    private Evidence evidence(LongPredicate check, boolean hash, java.util.function.UnaryOperator<Signature> candidate) {
         return new Evidence() {
             public Signature signature(long id,String number) {
                 if (!hash) return null;
@@ -109,7 +108,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
                 } catch (java.security.GeneralSecurityException | IllegalArgumentException e) { return false; }
             }
             public LineFacts line(long id,long line) {
-                return new LineFacts(date?taxPointDate:null,"NOR","S","M3ART",headerShares.get(line));
+                return new LineFacts("NOR","S","M3ART",headerShares.get(line));
             }
             public boolean isOwnNormalVatInvoice(long id) { return check.test(id); }
         };
@@ -136,7 +135,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
             assertThat(db.queryForObject("show transaction_isolation",String.class)).isEqualTo("repeatable read");
             assertThat(db.queryForObject("show transaction_read_only",String.class)).isEqualTo("on");
             return true;
-        },true,true),this::validate);
+        },true),this::validate);
         noSideEffects(normal,before);
         assertThat(count("auditoria_evento")).isEqualTo(audits);
         assertThat(result.count()).isEqualTo(2);
@@ -215,9 +214,9 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
                     assertThat(committed.await(15,TimeUnit.SECONDS)).isTrue();
                 } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new IllegalStateException(e); }
                 return true;
-            },true,true),this::validate);
+            },true),this::validate);
             writer.get(15,TimeUnit.SECONDS);
-            var second=exporter.export(INSTALLATION,evidence(id -> true,true,true),this::validate);
+            var second=exporter.export(INSTALLATION,evidence(id -> true,true),this::validate);
             assertThat(first.count()).isEqualTo(2);
             assertThat(second.count()).isEqualTo(3);
             assertThat(first.totalCredit()).isEqualByComparingTo("10");
@@ -239,7 +238,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType("application/json")
                 .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
         captureSignature(id);
-        var result=exporter.export(INSTALLATION,evidence(doc -> true,true,true),this::validate);
+        var result=exporter.export(INSTALLATION,evidence(doc -> true,true),this::validate);
         assertThat(result.count()).isEqualTo(4);
         assertThat(result.totalCredit()).isEqualByComparingTo("21");
         var parser=javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -257,14 +256,14 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
 
     @Test @Order(4) void refusesDivergentHashAndKeyBeforeValidatorAndRejectsFutureDates() throws Exception {
         Validator mustNotRun = xml -> fail("XML reached the validator");
-        var badHash=evidence(id -> true,true,true,s -> new Signature(
+        var badHash=evidence(id -> true,true,s -> new Signature(
                 (s.hash().startsWith("A") ? "B" : "A")+s.hash().substring(1),s.keyVersion()));
         assertThatThrownBy(() -> exporter.export(INSTALLATION,badHash,mustNotRun)).hasMessageContaining("Hash does not verify");
-        var badKey=evidence(id -> true,true,true,s -> new Signature(s.hash(),"2"));
+        var badKey=evidence(id -> true,true,s -> new Signature(s.hash(),"2"));
         assertThatThrownBy(() -> exporter.export(INSTALLATION,badKey,mustNotRun)).hasMessageContaining("HashControl does not match");
         long normal=db.queryForObject("select min(id) from documento_comercial where estado='EMITIDO'",Long.class);
         long cancelled=db.queryForObject("select min(id) from documento_comercial where estado='ANULADO'",Long.class);
-        var good=evidence(id -> true,true,true);
+        var good=evidence(id -> true,true);
         db.update("update documento_comercial set momento_emissao='2026-11-04T00:00:00Z' where id=?",normal);
         try {
             assertThatThrownBy(() -> exporter.export(INSTALLATION,good,mustNotRun)).hasMessageContaining("SystemEntryDate after DateCreated");
@@ -283,7 +282,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
                 .andExpect(status().isCreated()).andReturn()).get("id").asLong();
         http.perform(auth(post(doc(id)+"/emitir"),admin).contentType("application/json")
                 .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
-        var result=exporter.export(INSTALLATION,evidence(doc -> true,true,true),this::validate);
+        var result=exporter.export(INSTALLATION,evidence(doc -> true,true),this::validate);
         assertThat(result.count()).isEqualTo(4);
         assertThat(new String(result.xml(),StandardCharsets.UTF_8))
                 .doesNotContain(correctionIdentity(id).get("numero_documento_completo").toString());
@@ -302,12 +301,12 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         captureSignature(id);
         long lineId=db.queryForObject("select id from linha_documento_comercial where id_documento_comercial=?",Long.class,id);
         db.update("update documento_comercial set valor_desconto=5 where id=?",id);
-        assertThatThrownBy(() -> exporter.export(INSTALLATION,evidence(doc -> true,true,true),xml -> fail("Unexpected XML")))
+        assertThatThrownBy(() -> exporter.export(INSTALLATION,evidence(doc -> true,true),xml -> fail("Unexpected XML")))
                 .hasMessageContaining("unapportioned discount");
         db.update("update linha_documento_comercial set base_tributavel=25,valor_imposto=5.75,total_linha=30.75 where id=?",lineId);
         db.update("update documento_comercial set valor_iva_total=5.75,valor_total=30.75 where id=?",id);
         headerShares.put(lineId,new java.math.BigDecimal("2.00"));
-        var result=exporter.export(INSTALLATION,evidence(doc -> true,true,true),this::validate);
+        var result=exporter.export(INSTALLATION,evidence(doc -> true,true),this::validate);
         assertThat(result.count()).isEqualTo(5);
         assertThat(result.totalCredit()).isEqualByComparingTo("46");
         assertThat(new String(result.xml(),StandardCharsets.UTF_8)).contains("<UnitPrice>8.333333333333</UnitPrice>",
@@ -316,9 +315,14 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
     }
 
     @Test @Order(7) void refusesMissingEvidenceAndUnsupportedDocumentsBeforeFiltering() throws Exception {
-        var withoutDate=evidence(id -> true,false,true);
-        var withoutHash=evidence(id -> true,true,false);
-        assertThatThrownBy(() -> exporter.export(INSTALLATION,withoutDate,this::validate)).hasMessageContaining("TaxPointDate");
+        var withoutDate=evidence(id -> true,true);
+        var withoutHash=evidence(id -> true,false);
+        long fallback = db.queryForObject("""
+                select min(id) from documento_comercial
+                where estado='EMITIDO' and data_prestacao is null and data_emissao=?
+                """, Long.class, DAY);
+        assertThat(taxPoints(exporter.export(INSTALLATION,withoutDate,this::validate).xml(), fallback))
+                .isNotEmpty().containsOnly(DAY.toString());
         assertThatThrownBy(() -> exporter.export(INSTALLATION,withoutHash,this::validate)).hasMessageContaining("Hash/HashControl");
         var i=INSTALLATION;
         var supplier=new Installation(i.start(),i.end(),i.generated(),i.zone(),i.taxEntity(),i.companyId(),
@@ -330,7 +334,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         assertThatThrownBy(() -> exporter.export(INSTALLATION,evidence(id -> {
             db.update("update empresa set nome=nome where id=1");
             return true;
-        },true,true),this::validate)).hasStackTraceContaining("read-only transaction");
+        },true),this::validate)).hasStackTraceContaining("read-only transaction");
         long fr=immediateDraft("SYNTH");
         issuer.issueProjected(key(),request(fr));
         assertThatThrownBy(() -> exporter.export(INSTALLATION,withoutDate,this::validate))
@@ -358,7 +362,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
 
         setEntryInstant(id, "2026-07-03T23:00:00Z");
         try {
-            assertThatThrownBy(() -> exporter.export(installation, chronologyEvidence(day),
+            assertThatThrownBy(() -> exporter.export(installation, evidence(idToCheck -> true,true),
                     xml -> fail("Rejected SystemEntryDate reached the validator")))
                     .hasMessageContaining("SystemEntryDate after DateCreated");
         } finally {
@@ -377,21 +381,35 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         assertChronologyXml(installation, id, "InvoiceStatusDate", "2026-07-03T23:59:59", "summer-status");
 
         setAnnulmentInstant(id, "2026-07-03T23:00:00Z");
-        assertThatThrownBy(() -> exporter.export(installation, chronologyEvidence(day),
+        assertThatThrownBy(() -> exporter.export(installation, evidence(idToCheck -> true,true),
                 xml -> fail("Rejected InvoiceStatusDate reached the validator")))
                 .hasMessageContaining("InvoiceStatusDate after DateCreated");
     }
 
     private long issueChronologyFixture(LocalDate day) throws Exception {
+        return issueDatedFixture(day, null);
+    }
+
+    private long issueDatedFixture(LocalDate day, LocalDate serviceDate) throws Exception {
         db.update("update cliente set localidade='Lisboa' where id=?", customer);
         var series = "R2-" + day.getMonthValue();
         db.update("""
                 insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at)
                 values ('GFT',?,'Synthetic R2',0,?,'2026-01-01') on conflict do nothing
                 """, series, "R2SAFT" + day.getMonthValue());
+        var payload = (com.fasterxml.jackson.databind.node.ObjectNode) json.readTree(
+                draft(series, "M3ART", 1).replace("2026-11-03", day.toString()));
+        if (serviceDate != null) {
+            ((com.fasterxml.jackson.databind.node.ObjectNode) payload.get("documento"))
+                    .put("dataPrestacao", serviceDate.toString());
+        }
         long id = body(http.perform(auth(post("/documentos-comerciais"), admin).contentType("application/json")
-                .content(draft(series, "M3ART", 1).replace("2026-11-03", day.toString())))
+                .content(payload.toString()))
                 .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        if (day.getMonthValue() == 9) {
+            http.perform(auth(post(doc(id) + "/linhas"), admin).contentType("application/json")
+                    .content(line("M3ART", 2, 10))).andExpect(status().isCreated());
+        }
         http.perform(auth(post(doc(id) + "/emitir"), admin).contentType("application/json")
                 .content("{\"emissorId\":\"M3ADMIN\"}")).andExpect(status().isOk());
         captureSignature(id);
@@ -403,10 +421,6 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         return new Installation(day, day, generated, i.zone(), i.taxEntity(), i.companyId(),
                 i.producerTaxId(), i.productId(), i.version(), i.certificate(),
                 i.enabledTypes(), i.disabledTypes(), false);
-    }
-
-    private Evidence chronologyEvidence(LocalDate day) {
-        return evidence(id -> true, true, true, java.util.function.UnaryOperator.identity(), day);
     }
 
     private void setEntryInstant(long id, String instant) {
@@ -421,7 +435,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
 
     private void assertChronologyXml(Installation installation, long id, String field,
                                      String expected, String proof) throws Exception {
-        var result = exporter.export(installation, chronologyEvidence(installation.end()), this::validate);
+        var result = exporter.export(installation, evidence(idToCheck -> true,true), this::validate);
         var xml = new String(result.xml(), StandardCharsets.UTF_8);
         var number = correctionIdentity(id).get("numero_documento_completo").toString();
         assertThat(xml).contains("<DateCreated>" + installation.generated() + "</DateCreated>");
@@ -433,5 +447,45 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         }
         assertThat(invoice).contains("<" + field + ">" + expected + "</" + field + ">");
         Files.write(Path.of(System.getenv("M402_EVIDENCE"), "SAFT-R2-" + proof + ".xml"), result.xml());
+    }
+
+    @Test @Order(11) void exportsPersistedServiceDateAndEmissionFallbackInOneFile() throws Exception {
+        var emission = LocalDate.of(2026, 9, 10);
+        var before = emission.minusDays(1);
+        var after = emission.plusDays(1);
+        long earlier = issueDatedFixture(emission, before);
+        long missing = issueDatedFixture(emission, null);
+        long later = issueDatedFixture(emission, after);
+        long cancelled = issueDatedFixture(emission, before);
+        http.perform(auth(post(doc(cancelled) + "/anular"), login("M3VOID")).contentType("application/json")
+                .content("{\"motivo\":\"" + REASON + "\"}")).andExpect(status().isOk());
+
+        setAnnulmentInstant(cancelled, "2026-09-10T17:45:00Z");
+        var result = exporter.export(chronologyInstallation(emission, DAY), evidence(id -> true,true), this::validate);
+        assertThat(result.count()).isEqualTo(4);
+        assertThat(taxPoints(result.xml(), earlier)).containsExactly(before.toString(), before.toString());
+        assertThat(taxPoints(result.xml(), missing)).containsExactly(emission.toString(), emission.toString());
+        assertThat(taxPoints(result.xml(), later)).containsExactly(after.toString(), after.toString());
+        assertThat(taxPoints(result.xml(), cancelled)).containsExactly(before.toString(), before.toString());
+        assertThat(db.queryForObject("select data_prestacao from documento_comercial where id=?",
+                LocalDate.class,cancelled)).isEqualTo(before);
+        Files.write(Path.of(System.getenv("M402_EVIDENCE"),"SAFT-taxpoint-synthetic.xml"),result.xml());
+    }
+
+    private java.util.List<String> taxPoints(byte[] xml, long id) throws Exception {
+        var factory = javax.xml.parsers.DocumentBuilderFactory.newDefaultInstance();
+        factory.setNamespaceAware(true);
+        var document = factory.newDocumentBuilder().parse(new java.io.ByteArrayInputStream(xml));
+        var number = correctionIdentity(id).get("numero_documento_completo").toString();
+        var invoices = document.getElementsByTagNameNS(NAMESPACE, "Invoice");
+        for (int i = 0; i < invoices.getLength(); i++) {
+            var invoice = (org.w3c.dom.Element) invoices.item(i);
+            if (!number.equals(invoice.getElementsByTagNameNS(NAMESPACE,"InvoiceNo").item(0).getTextContent())) continue;
+            var nodes = invoice.getElementsByTagNameNS(NAMESPACE, "TaxPointDate");
+            var dates = new java.util.ArrayList<String>();
+            for (int n = 0; n < nodes.getLength(); n++) dates.add(nodes.item(n).getTextContent());
+            return dates;
+        }
+        throw new AssertionError("Invoice missing from SAF-T: " + number);
     }
 }

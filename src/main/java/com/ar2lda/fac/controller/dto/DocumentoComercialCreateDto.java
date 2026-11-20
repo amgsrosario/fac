@@ -35,6 +35,16 @@ public record DocumentoComercialCreateDto(
         LocalTime horaDescarga,
         BigDecimal peso,
         @Size(max = 250, message = "Observações devem ter no máximo 250 caracteres")
-        String observacoes
+        String observacoes,
+        LocalDate dataPrestacao
 ) {
+    public DocumentoComercialCreateDto(String tipoDocumentoId, String serie, LocalDate dataEmissao,
+            Long clienteId, Long moradaEnvioId, String armazemCargaId, String moedaId, String rivaId,
+            String mPagamentoId, String pPagamentoId, String transporteId, LocalDate dataCarga,
+            LocalTime horaCarga, String matricula, LocalDate dataDescarga, LocalTime horaDescarga,
+            BigDecimal peso, String observacoes) {
+        this(tipoDocumentoId, serie, dataEmissao, clienteId, moradaEnvioId, armazemCargaId, moedaId,
+                rivaId, mPagamentoId, pPagamentoId, transporteId, dataCarga, horaCarga, matricula,
+                dataDescarga, horaDescarga, peso, observacoes, null);
+    }
 }

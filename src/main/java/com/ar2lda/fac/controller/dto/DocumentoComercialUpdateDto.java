@@ -26,6 +26,7 @@ public record DocumentoComercialUpdateDto(
         LocalTime horaDescarga,
         BigDecimal peso,
         @Size(max = 250, message = "Observações devem ter no máximo 250 caracteres")
-        String observacoes
+        String observacoes,
+        LocalDate dataPrestacao
 ) {
 }
