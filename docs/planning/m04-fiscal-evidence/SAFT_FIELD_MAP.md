@@ -138,6 +138,9 @@ A chave de imposto precisa de unicidade/referência consistente entre TaxTable e
 | SettlementAmount | D/C: L.valorDesconto, com afectação de cabeçalho se efectivamente existente e demonstrada | N05 §4.1.4.19.18: descontos efectivos de linha e parcela global aplicável; não deduzir novamente de CreditAmount/NetTotal. Agregado D.valorDesconto não prova parcela adicional |
 | CustomsInformation | L | Documentos/quantidades aduaneiros sem origem dedicada; não inferir |
 
+> **Supersessão TAXPOINT-01.** A deliberação D1 da Administração de 20/11/2026 na [issue #46](https://github.com/amgsrosario/fac/issues/46) aplica-se apenas à TaxPointDate da FT/EUR. Usar a data de prestação do documento e, na sua ausência, data_emissao, conforme [SAFT_F_FT_EUR.md, §5.1](SAFT_F_FT_EUR.md). Para os outros campos e eventos obrigatórios mantém-se a regra «diagnóstico, não fallback».
+
+
 ### 5.2 DocumentTotals, retenção e controlo
 
 | Campo(s) | Origem efectiva / estado | Regra proposta, lacuna ou dependência |

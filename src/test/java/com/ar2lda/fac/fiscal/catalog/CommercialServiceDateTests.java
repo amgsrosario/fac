@@ -41,6 +41,13 @@ class CommercialServiceDateTests extends ProjectedFrFixture {
                 .isInstanceOf(DataIntegrityViolationException.class).hasMessageContaining("Data de prestação imutável");
         assertThat(db.queryForObject("select data_prestacao from documento_comercial where id=?", LocalDate.class, id))
                 .isEqualTo(LocalDate.of(2026,11,5));
+        http.perform(auth(post(doc(id) + "/anular"), admin).contentType("application/json")
+                .content("{\"motivo\":\"Anulação sintética\"}")).andExpect(status().isOk());
+        assertThat(db.queryForObject("select estado from documento_comercial where id=?", String.class, id))
+                .isEqualTo("ANULADO");
+        assertThatThrownBy(() -> db.update(
+                "update documento_comercial set data_prestacao=date '2026-11-06' where id=?", id))
+                .isInstanceOf(DataIntegrityViolationException.class).hasMessageContaining("Data de prestação imutável");
     }
 
     @Test void hidesAbsentAndEqualServiceDatesWithoutChangingPrintedTextOrTotals() throws Exception {

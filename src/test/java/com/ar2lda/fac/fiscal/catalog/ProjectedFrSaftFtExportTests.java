@@ -387,10 +387,10 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
     }
 
     private long issueChronologyFixture(LocalDate day) throws Exception {
-        return issueDatedFixture(day, null);
+        return issueDatedFixture(day, null, 1);
     }
 
-    private long issueDatedFixture(LocalDate day, LocalDate serviceDate) throws Exception {
+    private long issueDatedFixture(LocalDate day, LocalDate serviceDate, int lineCount) throws Exception {
         db.update("update cliente set localidade='Lisboa' where id=?", customer);
         var series = "R2-" + day.getMonthValue();
         db.update("""
@@ -406,7 +406,7 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         long id = body(http.perform(auth(post("/documentos-comerciais"), admin).contentType("application/json")
                 .content(payload.toString()))
                 .andExpect(status().isCreated()).andReturn()).get("id").asLong();
-        if (day.getMonthValue() == 9) {
+        for (int lineNumber = 1; lineNumber < lineCount; lineNumber++) {
             http.perform(auth(post(doc(id) + "/linhas"), admin).contentType("application/json")
                     .content(line("M3ART", 2, 10))).andExpect(status().isCreated());
         }
@@ -453,26 +453,37 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
         var emission = LocalDate.of(2026, 9, 10);
         var before = emission.minusDays(1);
         var after = emission.plusDays(1);
-        long earlier = issueDatedFixture(emission, before);
-        long missing = issueDatedFixture(emission, null);
-        long later = issueDatedFixture(emission, after);
-        long cancelled = issueDatedFixture(emission, before);
+        long earlier = issueDatedFixture(emission, before, 2);
+        long missing = issueDatedFixture(emission, null, 2);
+        long later = issueDatedFixture(emission, after, 2);
+        long cancelled = issueDatedFixture(emission, before, 2);
         http.perform(auth(post(doc(cancelled) + "/anular"), login("M3VOID")).contentType("application/json")
                 .content("{\"motivo\":\"" + REASON + "\"}")).andExpect(status().isOk());
 
         setAnnulmentInstant(cancelled, "2026-09-10T17:45:00Z");
         var result = exporter.export(chronologyInstallation(emission, DAY), evidence(id -> true,true), this::validate);
-        assertThat(result.count()).isEqualTo(4);
-        assertThat(taxPoints(result.xml(), earlier)).containsExactly(before.toString(), before.toString());
-        assertThat(taxPoints(result.xml(), missing)).containsExactly(emission.toString(), emission.toString());
-        assertThat(taxPoints(result.xml(), later)).containsExactly(after.toString(), after.toString());
-        assertThat(taxPoints(result.xml(), cancelled)).containsExactly(before.toString(), before.toString());
-        assertThat(db.queryForObject("select data_prestacao from documento_comercial where id=?",
-                LocalDate.class,cancelled)).isEqualTo(before);
+        org.assertj.core.api.SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(result.count()).as("c: mixed document file").isEqualTo(4);
+            softly.assertThat(taxPoints(result.xml(), earlier)).as("a: earlier prestation")
+                    .containsExactly(before.toString(), before.toString());
+            softly.assertThat(taxPoints(result.xml(), missing)).as("b: emission fallback")
+                    .containsExactly(emission.toString(), emission.toString());
+            softly.assertThat(taxPoints(result.xml(), later)).as("e: later prestation")
+                    .containsExactly(after.toString(), after.toString());
+            softly.assertThat(taxPoints(result.xml(), cancelled)).as("d: annulled document")
+                    .containsExactly(before.toString(), before.toString());
+            softly.assertThat(db.queryForObject("select data_prestacao from documento_comercial where id=?",
+                    LocalDate.class,cancelled)).isEqualTo(before);
+        });
         Files.write(Path.of(System.getenv("M402_EVIDENCE"),"SAFT-taxpoint-synthetic.xml"),result.xml());
     }
 
-    private java.util.List<String> taxPoints(byte[] xml, long id) throws Exception {
+    private java.util.List<String> taxPoints(byte[] xml, long id) {
+        try { return readTaxPoints(xml, id); }
+        catch (Exception exception) { throw new IllegalStateException("Cannot read synthetic SAF-T", exception); }
+    }
+
+    private java.util.List<String> readTaxPoints(byte[] xml, long id) throws Exception {
         var factory = javax.xml.parsers.DocumentBuilderFactory.newDefaultInstance();
         factory.setNamespaceAware(true);
         var document = factory.newDocumentBuilder().parse(new java.io.ByteArrayInputStream(xml));
@@ -486,6 +497,6 @@ class ProjectedFrSaftFtExportTests extends ProjectedFrFixture {
             for (int n = 0; n < nodes.getLength(); n++) dates.add(nodes.item(n).getTextContent());
             return dates;
         }
-        throw new AssertionError("Invoice missing from SAF-T: " + number);
+        return java.util.List.of();
     }
 }

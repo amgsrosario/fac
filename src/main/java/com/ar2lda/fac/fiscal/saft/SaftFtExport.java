@@ -320,7 +320,10 @@ public class SaftFtExport {
         Object value = line.get("data_prestacao");
         if (value == null) value = invoice.get("data_prestacao");
         if (value == null) value = invoice.get("data_emissao");
-        return value instanceof java.sql.Date date ? date.toLocalDate() : (LocalDate) value;
+        if (value == null || value instanceof LocalDate) return (LocalDate) value;
+        if (value instanceof java.sql.Date date) return date.toLocalDate();
+        throw new Refusal("TaxPointDate source has unexpected type " + value.getClass().getName()
+                + " for invoice " + invoice.get("id") + ", line " + line.get("id"));
     }
 
     private static BigDecimal headerShare(LineFacts facts) {
