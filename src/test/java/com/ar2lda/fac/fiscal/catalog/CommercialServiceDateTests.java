@@ -25,8 +25,9 @@ class CommercialServiceDateTests extends ProjectedFrFixture {
         http.perform(auth(put(doc(id)), admin).contentType("application/json").content(payload.toString()))
                 .andExpect(status().isBadRequest());
         payload.put("dataPrestacao", "2026-11-05");
-        var saved = body(http.perform(auth(put(doc(id)), admin).contentType("application/json").content(payload.toString()))
-                .andExpect(status().isOk()).andReturn());
+        http.perform(auth(put(doc(id)), admin).contentType("application/json").content(payload.toString()))
+                .andExpect(status().isNoContent());
+        var saved = body(http.perform(auth(get(doc(id)), admin)).andExpect(status().isOk()).andReturn());
         assertThat(saved.path("dataPrestacao").asText()).isEqualTo("2026-11-05");
 
         var issued = issue(id);
