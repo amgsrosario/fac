@@ -20,6 +20,7 @@ class CommercialServiceDateTests extends ProjectedFrFixture {
     @Test void issuesWithLaterServiceDateAndProtectsThePersistedValue() throws Exception {
         long id = create("SYNTH", admin);
         var payload = (ObjectNode) json.readTree(draft("SYNTH", "M3ART", 1)).get("documento");
+        payload.remove(java.util.List.of("tipoDocumentoId", "serie", "clienteId"));
         payload.put("dataPrestacao", "invalid");
         http.perform(auth(put(doc(id)), admin).contentType("application/json").content(payload.toString()))
                 .andExpect(status().isBadRequest());
@@ -75,6 +76,6 @@ class CommercialServiceDateTests extends ProjectedFrFixture {
     private String normalizeIdentity(String text, JsonNode issued) {
         return text.replace(issued.path("numeroDocumentoCompleto").asText(), "[NÚMERO]")
                 .replace(issued.path("atcud").asText(), "[ATCUD]")
-                .replace(issued.path("momentoEmissao").asText(), "[INSTANTE]");
+                .replaceFirst("(Emitido por M3ADMIN em )\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z", "$1[INSTANTE]");
     }
 }
