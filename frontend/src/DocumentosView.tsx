@@ -1,3 +1,4 @@
+import { serviceDateWarning, serviceDateWarningText } from "./serviceDateWarning";
 import { EmissionAssessment, EmissionReadinessMessages, emissionConfirmation } from "./emissionReadiness";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Paginator } from "primereact/paginator";
@@ -558,6 +559,7 @@ export default function DocumentosView() {
           </Field>
           <Field label="Data de emissão"><input onChange={(event) => changeDraft("dataEmissao", event.target.value)} type="date" value={draftForm.dataEmissao} /></Field>
           <Field label="Data de prestação"><input onChange={(event) => changeDraft("dataPrestacao", event.target.value)} type="date" value={draftForm.dataPrestacao} /></Field>
+          {renderServiceDateWarning(draftForm.dataPrestacao, draftForm.dataEmissao)}
           <Field label="Cliente">
             <select ref={newDocumentClientRef} onChange={(event) => changeDraft("clienteId", event.target.value)} value={draftForm.clienteId}>
               <option value="">Selecionar</option>
@@ -855,6 +857,11 @@ function todayIso() {
   const now = new Date();
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 10);
+}
+
+function renderServiceDateWarning(service: string, issue: string) {
+  const warning = serviceDateWarning(service, issue);
+  return warning && <p role="status">{serviceDateWarningText[warning]}</p>;
 }
 
 function Field({ children, label }: { children: React.ReactNode; label: string }) {
