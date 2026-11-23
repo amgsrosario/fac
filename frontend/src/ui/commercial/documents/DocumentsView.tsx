@@ -1,3 +1,4 @@
+import { serviceDateConfirmation } from "../../../ServiceDateWarningMessage";
 import { EmissionAssessment, EmissionReadinessMessages, emissionConfirmation } from "../../../emissionReadiness";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -51,6 +52,7 @@ type DocumentoComercial = {
   qrPayload?: string | null;
   estado: EstadoDocumento;
   dataEmissao: string;
+  dataPrestacao?: string | null;
   dataVencimento?: string | null;
   clienteId: number;
   moedaId?: string | null;
@@ -474,9 +476,13 @@ export default function DocumentsView({ currentUser, onLogout }: { currentUser: 
     if (!selected || saving) return;
     setSaving(true);
     try {
-      const fresh = await requestJson<Diagnostico>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
+      const [freshDoc, fresh] = await Promise.all([
+        requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}`),
+        requestJson<Diagnostico>(`/api/documentos-comerciais/${selected.id}/diagnostico`)
+      ]);
       setDiagnostico(fresh);
-      if (!fresh.podeEmitir || !window.confirm(emissionConfirmation(fresh, documentRef(selected)))) return;
+      const confirmation = serviceDateConfirmation(freshDoc, selected) + emissionConfirmation(fresh, documentRef(selected));
+      if (!fresh.podeEmitir || !window.confirm(confirmation)) return;
       const updated = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`,
         { emissorId: currentUser.codigo, recalculoConfirmado: Boolean(fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria) }, "POST");
       await refreshAfterAction(updated.id, "Documento emitido.");
