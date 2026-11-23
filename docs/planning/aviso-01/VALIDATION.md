@@ -26,3 +26,16 @@ Arquivo reservado `AVISO-01/2026-11-23/`. Índice e sidecar conferidos com 9/9 e
 | `fresh service date requests renewed confirmation and does not change the issuance payload` | I, sincronização da prova nova | O PUT do cabeçalho concluiu e o mock registou a data na linha 260. O teste aguardou «Guardar alterações» na linha 261, mas o botão só é renderizado com `showSaveDraftAction` (DraftDocumentEditor.tsx:831) e desaparece após guardar. A simulação de alteração concorrente e os pedidos de releitura e emissão ainda não tinham ocorrido. |
 
 As referências de linha acima são do HEAD ensaiado da primeira execução, `5839de607de99fb0410971356369fca17aa68bb3`.
+
+## Resultado R1
+
+HEAD ensaiado `617b239edef7f5633282dd927518b3229381fbad`, tree `21a8d4326c484eb2580136005a1a2b5cff813b9c`. A comparação usa o documento persistido que hidratou o editor após guardar, ou o rascunho que já estava carregado. O GET continua em paralelo com o diagnóstico. Uma mudança posterior à versão apresentada actualiza as datas e pede nova confirmação. A requisição de emissão mantém o mesmo payload.
+
+| Prova | Resultado |
+| --- | --- |
+| Fluxo preexistente | O cenário de guardar, diagnosticar, confirmar e emitir voltou a passar com um POST. O diff `testes-r1.diff` só ajusta a espera do teste novo. Na comparação com a base, `testes-base.diff` identifica as extensões do mock e os testes novos. Os corpos dos testes preexistentes foram comparados e coincidem. |
+| GET concorrente | O teste novo confirmou o PUT, simulou a alteração da prestação de 07/11 para 20/10 e verificou o aviso derivado do GET fresco. O editor mostrou a data fresca e não houve POST na primeira tentativa. A segunda tentativa mostrou o aviso e a nota de imutabilidade. O POST foi igual ao do caso sem aviso e o editor apresentou a emissão concluída. |
+| Evidência visual | `01-criacao.png` é a captura do percurso activo de criação. `02-editor.png` mostra o aviso junto ao campo. A caixa nativa fica documentada pelo seu texto capturado no evento Playwright, em `03-confirmacao-mensagem.txt`, e pela transcrição visual rotulada `03-confirmacao-transcricao.png`. A captura directa da janela nativa ficou indisponível nesta sessão. |
+| Execução | Build tsc/Vite com saída 0. Suite integral Playwright com Edge nativo, 46 aprovados, zero falhas, instáveis ou omissões, saída 0. Node 24.19.0, npm 11.17.0, Playwright 1.63.0 e Edge 157.0.4341.60. `versions.log` identifica os comandos, HEAD e tree. |
+
+O arquivo R1 em `AVISO-01/2026-11-23-R1/` tem 11/11 entradas conferidas. SHA-256 do índice `6e9b23ff1e93ae47e85083df96268bab4e19f31518fce74fca06586e3ac58532`, com sidecar. As 9 entradas do ensaio falhado foram reconferidas no arquivo original.
