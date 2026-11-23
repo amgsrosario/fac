@@ -39,3 +39,24 @@ HEAD ensaiado `617b239edef7f5633282dd927518b3229381fbad`, tree `21a8d4326c484eb2
 | Execução | Build tsc/Vite com saída 0. Suite integral Playwright com Edge nativo, 46 aprovados, zero falhas, instáveis ou omissões, saída 0. Node 24.19.0, npm 11.17.0, Playwright 1.63.0 e Edge 157.0.4341.60. `versions.log` identifica os comandos, HEAD e tree. |
 
 O arquivo R1 em `AVISO-01/2026-11-23-R1/` tem 11/11 entradas conferidas. SHA-256 do índice `6e9b23ff1e93ae47e85083df96268bab4e19f31518fce74fca06586e3ac58532`, com sidecar. As 9 entradas do ensaio falhado foram reconferidas no arquivo original.
+
+## R2 — cobertura de todos os consumidores de emissão
+
+O inventário `git grep -n '/emitir' -- frontend/src` identificou três chamadas de emissão comercial. As linhas abaixo referem-se ao HEAD ensaiado `0d23ede11897ad2c4ed4f1955a4a5d8593afd0ce`, tree `662b4ade779f6cfe6ec000c367bdf929029e0344`.
+
+| Caminho | Prova |
+| --- | --- |
+| `DocumentosView.emitDocument`, vista antiga, POST na linha 366 | MINOR-001. GET fresco em paralelo com o diagnóstico. O teste legado exige uma confirmação, texto de referência integral sem aviso e POST de referência. Com data alterada no GET, exige as datas frescas, aviso, nota de imutabilidade, o mesmo POST e estado Emitido. |
+| `DocumentsView.emitir`, lista, POST na linha 486 | MINOR-001. Mesma prova, incluindo espera pelo carregamento da selecção antes de simular a alteração. |
+| `DraftDocumentEditor.emitDocument`, editor, POST na linha 730 | Regressão R1. Confirma GET fresco e actualização do editor antes de nova confirmação, emissão com aviso e igualdade do POST com o percurso sem aviso. |
+| O-1, calendário | Casos adicionais aprovados para Sexta-feira Santa e Corpo de Deus em 2025 e 2027, início num sábado, início no feriado fixo de 1/12 e transição de 31/12/2026 para 08/01/2027 e 11/01/2027. |
+| O-2, criação na vista antiga | O harness monta o formulário interno de `DocumentosView` aberto e verifica o aviso e o seu desaparecimento ao limpar a data. A navegação activa de produção para criação mantém o encaminhamento para o editor. |
+| O-4, apresentação partilhada | `ServiceDateWarningMessage` substitui as duas funções de renderização locais. Os três consumidores de emissão partilham a composição do texto de aviso, baseada na mesma função de calendário. |
+
+A janela residual entre a leitura fresca e o POST existe nos três caminhos. A EMISSAO-CONC-01 terá de os cobrir a todos. [DEC-EMISSAO-CONC-01](https://github.com/amgsrosario/fac/issues/46#issuecomment-7100219523)
+
+A primeira execução R2 em `1167343` passou 48 testes e falhou dois casos acrescentados nesta R2. Na lista, o teste alterava a fixture antes de a selecção aparecer. Na vista antiga, a emissão completava-se mas o teste procurava uma frase de sucesso diferente. O delta até ao HEAD ensaiado corrige a sincronização e verifica o estado Emitido. O conteúdo preexistente de `emission-readiness.spec.ts` permanece integralmente no início do ficheiro, byte a byte. A única alteração no harness adiciona a montagem do formulário antigo para a prova O-2.
+
+Build tsc/Vite com saída 0. Suite integral Edge nativo com 50 testes aprovados, zero falhas, instáveis ou omissões, saída 0. Node 24.19.0, npm 11.17.0, Playwright 1.63.0 e Edge 157.0.4341.60. Os dois ensaios registam comandos, HEAD, tree e versões. As capturas de criação e editor e a transcrição visual da confirmação nativa estão junto dos logs.
+
+Arquivo `AVISO-01/2026-11-23-R2/`, 21/21 entradas conferidas. SHA-256 do índice `58d05cb8aed2b272223b2320839837cec0e297670479e76fc4e1f2b590103dd3`, com sidecar. Os arquivos original e R1 foram reconferidos em 9/9 e 11/11 entradas.
