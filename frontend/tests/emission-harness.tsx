@@ -11,7 +11,7 @@ import { getAuthSession } from '../src/api';
 import '../src/styles.css';
 const session = getAuthSession()!;
 const consumer = new URLSearchParams(location.search).get('consumer');
-const content = consumer === 'legacy' ? <DocumentosView /> : consumer === 'list'
+const content = consumer === 'legacy' ? <DocumentosView initialCreationOpen={new URLSearchParams(location.search).has('legacyCreate')} /> : consumer === 'list'
   ? <DocumentsView currentUser={session} onLogout={() => {}} />
   : <DraftDocumentEditor currentUser={session} onLogout={() => {}} />;
 createRoot(document.getElementById('root')!).render(

@@ -51,7 +51,7 @@ async function setup(page: Page, consumer: string, allowed: boolean, warningOnSa
     return send({content:catalogs[path]??[],totalElements:(catalogs[path]??[]).length,totalPages:1,number:0});
   });
   await page.goto('/tests/emission-harness.html?consumer='+consumer+(options.newDocument?'&new=1':''));
-  return {posts,savedDates,diagnostics:()=>diagCalls};
+  return {posts,savedDates,diagnostics:()=>diagCalls, setServiceDate: (value: string | null) => { doc.dataPrestacao = value; }};
 }
 for(const consumer of ['legacy','list','editor']) {
   test(consumer+' shows known blocker and prevents issuance',async({page})=>{
@@ -192,4 +192,159 @@ test('draft service date survives reload and clears as explicit null', async ({p
   await expect.poll(() => state.savedDates).toEqual(['2026-11-07', null]);
   await page.reload();
   await expect(date).toHaveValue('');
+});
+
+
+const afterIssue = 'A data de prestação é posterior à data de emissão.';
+const lateIssue = 'A data de emissão excede o 5.º dia útil após a data de prestação';
+const immutableDate = 'A data de prestação não pode ser alterada depois de emitida.';
+
+test('service date working-day calendar uses Gregorian holiday boundaries', async ({page}) => {
+  await page.goto('/tests/emission-harness.html');
+  const warnings = await page.evaluate(async () => {
+    const moduleUrl = '/src/serviceDateWarning.ts';
+    const {serviceDateWarning: warning} = await import(moduleUrl);
+    return [
+      warning('2026-11-28', '2026-11-27'),
+      warning('2026-11-27', '2026-12-07'),
+      warning('2026-11-27', '2026-12-08'),
+      warning('2026-11-27', '2026-12-09'),
+      warning('2026-04-02', '2026-04-10'),
+      warning('2026-04-02', '2026-04-11'),
+      warning('2026-04-05', '2026-04-10'),
+      warning('2026-05-29', '2026-06-08'),
+      warning('2026-05-29', '2026-06-09'),
+      warning('', '2026-11-27'),
+      warning('2026-11-27', '2026-11-27')
+    ];
+  });
+  expect(warnings).toEqual([
+    'after-issue', null, 'late-issue', 'late-issue',
+    null, 'late-issue', null, null, 'late-issue', null, null
+  ]);
+});
+
+test('service date warning is shown during document creation and responds to either date', async ({page}, info) => {
+  await setup(page, 'editor', true, false, {newDocument:true});
+  const service = page.getByLabel('Data de prestação', {exact:true});
+  const issue = page.getByLabel('Data', {exact:true});
+  await issue.fill('2026-12-07');
+  await service.fill('2026-11-27');
+  await expect(page.getByText(lateIssue, {exact:false})).toHaveCount(0);
+  await issue.fill('2026-12-09');
+  await expect(page.getByText(lateIssue, {exact:false})).toBeVisible();
+  const screenshot = info.outputPath('01-criacao.png');
+  await page.screenshot({path:screenshot});
+  await info.attach('Criação', {path:screenshot, contentType:'image/png'});
+  await service.fill('2026-12-09');
+  await expect(page.getByText(lateIssue, {exact:false})).toHaveCount(0);
+});
+
+test('fresh service date requests renewed confirmation and does not change the issuance payload', async ({page}, info) => {
+  const baseline = await setup(page, 'editor', true);
+  const messages: string[] = [];
+  page.on('dialog', async dialog => { messages.push(dialog.message()); await dialog.accept(); });
+  await page.getByRole('button',{name:'Linhas e totais',exact:true}).click();
+  await page.getByRole('button',{name:'Emitir documento',exact:true}).click();
+  await expect.poll(() => baseline.posts.length).toBe(1);
+  expect(messages[0]).not.toContain(immutableDate);
+
+  const state = await setup(page, 'editor', true);
+  const service = page.getByLabel('Data de prestação', {exact:true});
+  await service.fill('2026-11-07');
+  await expect(page.getByText(afterIssue, {exact:false})).toBeVisible();
+  const editorShot = info.outputPath('02-editor.png');
+  await page.screenshot({path:editorShot});
+  await info.attach('Editor', {path:editorShot, contentType:'image/png'});
+  await page.getByRole('button',{name:'Guardar alterações',exact:true}).click();
+  await expect.poll(() => state.savedDates).toEqual(['2026-11-07']);
+  const emit = page.getByRole('button',{name:'Emitir documento',exact:true});
+  await expect(emit).toBeEnabled();
+  state.setServiceDate('2026-10-20');
+  await page.getByRole('button',{name:'Linhas e totais',exact:true}).click();
+  await emit.click();
+  const notice = page.getByText(/Datas actualizadas.*Prestação: 2026-10-20.*Reveja as datas/);
+  await expect(notice).toContainText(lateIssue);
+  expect(messages).toHaveLength(1);
+  expect(state.posts).toHaveLength(0);
+  await page.getByRole('button',{name:'Cabeçalho e condições',exact:true}).click();
+  await expect(service).toHaveValue('2026-10-20');
+  await page.getByRole('button',{name:'Linhas e totais',exact:true}).click();
+  await emit.click();
+  await expect.poll(() => state.posts.length).toBe(1);
+  expect(messages).toHaveLength(2);
+  expect(messages[1]).toContain(lateIssue);
+  expect(messages[1]).toContain(immutableDate);
+  expect(state.posts[0]).toEqual(baseline.posts[0]);
+  await expect(page.getByText('Documento emitido.', {exact:true}).first()).toBeVisible();
+
+  // Playwright does not include the native confirmation dialog in page screenshots.
+  // Preserve its actual message and make a labelled visual transcript.
+  await info.attach('Mensagem nativa da confirmação', {body:messages[1], contentType:'text/plain'});
+  const transcript = await page.context().newPage();
+  await transcript.setContent('<h1>Transcrição da confirmação nativa</h1><pre style="white-space: pre-wrap"></pre>');
+  await transcript.locator('pre').evaluate((element, message) => { element.textContent = message; }, messages[1]);
+  const dialogShot = info.outputPath('03-confirmacao-transcricao.png');
+  await transcript.screenshot({path:dialogShot});
+  await info.attach('Transcrição da confirmação', {path:dialogShot, contentType:'image/png'});
+  await transcript.close();
+});
+
+test('legacy creation form shows the service date warning', async ({page}) => {
+  await setup(page, 'legacy', true);
+  await page.goto('/tests/emission-harness.html?consumer=legacy&legacyCreate=1');
+  await expect(page.getByRole('heading', {name:'Novo documento'})).toBeVisible();
+  await page.getByLabel('Data de emissão', {exact:true}).fill('2026-11-23');
+  const service = page.getByLabel('Data de prestação', {exact:true});
+  await service.fill('2026-11-24');
+  await expect(page.getByText(afterIssue, {exact:false})).toBeVisible();
+  await service.fill('');
+  await expect(page.getByText(afterIssue, {exact:false})).toHaveCount(0);
+});
+
+for (const consumer of ['legacy','list']) {
+  test(consumer+' confirms once with the baseline message or the fresh service date warning', async ({page}) => {
+    const baselineMessage = 'Total apresentado: 12.3. Total projectado: 15.\nEmitir definitivamente FT A/9? Confirma os valores apresentados.';
+    const messages: string[] = [];
+    page.on('dialog', async dialog => { messages.push(dialog.message()); await dialog.accept(); });
+    const emit = page.getByRole('button', {name:consumer==='list'?'Conferir e emitir':'Emitir documento', exact:true}).last();
+    const baseline = await setup(page, consumer, true);
+    await openConsumer(page, consumer);
+    await emit.click();
+    await expect.poll(() => baseline.posts.length).toBe(1);
+    expect(messages).toEqual([baselineMessage]);
+    expect(baseline.posts).toEqual([{emissorId:'TESTE', recalculoConfirmado:false}]);
+
+    const state = await setup(page, consumer, true);
+    await openConsumer(page, consumer);
+    await expect(emit).toBeEnabled();
+    state.setServiceDate('2026-11-07');
+    await emit.click();
+    await expect.poll(() => state.posts.length).toBe(1);
+    expect(messages).toHaveLength(2);
+    expect(messages[1]).toContain('Emissão: 2026-11-05. Prestação: 2026-11-07.');
+    expect(messages[1]).toContain(afterIssue);
+    expect(messages[1]).toContain(immutableDate);
+    expect(messages[1]).toContain(baselineMessage);
+    expect(state.posts).toEqual(baseline.posts);
+    await expect(page.getByRole('cell', {name:'Emitido', exact:true}).first()).toBeVisible();
+  });
+}
+
+test('service date working-day calendar handles other years and non-business start dates', async ({page}) => {
+  await setup(page, 'editor', true);
+  const results = await page.evaluate(async () => {
+    const moduleUrl = '/src/serviceDateWarning.ts';
+    const {serviceDateWarning: warning} = await import(moduleUrl);
+    return [
+      ['2025-04-16','2025-04-24','2025-04-25'],
+      ['2025-06-18','2025-06-26','2025-06-27'],
+      ['2027-03-25','2027-04-02','2027-04-03'],
+      ['2027-05-26','2027-06-03','2027-06-04'],
+      ['2026-11-28','2026-12-07','2026-12-09'],
+      ['2026-12-01','2026-12-09','2026-12-10'],
+      ['2026-12-31','2027-01-08','2027-01-11']
+    ].map(([service,deadline,late]) => [warning(service,deadline),warning(service,late)]);
+  });
+  expect(results).toEqual(Array.from({length:7}, () => [null,'late-issue']));
 });

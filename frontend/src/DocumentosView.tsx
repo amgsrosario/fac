@@ -1,3 +1,4 @@
+import { ServiceDateWarningMessage, serviceDateConfirmation } from "./ServiceDateWarningMessage";
 import { EmissionAssessment, EmissionReadinessMessages, emissionConfirmation } from "./emissionReadiness";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Paginator } from "primereact/paginator";
@@ -166,7 +167,7 @@ const emptyLineForm: LineForm = {
   desconto: "0"
 };
 
-export default function DocumentosView() {
+export default function DocumentosView({ initialCreationOpen = false }: { initialCreationOpen?: boolean } = {}) {
   const navigate = useNavigate();
   const [documentos, setDocumentos] = useState<DocumentoComercial[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -182,7 +183,7 @@ export default function DocumentosView() {
   const [linesLoading, setLinesLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(initialCreationOpen);
   const [draftForm, setDraftForm] = useState<DraftForm>(emptyDraftForm);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [tiposDocumento, setTiposDocumento] = useState<TipoDocumento[]>([]);
@@ -355,9 +356,13 @@ export default function DocumentosView() {
     setLoading(true);
     setMessage(null);
     try {
-      const fresh = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
+      const [freshDoc, fresh] = await Promise.all([
+        fetchJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}`),
+        fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`)
+      ]);
       setDiagnostico(fresh);
-      if (!fresh.podeEmitir || !window.confirm(emissionConfirmation(fresh, fresh.referencia))) return;
+      const confirmation = serviceDateConfirmation(freshDoc, selected) + emissionConfirmation(fresh, fresh.referencia);
+      if (!fresh.podeEmitir || !window.confirm(confirmation)) return;
       const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${selected.id}/emitir`, "POST", { emissorId: getAuthSession()?.codigo, recalculoConfirmado: Boolean(fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria) });
       const diagnosticoEmitido = await fetchJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${selected.id}/diagnostico`);
       setDocumentos((current) => current.map((item) => item.id === emitted.id ? emitted : item));
@@ -558,6 +563,7 @@ export default function DocumentosView() {
           </Field>
           <Field label="Data de emissão"><input onChange={(event) => changeDraft("dataEmissao", event.target.value)} type="date" value={draftForm.dataEmissao} /></Field>
           <Field label="Data de prestação"><input onChange={(event) => changeDraft("dataPrestacao", event.target.value)} type="date" value={draftForm.dataPrestacao} /></Field>
+          <ServiceDateWarningMessage dataPrestacao={draftForm.dataPrestacao} dataEmissao={draftForm.dataEmissao} />
           <Field label="Cliente">
             <select ref={newDocumentClientRef} onChange={(event) => changeDraft("clienteId", event.target.value)} value={draftForm.clienteId}>
               <option value="">Selecionar</option>

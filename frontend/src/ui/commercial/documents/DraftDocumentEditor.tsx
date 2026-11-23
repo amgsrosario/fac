@@ -1,3 +1,5 @@
+import { ServiceDateWarningMessage, serviceDateConfirmation } from "../../../ServiceDateWarningMessage";
+import { serviceDateWarning, serviceDateWarningText } from "../../../serviceDateWarning";
 import { EmissionAssessment, EmissionReadinessMessages, emissionConfirmation } from "../../../emissionReadiness";
 import { KeyboardEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { InputNumber, InputNumberValueChangeEvent } from "primereact/inputnumber";
@@ -697,14 +699,33 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     setSaving(true);
     setError(null);
     try {
-      const fresh = await requestJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${draft.id}/diagnostico`);
+      const [freshDoc, fresh] = await Promise.all([
+        requestJson<DocumentoComercial>(`/api/documentos-comerciais/${draft.id}`),
+        requestJson<DiagnosticoDocumento>(`/api/documentos-comerciais/${draft.id}/diagnostico`)
+      ]);
       setDiagnostico(fresh);
+      const warning = serviceDateWarning(freshDoc.dataPrestacao, freshDoc.dataEmissao);
+      // saveDraft has already hydrated the editor from the returned persisted draft.
+      if (freshDoc.dataEmissao !== draft.dataEmissao || (freshDoc.dataPrestacao ?? "") !== (draft.dataPrestacao ?? "")) {
+        const dates = { dataEmissao: freshDoc.dataEmissao, dataPrestacao: freshDoc.dataPrestacao ?? "" };
+        setDocumento(freshDoc);
+        setHeader(current => ({ ...current, ...dates }));
+        setOriginalHeaderKey(headerKey({ ...headerFromDocument(draft), ...dates }));
+        setNotice([
+          `Datas actualizadas. Emissão: ${dates.dataEmissao}. Prestação: ${dates.dataPrestacao || "sem data"}.`,
+          warning && serviceDateWarningText[warning],
+          "Reveja as datas e confirme novamente a emissão."
+        ].filter(Boolean).join(" "));
+        return;
+      }
       if (requiresSave && !warningBeforeSave && (draft.resultadoFiscal?.recalculoAviso || fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria)) {
         setRecalculationWarning(true);
         setNotice("O rascunho foi guardado e recalculado. Revê os valores apresentados e confirma novamente a emissão.");
         return;
       }
-      if (!fresh.podeEmitir || !window.confirm(emissionConfirmation(fresh, documentRef(draft)))) return;
+      const confirmation = emissionConfirmation(fresh, documentRef(freshDoc));
+      const warningText = serviceDateConfirmation(freshDoc, draft);
+      if (!fresh.podeEmitir || !window.confirm(warningText + confirmation)) return;
       const recalculationConfirmed = Boolean(fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria);
       const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${draft.id}/emitir`, { emissorId: currentUser.codigo, recalculoConfirmado: recalculationConfirmed }, "POST");
       await refreshAfterStateChange(emitted.id, "Documento emitido.");
@@ -908,6 +929,7 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
           <FacSelect disabled={readOnly} label="Série" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
           <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
           <FacInputText disabled={readOnly} label="Data de prestação" onChange={(event) => onUpdate({ dataPrestacao: event.target.value })} type="date" value={header.dataPrestacao} />
+          {!readOnly && <ServiceDateWarningMessage dataPrestacao={header.dataPrestacao} dataEmissao={header.dataEmissao} />}
           <EntityLookupField<Cliente>
             clearable={false}
             columns={clienteLookupColumns}
