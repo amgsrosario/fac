@@ -317,6 +317,7 @@ for (const consumer of ['legacy','list']) {
 
     const state = await setup(page, consumer, true);
     await openConsumer(page, consumer);
+    await expect(emit).toBeEnabled();
     state.setServiceDate('2026-11-07');
     await emit.click();
     await expect.poll(() => state.posts.length).toBe(1);
@@ -326,7 +327,7 @@ for (const consumer of ['legacy','list']) {
     expect(messages[1]).toContain(immutableDate);
     expect(messages[1]).toContain(baselineMessage);
     expect(state.posts).toEqual(baseline.posts);
-    await expect(page.getByText(/Documento emitido/).first()).toBeVisible();
+    await expect(page.getByRole('cell', {name:'Emitido', exact:true}).first()).toBeVisible();
   });
 }
 
