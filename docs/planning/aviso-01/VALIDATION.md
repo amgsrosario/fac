@@ -17,3 +17,12 @@ O teste preexistente «new editor saves before diagnosing and emitting» esperav
 A pausa inicial de 23/11 ocorreu porque a emissão relê e bloqueia a versão persistida e podia usar datas que o operador ainda não tinha visto. A v2 prevê releitura antes da confirmação. Entre o GET e o POST mantém-se a janela residual para edições concorrentes, abrangida pela DEC-EMISSAO-CONC-01. [Deliberação de concorrência](https://github.com/amgsrosario/fac/issues/46#issuecomment-7100219523)
 
 Arquivo reservado `AVISO-01/2026-11-23/`. Índice e sidecar conferidos com 9/9 entradas. SHA-256 do índice `5d53f035296bb1e317f5f8977b10242f0ae7fad73f3ea369901baa65c5fe8581`.
+
+## Diagnóstico R1 anterior à correcção
+
+| Teste | Classificação | Pedido em falta e causa |
+| --- | --- | --- |
+| `new editor saves before diagnosing and emitting` | C, comportamento novo | O `POST /api/documentos-comerciais/9/emitir` não ocorreu. A gravação já tinha hidratado o ecrã com o documento devolvido por `saveDraft` (DraftDocumentEditor.tsx:649–653). A comparação em DraftDocumentEditor.tsx:707 usou a variável `header` capturada antes da gravação. A diferença em relação ao GET da linha 702 entrou indevidamente no ramo que termina na linha 717. O mock já devolvia o documento em emission-readiness.spec.ts:43. A asserção preexistente na linha 167 observou 0 em vez de 1. |
+| `fresh service date requests renewed confirmation and does not change the issuance payload` | I, sincronização da prova nova | O PUT do cabeçalho concluiu e o mock registou a data na linha 260. O teste aguardou «Guardar alterações» na linha 261, mas o botão só é renderizado com `showSaveDraftAction` (DraftDocumentEditor.tsx:831) e desaparece após guardar. A simulação de alteração concorrente e os pedidos de releitura e emissão ainda não tinham ocorrido. |
+
+As referências de linha acima são do HEAD ensaiado da primeira execução, `5839de607de99fb0410971356369fca17aa68bb3`.

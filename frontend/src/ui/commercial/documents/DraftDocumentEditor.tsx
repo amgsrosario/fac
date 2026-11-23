@@ -704,7 +704,8 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       ]);
       setDiagnostico(fresh);
       const warning = serviceDateWarning(freshDoc.dataPrestacao, freshDoc.dataEmissao);
-      if (freshDoc.dataEmissao !== header.dataEmissao || (freshDoc.dataPrestacao ?? "") !== header.dataPrestacao) {
+      // saveDraft has already hydrated the editor from the returned persisted draft.
+      if (freshDoc.dataEmissao !== draft.dataEmissao || (freshDoc.dataPrestacao ?? "") !== (draft.dataPrestacao ?? "")) {
         const dates = { dataEmissao: freshDoc.dataEmissao, dataPrestacao: freshDoc.dataPrestacao ?? "" };
         setDocumento(freshDoc);
         setHeader(current => ({ ...current, ...dates }));

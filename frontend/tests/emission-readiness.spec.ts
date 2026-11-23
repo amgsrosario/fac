@@ -258,11 +258,10 @@ test('fresh service date requests renewed confirmation and does not change the i
   await info.attach('Editor', {path:editorShot, contentType:'image/png'});
   await page.getByRole('button',{name:'Guardar alterações',exact:true}).click();
   await expect.poll(() => state.savedDates).toEqual(['2026-11-07']);
-  await expect(page.getByRole('button',{name:'Guardar alterações',exact:true})).toBeEnabled();
-
+  const emit = page.getByRole('button',{name:'Emitir documento',exact:true});
+  await expect(emit).toBeEnabled();
   state.setServiceDate('2026-10-20');
   await page.getByRole('button',{name:'Linhas e totais',exact:true}).click();
-  const emit = page.getByRole('button',{name:'Emitir documento',exact:true});
   await emit.click();
   const notice = page.getByText(/Datas actualizadas.*Prestação: 2026-10-20.*Reveja as datas/);
   await expect(notice).toContainText(lateIssue);
