@@ -477,16 +477,7 @@ em qualquer DTO.
 
 # 15. Utilizador Inicial
 
-Para facilitar o desenvolvimento deverá existir um utilizador inicial.
-
-Exemplo:
-
-```text
-Username: admin
-Email: admin@fac.local
-Password: admin123
-Role: ADMIN
-```
+A credencial inicial é definida no provisionamento local seguro (M02). Nunca é documentada nem versionada. Não existem credenciais por omissão.
 
 ---
 
