@@ -85,7 +85,7 @@ Comandos (credenciais apenas do contentor descartável):
 ```bash
 export FAC_TEST_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:25437/fac_catalog_test
 export FAC_TEST_DATASOURCE_USERNAME=postgres
-export FAC_TEST_DATASOURCE_PASSWORD=postgres
+export FAC_TEST_DATASOURCE_PASSWORD="<definida-localmente>"
 mvn -o -B -Dtest=DocumentTypeImmutabilityTests,FinancialDocumentClassificationTests,FinancialReceiptMigrationTests,FinancialCoreMigrationTests,ReceiptPayloadCompatibilityTests,FinancialQueriesIntegrationTests,FinancialReconciliationIntegrationTests,TestDatabaseSafetyValidatorTests test
 mvn -o -B -Dtest=FiscalCatalogTests,FinancialReceiptIntegrationTests,DocumentoFinanceiroPdfServiceTests package
 ```
@@ -185,7 +185,7 @@ Comandos adicionais:
 ```bash
 export FAC_TEST_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:25438/fac_catalog_reserves_test
 export FAC_TEST_DATASOURCE_USERNAME=postgres
-export FAC_TEST_DATASOURCE_PASSWORD=postgres
+export FAC_TEST_DATASOURCE_PASSWORD="<definida-localmente>"
 mvn -o -B -Dtest=FiscalCatalogInitializationTests,FiscalCatalogTests test
 mvn -o -B -Dtest=TipoDocumentoControllerTests,DocumentoComercialControllerTests,DocumentoComercialEmissaoIntegridadeTests,DocumentTypeImmutabilityTests,FinancialDocumentClassificationTests,FinancialReceiptMigrationTests,FinancialCoreMigrationTests,TestDatabaseSafetyValidatorTests package
 ```

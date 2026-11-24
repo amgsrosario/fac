@@ -53,7 +53,7 @@ Configuração opcional, sempre apontando para uma base terminada em `_test`:
 ```powershell
 $env:FAC_TEST_DATASOURCE_URL='jdbc:postgresql://localhost:25432/fac_test'
 $env:FAC_TEST_DATASOURCE_USERNAME='postgres'
-$env:FAC_TEST_DATASOURCE_PASSWORD='...'
+$env:FAC_TEST_DATASOURCE_PASSWORD="<definida-localmente>"
 mvn test
 ```
 
