@@ -1,0 +1,8 @@
+# Preserve archive bytes, including historical line endings and whitespace.
+* -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof,-space-before-tab
+.gitattributes text eol=lf whitespace
+INDEX.md text eol=lf whitespace
+DECISOES_HISTORICAS.md text eol=lf whitespace
+HANDOFF.md text eol=lf whitespace
+MANIFEST_SHA256.txt text eol=lf whitespace
+MANIFEST_SHA256.txt.sha256 text eol=lf whitespace

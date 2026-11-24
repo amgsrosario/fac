@@ -1,0 +1,1250 @@
+{
+  "failedResponses": [
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "401 http://127.0.0.1:5174/api/empresa/logotipo?v=0",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-documento-comercial",
+    "404 http://127.0.0.1:5174/api/parametros-documento-comercial",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-documento-comercial",
+    "404 http://127.0.0.1:5174/api/parametros-documento-comercial",
+    "404 http://127.0.0.1:5174/api/parametros-cliente",
+    "404 http://127.0.0.1:5174/api/parametros-cliente"
+  ],
+  "pageErrors": [],
+  "results": [
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Visão geral",
+          "size": "43.2px",
+          "weight": "600"
+        },
+        {
+          "text": "Evolução de vendas e recebimentos",
+          "size": "20px",
+          "weight": "400"
+        },
+        {
+          "text": "Clientes com maior saldo",
+          "size": "20px",
+          "weight": "400"
+        },
+        {
+          "text": "Continuar o trabalho",
+          "size": "20px",
+          "weight": "400"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "dashboard-desktop",
+      "pageHeight": 1760,
+      "smallTargets": []
+    },
+    {
+      "clipped": [
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "left": 1320,
+          "right": 1479
+        }
+      ],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Documentos",
+          "size": "43.2px",
+          "weight": "600"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "documentos-desktop",
+      "pageHeight": 1000,
+      "smallTargets": []
+    },
+    {
+      "clipped": [
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "left": 1320,
+          "right": 1479
+        },
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "left": 1335,
+          "right": 1494
+        }
+      ],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Clientes e conta corrente",
+          "size": "43.2px",
+          "weight": "600"
+        },
+        {
+          "text": "Casa dos Sabores do Sul, Lda.",
+          "size": "20px",
+          "weight": "400"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "clientes-desktop",
+      "pageHeight": 1023,
+      "smallTargets": []
+    },
+    {
+      "clipped": [
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "left": 1320,
+          "right": 1479
+        }
+      ],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Artigos e serviços",
+          "size": "43.2px",
+          "weight": "600"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "artigos-desktop",
+      "pageHeight": 1000,
+      "smallTargets": []
+    },
+    {
+      "clipped": [
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "left": 1335,
+          "right": 1494
+        },
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "left": 1335,
+          "right": 1494
+        }
+      ],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Recebimentos",
+          "size": "32px",
+          "weight": "600"
+        },
+        {
+          "text": "Recebimentos emitidos",
+          "size": "19.2px",
+          "weight": "500"
+        },
+        {
+          "text": "Conta corrente em aberto e liquidada",
+          "size": "19.2px",
+          "weight": "500"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "recebimentos-desktop",
+      "pageHeight": 1265,
+      "smallTargets": []
+    },
+    {
+      "clipped": [
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "left": 1320,
+          "right": 1479
+        }
+      ],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Listagens e análise",
+          "size": "43.2px",
+          "weight": "600"
+        },
+        {
+          "text": "Dados disponíveis",
+          "size": "21.12px",
+          "weight": "500"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "listagens-desktop",
+      "pageHeight": 1000,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Configuração",
+          "size": "32px",
+          "weight": "740"
+        },
+        {
+          "text": "Identificação da entidade emissora",
+          "size": "24px",
+          "weight": "740"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "empresa-desktop",
+      "pageHeight": 1159,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Configuração",
+          "size": "32px",
+          "weight": "740"
+        },
+        {
+          "text": "Utilizadores e perfis funcionais",
+          "size": "31.68px",
+          "weight": "600"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "utilizadores-desktop",
+      "pageHeight": 1000,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Auditoria fiscal",
+          "size": "32px",
+          "weight": "740"
+        },
+        {
+          "text": "Operações críticas e tentativas negadas",
+          "size": "31.68px",
+          "weight": "600"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "auditoria-desktop",
+      "pageHeight": 7222,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Configuração",
+          "size": "32px",
+          "weight": "740"
+        },
+        {
+          "text": "Códigos postais",
+          "size": "24px",
+          "weight": "740"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "codpostal-desktop",
+      "pageHeight": 2349,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Configuração",
+          "size": "32px",
+          "weight": "740"
+        },
+        {
+          "text": "Freguesias",
+          "size": "24px",
+          "weight": "740"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "freguesias-desktop",
+      "pageHeight": 2490,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Configuração",
+          "size": "32px",
+          "weight": "740"
+        },
+        {
+          "text": "Armazéns",
+          "size": "24px",
+          "weight": "740"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "armazens-desktop",
+      "pageHeight": 1000,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Configuração",
+          "size": "32px",
+          "weight": "740"
+        },
+        {
+          "text": "Catálogos de apoio",
+          "size": "24px",
+          "weight": "700"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "paises-desktop",
+      "pageHeight": 1000,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Documentos",
+          "size": "33px",
+          "weight": "600"
+        },
+        {
+          "text": "Novo documento",
+          "size": "22px",
+          "weight": "600"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "documento-editor-1100",
+      "pageHeight": 1000,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Visão geral",
+          "size": "32px",
+          "weight": "600"
+        },
+        {
+          "text": "Evolução de vendas e recebimentos",
+          "size": "20px",
+          "weight": "400"
+        },
+        {
+          "text": "Clientes com maior saldo",
+          "size": "20px",
+          "weight": "400"
+        },
+        {
+          "text": "Continuar o trabalho",
+          "size": "20px",
+          "weight": "400"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "dashboard-900",
+      "pageHeight": 2567,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [],
+      "iconOnlyWithoutName": 0,
+      "name": "documentos-700",
+      "pageHeight": 1000,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Códigos postais",
+          "size": "24px",
+          "weight": "740"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "configuracao-700",
+      "pageHeight": 2464,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Evolução de vendas e recebimentos",
+          "size": "20px",
+          "weight": "400"
+        },
+        {
+          "text": "Clientes com maior saldo",
+          "size": "20px",
+          "weight": "400"
+        },
+        {
+          "text": "Continuar o trabalho",
+          "size": "20px",
+          "weight": "400"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "dashboard-393",
+      "pageHeight": 2544,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [],
+      "iconOnlyWithoutName": 0,
+      "name": "documentos-393",
+      "pageHeight": 1000,
+      "smallTargets": [
+        {
+          "tag": "BUTTON",
+          "text": "Consultar",
+          "width": 71,
+          "height": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "PDF",
+          "width": 39,
+          "height": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Detalhe",
+          "width": 60,
+          "height": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Primeira página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página anterior",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página seguinte",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Última página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "width": 159,
+          "height": 24
+        },
+        {
+          "tag": "SELECT",
+          "text": "10",
+          "width": 36,
+          "height": 20
+        },
+        {
+          "tag": "DIV",
+          "text": "Escolher",
+          "width": 32,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Casa dos Sabores do Sul, Lda.",
+          "size": "20px",
+          "weight": "400"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "clientes-393",
+      "pageHeight": 1307,
+      "smallTargets": [
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 14,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Primeira página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página anterior",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página seguinte",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Última página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "width": 159,
+          "height": 24
+        },
+        {
+          "tag": "SELECT",
+          "text": "20",
+          "width": 36,
+          "height": 20
+        },
+        {
+          "tag": "DIV",
+          "text": "Escolher",
+          "width": 32,
+          "height": 30
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 14,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Primeira página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página anterior",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página seguinte",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Última página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "width": 159,
+          "height": 24
+        },
+        {
+          "tag": "SELECT",
+          "text": "10",
+          "width": 36,
+          "height": 20
+        },
+        {
+          "tag": "DIV",
+          "text": "Escolher",
+          "width": 32,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [],
+      "iconOnlyWithoutName": 0,
+      "name": "artigos-393",
+      "pageHeight": 1000,
+      "smallTargets": [
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 14,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Primeira página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página anterior",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página seguinte",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Última página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "width": 159,
+          "height": 24
+        },
+        {
+          "tag": "SELECT",
+          "text": "10",
+          "width": 36,
+          "height": 20
+        },
+        {
+          "tag": "DIV",
+          "text": "Escolher",
+          "width": 32,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Recebimentos emitidos",
+          "size": "19.2px",
+          "weight": "500"
+        },
+        {
+          "text": "Conta corrente em aberto e liquidada",
+          "size": "19.2px",
+          "weight": "500"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "recebimentos-393",
+      "pageHeight": 1653,
+      "smallTargets": [
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 14,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Primeira página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página anterior",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página seguinte",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Última página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "width": 159,
+          "height": 24
+        },
+        {
+          "tag": "SELECT",
+          "text": "10",
+          "width": 36,
+          "height": 20
+        },
+        {
+          "tag": "DIV",
+          "text": "Escolher",
+          "width": 32,
+          "height": 30
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 14,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Primeira página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página anterior",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página seguinte",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Última página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "width": 159,
+          "height": 24
+        },
+        {
+          "tag": "SELECT",
+          "text": "10",
+          "width": 36,
+          "height": 20
+        },
+        {
+          "tag": "DIV",
+          "text": "Escolher",
+          "width": 32,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Dados disponíveis",
+          "size": "21.12px",
+          "weight": "500"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "listagens-393",
+      "pageHeight": 1582,
+      "smallTargets": [
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 16,
+          "height": 16
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Data ↓",
+          "width": 36,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Documento",
+          "width": 68,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Cliente",
+          "width": 42,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Estado",
+          "width": 41,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Total",
+          "width": 31,
+          "height": 14
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Primeira página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página anterior",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Página seguinte",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Última página",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "tag": "INPUT",
+          "text": "Jump to Page Dropdown",
+          "width": 159,
+          "height": 24
+        },
+        {
+          "tag": "SELECT",
+          "text": "20",
+          "width": 36,
+          "height": 20
+        },
+        {
+          "tag": "DIV",
+          "text": "Escolher",
+          "width": 32,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Utilizadores e perfis funcionais",
+          "size": "24.8px",
+          "weight": "600"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "utilizadores-393",
+      "pageHeight": 1343,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Operações críticas e tentativas negadas",
+          "size": "24.8px",
+          "weight": "600"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "auditoria-393",
+      "pageHeight": 7670,
+      "smallTargets": []
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Freguesias",
+          "size": "24px",
+          "weight": "740"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "freguesias-393",
+      "pageHeight": 2882,
+      "smallTargets": [
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 17,
+          "height": 17
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Código ↑",
+          "width": 52,
+          "height": 16
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Concelho",
+          "width": 54,
+          "height": 16
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Freguesia",
+          "width": 55,
+          "height": 16
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Estado",
+          "width": 39,
+          "height": 16
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Eliminar",
+          "width": 49,
+          "height": 19
+        }
+      ]
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Criar cliente",
+          "size": "24px",
+          "weight": "600"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "cliente-form-393",
+      "pageHeight": 2354,
+      "smallTargets": [
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 17,
+          "height": 17
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Mais opções",
+          "width": 361,
+          "height": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 17,
+          "height": 17
+        }
+      ]
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Criar artigo ou serviço",
+          "size": "24px",
+          "weight": "600"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "artigo-form-393",
+      "pageHeight": 1302,
+      "smallTargets": [
+        {
+          "tag": "BUTTON",
+          "text": "Mais opções",
+          "width": 361,
+          "height": 19
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 17,
+          "height": 17
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "width": 17,
+          "height": 17
+        }
+      ]
+    },
+    {
+      "clipped": [],
+      "globalOverflow": false,
+      "headings": [
+        {
+          "text": "Valores base para novos clientes",
+          "size": "24px",
+          "weight": "740"
+        },
+        {
+          "text": "Valores base do rascunho",
+          "size": "24px",
+          "weight": "740"
+        }
+      ],
+      "iconOnlyWithoutName": 0,
+      "name": "parametros-desktop",
+      "pageHeight": 1484,
+      "smallTargets": []
+    }
+  ]
+}
