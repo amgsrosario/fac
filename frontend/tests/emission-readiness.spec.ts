@@ -1,6 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
-async function setup(page: Page, consumer: string, allowed: boolean, warningOnSave = false, options: {missing?: boolean; failSave?: boolean; forbidden?: boolean; delayed?: boolean; newDocument?: boolean; stale?: boolean} = {}) {
+async function setup(page: Page, consumer: string, allowed: boolean, warningOnSave = false, options: {missing?: boolean; failSave?: boolean; forbidden?: boolean; delayed?: boolean; newDocument?: boolean; stale?: boolean; projected?: boolean; sameTotal?: boolean} = {}) {
   let diagCalls = 0;
+  let recalcCalls = 0;
   const posts: unknown[] = [];
   const savedDates: (string | null)[] = [];
   const session = { token:'synthetic',type:'Bearer',codigo:'TESTE',nome:'Teste',papel:'ADMINISTRADOR',
@@ -22,7 +23,7 @@ async function setup(page: Page, consumer: string, allowed: boolean, warningOnSa
       if (options.missing) return send({message:'Diagnóstico sintético indisponível'},503);
       return send({referencia:'FT A/9',podeEmitir:allowed,podeAnular:false,alertas:[],bloqueios:[],
         pendente:{existe:false},totais:{coerente:true,cabecalhoValorTotal:12.3,linhasValorTotal:12.3},
-        avaliacaoEmissao:{confirmacaoRecalculoNecessaria:doc.resultadoFiscal.recalculoAviso,totalApresentado:12.3,totalProjectado:15,
+        avaliacaoEmissao:{confirmacaoRecalculoNecessaria:doc.resultadoFiscal.recalculoAviso || Boolean(options.sameTotal && recalcCalls === 1),totalApresentado:doc.valorTotal,totalProjectado:consumer === 'editor' && (!options.projected || recalcCalls > 1) ? doc.valorTotal : 15,
           impedimentos:allowed?[]:[{codigo:'CODIGO_AT_AUSENTE',mensagem:options.stale?(path.includes('/10/')?'Novo contexto sintético':'Antigo contexto sintético'):'A série não possui código AT.'}],
           avisos:doc.resultadoFiscal.recalculoAviso?[{codigo:'RECALCULO_POR_CONFIRMAR',mensagem:'Confirme os valores recalculados.'}]:[]}});
     }
@@ -30,8 +31,8 @@ async function setup(page: Page, consumer: string, allowed: boolean, warningOnSa
     if(path==='documentos-comerciais' && route.request().method()==='POST')return send(doc,201);
     if(path.startsWith('documentos-comerciais/10') && !path.endsWith('/linhas') && !path.endsWith('/impressao'))return send({...doc,id:10});
     if(path.endsWith('/emitir')) {posts.push(route.request().postDataJSON());if(options.forbidden)return send({message:'Sem permissão sintética'},403);doc.estado='EMITIDO';return send(doc);}
-    if(path.endsWith('/recalcular-fiscal')) return send(doc);
-    if(path==='documentos-comerciais/preview-fiscal') return send({linhas:[fiscal],totais:{valorBruto:10,valorDesconto:0,valorIvaTotal:2.3,valorTotal:12.3}});
+    if(path.endsWith('/recalcular-fiscal')) { recalcCalls++; if(recalcCalls > 1 && (options.projected || options.sameTotal)) { doc.valorBruto=options.sameTotal ? 11 : 12; doc.valorIvaTotal=options.sameTotal ? 1.3 : 3; doc.valorTotal=options.sameTotal ? 12.3 : 15; doc.resultadoFiscal.recalculoAviso=Boolean(options.sameTotal); } return send(doc); }
+    if(path==='documentos-comerciais/preview-fiscal') return send({linhas:[fiscal],totais:{valorBruto:doc.valorBruto,valorDesconto:doc.valorDesconto,valorIvaTotal:doc.valorIvaTotal,valorTotal:doc.valorTotal}});
     if(path.endsWith('/linhas/1') && route.request().method()==='PUT') {if(options.failSave)return send({message:'Falha sintética ao guardar'},400);doc.resultadoFiscal.recalculoAviso=warningOnSave; return send(line);}
     if(path.endsWith('/linhas')) return send([line]);
     if(path.endsWith('/impressao')) return send({documento:doc,linhas:[line]});
@@ -78,7 +79,7 @@ for(const consumer of ['legacy','list','editor']) {
     await page.getByRole('button',{name:consumer==='list'?'Conferir e emitir':'Emitir documento',exact:true}).last().click();
     await expect.poll(()=>state.posts.length).toBe(1);
     expect(state.diagnostics()).toBeGreaterThan(baseline);
-    expect(dialogs[0]).toContain('Total apresentado: 12.3. Total projectado: 15.');
+    if (consumer !== 'editor') expect(dialogs[0]).toContain('Total apresentado: 12.3. Total projectado: 15.');
     expect(state.posts[0]).toMatchObject({recalculoConfirmado:false});
   });
 }
@@ -97,7 +98,30 @@ test('dirty editor saves then reevaluates and confirms the new persisted warning
   await expect.poll(()=>state.posts.length).toBe(1);
   expect(state.posts[0]).toMatchObject({recalculoConfirmado:true});
   expect(messages[0]).toContain('Confirme os valores recalculados.');
+  expect(messages[0]).toMatch(/Antes de IVA:\s*10,00/);
+  expect(messages[0]).toMatch(/IVA:\s*2,30/);
+  expect(messages[0]).toMatch(/Total:\s*12,30/);
 });
+
+for (const scenario of [{projected:true}, {sameTotal:true}]) {
+  test('editor reviews recalculation and confirms updated amounts: '+JSON.stringify(scenario),async({page})=>{
+    const state=await setup(page,'editor',true,false,scenario);
+    await page.getByRole('button',{name:'Linhas e totais',exact:true}).click();
+    const messages:string[]=[];
+    page.on('dialog',async dialog=>{messages.push(dialog.message());await dialog.accept();});
+    await page.getByRole('button',{name:'Emitir documento',exact:true}).click();
+    await expect(page.getByText('O rascunho foi recalculado. Revê os valores apresentados e confirma novamente a emissão.',{exact:true}).first()).toBeVisible();
+    expect(state.posts).toHaveLength(0);
+    expect(messages).toHaveLength(0);
+    await expect(page.locator('.fac-draft-total-final strong')).toHaveText(scenario.sameTotal ? /12,30/ : /15,00/);
+    await expect(page.getByText(scenario.sameTotal ? '11,00 €' : '12,00 €').first()).toBeVisible();
+    await page.getByRole('button',{name:'Emitir documento',exact:true}).click();
+    await expect.poll(()=>state.posts.length).toBe(1);
+    expect(messages[0]).toMatch(scenario.sameTotal ? /Antes de IVA:\s*11,00/ : /Antes de IVA:\s*12,00/);
+    expect(messages[0]).toMatch(scenario.sameTotal ? /IVA:\s*1,30/ : /IVA:\s*3,00/);
+    expect(messages[0]).toMatch(scenario.sameTotal ? /Total:\s*12,30/ : /Total:\s*15,00/);
+  });
+}
 
 async function openConsumer(page: Page, consumer: string) {
   if(consumer==='legacy') {
