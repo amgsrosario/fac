@@ -25,7 +25,7 @@ import java.util.*;
 
 /** Internal laboratory only. No operational endpoint or production source for unresolved fiscal facts. */
 @Service
-@Profile("saft-ft-eur-lab")
+@Profile({"saft-ft-eur-lab", "demo"})
 public class SaftFtExport {
     public static final String NAMESPACE = "urn:OECD:StandardAuditFile-Tax:PT_1.04_01";
 
@@ -58,8 +58,9 @@ public class SaftFtExport {
         void validate(byte[] xml);
     }
 
-    public record Result(byte[] xml, int count, BigDecimal totalCredit) {
-        public Result { xml = xml.clone(); }
+    public record Reconciliation(String number, String status, BigDecimal net, BigDecimal vat, BigDecimal total) {}
+    public record Result(byte[] xml, int count, BigDecimal totalCredit, List<Reconciliation> reconciliation) {
+        public Result { xml = xml.clone(); reconciliation = List.copyOf(reconciliation); }
         @Override public byte[] xml() { return xml.clone(); }
     }
 
@@ -102,8 +103,9 @@ public class SaftFtExport {
                     && "FT".equals(installation.enabledTypes().get(item.code()))
                     && Set.of("EMITIDO","ANULADO").contains(item.status()),
                     "Document without coverage: " + item);
-            check(evidence.isOwnNormalVatInvoice(item.id()),"Unproved regime or provenance: invoice " + item.id());
         }
+        for (var item : inventory)
+            check(evidence.isOwnNormalVatInvoice(item.id()),"Unproved regime or provenance: invoice " + item.id());
 
         List<Map<String,Object>> invoices = db.queryForList("""
                 select * from documento_comercial
@@ -138,6 +140,7 @@ public class SaftFtExport {
         Map<String,BigDecimal> rates = new TreeMap<>();
         Set<String> numbers = new HashSet<>();
         BigDecimal credit = BigDecimal.ZERO;
+        List<Reconciliation> reconciliation = new ArrayList<>();
         for (var invoice : invoices) {
             long id = id(invoice,"id");
             String number = required(invoice,"numero_documento_completo");
@@ -192,13 +195,14 @@ public class SaftFtExport {
             value(totals,"TaxPayable",tax);
             value(totals,"NetTotal",net);
             value(totals,"GrossTotal",net.add(tax));
+            reconciliation.add(new Reconciliation(number,invoice.get("estado").toString(),net,tax,net.add(tax)));
             if (!"ANULADO".equals(invoice.get("estado"))) credit = credit.add(net);
         }
         totalCredit.setTextContent(credit.toPlainString());
         masters(master,customers,products,rates);
         byte[] bytes = serialize(xml);
         validator.validate(bytes.clone());
-        return new Result(bytes,invoices.size(),credit);
+        return new Result(bytes,invoices.size(),credit,reconciliation);
     }
 
     private record Item(String family,long id,String code,String type,String currency,String status) {}

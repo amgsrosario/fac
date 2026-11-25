@@ -48,6 +48,21 @@ class DemoSignatureSourceTests {
     @Test void rejectsDifferentCluster()throws Exception {
         assertThatThrownBy(()->source("demo","fac_demo","7702999999999999999",0).afterPropertiesSet()).isInstanceOf(IllegalStateException.class);
     }
+    @Test void shortSyntheticSignerRequiresExactlyTheApprovedCluster() {
+        var env=new MockEnvironment();env.setActiveProfiles("demo");env.setProperty("fac.demo.enabled","true");
+        env.setProperty("fac.demo.signature.authorized-cluster","7712163055710986279");
+        env.setProperty("fac.demo.saft.short-signature.enabled","true");
+        env.setProperty("fac.demo.saft.short-signature.authorized-cluster","7712163055710986279");
+        env.setProperty("fac.demo.saft.synthetic-catalog","true");
+        var jdbc=mock(JdbcTemplate.class);
+        when(jdbc.queryForObject("select current_database()",String.class)).thenReturn("fac_demo");
+        when(jdbc.queryForObject("select system_identifier::text from pg_control_system()",String.class))
+                .thenReturn("7712163055710986279","7712163055710986280");
+        DemoSignatureSource.validateIdentity(env,jdbc);
+        env.setProperty("fac.demo.signature.authorized-cluster","7712163055710986280");
+        env.setProperty("fac.demo.saft.short-signature.authorized-cluster","7712163055710986280");
+        assertThatThrownBy(()->DemoSignatureSource.validateIdentity(env,jdbc)).isInstanceOf(IllegalStateException.class);
+    }
     @Test void rejectsRealOrForeignSeriesAtStartup()throws Exception {
         var provider=source("demo","fac_demo","7702000000000000000",1);
         new ApplicationContextRunner().withPropertyValues("fac.demo.signature.enabled=true").withBean(DemoSignatureSource.class,()->provider)
