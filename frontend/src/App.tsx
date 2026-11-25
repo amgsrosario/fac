@@ -957,6 +957,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 
         <nav className="fac-menu" aria-label="Navegação principal">
           {renderMenu(visibleMenuGroups, selectView)}
+          {import.meta.env.VITE_FAC_SAFT_DEMO === "true" && hasPermission("CONFIGURACAO_GERIR", currentUser) && <section className="fac-menu-section"><p>Fiscalidade</p><a href="/saft-demo">SAF-T demo</a></section>}
         </nav>
       </aside>
 

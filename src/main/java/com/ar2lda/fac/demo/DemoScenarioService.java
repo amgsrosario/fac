@@ -42,6 +42,7 @@ public class DemoScenarioService {
     @Value("${fac.demo.password-consulta:}") private String consultaPassword;
     @Value("${fac.demo.expected-database:fac_demo}") private String expectedDatabase;
     @Value("${fac.demo.reset-authorized:false}") private boolean resetAuthorized;
+    @Value("${fac.demo.saft.synthetic-catalog:false}") private boolean syntheticSaftCatalog;
 
     @Transactional
     public DemoScenarioCheckService.DemoCheckReport seedAndValidate() {
@@ -49,6 +50,18 @@ public class DemoScenarioService {
         DemoResetSafety.validate(actualDatabase, expectedDatabase, resetAuthorized);
         requirePasswords();
         if (utilizadorRepository.existsById("admin.demo")) return checkService.validate();
+        if (syntheticSaftCatalog) {
+            var jdbc=new JdbcTemplate(dataSource);
+            String definition="""
+                {"schemaVersion":1,"fiscalCode":"FT","revision":9000101,"semantics":{"allowedConfigurations":[{"codigoFiscal":"FT","areaGestao":2,"entidade":1,"sinalContabilistico":1,"liquidacaoImediata":false}]}}
+                """;
+            jdbc.update("insert into fiscal_catalog_revision(fiscal_code,revision,definition) values('FT',9000101,?::jsonb)",definition);
+            jdbc.update("""
+                insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,liquidacao_imediata,
+                    codigo_fiscal,fiscal_catalog_code,fiscal_catalog_revision)
+                values('FT','Fatura',2,1,1,false,'FT','FT',9000101)
+                """);
+        }
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator(new ClassPathResource("demo/demo-base.sql"));
         populator.execute(dataSource);
         utilizadorRepository.deleteById("DEMO");

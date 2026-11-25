@@ -8,6 +8,7 @@ import TuuliSplash from "./TuuliSplash";
 import { AuthSession, clearAuthSession, getAuthSession } from "./api";
 import { CommercialApp } from "./ui/commercial";
 import DraftDocumentEditor from "./ui/commercial/documents/DraftDocumentEditor";
+import DemoSaftView from "./ui/commercial/documents/DemoSaftView";
 import { FacToastProvider } from "./ui/fac";
 import { facPrimeReactConfig } from "./ui/fac/theme/primeReactConfig";
 import "primeicons/primeicons.css";
@@ -51,6 +52,7 @@ function Root() {
         <Route element={<App currentUser={session} initialView="Artigos" onLogout={logout} />} path="/artigos" />
         <Route element={<App currentUser={session} initialView="Tesouraria" onLogout={logout} />} path="/recebimentos" />
         <Route element={<App currentUser={session} initialView="Listagens" onLogout={logout} />} path="/listagens" />
+        {import.meta.env.VITE_FAC_SAFT_DEMO === "true" && <Route element={<App currentUser={session} embeddedContent={<DemoSaftView />} initialView="Listagens" onLogout={logout} />} path="/saft-demo" />}
         <Route element={<App currentUser={session} initialView="Listagens" onLogout={logout} />} path="/listagens/pendentes-a-data" />
         <Route element={<App currentUser={session} initialView="Listagens" onLogout={logout} />} path="/listagens/pendentes" />
         <Route element={<App currentUser={session} onLogout={logout} />} path="*" />

@@ -26,9 +26,19 @@ public final class FiscalCatalog {
     }
 
     @org.springframework.beans.factory.annotation.Autowired
-    public FiscalCatalog(JdbcTemplate db) {
-        this(db, new ClassPathResource("fiscal/catalog.json"));
+    public FiscalCatalog(JdbcTemplate db, org.springframework.core.env.Environment environment) {
+        this(db, new ClassPathResource(demoCatalog(environment) ? "demo/saft-synthetic-catalog.json" : "fiscal/catalog.json"));
     }
+
+    private static boolean demoCatalog(org.springframework.core.env.Environment environment) {
+        boolean enabled=environment.getProperty("fac.demo.saft.synthetic-catalog",Boolean.class,false);
+        if (enabled && (!java.util.Arrays.equals(environment.getActiveProfiles(),new String[]{"demo"})
+                || !environment.getProperty("fac.demo.enabled",Boolean.class,false)))
+            throw new IllegalStateException("O catálogo sintético SAF-T exige o perfil demo exclusivo");
+        return enabled;
+    }
+
+    FiscalCatalog(JdbcTemplate db) { this(db, new ClassPathResource("fiscal/catalog.json")); }
 
     FiscalCatalog(JdbcTemplate db, Resource source) {
         this.db = db;

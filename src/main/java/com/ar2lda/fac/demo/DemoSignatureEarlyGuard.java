@@ -21,7 +21,7 @@ public class DemoSignatureEarlyGuard {
                     if (Boolean.TRUE.equals(jdbc.queryForObject("select to_regclass('public.serie') is not null",Boolean.class)))
                         DemoSignatureSource.validateSeries(jdbc);
                     if (Boolean.TRUE.equals(jdbc.queryForObject("select to_regclass('public.documento_comercial') is not null and to_regclass('public.documento_financeiro') is not null",Boolean.class)))
-                        DemoSignatureSource.validateExistingDocuments(jdbc);
+                        DemoSignatureSource.validateExistingDocuments(jdbc,environment);
                 }
                 return bean;
             }

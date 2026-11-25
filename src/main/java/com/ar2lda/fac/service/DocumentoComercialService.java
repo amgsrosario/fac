@@ -73,6 +73,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class DocumentoComercialService {
 
+    @org.springframework.beans.factory.annotation.Value("${fac.demo.saft.ft-only:false}")
+    private boolean demoSaftFtOnly;
+
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP);
 
     private final DocumentoComercialRepository documentoRepository;
@@ -364,6 +367,9 @@ public class DocumentoComercialService {
 
     private DocumentoComercialDto emit(Long id, DocumentoComercialEmitirDto dto,boolean immediateAct) {
         DocumentoComercial documento = findDocumentoForUpdate(id);
+        if (demoSaftFtOnly && (!"FT".equals(documento.getTipoDocumento().getId())
+                || !"DEMO26".equals(documento.getSerie()) || documento.getTipoDocumento().isLiquidacaoImediata() || immediateAct))
+            throw new BadRequestException("Candidata SAF-T demo: apenas facturas FT/DEMO26 diferidas estão habilitadas");
         validateRascunho(documento);
         documento.setTipoDocumento(tipoDocumentoService.lockConfiguration(documento.getTipoDocumento().getId()));
         var projection=fiscalCatalog.frForType(documento.getTipoDocumento().getId());
