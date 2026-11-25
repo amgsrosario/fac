@@ -291,23 +291,28 @@
 .fac-draft-editor {
   display: grid;
   align-content: start;
-  gap: 0.75rem;
+  gap: 0.45rem;
   min-height: auto;
 }
 
 .fac-draft-appbar {
-  align-items: end;
-  border-bottom: 1px solid var(--fac-border);
+  align-items: center;
+  background: var(--fac-surface);
+  border: 1px solid var(--fac-border);
+  border-radius: 8px;
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.35rem;
   justify-content: space-between;
-  min-height: 72px;
-  padding: 0 0 0.8rem;
+  min-height: 56px;
+  padding: 0.35rem 0.55rem;
 }
 
 .fac-draft-title {
-  display: grid;
-  gap: 0.2rem;
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
   flex: 0 1 auto;
   min-width: 0;
 }
@@ -374,9 +379,10 @@
 }
 
 .fac-draft-actions {
-  flex: 1 1 auto;
+  flex: 1 1 32rem;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  margin-left: 1rem;
+  margin-left: 0;
 }
 
 .fac-draft-navigation,
@@ -426,37 +432,43 @@
 
 .fac-draft-steps {
   align-items: center;
-  border-bottom: 1px solid var(--fac-border);
+  background: var(--fac-surface);
+  border: 1px solid var(--fac-border);
+  border-radius: 8px;
   display: flex;
-  gap: 1.25rem;
-  min-height: 38px;
+  gap: 0.25rem;
+  min-height: 42px;
+  padding: 0.25rem;
 }
 
 .fac-draft-steps button {
   background: transparent;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  color: var(--fac-text-muted);
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--fac-text);
   cursor: pointer;
   font-weight: 500;
-  min-height: 38px;
-  padding: 0.35rem 0;
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
 }
 
 .fac-draft-steps button.active {
-  border-bottom-color: var(--fac-accent);
-  color: var(--fac-text);
+  background: var(--fac-client-soft);
+  border-color: var(--fac-accent);
 }
 
 .fac-draft-header-phase,
 .fac-draft-lines-phase,
 .fac-draft-loading {
+  background: var(--fac-surface);
+  border: 1px solid var(--fac-border);
+  border-radius: 8px;
   display: grid;
   gap: 0.75rem;
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
-  padding: 0.35rem 0 0;
+  padding: 0.55rem;
 }
 
 .fac-draft-diagnostics {
@@ -516,23 +528,13 @@
 
 .fac-draft-form-grid {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .fac-draft-form-primary,
 .fac-draft-form-conditions {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.fac-draft-form-primary {
-  grid-template-columns: minmax(10rem, 0.8fr) minmax(9rem, 0.65fr) minmax(10rem, 0.7fr) minmax(18rem, 1.6fr);
-}
-
-.fac-draft-form-conditions {
-  border-top: 1px solid var(--fac-border);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  padding-top: 0.85rem;
+  display: contents;
 }
 
 .fac-draft-form-grid .fac-field-stack > span,
@@ -1062,8 +1064,7 @@
     grid-template-columns: 1fr;
   }
 
-  .fac-draft-form-primary,
-  .fac-draft-form-conditions {
+  .fac-draft-form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1095,8 +1096,7 @@
   .fac-documents-form-grid,
   .fac-documents-definition,
   .fac-draft-diagnostics,
-  .fac-draft-form-primary,
-  .fac-draft-form-conditions {
+  .fac-draft-form-grid {
     grid-template-columns: 1fr;
   }
 

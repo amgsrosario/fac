@@ -8,6 +8,7 @@ import { apiFetch, hasPermission, AuthSession } from "../../../api";
 import { DesktopShell, EntityLookupColumn, EntityLookupDialog, EntityLookupField, EntityLookupSearchField, FacButton, FacInputText, FacMessage, FacSelect, MobileShell, ResponsiveSlot, useFacToast } from "../../fac";
 import { CommercialSidebar } from "../shared";
 import { lookupSelected } from "../../../lookups/useRemoteLookup";
+import { GlobalSearch } from "../../../GlobalSearch";
 
 type Page<T> = { content: T[]; totalPages?: number };
 type EstadoDocumento = "RASCUNHO" | "EMITIDO" | "ANULADO";
@@ -209,6 +210,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [fiscalPreview, setFiscalPreview] = useState<{ key: string; result?: FiscalPreview; error?: string } | null>(null);
+  const [previewRevision, setPreviewRevision] = useState(0);
   const [recalculationWarning, setRecalculationWarning] = useState(false);
   const loadGeneration = useRef(0);
   const [diagnostico, setDiagnostico] = useState<DiagnosticoDocumento | null>(null);
@@ -276,7 +278,7 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
       }
     }, 300);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [previewKey, loading, isDraft, canEditCurrent]);
+  }, [previewKey, previewRevision, loading, isDraft, canEditCurrent]);
   const sidebar = embedded ? null : <CommercialSidebar active="documents" currentUser={currentUser} onLogout={() => confirmLeave(dirty) && onLogout()} />;
 
   useEffect(() => {
@@ -719,11 +721,37 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         return;
       }
       if (requiresSave && !warningBeforeSave && (draft.resultadoFiscal?.recalculoAviso || fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria)) {
+        setFiscalPreview(null);
+        setPreviewRevision(value => value + 1);
         setRecalculationWarning(true);
         setNotice("O rascunho foi guardado e recalculado. Revê os valores apresentados e confirma novamente a emissão.");
         return;
       }
-      const confirmation = emissionConfirmation(fresh, documentRef(freshDoc));
+      const assessment = fresh.avaliacaoEmissao;
+      const projectedTotalChanged = assessment?.totalProjectado != null && assessment.totalApresentado != null
+        && Number(assessment.totalProjectado) !== Number(assessment.totalApresentado);
+      const uncalculatedWarning = assessment?.confirmacaoRecalculoNecessaria && !freshDoc.resultadoFiscal?.recalculoAviso;
+      if (fresh.podeEmitir && (projectedTotalChanged || uncalculatedWarning)) {
+        await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${draft.id}/recalcular-fiscal`, {}, "POST");
+        await refreshAfterStateChange(draft.id, "O rascunho foi recalculado. Revê os valores apresentados e confirma novamente a emissão.");
+        setFiscalPreview(null);
+        setPreviewRevision(value => value + 1);
+        setRecalculationWarning(true);
+        setStep("lines");
+        return;
+      }
+      const values = [freshDoc.valorBruto, freshDoc.valorDesconto, freshDoc.valorIvaTotal, freshDoc.valorTotal];
+      if (values.some(value => value == null || !Number.isFinite(Number(value)))) {
+        setError("Não foi possível confirmar os valores finais do documento.");
+        return;
+      }
+      const format = new Intl.NumberFormat("pt-PT", { style: "currency", currency: freshDoc.moedaId || "EUR" });
+      const confirmation = [
+        `Antes de IVA: ${format.format(Number(freshDoc.valorBruto) - Number(freshDoc.valorDesconto))}`,
+        `IVA: ${format.format(Number(freshDoc.valorIvaTotal))}`,
+        `Total: ${format.format(Number(freshDoc.valorTotal))}`,
+        emissionConfirmation(fresh, documentRef(freshDoc))
+      ].join("\n");
       const warningText = serviceDateConfirmation(freshDoc, draft);
       if (!fresh.podeEmitir || !window.confirm(warningText + confirmation)) return;
       const recalculationConfirmed = Boolean(fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria);
@@ -809,17 +837,13 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
     <section className="fac-draft-editor" onKeyDown={handleKeyDown}>
       <header className="fac-draft-appbar">
         <div className="fac-draft-title">
-          <span className="fac-draft-eyebrow">Documentos comerciais</span>
-          <div className="fac-draft-heading">
-            <h1>{documento ? documentRef(documento) : "Novo documento"}</h1>
-            {documento && <span className={`fac-draft-status ${documento.estado.toLowerCase()}`}>{estadoLabel(documento.estado)}</span>}
-          </div>
-          <div className="fac-draft-context">
-            {header.clienteId && <span>{catalogos.clientes.find((cliente) => String(cliente.id) === header.clienteId)?.nome ?? "Cliente selecionado"}</span>}
-            {dirty && <span className="fac-draft-dirty">Alterações por guardar</span>}
-          </div>
+          <strong>Documentos</strong>
+          <span>{documento ? documentRef(documento) : "Novo rascunho"}</span>
+          {documento && <span className={`fac-draft-status ${documento.estado.toLowerCase()}`}>{estadoLabel(documento.estado)}</span>}
         </div>
         <div className="fac-draft-actions">
+          <GlobalSearch className="fac-commercial-global-search" />
+          {dirty && <span className="fac-draft-dirty">Alterações por guardar</span>}
           <div className="fac-draft-navigation">
             <FacButton icon="pi pi-arrow-left" label="Voltar à listagem" onClick={goBack} variant="ghost" />
           </div>
@@ -928,8 +952,6 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
           <FacSelect disabled={readOnly} label="Tipo" onChange={(value) => onUpdate({ tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={header.tipoDocumentoId} />
           <FacSelect disabled={readOnly} label="Série" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
           <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
-          <FacInputText disabled={readOnly} label="Data de prestação" onChange={(event) => onUpdate({ dataPrestacao: event.target.value })} type="date" value={header.dataPrestacao} />
-          {!readOnly && <ServiceDateWarningMessage dataPrestacao={header.dataPrestacao} dataEmissao={header.dataEmissao} />}
           <EntityLookupField<Cliente>
             clearable={false}
             columns={clienteLookupColumns}
@@ -957,6 +979,8 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
           <FacSelect disabled={readOnly} label="Modo de pagamento" onChange={(value) => onUpdate({ mPagamentoId: value ?? "" })} options={catalogos.modosPagamento.map((modo) => ({ label: modo.nome, value: String(modo.id) }))} value={header.mPagamentoId} />
           <FacSelect disabled={readOnly} label="Prazo" onChange={(value) => onUpdate({ pPagamentoId: value ?? "" })} options={catalogos.prazosPagamento.map((prazo) => ({ label: prazo.nome, value: prazo.id }))} value={header.pPagamentoId} />
           <FacSelect disabled={readOnly} label="Transporte" onChange={(value) => onUpdate({ transporteId: value ?? "" })} options={catalogos.transportes.map((transporte) => ({ label: transporte.nome, value: String(transporte.id) }))} value={header.transporteId} />
+          <FacInputText disabled={readOnly} label="Data de prestação" onChange={(event) => onUpdate({ dataPrestacao: event.target.value })} type="date" value={header.dataPrestacao} />
+          {!readOnly && <ServiceDateWarningMessage dataPrestacao={header.dataPrestacao} dataEmissao={header.dataEmissao} />}
         </div>
         <label className="fac-draft-textarea"><span>Observações</span><textarea disabled={readOnly} maxLength={250} onChange={(event) => onUpdate({ observacoes: event.target.value })} value={header.observacoes} /></label>
       </div>
@@ -1148,6 +1172,7 @@ function DraftLines(props: {
       <aside className="fac-draft-totals">
         <div><span>Subtotal</span><strong>{props.totals ? money(props.totals.subtotal) : "—"}</strong></div>
         <div><span>Descontos</span><strong>{props.totals ? money(props.totals.discount) : "—"}</strong></div>
+        <div><span>Antes de IVA</span><strong>{props.totals ? money(props.totals.subtotal - props.totals.discount) : "—"}</strong></div>
         <div><span>IVA</span><strong>{props.totals ? money(props.totals.vat) : "—"}</strong></div>
         <div className="fac-draft-total-final"><span>Total</span><strong>{props.totals ? money(props.totals.total) : "—"}</strong></div>
       </aside>
