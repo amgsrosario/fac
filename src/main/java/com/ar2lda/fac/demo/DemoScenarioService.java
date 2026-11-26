@@ -78,7 +78,7 @@ public class DemoScenarioService {
         populator.execute(dataSource);
         if (syntheticSaftCatalog && syntheticFr) {
             var jdbc=new JdbcTemplate(dataSource);
-            jdbc.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('FRE','DEMO26','Serie FR exclusivamente sintetica',0,'DEMO-FRE','2026-01-01')");
+            jdbc.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('FRE','FR26','Serie FR exclusivamente sintetica',0,'DEMO-FRE','2026-01-01')");
             jdbc.update("insert into mpagamento(id,nome) values('CCD','Cartão de crédito (demo)')");
         }
         utilizadorRepository.deleteById("DEMO");

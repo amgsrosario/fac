@@ -79,7 +79,7 @@ public class DemoSignatureSource implements FiscalDocumentSignatureSource, Initi
         if (!"fac_demo".equals(database) || !authorized.matches("[0-9]{19}") || !authorized.equals(cluster)
                 || Set.of("7689035507522658342","7701042457621884972").contains(cluster)) throw rejected();
         if (environment.getProperty("fac.demo.saft.short-signature.enabled",Boolean.class,false)
-                && (!Set.of("7712163055710986279", "7712437121396502565").contains(cluster)
+                && (!Set.of("7712163055710986279", "7712437121396502565", "7712504161523511334").contains(cluster)
                     || !cluster.equals(environment.getProperty("fac.demo.saft.short-signature.authorized-cluster",""))
                     || !environment.getProperty("fac.demo.saft.synthetic-catalog",Boolean.class,false))) throw rejected();
     }
@@ -88,9 +88,9 @@ public class DemoSignatureSource implements FiscalDocumentSignatureSource, Initi
         // Deliberately invalid AT codes (hyphen), restricted to this local demo seed.
         Long incompatible=jdbc.queryForObject("""
                 select count(*) from serie where not (
-                  serie='DEMO26' and ((id_tipo_documento='FT' and codigo_at='DEMO-FT')
-                                  or (id_tipo_documento='RC' and codigo_at='DEMO-RC')
-                                  or (%s and id_tipo_documento='FRE' and codigo_at='DEMO-FRE')))
+                  (serie='DEMO26' and ((id_tipo_documento='FT' and codigo_at='DEMO-FT')
+                                  or (id_tipo_documento='RC' and codigo_at='DEMO-RC')))
+                  or (%s and serie='FR26' and id_tipo_documento='FRE' and codigo_at='DEMO-FRE'))
                    or codigo_at is null
                 """.formatted(environment.getProperty("fac.demo.fr.enabled",Boolean.class,false)),Long.class);
         if (incompatible==null || incompatible!=0) throw rejected();
@@ -114,7 +114,8 @@ public class DemoSignatureSource implements FiscalDocumentSignatureSource, Initi
         validateEnvironment(); validateDatabaseAndSeries();
         boolean supported=Set.of("FT","RC").contains(type)
                 || environment.getProperty("fac.demo.fr.enabled",Boolean.class,false) && "FRE".equals(type);
-        if (key==null || id==null || !"DEMO26".equals(series) || !supported
+        boolean approvedSeries = "FRE".equals(type) ? "FR26".equals(series) : "DEMO26".equals(series);
+        if (key==null || id==null || !approvedSeries || !supported
                 || !("DEMO-"+type+"-").concat(String.valueOf(number)).equals(atcud)) throw rejected();
         try {
             var signer=java.security.Signature.getInstance("SHA256withRSA");

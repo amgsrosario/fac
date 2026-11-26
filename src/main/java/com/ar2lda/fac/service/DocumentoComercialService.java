@@ -370,11 +370,11 @@ public class DocumentoComercialService {
 
     private DocumentoComercialDto emit(Long id, DocumentoComercialEmitirDto dto,boolean immediateAct) {
         DocumentoComercial documento = findDocumentoForUpdate(id);
-        boolean demoDeferredFt="FT".equals(documento.getTipoDocumento().getId())
+        boolean demoDeferredFt="DEMO26".equals(documento.getSerie()) && "FT".equals(documento.getTipoDocumento().getId())
                 && !documento.getTipoDocumento().isLiquidacaoImediata() && !immediateAct;
-        boolean demoImmediateFr=demoFrEnabled && "FRE".equals(documento.getTipoDocumento().getId())
+        boolean demoImmediateFr=demoFrEnabled && "FR26".equals(documento.getSerie()) && "FRE".equals(documento.getTipoDocumento().getId())
                 && documento.getTipoDocumento().isLiquidacaoImediata() && immediateAct;
-        if (demoSaftFtOnly && (!"DEMO26".equals(documento.getSerie()) || !(demoDeferredFt || demoImmediateFr)))
+        if (demoSaftFtOnly && !(demoDeferredFt || demoImmediateFr))
             throw new BadRequestException("Candidata SAF-T demo: apenas facturas FT/DEMO26 diferidas estão habilitadas");
         validateRascunho(documento);
         documento.setTipoDocumento(tipoDocumentoService.lockConfiguration(documento.getTipoDocumento().getId()));
