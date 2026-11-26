@@ -57,6 +57,9 @@ public class DocumentoFinanceiroService {
     @org.springframework.beans.factory.annotation.Value("${fac.demo.saft.ft-only:false}")
     private boolean demoSaftFtOnly;
 
+    @org.springframework.beans.factory.annotation.Value("${fac.demo.saft.receipts-enabled:false}")
+    private boolean demoSaftReceiptsEnabled;
+
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP);
 
     private final DocumentoFinanceiroRepository documentoRepository;
@@ -80,7 +83,7 @@ public class DocumentoFinanceiroService {
 
     @Transactional
     public DocumentoFinanceiroDto create(DocumentoFinanceiroCreateDto dto) {
-        if (demoSaftFtOnly) throw new BadRequestException("Candidata SAF-T demo: recibos não estão habilitados no âmbito FT/EUR");
+        if (demoSaftFtOnly && !demoSaftReceiptsEnabled) throw new BadRequestException("Candidata SAF-T demo: recibos não estão habilitados no âmbito FT/EUR");
         Cliente cliente = findCliente(dto.clienteId());
         TipoDocumento tipoDocumento = tipoDocumentoService.lockConfiguration(dto.tipoDocumentoId());
         validateSerie(dto.tipoDocumentoId(), dto.serie());

@@ -79,7 +79,7 @@ public class DemoSignatureSource implements FiscalDocumentSignatureSource, Initi
         if (!"fac_demo".equals(database) || !authorized.matches("[0-9]{19}") || !authorized.equals(cluster)
                 || Set.of("7689035507522658342","7701042457621884972").contains(cluster)) throw rejected();
         if (environment.getProperty("fac.demo.saft.short-signature.enabled",Boolean.class,false)
-                && (!"7712163055710986279".equals(cluster)
+                && (!Set.of("7712163055710986279", "7712437121396502565").contains(cluster)
                     || !cluster.equals(environment.getProperty("fac.demo.saft.short-signature.authorized-cluster",""))
                     || !environment.getProperty("fac.demo.saft.synthetic-catalog",Boolean.class,false))) throw rejected();
     }
@@ -123,6 +123,10 @@ public class DemoSignatureSource implements FiscalDocumentSignatureSource, Initi
                     && environment.getProperty("fac.demo.saft.capture-evidence", Boolean.class, false)) {
                 archiveCommercialEvidence(commercial, signedBytes, signed);
             }
+            if (snapshot instanceof DocumentoFinanceiroImpressaoDto receipt
+                    && environment.getProperty("fac.demo.saft.receipts-enabled", Boolean.class, false)) {
+                archiveReceiptEvidence(receipt, signedBytes, signed);
+            }
             String q=""+signature.charAt(0)+signature.charAt(10)+signature.charAt(20)+signature.charAt(30);
             Map<String,Object> fields=new LinkedHashMap<>();
             String version=versionFor(environment);
@@ -134,6 +138,18 @@ public class DemoSignatureSource implements FiscalDocumentSignatureSource, Initi
         } catch (GeneralSecurityException | java.io.IOException error) {
             throw new IllegalStateException("Não foi possível produzir assinatura exclusivamente demonstrativa",error);
         }
+    }
+
+    private void archiveReceiptEvidence(DocumentoFinanceiroImpressaoDto receipt, byte[] bytes, byte[] signature)
+            throws GeneralSecurityException {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()
+                || !(key instanceof java.security.interfaces.RSAPrivateCrtKey rsa)) throw rejected();
+        byte[] publicKey = KeyFactory.getInstance("RSA").generatePublic(
+                new RSAPublicKeySpec(rsa.getModulus(), rsa.getPublicExponent())).getEncoded();
+        if (!HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(publicKey))
+                .equals(environment.getProperty("fac.demo.saft.public-key-sha256", ""))) throw rejected();
+        jdbc.update("insert into demo_saft_receipt_evidence (documento_id,public_key,signed_bytes,signature) values (?,?,?,?)",
+                receipt.documento().id(), publicKey, bytes, signature);
     }
 
     private void archiveCommercialEvidence(DocumentoComercialImpressaoDto commercial, byte[] bytes, byte[] signature)

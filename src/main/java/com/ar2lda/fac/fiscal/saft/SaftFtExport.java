@@ -51,6 +51,8 @@ public class SaftFtExport {
         boolean verifiesHash(long invoice, String number, Signature candidate);
         LineFacts line(long invoice, long line);
         boolean isOwnNormalVatInvoice(long invoice);
+        default boolean supportsFullReceipts() { return false; }
+        default boolean verifiesReceipt(long receipt) { return false; }
     }
 
     /** A caller must supply the pinned XSD 1.1 validator before any bytes are released. */
@@ -59,8 +61,10 @@ public class SaftFtExport {
     }
 
     public record Reconciliation(String number, String status, BigDecimal net, BigDecimal vat, BigDecimal total) {}
-    public record Result(byte[] xml, int count, BigDecimal totalCredit, List<Reconciliation> reconciliation) {
-        public Result { xml = xml.clone(); reconciliation = List.copyOf(reconciliation); }
+    public record ReceiptReconciliation(String number, String invoice, BigDecimal amount) {}
+    public record Result(byte[] xml, int count, BigDecimal totalCredit, List<Reconciliation> reconciliation,
+                         List<ReceiptReconciliation> receipts) {
+        public Result { xml = xml.clone(); reconciliation = List.copyOf(reconciliation); receipts = List.copyOf(receipts); }
         @Override public byte[] xml() { return xml.clone(); }
     }
 
@@ -99,20 +103,19 @@ public class SaftFtExport {
                 "Enabled type is not a governed deferred FT");
         // Always inspect commercial and fiscal receipts before filtering; internal SETTLE is not a document.
         for (var item : inventory) {
-            check("commercial".equals(item.family()) && "FT".equals(item.type()) && "EUR".equals(item.currency())
-                    && "FT".equals(installation.enabledTypes().get(item.code()))
-                    && Set.of("EMITIDO","ANULADO").contains(item.status()),
+            check(isCovered(item,installation,evidence),
                     "Document without coverage: " + item);
         }
         for (var item : inventory)
-            check(evidence.isOwnNormalVatInvoice(item.id()),"Unproved regime or provenance: invoice " + item.id());
+            if ("commercial".equals(item.family()))
+                check(evidence.isOwnNormalVatInvoice(item.id()),"Unproved regime or provenance: invoice " + item.id());
 
         List<Map<String,Object>> invoices = db.queryForList("""
                 select * from documento_comercial
                 where data_emissao between ? and ? and (estado<>'RASCUNHO' or numero_documento is not null)
                 order by id
                 """, start, end);
-        check(invoices.stream().map(r -> id(r,"id")).toList().equals(inventory.stream().map(Item::id).toList()),
+        check(invoices.stream().map(r -> id(r,"id")).toList().equals(inventory.stream().filter(i -> "commercial".equals(i.family())).map(Item::id).toList()),
                 "Inventory and extraction differ");
         var lines = db.queryForList("""
                 select l.* from linha_documento_comercial l
@@ -148,7 +151,7 @@ public class SaftFtExport {
             check("PT".equals(invoice.get("fiscal_jurisdicao"))
                     && "CONTINENTE".equals(invoice.get("fiscal_territorio_fiscal"))
                     && "NORMAL".equals(invoice.get("fiscal_tratamento_liquidacao"))
-                    && decimal(invoice,"valor_retencao").signum()==0 && !Boolean.TRUE.equals(invoice.get("liquidado")),
+                    && decimal(invoice,"valor_retencao").signum()==0,
                     number + ": unproved regime, withholding or settlement");
             check(required(issuer,"nif").equals(required(invoice,"emitente_nif")),number + ": issuer mismatch");
             String customerId = required(invoice,"id_cliente");
@@ -199,13 +202,73 @@ public class SaftFtExport {
             if (!"ANULADO".equals(invoice.get("estado"))) credit = credit.add(net);
         }
         totalCredit.setTextContent(credit.toPlainString());
+        List<ReceiptReconciliation> receiptReconciliation = receipts(source, inventory, invoices, evidence, installation);
         masters(master,customers,products,rates);
         byte[] bytes = serialize(xml);
         validator.validate(bytes.clone());
-        return new Result(bytes,invoices.size(),credit,reconciliation);
+        return new Result(bytes,invoices.size(),credit,reconciliation,receiptReconciliation);
     }
 
-    private record Item(String family,long id,String code,String type,String currency,String status) {}
+    List<ReceiptReconciliation> receipts(Element source, List<Item> inventory, List<Map<String,Object>> invoices,
+                                                  Evidence evidence, Installation installation) {
+        var entries=inventory.stream().filter(item -> "financial".equals(item.family())).toList();
+        if (entries.isEmpty()) return List.of();
+        check(entries.size()==1 && invoices.size()==1, "Recebimento fora da cobertura: exige uma factura e um recibo no período");
+        var invoice=invoices.get(0);
+        check("EMITIDO".equals(invoice.get("estado")),"Recebimento de factura anulada fora da cobertura");
+        long receiptId=entries.get(0).id();
+        check(evidence.verifiesReceipt(receiptId),"Recibo " + receiptId + ": falta prova original válida da emissão");
+        var receipt=db.queryForMap("select * from documento_financeiro where id=?",receiptId);
+        var lines=db.queryForList("""
+                select l.*,p.id_documento_comercial,p.valor_pendente from linha_documento_financeiro l
+                join pendente p on p.id=l.id_pendente where l.id_documento_financeiro=? order by l.numero_linha,l.id
+                """,receiptId);
+        check(lines.size()==1,"Recibo fora da cobertura: exige uma única factura");
+        var line=lines.get(0);
+        check(id(line,"id_documento_comercial")==id(invoice,"id")
+                && Objects.equals(receipt.get("id_cliente"),invoice.get("id_cliente"))
+                && "EUR".equals(line.get("id_moeda")) && "FT".equals(line.get("id_tipo_documento"))
+                && Objects.equals(line.get("numero_documento"),invoice.get("numero_documento"))
+                && Objects.equals(line.get("serie_documento"),invoice.get("serie"))
+                && Objects.equals(line.get("data_documento"),invoice.get("data_emissao")),
+                "Recibo: ligação à factura divergente");
+        BigDecimal amount=decimal(invoice,"valor_total");
+        for (String field:List.of("valor_documento","valor_pendente_antes","valor_pagamento_bruto","valor_pagamento_liquido"))
+            same(decimal(line,field),amount,"Recibo: pagamento parcial ou montante divergente: " + field);
+        same(decimal(line,"novo_valor_pendente"),BigDecimal.ZERO,"Recibo: saldo posterior não é zero");
+        same(decimal(line,"valor_pendente"),BigDecimal.ZERO,"Recibo: saldo actual não é zero");
+        same(decimal(line,"valor_desconto_financeiro"),BigDecimal.ZERO,"Recibo: desconto fora da cobertura");
+        same(decimal(receipt,"valor_desconto_financeiro"),BigDecimal.ZERO,"Recibo: desconto fora da cobertura");
+        same(decimal(receipt,"valor_pagamento_bruto"),amount,"Recibo: total bruto divergente");
+        same(decimal(receipt,"valor_pagamento_liquido"),amount,"Recibo: total recebido divergente");
+        var number=required(receipt,"id_tipo_documento")+" "+required(receipt,"serie")+"/"+required(receipt,"numero_documento");
+        var invoiceNumber=required(invoice,"numero_documento_completo");
+        var payments=node(source,"Payments");
+        value(payments,"NumberOfEntries",1); value(payments,"TotalDebit",amount); value(payments,"TotalCredit",BigDecimal.ZERO);
+        var payment=node(payments,"Payment"); value(payment,"PaymentRefNo",number); value(payment,"ATCUD",required(receipt,"atcud"));
+        value(payment,"TransactionDate",receipt.get("data_emissao")); value(payment,"PaymentType","RG");
+        var status=node(payment,"DocumentStatus"); value(status,"PaymentStatus","N");
+        value(status,"PaymentStatusDate",timestamp(receipt,"momento_emissao",installation,"PaymentStatusDate",number));
+        value(status,"SourceID",required(receipt,"id_emissor")); value(status,"SourcePayment","P");
+        value(payment,"SourceID",required(receipt,"id_emissor"));
+        value(payment,"SystemEntryDate",timestamp(receipt,"momento_emissao",installation,"SystemEntryDate",number));
+        value(payment,"CustomerID",required(receipt,"id_cliente"));
+        var paymentLine=node(payment,"Line"); value(paymentLine,"LineNumber",1);
+        var origin=node(paymentLine,"SourceDocumentID"); value(origin,"OriginatingON",invoiceNumber); value(origin,"InvoiceDate",invoice.get("data_emissao"));
+        value(paymentLine,"DebitAmount",amount);
+        var totals=node(payment,"DocumentTotals"); value(totals,"TaxPayable",BigDecimal.ZERO);
+        value(totals,"NetTotal",amount); value(totals,"GrossTotal",amount);
+        return List.of(new ReceiptReconciliation(number,invoiceNumber,amount));
+    }
+
+    record Item(String family,long id,String code,String type,String currency,String status) {}
+
+    static boolean isCovered(Item item, Installation installation, Evidence evidence) {
+        return "commercial".equals(item.family()) && "FT".equals(item.type()) && "EUR".equals(item.currency())
+                && "FT".equals(installation.enabledTypes().get(item.code())) && Set.of("EMITIDO","ANULADO").contains(item.status())
+                || evidence.supportsFullReceipts() && "financial".equals(item.family()) && "RC".equals(item.code())
+                && "EUR".equals(item.currency()) && "EMITIDO".equals(item.status());
+    }
 
     private List<Item> inventory(LocalDate start, LocalDate end) {
         return db.query("""

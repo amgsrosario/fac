@@ -21,6 +21,7 @@ final class DemoSaftEvidence implements SaftFtExport.Evidence {
     private final String trustedFingerprint;
     private final String trustedManifest;
     private final String expectedVersion;
+    private final boolean receiptsEnabled;
 
     DemoSaftEvidence(JdbcTemplate db, ObjectMapper mapper, Environment environment) {
         this.db = db;
@@ -28,6 +29,51 @@ final class DemoSaftEvidence implements SaftFtExport.Evidence {
         this.trustedFingerprint = environment.getRequiredProperty("fac.demo.saft.public-key-sha256");
         this.trustedManifest = environment.getRequiredProperty("fac.demo.saft.manifest-sha256");
         this.expectedVersion = DemoSignatureSource.versionFor(environment);
+        this.receiptsEnabled = environment.getProperty("fac.demo.saft.receipts-enabled", Boolean.class, false);
+    }
+
+    @Override public boolean supportsFullReceipts() { return receiptsEnabled; }
+
+    @Override public boolean verifiesReceipt(long id) {
+        try {
+            var evidence = db.queryForList("select * from demo_saft_receipt_evidence where documento_id=?", id);
+            if (evidence.size()!=1) return false;
+            var item=evidence.get(0);
+            byte[] publicKey=(byte[])item.get("public_key");
+            if (!trustedFingerprint.equals(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(publicKey)))) return false;
+            var key=KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKey));
+            var verifier=java.security.Signature.getInstance("SHA256withRSA");
+            verifier.initVerify(key); verifier.update((byte[])item.get("signed_bytes"));
+            if (!verifier.verify((byte[])item.get("signature"))) return false;
+            var archived=mapper.readTree((byte[])item.get("signed_bytes")).path("documento");
+            var rows=db.queryForList("select * from documento_financeiro where id=?",id);
+            if (rows.size()!=1) return false;
+            var receipt=rows.get(0);
+            String qr=(String)receipt.get("qr_payload");
+            if (qr==null || !qr.startsWith(expectedVersion+"\n")) return false;
+            var qrJson=mapper.readTree(qr.substring(qr.indexOf('\n')+1));
+            if (qrJson.path("documentId").asLong()!=id || !Base64.getEncoder().encodeToString((byte[])item.get("signature")).equals(qrJson.path("signature").asText())) return false;
+            String[][] fields={{"id","id"},{"clienteId","id_cliente"},{"tipoDocumentoId","id_tipo_documento"},
+                    {"serie","serie"},{"numeroDocumento","numero_documento"},{"atcud","atcud"},
+                    {"dataEmissao","data_emissao"},{"moedaId","id_moeda"},{"valorPagamentoBruto","valor_pagamento_bruto"},
+                    {"valorDescontoFinanceiro","valor_desconto_financeiro"},{"valorPagamentoLiquido","valor_pagamento_liquido"},
+                    {"mPagamentoId","id_mpagamento"},{"emissorId","id_emissor"},{"dataValor","data_valor"}};
+            for (var pair:fields) if (!same(archived.path(pair[0]),receipt.get(pair[1]))) return false;
+            if (!(receipt.get("momento_emissao") instanceof java.sql.Timestamp issued)
+                    || Math.abs(java.time.Duration.between(java.time.OffsetDateTime.parse(archived.path("momentoEmissao").asText()).toInstant(), issued.toInstant()).toNanos())>1_000) return false;
+            var lines=db.queryForList("select l.*,p.id_documento_comercial from linha_documento_financeiro l join pendente p on p.id=l.id_pendente where l.id_documento_financeiro=? order by l.numero_linha,l.id",id);
+            if (lines.size()!=archived.path("linhas").size()) return false;
+            String[][] lineFields={{"id","id"},{"numeroLinha","numero_linha"},{"pendenteId","id_pendente"},
+                    {"documentoComercialId","id_documento_comercial"},{"dataDocumento","data_documento"},
+                    {"tipoDocumentoId","id_tipo_documento"},{"numeroDocumento","numero_documento"},
+                    {"serieDocumento","serie_documento"},{"valorDocumento","valor_documento"},
+                    {"valorPendenteAntes","valor_pendente_antes"},{"valorALiquidar","valor_pagamento_bruto"},
+                    {"descontoValor","valor_desconto_financeiro"},{"valorPagamentoLiquido","valor_pagamento_liquido"},
+                    {"novoValorPendente","novo_valor_pendente"},{"moedaId","id_moeda"}};
+            for (int n=0;n<lines.size();n++) for (var pair:lineFields)
+                if (!same(archived.path("linhas").get(n).path(pair[0]),lines.get(n).get(pair[1]))) return false;
+            return true;
+        } catch (Exception ex) { return false; }
     }
 
     private Map<String,Object> evidence(long id) {
