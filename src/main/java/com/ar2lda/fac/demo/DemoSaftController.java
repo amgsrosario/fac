@@ -38,6 +38,7 @@ public class DemoSaftController {
 
     public record ExportResponse(String aviso, String inicio, String fim, int documentos,
                                  java.math.BigDecimal totalCredit, List<SaftFtExport.Reconciliation> reconciliacao,
+                                 List<SaftFtExport.ReceiptReconciliation> recebimentos,
                                  String xmlBase64) {}
 
     @GetMapping("/exportar")
@@ -66,7 +67,7 @@ public class DemoSaftController {
                     manifest.path("version").asText(),manifest.path("syntheticCertificate").asInt(),Map.of("FT","FT"),types,false);
             var result=exporter.export(installation,new DemoSaftEvidence(db,mapper,env),this::validateXsd);
             return new ExportResponse("DEMONSTRAÇÃO — XML SINTÉTICO SEM VALIDADE FISCAL",inicio.toString(),fim.toString(),result.count(),
-                    result.totalCredit(),result.reconciliation(),Base64.getEncoder().encodeToString(result.xml()));
+                    result.totalCredit(),result.reconciliation(),result.receipts(),Base64.getEncoder().encodeToString(result.xml()));
         } catch (SaftFtExport.Refusal ex) { throw ex; }
         catch (Exception ex) { throw new SaftFtExport.Refusal("Não foi possível comprovar a configuração ou validar o XML da demo"); }
     }
