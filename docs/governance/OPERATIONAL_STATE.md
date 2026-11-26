@@ -1,12 +1,19 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-11-19, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-11-26, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
-## M04 — contrato SAF-T consolidado para decisão P12
+## Referência de demonstração e fecho do M04 — 26/11/2026
 
-A [consolidação M4-12 a M4-16](../planning/m04-fiscal-evidence/SAFT_CONSOLIDATION.md) retoma a R1 revista em `7efda5c` sobre a base integrada `e0b15a7`. Reutiliza evidências e aguarda revisão independente do delta.
+A Administração aceitou a Ordem 04 e encerrou o M04 no âmbito demonstrado. A referência integrada no ThinkPad é http://127.0.0.1:18112, utilizador local `admin.demo`, com dados sintéticos e código correspondente à árvore de `e0dd2f90646795894aefd10b11abcc2e7cf67389`. A instalação anterior na porta 18089 foi preservada.
 
-**Caminho crítico:** confirmar a natureza/perfil P12-01 e as operações da instalação P12-02, comprovar identidade, release e enquadramento de certificação em P12-03, fechar as fontes obrigatórias das famílias aplicáveis e, sob mandato próprio, implementar e validar o exportador. Permanecem impeditivos o exportador ainda inexistente, a falta de prova da fonte produtiva de assinatura e versão histórica da chave e a falta de comprovação dos dados/configuração fiscal do release e da instalação. Assinatura produtiva, comunicação AT, homologação e activação ficam reservadas. Podem avançar autonomamente a preparação documental de fontes, a rastreabilidade e os critérios de aceitação, dentro dos mandatos vigentes.
+- Ordem 01 ([PR 71](https://github.com/amgsrosario/fac/pull/71)): editor e circuito da factura até à liquidação aceites.
+- Ordem 02 ([PR 72](https://github.com/amgsrosario/fac/pull/72)): exportação FT/EUR com reconciliação, tratamento de factura anulada e bloqueio das operações sem cobertura.
+- Ordem 03 ([registo 73](https://github.com/amgsrosario/fac/issues/73)): uma FT/EUR e um recibo integral no mesmo período, referência à factura e validação XSD do XML descarregado pela Administração.
+- Ordem 04 ([registo 75](https://github.com/amgsrosario/fac/issues/75)): após reinício com o volume existente, o executor confirmou autenticação, editor, FT DEMO26/7 e PDF, RC DEMO26/3 com 14,13 € recebidos e saldo zero, e acesso ao ecrã SAF-T.
+
+**Pendências do produto.** FR/EUR tem trabalho técnico integrado e inactivo. Falta disponibilizar à Administração a venda com pagamento imediato e quitação única. O caso C6 documenta a possibilidade de uma FT imediata seguir o percurso legado e ficar sem quitação. A cobertura demonstrada do exportador limita-se aos casos aceites nas Ordens 02 e 03. As provas de [piloto técnico isolado M05](../planning/m05-isolated-pilot/VALIDATION.md) mantêm-se aproveitáveis. Para produção continuam pendentes identidade e assinatura produtivas com prova histórica, séries e comunicação AT aplicáveis, cobertura fiscal da versão a certificar, certificação e decisão de activação. As secções datadas que se seguem conservam o contexto técnico das respectivas entregas.
+
+**Próxima entrega recomendada, sujeita a decisão:** uma venda em euros paga no acto, emitida como factura-recibo na interface de demonstração e reconciliada no SAF-T do período. Reutilizar o trabalho FR existente numa candidata isolada. Entregar documento/PDF com identidade FR, uma única quitação, saldo zero e exportação coerente com a operação. Preservar a referência 18112 até aceitação.
 
 ## FR/EUR — correcção da quitação integrada e inactiva
 
