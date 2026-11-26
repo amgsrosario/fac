@@ -27,7 +27,9 @@ public final class FiscalCatalog {
 
     @org.springframework.beans.factory.annotation.Autowired
     public FiscalCatalog(JdbcTemplate db, org.springframework.core.env.Environment environment) {
-        this(db, new ClassPathResource(demoCatalog(environment) ? "demo/saft-synthetic-catalog.json" : "fiscal/catalog.json"));
+        this(db, new ClassPathResource(demoCatalog(environment)
+                ? (environment.getProperty("fac.demo.fr.enabled",Boolean.class,false) ? "demo/saft-fr-synthetic-catalog.json" : "demo/saft-synthetic-catalog.json")
+                : "fiscal/catalog.json"));
     }
 
     private static boolean demoCatalog(org.springframework.core.env.Environment environment) {

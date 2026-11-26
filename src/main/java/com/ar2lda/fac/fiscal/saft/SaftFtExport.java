@@ -51,6 +51,7 @@ public class SaftFtExport {
         boolean verifiesHash(long invoice, String number, Signature candidate);
         LineFacts line(long invoice, long line);
         boolean isOwnNormalVatInvoice(long invoice);
+        default boolean supportsImmediateFr() { return false; }
         default boolean supportsFullReceipts() { return false; }
         default boolean verifiesReceipt(long receipt) { return false; }
     }
@@ -88,7 +89,7 @@ public class SaftFtExport {
         check(!installation.supplierRequired(), "Supplier: applicable family without a legitimate source");
         check(!installation.enabledTypes().isEmpty(), "Enabled documentary types required");
         installation.enabledTypes().forEach((code,type) ->
-                check("FT".equals(type), "Enabled type without coverage: " + code + "/" + type));
+                check("FT".equals(type) || "FR".equals(type) && evidence.supportsImmediateFr(), "Enabled type without coverage: " + code + "/" + type));
         var coveredConfiguration = new HashSet<>(installation.enabledTypes().keySet());
         check(Collections.disjoint(coveredConfiguration,installation.disabledTypes()),
                 "Type cannot be both enabled and disabled");
@@ -99,8 +100,15 @@ public class SaftFtExport {
                 select id from tipodocumento
                 where codigo_fiscal='FT' and not liquidacao_imediata and fiscal_catalog_revision is not null
                 """, String.class);
-        check(configuredFt.containsAll(installation.enabledTypes().keySet()),
+        check(configuredFt.containsAll(installation.enabledTypes().entrySet().stream().filter(e -> "FT".equals(e.getValue())).map(Map.Entry::getKey).toList()),
                 "Enabled type is not a governed deferred FT");
+        var configuredFr=db.queryForList("""
+                select t.id from tipodocumento t join fiscal_catalog_revision r
+                on r.fiscal_code=t.fiscal_catalog_code and r.revision=t.fiscal_catalog_revision
+                where t.codigo_fiscal='FT' and t.liquidacao_imediata and r.definition->'semantics'->>'externalType'='FR'
+                """,String.class);
+        check(configuredFr.containsAll(installation.enabledTypes().entrySet().stream().filter(e -> "FR".equals(e.getValue())).map(Map.Entry::getKey).toList()),
+                "Enabled type is not a governed immediate FR");
         // Always inspect commercial and fiscal receipts before filtering; internal SETTLE is not a document.
         for (var item : inventory) {
             check(isCovered(item,installation,evidence),
@@ -169,7 +177,9 @@ public class SaftFtExport {
             check(evidence.verifiesHash(id,number,signature),number + ": Hash does not verify against original evidence");
             List<Map<String,Object>> invoiceLines = byInvoice.getOrDefault(id,List.of());
             check(!invoiceLines.isEmpty(),number + ": no lines");
-            Element item = invoice(sales,invoice,installation,signature,number,customerId);
+            String type=invoice.get("projection_external_type") == null
+                    ? required(invoice,"tipo_documento_codigo_fiscal") : required(invoice,"projection_external_type");
+            Element item = invoice(sales,invoice,installation,signature,number,customerId,type);
             BigDecimal net = BigDecimal.ZERO;
             BigDecimal tax = BigDecimal.ZERO;
             BigDecimal discount = BigDecimal.ZERO;
@@ -198,6 +208,7 @@ public class SaftFtExport {
             value(totals,"TaxPayable",tax);
             value(totals,"NetTotal",net);
             value(totals,"GrossTotal",net.add(tax));
+            if ("FR".equals(type)) addImmediatePayment(totals,invoice);
             reconciliation.add(new Reconciliation(number,invoice.get("estado").toString(),net,tax,net.add(tax)));
             if (!"ANULADO".equals(invoice.get("estado"))) credit = credit.add(net);
         }
@@ -261,11 +272,43 @@ public class SaftFtExport {
         return List.of(new ReceiptReconciliation(number,invoiceNumber,amount));
     }
 
+    void addImmediatePayment(Element totals, Map<String,Object> invoice) {
+        long invoiceId=id(invoice,"id");
+        check("EMITIDO".equals(invoice.get("estado")) && Boolean.TRUE.equals(invoice.get("liquidado")),
+                "FR: anulação ou quitação sem prova fora da cobertura");
+        var rows=db.queryForList("""
+            select f.received,f.payment_method,f.cliente_id,f.moeda_id,p.available,
+                   (select count(*) from financial_component c where c.operation_id=f.operation_id
+                    and c.kind='CASH_IN' and c.amount=f.received and not c.reversed) as cash_count,
+                   (select count(*) from financial_allocation a where a.operation_id=f.operation_id
+                    and a.position_id=f.position_id and a.effect='CONSUME' and a.amount=f.received) as allocation_count
+            from financial_immediate_invoice f join financial_position p on p.id=f.position_id
+            where f.document_id=?
+            """,invoiceId);
+        check(rows.size()==1,"FR: prova original da quitação em falta");
+        var payment=rows.get(0);
+        check(Objects.equals(payment.get("cliente_id"),invoice.get("id_cliente"))
+                && "EUR".equals(payment.get("moeda_id"))
+                && Objects.equals(payment.get("payment_method"),invoice.get("id_mpagamento"))
+                && ((Number)payment.get("cash_count")).longValue()==1
+                && ((Number)payment.get("allocation_count")).longValue()==1,
+                "FR: prova de recebimento inconsistente");
+        same(decimal(payment,"received"),decimal(invoice,"valor_total"),"FR: recebido não corresponde ao total");
+        same(decimal(payment,"available"),BigDecimal.ZERO,"FR: saldo não é zero");
+        String mechanism=switch(required(payment,"payment_method")) {
+            case "CCD" -> "CC"; // Declared synthetic credit card.
+            case "TFB" -> "TB"; // Declared synthetic bank transfer.
+            default -> throw new Refusal("FR: modo de pagamento sem correspondência SAF-T comprovada");
+        };
+        var node=node(totals,"Payment"); value(node,"PaymentMechanism",mechanism);
+        value(node,"PaymentAmount",decimal(payment,"received")); value(node,"PaymentDate",invoice.get("data_emissao"));
+    }
+
     record Item(String family,long id,String code,String type,String currency,String status) {}
 
     static boolean isCovered(Item item, Installation installation, Evidence evidence) {
-        return "commercial".equals(item.family()) && "FT".equals(item.type()) && "EUR".equals(item.currency())
-                && "FT".equals(installation.enabledTypes().get(item.code())) && Set.of("EMITIDO","ANULADO").contains(item.status())
+        return "commercial".equals(item.family()) && ("FT".equals(item.type()) || "FR".equals(item.type())) && "EUR".equals(item.currency())
+                && item.type().equals(installation.enabledTypes().get(item.code())) && Set.of("EMITIDO","ANULADO").contains(item.status())
                 || evidence.supportsFullReceipts() && "financial".equals(item.family()) && "RC".equals(item.code())
                 && "EUR".equals(item.currency()) && "EMITIDO".equals(item.status());
     }
@@ -308,7 +351,7 @@ public class SaftFtExport {
         value(h,"HeaderComment","SYNTHETIC TEST ONLY");
     }
 
-    private static Element invoice(Element sales,Map<String,Object> r,Installation i,Signature s,String number,String customerId) {
+    private static Element invoice(Element sales,Map<String,Object> r,Installation i,Signature s,String number,String customerId,String type) {
         boolean voided = "ANULADO".equals(r.get("estado"));
         check(voided == Boolean.TRUE.equals(r.get("anulado")),number + ": inconsistent document status");
         String systemEntry = timestamp(r,"momento_emissao",i,"SystemEntryDate",number);
@@ -324,7 +367,7 @@ public class SaftFtExport {
         value(inv,"Hash",s.hash());
         value(inv,"HashControl",s.keyVersion());
         value(inv,"InvoiceDate",r.get("data_emissao"));
-        value(inv,"InvoiceType","FT");
+        value(inv,"InvoiceType",type);
         var regimes = node(inv,"SpecialRegimes");
         value(regimes,"SelfBillingIndicator",0);
         value(regimes,"CashVATSchemeIndicator",0);

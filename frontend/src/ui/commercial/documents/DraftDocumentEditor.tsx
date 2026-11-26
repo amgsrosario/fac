@@ -745,17 +745,26 @@ export default function DraftDocumentEditor({ currentUser, embedded = false, onL
         setError("Não foi possível confirmar os valores finais do documento.");
         return;
       }
+      const immediateFr = freshDoc.tipoDocumentoId === "FRE";
+      if (immediateFr && !freshDoc.mPagamentoId) {
+        setError("Indica o modo de pagamento da factura-recibo antes de emitir.");
+        setStep("header");
+        return;
+      }
       const format = new Intl.NumberFormat("pt-PT", { style: "currency", currency: freshDoc.moedaId || "EUR" });
       const confirmation = [
         `Antes de IVA: ${format.format(Number(freshDoc.valorBruto) - Number(freshDoc.valorDesconto))}`,
         `IVA: ${format.format(Number(freshDoc.valorIvaTotal))}`,
         `Total: ${format.format(Number(freshDoc.valorTotal))}`,
+        immediateFr ? `Recebimento no acto: ${format.format(Number(freshDoc.valorTotal))}` : "",
         emissionConfirmation(fresh, documentRef(freshDoc))
       ].join("\n");
       const warningText = serviceDateConfirmation(freshDoc, draft);
       if (!fresh.podeEmitir || !window.confirm(warningText + confirmation)) return;
       const recalculationConfirmed = Boolean(fresh.avaliacaoEmissao?.confirmacaoRecalculoNecessaria);
-      const emitted = await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${draft.id}/emitir`, { emissorId: currentUser.codigo, recalculoConfirmado: recalculationConfirmed }, "POST");
+      const emitted = immediateFr
+        ? await requestJson<DocumentoComercial>(`/api/demo-fr/${draft.id}/emitir`, { total: Number(freshDoc.valorTotal), modoPagamento: freshDoc.mPagamentoId, recalculoConfirmado: recalculationConfirmed }, "POST")
+        : await requestJson<DocumentoComercial>(`/api/documentos-comerciais/${draft.id}/emitir`, { emissorId: currentUser.codigo, recalculoConfirmado: recalculationConfirmed }, "POST");
       await refreshAfterStateChange(emitted.id, "Documento emitido.");
       setRecalculationWarning(false);
       if (!documentId) navigate(`/documentos/${emitted.id}`, { replace: true });
@@ -949,7 +958,7 @@ function DraftHeader({ catalogos, header, onChooseClient, onContinue, onUpdate, 
     <section className="fac-draft-header-phase">
       <div className="fac-draft-form-grid">
         <div className="fac-draft-form-primary">
-          <FacSelect disabled={readOnly} label="Tipo" onChange={(value) => onUpdate({ tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={header.tipoDocumentoId} />
+          <FacSelect disabled={readOnly} label="Tipo" onChange={(value) => onUpdate({ tipoDocumentoId: value ?? "", serie: firstSerie(catalogos.series, value ?? "") })} options={catalogos.tiposDocumento.map((tipo) => ({ label: `${tipo.id === "FRE" ? "FR" : tipo.id} - ${tipo.descricao}`, value: tipo.id }))} value={header.tipoDocumentoId} />
           <FacSelect disabled={readOnly} label="Série" onChange={(value) => onUpdate({ serie: value ?? "" })} options={series.map((serie) => ({ label: `${serie.serie} - ${serie.nome}`, value: serie.serie }))} value={header.serie} />
           <FacInputText disabled={readOnly} label="Data" onChange={(event) => onUpdate({ dataEmissao: event.target.value })} type="date" value={header.dataEmissao} />
           <EntityLookupField<Cliente>

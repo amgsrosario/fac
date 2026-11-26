@@ -22,6 +22,7 @@ final class DemoSaftEvidence implements SaftFtExport.Evidence {
     private final String trustedManifest;
     private final String expectedVersion;
     private final boolean receiptsEnabled;
+    private final boolean immediateFrEnabled;
 
     DemoSaftEvidence(JdbcTemplate db, ObjectMapper mapper, Environment environment) {
         this.db = db;
@@ -30,9 +31,11 @@ final class DemoSaftEvidence implements SaftFtExport.Evidence {
         this.trustedManifest = environment.getRequiredProperty("fac.demo.saft.manifest-sha256");
         this.expectedVersion = DemoSignatureSource.versionFor(environment);
         this.receiptsEnabled = environment.getProperty("fac.demo.saft.receipts-enabled", Boolean.class, false);
+        this.immediateFrEnabled = environment.getProperty("fac.demo.fr.enabled", Boolean.class, false);
     }
 
     @Override public boolean supportsFullReceipts() { return receiptsEnabled; }
+    @Override public boolean supportsImmediateFr() { return immediateFrEnabled; }
 
     @Override public boolean verifiesReceipt(long id) {
         try {
@@ -145,6 +148,9 @@ final class DemoSaftEvidence implements SaftFtExport.Evidence {
                     {"valorBruto","valor_bruto"},{"valorDesconto","valor_desconto"},{"valorIvaTotal","valor_iva_total"},
                     {"valorTotal","valor_total"},{"dataPrestacao","data_prestacao"}};
             for (var pair : documentFields) if (!same(doc.path(pair[0]), persisted.get(pair[1]))) return false;
+            if ("FR".equals(persisted.get("projection_external_type"))
+                    && (!same(doc.path("mPagamentoId"),persisted.get("id_mpagamento"))
+                        || !same(doc.path("liquidado"),persisted.get("liquidado")))) return false;
             var rows = db.queryForList("select * from linha_documento_comercial where id_documento_comercial=? order by numero_linha,id", id);
             if (rows.size()!=archived.path("linhas").size()) return false;
             String[][] lineFields={{"id","id"},{"numeroLinha","numero_linha"},{"tipoLinha","tipo_linha"},

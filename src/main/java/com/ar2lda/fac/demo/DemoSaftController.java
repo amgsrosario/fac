@@ -44,7 +44,7 @@ public class DemoSaftController {
     @GetMapping("/exportar")
     public ExportResponse export(@RequestParam LocalDate inicio, @RequestParam LocalDate fim) {
         DemoSignatureSource.validateIdentity(env,db);
-        DemoSignatureSource.validateSeries(db);
+        DemoSignatureSource.validateSeries(db,env);
         if (!env.getProperty("fac.demo.saft.capture-evidence",Boolean.class,false)
                 || !env.getProperty("fac.demo.saft.synthetic-catalog",Boolean.class,false)
                 || !env.getProperty("fac.demo.saft.ft-only",Boolean.class,false))
@@ -62,9 +62,14 @@ public class DemoSaftController {
             catalog.verifyCoherence();
             var types=new HashSet<>(db.queryForList("select id from tipodocumento",String.class));
             if (!types.remove("FT")) throw new SaftFtExport.Refusal("Tipo FT governado indisponível");
+            var enabled=new HashMap<String,String>(); enabled.put("FT","FT");
+            if (env.getProperty("fac.demo.fr.enabled",Boolean.class,false)) {
+                if (!types.remove("FRE")) throw new SaftFtExport.Refusal("Tipo FR governado indisponível");
+                enabled.put("FRE","FR");
+            }
             var installation=new SaftFtExport.Installation(inicio,fim,LocalDate.now(ZoneId.of("Europe/Lisbon")),ZoneId.of("Europe/Lisbon"),
                     "Global",manifest.path("companyId").asText(),manifest.path("producerTaxId").asText(),manifest.path("productId").asText(),
-                    manifest.path("version").asText(),manifest.path("syntheticCertificate").asInt(),Map.of("FT","FT"),types,false);
+                    manifest.path("version").asText(),manifest.path("syntheticCertificate").asInt(),enabled,types,false);
             var result=exporter.export(installation,new DemoSaftEvidence(db,mapper,env),this::validateXsd);
             return new ExportResponse("DEMONSTRAÇÃO — XML SINTÉTICO SEM VALIDADE FISCAL",inicio.toString(),fim.toString(),result.count(),
                     result.totalCredit(),result.reconciliation(),result.receipts(),Base64.getEncoder().encodeToString(result.xml()));

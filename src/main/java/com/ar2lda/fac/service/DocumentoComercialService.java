@@ -76,6 +76,9 @@ public class DocumentoComercialService {
     @org.springframework.beans.factory.annotation.Value("${fac.demo.saft.ft-only:false}")
     private boolean demoSaftFtOnly;
 
+    @org.springframework.beans.factory.annotation.Value("${fac.demo.fr.enabled:false}")
+    private boolean demoFrEnabled;
+
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP);
 
     private final DocumentoComercialRepository documentoRepository;
@@ -367,8 +370,11 @@ public class DocumentoComercialService {
 
     private DocumentoComercialDto emit(Long id, DocumentoComercialEmitirDto dto,boolean immediateAct) {
         DocumentoComercial documento = findDocumentoForUpdate(id);
-        if (demoSaftFtOnly && (!"FT".equals(documento.getTipoDocumento().getId())
-                || !"DEMO26".equals(documento.getSerie()) || documento.getTipoDocumento().isLiquidacaoImediata() || immediateAct))
+        boolean demoDeferredFt="FT".equals(documento.getTipoDocumento().getId())
+                && !documento.getTipoDocumento().isLiquidacaoImediata() && !immediateAct;
+        boolean demoImmediateFr=demoFrEnabled && "FRE".equals(documento.getTipoDocumento().getId())
+                && documento.getTipoDocumento().isLiquidacaoImediata() && immediateAct;
+        if (demoSaftFtOnly && (!"DEMO26".equals(documento.getSerie()) || !(demoDeferredFt || demoImmediateFr)))
             throw new BadRequestException("Candidata SAF-T demo: apenas facturas FT/DEMO26 diferidas estão habilitadas");
         validateRascunho(documento);
         documento.setTipoDocumento(tipoDocumentoService.lockConfiguration(documento.getTipoDocumento().getId()));
