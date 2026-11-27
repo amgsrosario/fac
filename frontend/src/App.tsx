@@ -828,18 +828,19 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
       <section className="fac-menu-section" key={group.title}>
         <p>{group.title}</p>
         {group.items.map((item) => (
-          <button
-            aria-current={shellView === item.label ? "page" : undefined}
-            className={shellView === item.label ? "active" : ""}
-            key={item.label}
-            onClick={() => onSelect(item.label)}
-            type="button"
-          >
-            <span>{menuLabel(item.label)}</span>
-          </button>
+          renderMenuItem(menuLabel(item.label), location.pathname !== "/saft-demo" && shellView === item.label, () => onSelect(item.label), item.label)
         ))}
       </section>
     ));
+  }
+
+  function renderMenuItem(label: string, active: boolean, onClick: () => void, key?: string) {
+    return <button aria-current={active ? "page" : undefined} className={active ? "active" : ""} key={key} onClick={onClick} type="button"><span>{label}</span></button>;
+  }
+
+  function renderFiscalMenu(mobile = false) {
+    if (import.meta.env.VITE_FAC_SAFT_DEMO !== "true" || !hasPermission("CONFIGURACAO_GERIR", currentUser)) return null;
+    return <section className="fac-menu-section"><p>Fiscalidade</p>{renderMenuItem("SAF-T demo", location.pathname === "/saft-demo", () => { navigate("/saft-demo"); if (mobile) closeMobileDrawer(false); })}</section>;
   }
 
   const selectedCliente = clientes?.content.find((cliente) => cliente.id === selectedClienteId) ?? null;
@@ -924,6 +925,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
           </div>
           <nav className="fac-menu fac-mobile-drawer-nav" aria-label="Navegação principal">
             {renderMenu(visibleMenuGroups, selectMobileView)}
+            {renderFiscalMenu(true)}
             {visibleAdminMenuItems.length > 0 && (
               <section className="fac-menu-section">
                 <p>Administração</p>
@@ -957,7 +959,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
 
         <nav className="fac-menu" aria-label="Navegação principal">
           {renderMenu(visibleMenuGroups, selectView)}
-          {import.meta.env.VITE_FAC_SAFT_DEMO === "true" && hasPermission("CONFIGURACAO_GERIR", currentUser) && <section className="fac-menu-section"><p>Fiscalidade</p><a href="/saft-demo">SAF-T demo</a></section>}
+          {renderFiscalMenu()}
         </nav>
       </aside>
 
@@ -965,7 +967,7 @@ function App({ currentUser, embeddedContent, initialView = "Dashboard", onLogout
         <header className="fac-topbar">
           <div>
             {import.meta.env.VITE_FAC_DEMO_MODE === "true" && <p className="fac-eyebrow">Ambiente de demonstração</p>}
-            <h1 className={shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" || shellView === "Listagens" ? "tuuli-page-title" : undefined}>{viewTitle(shellView)}</h1>
+            <h1 className={shellView === "Dashboard" || shellView === "Documentos" || shellView === "Clientes" || shellView === "Artigos" || shellView === "Listagens" ? "tuuli-page-title" : undefined}>{location.pathname === "/saft-demo" ? "SAF-T (PT) — demonstração" : viewTitle(shellView)}</h1>
           </div>
           <div className="fac-topbar-actions">
             {visibleAdminMenuItems.length > 0 && (
