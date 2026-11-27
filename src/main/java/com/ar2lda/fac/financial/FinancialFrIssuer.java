@@ -23,7 +23,7 @@ import java.util.List;
  * The commercial document is the invoice AND quittance; no fiscal RC is generated.
  */
 @Service
-@Profile("fr-inactive-lab")
+@Profile({"fr-inactive-lab", "demo"})
 public class FinancialFrIssuer {
     public record Request(long draftId, BigDecimal received, String paymentMethod,
                           String paymentReference, boolean recalculationConfirmed) {}

@@ -43,6 +43,7 @@ public class DemoScenarioService {
     @Value("${fac.demo.expected-database:fac_demo}") private String expectedDatabase;
     @Value("${fac.demo.reset-authorized:false}") private boolean resetAuthorized;
     @Value("${fac.demo.saft.synthetic-catalog:false}") private boolean syntheticSaftCatalog;
+    @Value("${fac.demo.fr.enabled:false}") private boolean syntheticFr;
 
     @Transactional
     public DemoScenarioCheckService.DemoCheckReport seedAndValidate() {
@@ -61,9 +62,25 @@ public class DemoScenarioService {
                     codigo_fiscal,fiscal_catalog_code,fiscal_catalog_revision)
                 values('FT','Fatura',2,1,1,false,'FT','FT',9000101)
                 """);
+            if (syntheticFr) {
+                String fr="""
+                    {"schemaVersion":2,"fiscalCode":"FT","revision":9000102,"semantics":{"specialization":"FR","externalType":"FR","documentLabel":"Fatura-recibo","allowedConfigurations":[{"codigoFiscal":"FT","areaGestao":2,"entidade":1,"sinalContabilistico":1,"liquidacaoImediata":true}]}}
+                    """;
+                jdbc.update("insert into fiscal_catalog_revision(fiscal_code,revision,definition) values('FT',9000102,?::jsonb)",fr);
+                jdbc.update("""
+                    insert into tipodocumento(id,descricao,area_gestao,entidade,sinal_contabilistico,liquidacao_imediata,
+                        codigo_fiscal,fiscal_catalog_code,fiscal_catalog_revision)
+                    values('FRE','Fatura-recibo',2,1,1,true,'FT','FT',9000102)
+                    """);
+            }
         }
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator(new ClassPathResource("demo/demo-base.sql"));
         populator.execute(dataSource);
+        if (syntheticSaftCatalog && syntheticFr) {
+            var jdbc=new JdbcTemplate(dataSource);
+            jdbc.update("insert into serie(id_tipo_documento,serie,nome,numerador,codigo_at,data_codigo_at) values('FRE','FR26','Serie FR exclusivamente sintetica',0,'DEMO-FRE','2026-01-01')");
+            jdbc.update("insert into mpagamento(id,nome) values('CCD','Cartão de crédito (demo)')");
+        }
         utilizadorRepository.deleteById("DEMO");
         saveUser("admin.demo", "Administrador Demo", "admin@fac.demo", adminPassword, PapelUtilizador.ADMINISTRADOR);
         saveUser("operador.demo", "Operador Demo", "operador@fac.demo", operadorPassword, PapelUtilizador.OPERADOR);
