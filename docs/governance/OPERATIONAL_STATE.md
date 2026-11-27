@@ -1,19 +1,25 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-11-26, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-11-27, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
 ## Referência de demonstração e fecho do M04 — 26/11/2026
 
-A Administração aceitou a Ordem 04 e encerrou o M04 no âmbito demonstrado. A referência integrada no ThinkPad é http://127.0.0.1:18112, utilizador local `admin.demo`, com dados sintéticos e código correspondente à árvore de `e0dd2f90646795894aefd10b11abcc2e7cf67389`. A instalação anterior na porta 18089 foi preservada.
+A Administração aceitou a Ordem 04 e encerrou o M04 no âmbito demonstrado. A referência da Ordem 04 no ThinkPad é http://127.0.0.1:18112, utilizador local `admin.demo`, com dados sintéticos e código correspondente à árvore de `e0dd2f90646795894aefd10b11abcc2e7cf67389`. A instalação anterior na porta 18089 foi preservada.
 
 - Ordem 01 ([PR 71](https://github.com/amgsrosario/fac/pull/71)): editor e circuito da factura até à liquidação aceites.
 - Ordem 02 ([PR 72](https://github.com/amgsrosario/fac/pull/72)): exportação FT/EUR com reconciliação, tratamento de factura anulada e bloqueio das operações sem cobertura.
 - Ordem 03 ([registo 73](https://github.com/amgsrosario/fac/issues/73)): uma FT/EUR e um recibo integral no mesmo período, referência à factura e validação XSD do XML descarregado pela Administração.
 - Ordem 04 ([registo 75](https://github.com/amgsrosario/fac/issues/75)): após reinício com o volume existente, o executor confirmou autenticação, editor, FT DEMO26/7 e PDF, RC DEMO26/3 com 14,13 € recebidos e saldo zero, e acesso ao ecrã SAF-T.
 
-**Pendências do produto.** FR/EUR tem trabalho técnico integrado e inactivo. Falta disponibilizar à Administração a venda com pagamento imediato e quitação única. O caso C6 documenta a possibilidade de uma FT imediata seguir o percurso legado e ficar sem quitação. A cobertura demonstrada do exportador limita-se aos casos aceites nas Ordens 02 e 03. As provas de [piloto técnico isolado M05](../planning/m05-isolated-pilot/VALIDATION.md) mantêm-se aproveitáveis. Para produção continuam pendentes identidade e assinatura produtivas com prova histórica, séries e comunicação AT aplicáveis, cobertura fiscal da versão a certificar, certificação e decisão de activação. As secções datadas que se seguem conservam o contexto técnico das respectivas entregas.
+## Ordem 05 — factura-recibo em euros na demonstração
 
-**Próxima entrega recomendada, sujeita a decisão:** uma venda em euros paga no acto, emitida como factura-recibo na interface de demonstração e reconciliada no SAF-T do período. Reutilizar o trabalho FR existente numa candidata isolada. Entregar documento/PDF com identidade FR, uma única quitação, saldo zero e exportação coerente com a operação. Preservar a referência 18112 até aceitação.
+Integrada em `feature/visual-redesign` pelo [PR #77](https://github.com/amgsrosario/fac/pull/77). Commit revisto e ensaiado `7b18452be8bc302d75c80f0ab7ce79465b175d9f`, merge `0b904487948b7ba9d3c9e8660b2137be0e05e535`.
+
+Na candidata da porta 18122, o executor emitiu a FRE FR26/1 por 123,00 € pagos por cartão, com um único recebimento, saldo zero, PDF com quitação integral e SAF-T validado pelo XSD. A Administração confirmou pela interface a emissão da FRE FR26/4 por 62,04 €, com quitação integral no PDF, e a regressão FT → Recebimentos. A candidata usa identidade sintética.
+
+**Pendências do produto.** O caso C6 documenta a possibilidade de uma FT imediata seguir o percurso legado e ficar sem quitação. A cobertura demonstrada do SAF-T abrange os cenários aceites nas Ordens 02, 03 e 05. As provas do [piloto técnico isolado M05](../planning/m05-isolated-pilot/VALIDATION.md) mantêm-se aproveitáveis. Para produção continuam pendentes a identidade e assinatura produtivas com prova histórica, as séries e a comunicação à AT aplicáveis, a cobertura fiscal da versão a certificar, a certificação e a decisão de activação. As secções datadas que se seguem conservam o contexto das respectivas entregas.
+
+**Próxima verificação.** Confirmar numa demonstração isolada que a versão integrada arranca e reproduz FR/EUR e FT → Recebimentos. Registar a versão, a instalação e a evidência antes de a adoptar como nova referência.
 
 ## FR/EUR — correcção da quitação integrada e inactiva
 
