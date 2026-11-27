@@ -19,7 +19,7 @@ Na candidata da porta 18122, o executor emitiu a FRE FR26/1 por 123,00 € pagos
 
 **Pendências do produto.** O caso C6 documenta a possibilidade de uma FT imediata seguir o percurso legado e ficar sem quitação. A cobertura demonstrada do SAF-T abrange os cenários aceites nas Ordens 02, 03 e 05. As provas do [piloto técnico isolado M05](../planning/m05-isolated-pilot/VALIDATION.md) mantêm-se aproveitáveis. Para produção continuam pendentes a identidade e assinatura produtivas com prova histórica, as séries e a comunicação à AT aplicáveis, a cobertura fiscal da versão a certificar, a certificação e a decisão de activação. As secções datadas que se seguem conservam o contexto das respectivas entregas.
 
-**Próxima verificação.** Confirmar numa demonstração isolada que a versão integrada arranca e reproduz FR/EUR e FT → Recebimentos. Registar a versão, a instalação e a evidência antes de a adoptar como nova referência.
+**Verificação após integração — 27/11/2026.** Segundo o executor, a demo isolada em http://127.0.0.1:18122 arrancou com a base sintética autorizada, sem migrações. Os artefactos foram compilados de `7b18452`, cuja árvore Git é idêntica à do merge `0b90448`. Pela interface, a FRE FR26/1 (123,00 € por cartão) apresentou um único recebimento, saldo de 0,00 € e quitação integral no PDF. A FT DEMO26/7 (123,00 €), emitida na sessão, foi liquidada pelo RC DEMO26/3, com ligação à factura e saldo posterior de 0,00 €. A demo anterior, na porta 18112, foi preservada. Após o reinício do Docker, os seus contentores estavam parados e a instalação não respondia.
 
 ## FR/EUR — correcção da quitação integrada e inactiva
 
