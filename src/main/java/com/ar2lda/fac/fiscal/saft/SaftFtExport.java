@@ -213,7 +213,7 @@ public class SaftFtExport {
             if (!"ANULADO".equals(invoice.get("estado"))) credit = credit.add(net);
         }
         totalCredit.setTextContent(credit.toPlainString());
-        List<ReceiptReconciliation> receiptReconciliation = receipts(source, inventory, invoices, evidence, installation);
+        List<ReceiptReconciliation> receiptReconciliation = receipts(source, inventory, invoices, evidence, installation, customers);
         masters(master,customers,products,rates);
         byte[] bytes = serialize(xml);
         validator.validate(bytes.clone());
@@ -221,41 +221,27 @@ public class SaftFtExport {
     }
 
     List<ReceiptReconciliation> receipts(Element source, List<Item> inventory, List<Map<String,Object>> invoices,
-                                                  Evidence evidence, Installation installation) {
+                                                  Evidence evidence, Installation installation, Map<String,Customer> customers) {
         var entries=inventory.stream().filter(item -> "financial".equals(item.family())).toList();
         if (entries.isEmpty()) return List.of();
-        check(entries.size()==1 && invoices.size()==1, "Recebimento fora da cobertura: exige uma factura e um recibo no período");
-        var invoice=invoices.get(0);
-        check("EMITIDO".equals(invoice.get("estado")),"Recebimento de factura anulada fora da cobertura");
-        long receiptId=entries.get(0).id();
-        check(evidence.verifiesReceipt(receiptId),"Recibo " + receiptId + ": falta prova original válida da emissão");
+        var payments=node(source,"Payments");
+        value(payments,"NumberOfEntries",entries.size()); value(payments,"TotalDebit",BigDecimal.ZERO);
+        Element paymentCredit=value(payments,"TotalCredit",BigDecimal.ZERO);
+        BigDecimal credit=BigDecimal.ZERO; List<ReceiptReconciliation> result=new ArrayList<>(); Set<Long> verifiedHistories=new HashSet<>();
+        for (var entry:entries) {
+        long receiptId=entry.id();
         var receipt=db.queryForMap("select * from documento_financeiro where id=?",receiptId);
+        var number=required(receipt,"id_tipo_documento")+" "+required(receipt,"serie")+"/"+required(receipt,"numero_documento");
+        check(evidence.verifiesReceipt(receiptId),number+": falta prova original válida da emissão ou vínculo");
         var lines=db.queryForList("""
-                select l.*,p.id_documento_comercial,p.valor_pendente from linha_documento_financeiro l
+                select l.*,p.id_documento_comercial from linha_documento_financeiro l
                 join pendente p on p.id=l.id_pendente where l.id_documento_financeiro=? order by l.numero_linha,l.id
                 """,receiptId);
-        check(lines.size()==1,"Recibo fora da cobertura: exige uma única factura");
-        var line=lines.get(0);
-        check(id(line,"id_documento_comercial")==id(invoice,"id")
-                && Objects.equals(receipt.get("id_cliente"),invoice.get("id_cliente"))
-                && "EUR".equals(line.get("id_moeda")) && "FT".equals(line.get("id_tipo_documento"))
-                && Objects.equals(line.get("numero_documento"),invoice.get("numero_documento"))
-                && Objects.equals(line.get("serie_documento"),invoice.get("serie"))
-                && Objects.equals(line.get("data_documento"),invoice.get("data_emissao")),
-                "Recibo: ligação à factura divergente");
-        BigDecimal amount=decimal(invoice,"valor_total");
-        for (String field:List.of("valor_documento","valor_pendente_antes","valor_pagamento_bruto","valor_pagamento_liquido"))
-            same(decimal(line,field),amount,"Recibo: pagamento parcial ou montante divergente: " + field);
-        same(decimal(line,"novo_valor_pendente"),BigDecimal.ZERO,"Recibo: saldo posterior não é zero");
-        same(decimal(line,"valor_pendente"),BigDecimal.ZERO,"Recibo: saldo actual não é zero");
-        same(decimal(line,"valor_desconto_financeiro"),BigDecimal.ZERO,"Recibo: desconto fora da cobertura");
-        same(decimal(receipt,"valor_desconto_financeiro"),BigDecimal.ZERO,"Recibo: desconto fora da cobertura");
-        same(decimal(receipt,"valor_pagamento_bruto"),amount,"Recibo: total bruto divergente");
-        same(decimal(receipt,"valor_pagamento_liquido"),amount,"Recibo: total recebido divergente");
-        var number=required(receipt,"id_tipo_documento")+" "+required(receipt,"serie")+"/"+required(receipt,"numero_documento");
-        var invoiceNumber=required(invoice,"numero_documento_completo");
-        var payments=node(source,"Payments");
-        value(payments,"NumberOfEntries",1); value(payments,"TotalDebit",amount); value(payments,"TotalCredit",BigDecimal.ZERO);
+        check(!lines.isEmpty(),number+": sem vínculo financeiro válido");
+        same(decimal(receipt,"valor_desconto_financeiro"),BigDecimal.ZERO,number+": desconto fora da cobertura");
+        BigDecimal amount=decimal(receipt,"valor_pagamento_liquido");
+        check(amount.signum()>0,number+": valor recebido inválido");
+        same(decimal(receipt,"valor_pagamento_bruto"),amount,number+": total bruto divergente");
         var payment=node(payments,"Payment"); value(payment,"PaymentRefNo",number); value(payment,"ATCUD",required(receipt,"atcud"));
         value(payment,"TransactionDate",receipt.get("data_emissao")); value(payment,"PaymentType","RG");
         var status=node(payment,"DocumentStatus"); value(status,"PaymentStatus","N");
@@ -264,12 +250,70 @@ public class SaftFtExport {
         value(payment,"SourceID",required(receipt,"id_emissor"));
         value(payment,"SystemEntryDate",timestamp(receipt,"momento_emissao",installation,"SystemEntryDate",number));
         value(payment,"CustomerID",required(receipt,"id_cliente"));
-        var paymentLine=node(payment,"Line"); value(paymentLine,"LineNumber",1);
-        var origin=node(paymentLine,"SourceDocumentID"); value(origin,"OriginatingON",invoiceNumber); value(origin,"InvoiceDate",invoice.get("data_emissao"));
-        value(paymentLine,"DebitAmount",amount);
+        BigDecimal allocated=BigDecimal.ZERO; int lineNumber=0; Set<Long> seen=new HashSet<>();
+        for (var line:lines) {
+            long invoiceId=id(line,"id_documento_comercial");
+            check(seen.add(invoiceId),number+": factura duplicada no recibo");
+            var matches=db.queryForList("select * from documento_comercial where id=?",invoiceId);
+            check(matches.size()==1,number+": factura de origem em falta");
+            var invoice=matches.get(0); var invoiceNumber=required(invoice,"numero_documento_completo");
+            check(invoice.get("data_emissao") instanceof java.sql.Date && receipt.get("data_emissao") instanceof java.sql.Date
+                    && !((java.sql.Date)invoice.get("data_emissao")).after((java.sql.Date)receipt.get("data_emissao")),
+                    number+": data da factura posterior ao recibo: "+invoiceNumber);
+            check(id(invoice,"id")==invoiceId && "EMITIDO".equals(invoice.get("estado")) && "FT".equals(invoice.get("tipo_documento_codigo_fiscal"))
+                    && invoice.get("projection_external_type")==null && Objects.equals(receipt.get("id_cliente"),invoice.get("id_cliente"))
+                    && "EUR".equals(line.get("id_moeda")) && "FT".equals(line.get("id_tipo_documento"))
+                    && Objects.equals(line.get("numero_documento"),invoice.get("numero_documento"))
+                    && Objects.equals(line.get("serie_documento"),invoice.get("serie"))
+                    && Objects.equals(line.get("data_documento"),invoice.get("data_emissao")),number+": ligação à factura divergente: "+invoiceNumber);
+            check(evidence.isOwnNormalVatInvoice(invoiceId),number+": origem ou regime não comprovados: "+invoiceNumber);
+            var signature=evidence.signature(invoiceId,invoiceNumber);
+            check(signature!=null && present(signature.hash()) && present(signature.keyVersion())
+                    && !"0".equals(signature.hash()) && !"0".equals(signature.keyVersion())
+                    && evidence.matchesHistoricalKeyVersion(invoiceId,invoiceNumber,signature.keyVersion())
+                    && evidence.verifiesHash(invoiceId,invoiceNumber,signature),number+": assinatura da factura não comprovada: "+invoiceNumber);
+            String customerId=required(invoice,"id_cliente");
+            consistent(customers,customerId,new Customer(required(invoice,"cliente_nif"),required(invoice,"cliente_nome"),
+                    address(invoice,"cliente_morada","cliente_morada1"),required(invoice,"cliente_localidade"),
+                    required(invoice,"cliente_cod_postal"),required(invoice,"cliente_pais")),"CustomerID");
+            same(decimal(line,"valor_documento"),decimal(invoice,"valor_total"),number+": valor da factura divergente");
+            same(decimal(line,"valor_desconto_financeiro"),BigDecimal.ZERO,number+": desconto fora da cobertura");
+            BigDecimal paid=decimal(line,"valor_pagamento_liquido"),before=decimal(line,"valor_pendente_antes"),after=decimal(line,"novo_valor_pendente");
+            check(paid.signum()>0 && before.compareTo(paid)>=0 && before.compareTo(decimal(invoice,"valor_total"))<=0 && after.signum()>=0,number+": imputação inválida");
+            same(decimal(line,"valor_pagamento_bruto"),paid,number+": imputação bruta divergente");
+            same(before.subtract(paid),after,number+": saldo posterior divergente");
+            if (verifiedHistories.add(invoiceId)) verifyReceiptHistory(invoiceId,invoiceNumber,decimal(invoice,"valor_total"),installation.end(),evidence);
+            var paymentLine=node(payment,"Line"); value(paymentLine,"LineNumber",++lineNumber);
+            var origin=node(paymentLine,"SourceDocumentID"); value(origin,"OriginatingON",invoiceNumber); value(origin,"InvoiceDate",invoice.get("data_emissao"));
+            value(paymentLine,"CreditAmount",paid); allocated=allocated.add(paid); result.add(new ReceiptReconciliation(number,invoiceNumber,paid));
+        }
+        same(allocated,amount,number+": total das imputações divergente");
         var totals=node(payment,"DocumentTotals"); value(totals,"TaxPayable",BigDecimal.ZERO);
         value(totals,"NetTotal",amount); value(totals,"GrossTotal",amount);
-        return List.of(new ReceiptReconciliation(number,invoiceNumber,amount));
+        credit=credit.add(amount);
+        }
+        paymentCredit.setTextContent(credit.toPlainString()); return result;
+    }
+
+    private void verifyReceiptHistory(long invoiceId,String invoiceNumber,BigDecimal total,LocalDate end,Evidence evidence) {
+        var history=db.queryForList("""
+                select l.*,d.id as receipt_id,d.anulado from linha_documento_financeiro l
+                join documento_financeiro d on d.id=l.id_documento_financeiro
+                join pendente p on p.id=l.id_pendente where p.id_documento_comercial=? and d.data_emissao<=?
+                order by d.id,l.numero_linha,l.id
+                """,invoiceId,end);
+        check(!history.isEmpty(),invoiceNumber+": histórico de recebimentos em falta");
+        BigDecimal previous=total;
+        for (var row:history) {
+            long receipt=id(row,"receipt_id");
+            check(Boolean.FALSE.equals(row.get("anulado")) && evidence.verifiesReceipt(receipt),
+                    invoiceNumber+": histórico inválido ou sem prova do recibo "+receipt);
+            BigDecimal paid=decimal(row,"valor_pagamento_bruto"),before=decimal(row,"valor_pendente_antes"),after=decimal(row,"novo_valor_pendente");
+            check(paid.signum()>0 && before.compareTo(paid)>=0 && after.signum()>=0,invoiceNumber+": imputação histórica inválida no recibo "+receipt);
+            same(before,previous,invoiceNumber+": sequência de saldos divergente no recibo "+receipt);
+            same(before.subtract(paid),after,invoiceNumber+": saldo histórico divergente no recibo "+receipt);
+            previous=after;
+        }
     }
 
     void addImmediatePayment(Element totals, Map<String,Object> invoice) {

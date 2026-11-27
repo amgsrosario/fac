@@ -79,7 +79,7 @@ public class DemoSignatureSource implements FiscalDocumentSignatureSource, Initi
         if (!"fac_demo".equals(database) || !authorized.matches("[0-9]{19}") || !authorized.equals(cluster)
                 || Set.of("7689035507522658342","7701042457621884972").contains(cluster)) throw rejected();
         if (environment.getProperty("fac.demo.saft.short-signature.enabled",Boolean.class,false)
-                && (!Set.of("7712163055710986279", "7712437121396502565", "7712504161523511334").contains(cluster)
+                && (!Set.of("7712163055710986279", "7712437121396502565", "7712504161523511334", "7712812072026869798").contains(cluster)
                     || !cluster.equals(environment.getProperty("fac.demo.saft.short-signature.authorized-cluster",""))
                     || !environment.getProperty("fac.demo.saft.synthetic-catalog",Boolean.class,false))) throw rejected();
     }

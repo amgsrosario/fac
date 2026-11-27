@@ -40,7 +40,7 @@ export default function DemoSaftView() {
       </table>
       {result.recebimentos.length>0 && <><p>Recebimentos (totalizados separadamente das vendas)</p>
         <table><thead><tr><th>Recibo</th><th>Factura</th><th>Recebido</th></tr></thead>
-          <tbody>{result.recebimentos.map(item=><tr key={item.number}><td>{item.number}</td><td>{item.invoice}</td><td>{money(item.amount)}</td></tr>)}</tbody></table></>}
+          <tbody>{result.recebimentos.map(item=><tr key={`${item.number}:${item.invoice}`}><td>{item.number}</td><td>{item.invoice}</td><td>{money(item.amount)}</td></tr>)}</tbody></table></>}
       </div>}
   </section>;
 }
