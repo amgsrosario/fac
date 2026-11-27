@@ -67,6 +67,10 @@ class SaftReceiptCoverageTests {
         when(evidence.verifiesReceipt(3)).thenReturn(false);
         assertThatThrownBy(this::run).isInstanceOf(SaftFtExport.Refusal.class).hasMessageContaining("prova original");
     }
+    @Test void missingLinkIdentifiesReceipt() {
+        when(db.queryForList(contains("select l.*,p.id_documento_comercial"),any(Object[].class))).thenReturn(List.of());
+        assertThatThrownBy(this::run).isInstanceOf(SaftFtExport.Refusal.class).hasMessageContaining("RC DEMO26/3: sem vínculo financeiro válido");
+    }
     @Test void partialReceiptReconciles() throws Exception {
         line.put("valor_pagamento_liquido",money("1.00")); line.put("valor_pagamento_bruto",money("1.00")); line.put("novo_valor_pendente",money("13.13"));
         receipt.put("valor_pagamento_liquido",money("1.00")); receipt.put("valor_pagamento_bruto",money("1.00"));

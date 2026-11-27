@@ -232,12 +232,12 @@ public class SaftFtExport {
         long receiptId=entry.id();
         var receipt=db.queryForMap("select * from documento_financeiro where id=?",receiptId);
         var number=required(receipt,"id_tipo_documento")+" "+required(receipt,"serie")+"/"+required(receipt,"numero_documento");
-        check(evidence.verifiesReceipt(receiptId),number+": falta prova original válida da emissão ou vínculo");
         var lines=db.queryForList("""
                 select l.*,p.id_documento_comercial from linha_documento_financeiro l
                 join pendente p on p.id=l.id_pendente where l.id_documento_financeiro=? order by l.numero_linha,l.id
                 """,receiptId);
         check(!lines.isEmpty(),number+": sem vínculo financeiro válido");
+        check(evidence.verifiesReceipt(receiptId),number+": falta prova original válida da emissão ou vínculo");
         same(decimal(receipt,"valor_desconto_financeiro"),BigDecimal.ZERO,number+": desconto fora da cobertura");
         BigDecimal amount=decimal(receipt,"valor_pagamento_liquido");
         check(amount.signum()>0,number+": valor recebido inválido");
