@@ -1,12 +1,25 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-11-19, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-11-27, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
 
-## M04 — contrato SAF-T consolidado para decisão P12
+## Referência de demonstração e fecho do M04 — 26/11/2026
 
-A [consolidação M4-12 a M4-16](../planning/m04-fiscal-evidence/SAFT_CONSOLIDATION.md) retoma a R1 revista em `7efda5c` sobre a base integrada `e0b15a7`. Reutiliza evidências e aguarda revisão independente do delta.
+A Administração aceitou a Ordem 04 e encerrou o M04 no âmbito demonstrado. A referência da Ordem 04 no ThinkPad é http://127.0.0.1:18112, utilizador local `admin.demo`, com dados sintéticos e código correspondente à árvore de `e0dd2f90646795894aefd10b11abcc2e7cf67389`. A instalação anterior na porta 18089 foi preservada.
 
-**Caminho crítico:** confirmar a natureza/perfil P12-01 e as operações da instalação P12-02, comprovar identidade, release e enquadramento de certificação em P12-03, fechar as fontes obrigatórias das famílias aplicáveis e, sob mandato próprio, implementar e validar o exportador. Permanecem impeditivos o exportador ainda inexistente, a falta de prova da fonte produtiva de assinatura e versão histórica da chave e a falta de comprovação dos dados/configuração fiscal do release e da instalação. Assinatura produtiva, comunicação AT, homologação e activação ficam reservadas. Podem avançar autonomamente a preparação documental de fontes, a rastreabilidade e os critérios de aceitação, dentro dos mandatos vigentes.
+- Ordem 01 ([PR 71](https://github.com/amgsrosario/fac/pull/71)): editor e circuito da factura até à liquidação aceites.
+- Ordem 02 ([PR 72](https://github.com/amgsrosario/fac/pull/72)): exportação FT/EUR com reconciliação, tratamento de factura anulada e bloqueio das operações sem cobertura.
+- Ordem 03 ([registo 73](https://github.com/amgsrosario/fac/issues/73)): uma FT/EUR e um recibo integral no mesmo período, referência à factura e validação XSD do XML descarregado pela Administração.
+- Ordem 04 ([registo 75](https://github.com/amgsrosario/fac/issues/75)): após reinício com o volume existente, o executor confirmou autenticação, editor, FT DEMO26/7 e PDF, RC DEMO26/3 com 14,13 € recebidos e saldo zero, e acesso ao ecrã SAF-T.
+
+## Ordem 05 — factura-recibo em euros na demonstração
+
+Integrada em `feature/visual-redesign` pelo [PR #77](https://github.com/amgsrosario/fac/pull/77). Commit revisto e ensaiado `7b18452be8bc302d75c80f0ab7ce79465b175d9f`, merge `0b904487948b7ba9d3c9e8660b2137be0e05e535`.
+
+Na candidata da porta 18122, o executor emitiu a FRE FR26/1 por 123,00 € pagos por cartão, com um único recebimento, saldo zero, PDF com quitação integral e SAF-T validado pelo XSD. A Administração confirmou pela interface a emissão da FRE FR26/4 por 62,04 €, com quitação integral no PDF, e a regressão FT → Recebimentos. A candidata usa identidade sintética.
+
+**Pendências do produto.** O caso C6 documenta a possibilidade de uma FT imediata seguir o percurso legado e ficar sem quitação. A cobertura demonstrada do SAF-T abrange os cenários aceites nas Ordens 02, 03 e 05. As provas do [piloto técnico isolado M05](../planning/m05-isolated-pilot/VALIDATION.md) mantêm-se aproveitáveis. Para produção continuam pendentes a identidade e assinatura produtivas com prova histórica, as séries e a comunicação à AT aplicáveis, a cobertura fiscal da versão a certificar, a certificação e a decisão de activação. As secções datadas que se seguem conservam o contexto das respectivas entregas.
+
+**Verificação após integração — 27/11/2026.** Segundo o executor, a demo isolada em http://127.0.0.1:18122 arrancou com a base sintética autorizada, sem migrações. Os artefactos foram compilados de `7b18452`, cuja árvore Git é idêntica à do merge `0b90448`. Pela interface, a FRE FR26/1 (123,00 € por cartão) apresentou um único recebimento, saldo de 0,00 € e quitação integral no PDF. A FT DEMO26/7 (123,00 €), emitida na sessão, foi liquidada pelo RC DEMO26/3, com ligação à factura e saldo posterior de 0,00 €. A demo anterior, na porta 18112, foi preservada. Após o reinício do Docker, os seus contentores estavam parados e a instalação não respondia.
 
 ## FR/EUR — correcção da quitação integrada e inactiva
 
