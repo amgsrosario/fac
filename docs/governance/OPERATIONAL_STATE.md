@@ -1,6 +1,10 @@
 # TUULI AIR — Estado Operacional
 
-Fonte canónica do estado corrente. Atualização: 2026-11-19, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+Fonte canónica do estado corrente. Atualização: 2026-11-27, Europe/Lisbon. Substituir informação obsoleta quando o estado mudar; o histórico detalhado permanece no Git. Consultar também [INSTITUTIONAL_MEMORY.md](INSTITUTIONAL_MEMORY.md).
+
+## C6 — Encerrado sem alteração funcional (27/11/2026)
+
+A Administração confirmou a escolha explícita de FT ou FR: FT cria valor a receber, liquidável em Recebimentos; FR confirma recebimento integral, regista-o e deixa saldo zero. Meio e condição de pagamento não comprovam recebimento. A proposta anterior de encaminhamento para FR fica retirada. A Ordem 08 observou FT DEMO26/7 pendente, FRE FR26/1 liquidada no acto e FT DEMO26/8 liquidada pelo RC DEMO26/3; a combinação FT e prazo «pronto pagamento» não foi ensaiada. [Registo, limites e evidências](../planning/c6-encerramento/REGISTO.md). As referências anteriores a C6 aberto abaixo são históricas e ficam superadas por esta decisão.
 
 ## M04 — contrato SAF-T consolidado para decisão P12
 

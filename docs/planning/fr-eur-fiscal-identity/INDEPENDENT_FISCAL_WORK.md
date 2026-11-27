@@ -29,7 +29,7 @@
 | P12-01 | Natureza efectiva da instalação: facturação própria ou contabilidade estatutária integrada? | F se comprovado o primeiro caso. FinancialCore não prova contabilidade estatutária; I exigiria as fontes contabilísticas adicionais. Não escolher perfil para ocultar tabelas em falta |
 | P12-02 | Operações/documentos efectivamente habilitados na primeira instalação | Cobrir todos os tipos realmente emitidos, incluindo anulados e famílias aplicáveis; só restringir o produto por decisão expressa. FR aprovada não volta a ser submetida como modelo por decidir |
 | P12-03 | Instalação/release legítima, obrigação e estado efectivo de certificação | Obter evidência autêntica de emitente/produtor/certificado/release/versão de chave. Dados desconhecidos não são opções arbitrárias. Ausência de prova não autoriza Hash=0 ou isenção |
-| C6 | Restringir futuramente novas FT imediatas sem vínculo? | Continua aberto; I04(b) demonstra preservação do legado, não quitação. Qualquer bloqueio exige decisão separada |
+| C6 | Ocorrência de FT sem quitação automática | **Encerrado sem alteração funcional**, por decisão da Administração na Ordem 09. FT é valor a receber; FR confirma recebimento integral. [Registo, evidências e limite do ensaio](../c6-encerramento/REGISTO.md) |
 | Anulação FR | Acto integral de neutralização, datas e relações do documento único | Incremento próprio; não implementar reversão avulsa nem herdar automaticamente a regra RC |
 
 A questão do espaço após `ATCUD:` e a melhoria pré-produtiva bruto/IVA/total no diálogo final mantêm-se abertas. Assinatura produtiva, comunicação AT/séries, homologação e activação continuam bloqueadas. As decisões P12 não impedem esta prova interna; impedem declarar pronto o exportador/produto comercial.

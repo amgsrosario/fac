@@ -2,6 +2,10 @@
 
 Fonte canónica das decisões duradouras do projeto. O estado corrente encontra-se em [OPERATIONAL_STATE.md](OPERATIONAL_STATE.md); o histórico detalhado permanece no Git. Decisões novas exigem fundamento e autorização dentro do âmbito aplicável.
 
+## C6 — regra de FT e FR (27/11/2026)
+
+**Encerrado sem alteração funcional.** O operador escolhe FT ou FR. A FT constitui um valor a receber, liquidável imediatamente ou mais tarde em Recebimentos. A FR pressupõe confirmação do recebimento integral, gera o movimento correspondente e deixa saldo zero. Meio e condição de pagamento são distintos do recebimento efectivo. A proposta anterior de encaminhamento para FR fica retirada. A [Ordem 08 e a decisão de encerramento](../planning/c6-encerramento/REGISTO.md) documentam a ocorrência e a limitação do prazo «pronto pagamento» não ensaiado. Referências anteriores a C6 aberto são históricas e ficam superadas nesta matéria.
+
 ## FR/EUR — correcção da quitação, implementação local
 
 Sobre o merge `7008ad8` (PR #59), a V32 local reutiliza o SETTLE como recibo interno. A correcção auditada da quitação sem fundos recebidos precede a anulação da factura. O extracto separa os quatro movimentos e as consultas históricas afectadas recusam o cálculo enquanto a data de efeito estiver pendente. 150 testes aprovados sobre `bc863be`, incluindo regressões FT/RC. Revisão Claude pendente. FR/EUR inactiva e C6 aberto. [Evidências e limites](../planning/fr-eur-inactive/CORRECTION_REVIEW_HANDOFF.md).
